@@ -1,0 +1,1218 @@
+ [SIDE CONVERSATION]
+ You guys ready to go?
+ Everything's good, right?
+ Already been going, I guess.
+ Yeah.
+ Oh, yeah, sure.
+ OK, welcome back, everybody.
+ So last time, we started doing perception.
+ We started the more geometric perception.
+ It connects, I think, nicely with the kinematics work
+ we had been doing, just thinking about the motion of the robot.
+ And I want to continue that today,
+ with the major theme being we're going to do estimation
+ and think a lot more about the consequences of having
+ very messy point clouds.
+ Now, there's a couple topics that I wanted--
+ there's lots of things to possibly say or know.
+ But I wanted, instead of listing all of them,
+ which I think the notes can be better about being a little bit
+ more encyclopedic, I want to go in a little bit deeper
+ and talk about a few cases that I think stand out
+ and are worthy of some attention here.
+ And I hope it will not only continue
+ thinking about geometry and perception,
+ but also it's going to dig a little deeper in the way
+ we're using optimization.
+ So this whole connection--
+ I know I've only introduced optimization
+ through a couple of pictures and examples,
+ but I'm hoping that I can continue
+ to build on that with build your intuition by working
+ through some of these examples and showing you how
+ powerful that framework can be.
+ So I'll start up on the slides here.
+ So remember that we started-- the setup
+ was we're using the soon-to-be-extinct D415
+ cameras, awesome cameras.
+ They've been a workhorse for robotics.
+ And we are simulating those cameras with basically
+ a rendering pipeline, where we've added our RGBD sensor,
+ so color and depth sensor.
+ And we're getting out images that
+ are of color image and a depth image that are the same size.
+ We can transform that into a point cloud.
+ And last time, what we started talking about
+ was the iterative closest point algorithm,
+ which we're going to build on today.
+ That was the foundation.
+ So roughly speaking, it looks like this.
+ So I've made a random shape.
+ I put it in original pose and some perturbed pose.
+ The blue is the model.
+ The red is the scene.
+ And the algorithm-- I mean, it's actually kind of worthwhile,
+ I think, to watch it and step through it
+ and see the choices it makes because
+ of that simple heuristic of distance.
+ But oftentimes, it will converge to something reasonable.
+ I also put in a few examples in the notes where it does not
+ converge to something reasonable.
+ It does something pretty ridiculous.
+ And that can be pretty frustrating
+ when you're trying to pick up a mug or something in the sink.
+ But this is the workhorse that we're going to start with.
+ Let me remind you of the basic equations there.
+ So it's iterative because we're alternating
+ between two different optimization problems.
+ In one of them, we assume the correspondences are known.
+ We optimize over a position and orientation
+ where this is actually a 3 by 3 matrix.
+ And we had to put in these extra constraints that--
+ so that was given the correspondences.
+ We did that.
+ And the other part of the algorithm
+ was given my guess at the pose, I
+ reconstruct by searching over possible correspondences.
+ And this one, since r is given, doesn't have those constraints.
+ This is just a distance, minimum distance problem.
+ It has good algorithms.
+ So it's important for today's conversation
+ to realize that this problem, when the correspondences are
+ given, we've decided that it has a good solution.
+ It has a globally optimal solution.
+ We showed you the pictures of that quadratic bowl.
+ This solution, once the correspondences are given,
+ it will find you the best p and r.
+ No worries about local minima or anything like this.
+ It will find the optimal p and r that minimizes this equation.
+ So that's an oracle that we can go to,
+ and we will go to, to ask, what was
+ the answer to this problem?
+ And separately, we can, either through brute force search
+ or clever nearest neighbor algorithms,
+ just search over all possible correspondences
+ and find, given the current pose,
+ what is the best correspondence?
+ What is the minimum distance?
+ So that we can also solve globally,
+ and we can do it efficiently with good data structures.
+ So we're going to alternate between two algorithms that
+ are independently global, but that alternation
+ can cause local minima.
+ So the problems where it gets stuck
+ and gets in this frustrating bad estimate of the solution,
+ alternating between two global solvers
+ does not mean that you're solving the joint problem
+ globally.
+ Yeah?
+ Are there known shape cases that are
+ harder than others, like stars versus compact bodies?
+ I haven't seen it broken in terms of shape.
+ It's possible that there's a dichotomy there.
+ But I think you can think about the global optima as--
+ basically, we're going to see a few of them do outliers.
+ But once you get a bad set of correspondences,
+ it doesn't take a star pattern or something.
+ You can get caught in the corner of a cube just fine
+ and get yourself pretty stuck.
+ I think it's highly dependent on both the shape
+ and the guess of the pose and the number of points
+ and all these different things.
+ I don't think it's as simple as that.
+ Now, it's interesting.
+ Oh, see.
+ Yeah, please.
+ I just want to confirm the objective functions.
+ [INAUDIBLE]
+ Oh my goodness.
+ I wrote subtract.
+ Thank you.
+ Thank you.
+ Thank you.
+ I appreciate you catching that.
+ Yeah, you definitely want to--
+ this is the points projected into the world frame.
+ This is the other point, so that we
+ want the distance between them.
+ Thank you for catching that.
+ Good, good.
+ OK, I mean, I want you to know that this is a general--
+ this is a common strategy in optimization.
+ When you have a problem that is non-convex,
+ but you can lock a few variables in and solve different pieces
+ of it optimally, these alternation strategies,
+ they come up over and over again.
+ You see them in bilinear optimization.
+ You see them-- if you've heard about the EM algorithm,
+ expectation maximization, that's an instance of this.
+ These are all the same kind of thing, where you're breaking up
+ a problem that is non-convex into two convex problems,
+ and you alternate.
+ But it can get stuck in local minima,
+ because the two halves are convex
+ is not enough to solve the original problem jointly.
+ OK, so yes, thank you for catching that.
+ Another good question that Jared asked at the end of class
+ last time was, sometimes I've written the model points here
+ and the scene points here in the notes
+ I have written in the other case.
+ So I think a question that I'd like to address here
+ is, do we want the model to match the scene points,
+ or the scene to match the model points?
+ If we're going to figure out correspondences,
+ which one's better?
+ Should we find for every model point a scene point
+ that it corresponds to?
+ Should we find for every scene point a model
+ that it corresponds to?
+ And I think the complexity there starts
+ to reveal some of the challenges in the real problem.
+ And I made some pictures.
+ So there's a couple of things that--
+ the real point clouds are messy.
+ They're messy in terms of having dropouts.
+ They're messy in terms of having outliers.
+ Remember, this video was just showing the lumpiness.
+ So these things are messy.
+ And if you wanted to run ICP to find a LEGO block or a piece
+ of carrot or something, this is not
+ the picture I had drawn with the simple shape in 2D before.
+ It's a much messier proposition.
+ So there's outliers and noise.
+ And the other big thing that we saw
+ is that there's partial views, the fact
+ that the camera looking from one side
+ is only going to see half your object at best.
+ You can put multiple cameras, but still you're
+ never going to see the bottom of the object
+ if it's sitting on the table unless you pick it up.
+ So if you start with a CAD model, which
+ has points all over the geometry,
+ and you try to find--
+ correspond every model point to a scene point,
+ what's the problem with the model points to scene points?
+ This is-- the potential problem with this is partial views.
+ So if you have only half of your mustard generating the point
+ cloud, and you have model points for all of your mustard,
+ if you ask every one of your model points
+ to correspond to some scene point,
+ then you're asking for it to correspond to things
+ that just don't exist.
+ And that's going to pull it backwards.
+ It's going to try to pull your estimate
+ into the wrong location.
+ Is that clear?
+ OK.
+ So you think, OK, let's do scene to model.
+ But that has problems too.
+ OK.
+ That has problems-- more problems with the outliers.
+ OK, this is actually-- let me finish the partial view.
+ So this is a partial view case, right, where I just made that.
+ So this is actually solving the scene points to model.
+ It happens to get caught in a local minima this time.
+ But scene to model can do better with the partial views, right,
+ if I only take my scene points and try
+ to capture the model points.
+ That seems natural.
+ The problem with scene to model is outliers.
+ OK.
+ [WRITING]
+ One of the problems, right?
+ So I've taken my blue perfect scene points,
+ and I've just added three random outliers.
+ I got a speck of light or a speck of dust in the air,
+ happened to catch a return.
+ I've got a random point in the middle of the air.
+ It happens, right?
+ Now, those are still going to match
+ if I'm asking all of my scene points
+ to connect to some model point, right?
+ Then this, even when it wants to get close,
+ it's still getting pulled towards these points
+ because they're all trying to find their match.
+ OK.
+ So both of these problems have potential pitfalls.
+ Both of them have possible solutions.
+ But I think one of the things that could fix either of these
+ is if we had some way of identifying outliers
+ and ejecting them from the data set, right?
+ [WRITING]
+ And I hope you're already thinking about some reasonable
+ heuristics for that, right?
+ If the distance is too big, I can just crop it.
+ There's a bunch of things that we can go through.
+ But before we completely solve the problem,
+ let's try to make a little bit more understanding
+ about this sort of decision.
+ There is actually one thing.
+ I think in both of those cases, if you have partial views
+ and you can reject outliers, then you
+ can reject the model points that were
+ on the back of a mustard bottle, right?
+ If you have actual outliers and you have the ability
+ to pull them from the data set, then I
+ think this can work too.
+ Both of those can be made more robust
+ if you have some algorithm for removing the non-matches.
+ But there are more subtle reasons maybe
+ to prefer one or the other.
+ I tend to prefer finding scene to model
+ because I particularly like a generalization
+ of the point-to-point correspondence, which
+ is point-to-mesh correspondence.
+ And it's worth, I think, writing that down.
+ So presumably, your CAD model-- it's kind of weird, right,
+ that we started off-- we have this nice CAD model.
+ You think that's something I've got,
+ like a nice triangular mesh, for instance.
+ And I'm going to start by sampling points on it.
+ And then I'm treating it as a point registration.
+ That always felt weird to me, right?
+ There's applications where maybe you actually had a point.
+ But I don't know.
+ In my world, you start with a CAD model probably.
+ And you're going to go from there.
+ So let's say our model was not a set of points,
+ but maybe a triangular mesh, one of our other 3D
+ representations, 3D geometry representations.
+ Typically, a triangular mesh, you
+ end up with a list of vertices, not so different than a point
+ cloud, but a list of x, y, z locations in space.
+ They could be sparse now instead of a dense point cloud.
+ And then you have a list of faces
+ where each face has indices into the vertices.
+ Let me write vertex indices.
+ So if I have a triangular mesh and a bunch of triangles
+ building up my geometry, then these might just be--
+ for every face, I have three integers that reference
+ the big list of vertices.
+ And if you look at an OBJ file or an SDL file or whatever,
+ that's basically what's inside there, is those two lists.
+ Sometimes some normal information,
+ but that's a big part of it.
+ So just to spell it out here, let's
+ say I've got everything in 2D for now.
+ So maybe my vertices could be negative 1.5, 1.5.
+ Got a box of size 3, let's say.
+ So this is maybe my vertex 0, I guess.
+ And then I made this one 1, 2, 3.
+ And then these are my vertices.
+ And then my faces in 2D would just be a list.
+ I'm saying, oh, I've got a face that goes from 0 to 1.
+ I've got another one that goes from 0 to 2.
+ I've got one that goes from 1 to 3.
+ I've got one that goes from 2 to 3.
+ What I'd like to do--
+ this is a different representation
+ than what we did before, where we had--
+ somehow, if we had a big box, we somehow
+ wanted to sample points all over the place
+ with some dense geometry.
+ I would like to solve a better problem, I think.
+ If I have a point here that I'm trying
+ to register with the CAD model, I
+ don't want to find the closest random sample point on this.
+ I want to just do the distance to the actual face.
+ It seems it would be way better if we could do that.
+ So you should start thinking about,
+ how would I write the point to a plane or point to a face,
+ even, because a face is actually not a full plane.
+ It's a segment.
+ And I hope you're thinking in your head, OK, well, I know--
+ I can write the equation of a plane as somehow a linear
+ equation.
+ We would define a plane.
+ So maybe I can use that.
+ And you actually can use that.
+ You can derive things.
+ You can think about taking dot products of the normal vector.
+ And there's a bunch of geometry that you can do.
+ And they will get you various different formulations.
+ But there's a really slick way, now
+ that we're in the land of optimization,
+ that I think is worth you appreciating.
+ So how can I say--
+ I guess the first observation here
+ is that I can talk about the element.
+ I can define the set of points that are inside here
+ by writing some element, p, if I want to position p.
+ And I want to parameterize all of the positions that
+ are inside that face.
+ I can do that.
+ This is any face or a triangular face is a convex set.
+ So I can do that by just making an affine combination
+ of the vertices.
+ So if I take a sum of the vertices,
+ let's say alpha i vertex i.
+ Let me say p of vertex i.
+ And I say that all the i's alphas are greater than 1.
+ And sum of the alphas equals 1.
+ Then in the case, this would be, let's say,
+ inside some face f, all the vertices inside some face f.
+ So in this case, it would really just be alpha times this
+ plus alpha times this.
+ And if the sum of them has to equal 1,
+ then I would parameterize.
+ If I change my alpha 0 from being 1 and the other one being
+ 0 to this one being 1 and the other one being 0,
+ I'm just going to walk along that face.
+ And that's true in higher dimensions, too.
+ If you have any convex polytope, you
+ can write a member of that convex polytope
+ by an affine combination of its vertices.
+ So why is that so useful?
+ Well, we're leaning more and more
+ on the power of optimization.
+ The game in optimization, the reason
+ we liked this sort of objective was
+ that that term, the inside of this,
+ is linear in the decision variables.
+ Therefore, when I take a squared,
+ it's quadratic in the decision variables, which
+ made it was convex in those decision variables.
+ So if I'm going to add any excitement to this,
+ any new things to this, I'd like to do it
+ in a way that is linear in the decision
+ variables on the inside, so it's quadratic for the whole thing.
+ You see where this is going?
+ So what if I do this for each of those points?
+ I'd like to say-- I guess I've got to flip my-- minus.
+ Now I'm going to do sum over j, alpha j, p of m,
+ j in the face that I know to be correspondent to.
+ Get that right?
+ So I'm going to do for all of my scene points,
+ i, I'm going to look up the face.
+ This time, my correspondence that I've given--
+ this is given correspondence.
+ I'll say fi, let's say.
+ Given correspondences fi.
+ I can just add in this alpha in a way that's
+ linear in the objective here.
+ I still have my more nasty constraints,
+ but I can do the same tricks I did before now
+ and actually solve in closed form for p and alpha
+ and r using my SPD trick.
+ So this is pretty slick, I would say.
+ Now you can have a much sparser representation.
+ Yeah?
+ [INAUDIBLE]
+ Oh, sorry, sorry.
+ Yes.
+ Oh, you're right.
+ So that makes it harder to do the SPD.
+ Alpha i and sum over i, i.
+ Yes, you do have to deal with those.
+ Right.
+ So yeah, you're right.
+ I misspoke when I said you can just call it the SPD
+ because you have to take those into account at the same time.
+ OK, but that's beautiful and good.
+ And now I can get closest point to a plane instead--
+ or to a face instead of point to point.
+ And I think it's so useful that that's maybe one thing
+ to break the tie between scene to model versus model to scene.
+ Is that good?
+ I'm hoping that you'll get increasingly
+ flexible with this sort of way of thinking about optimization
+ is that we can carve out these optimization problems
+ and doing a little extra work to sort of find the right way
+ to add your parameters into the model
+ can make a huge difference to the optimization landscape.
+ It's like if you make good choices here,
+ you are fundamentally reforming the landscape from something
+ that could be very non-convex to something that's non-convex
+ and an easy optimization to solve.
+ That is, I think, deep networks work so well that people
+ tend to not think about these kind of things as much anymore.
+ But it's still, even for deep networks,
+ if you make your landscape better,
+ it's going to work a lot better.
+ So make good choices.
+ I think that's the takeaway.
+ OK, so let's think about how do we reject outliers.
+ And let me distinguish between two cases.
+ One I would say is the easy case, which
+ would be inside the ICP loop where we've
+ got a pretty good solution, and we're just
+ trying to refine it.
+ We're kind of like in the last stages of convergence,
+ and we don't want these distant points to be screwing up
+ my optimization.
+ I would say good pose estimate near convergence.
+ And there's various heuristics that we'll use for that.
+ So for instance, let's say if I do my distance calculation
+ and the distance is greater than 3 centimeters,
+ I'll say just pick some threshold and distance.
+ And anything beyond some distance threshold
+ is just left as an outlier.
+ Threshold maximum distance.
+ There's another one that we put on the--
+ think about on your p-set, threshold
+ the number of inliers.
+ So is that language clear?
+ So if you have an optimization problem,
+ you're trying to fit all these points,
+ we're going to call the inliers the ones that
+ are agreeing with my model, and the outliers
+ the ones that are not agreeing with my model.
+ And we're trying to separate the inliers from the outliers.
+ So it might be that if you know a priori that you expect
+ to have exactly 10 points, then taking the 10 closest ones
+ could be a good one.
+ And that'll be something you'll look at in the p-set.
+ OK, but let's contrast that with the harder case, which
+ I think I put in the next slide here.
+ Yeah, so let's say I'm just looking
+ at some complicated scene, and I've
+ got a CAD model or a point cloud model of a drill.
+ And I'm trying to solve this much more global problem
+ of saying, find me the points that
+ match my drill in this scene that
+ has points all over the place.
+ And some of them are drill-ish shapes, but not a drill.
+ And you've got to find-- this is the more global registration
+ problem.
+ This global point registration problem, I think,
+ requires different tools.
+ You can't just somehow threshold max distance,
+ because you might not even latch on.
+ It might be that your initial guess, the max distance just
+ rules out the drill right away, and you'll never find it.
+ So there's a series of different ideas--
+ I'll tell you one or two of them in more detail--
+ that try to address this more global problem.
+ I'm OK going back and forth with these two.
+ [END PLAYBACK]
+ Do people know various ideas in this vein?
+ Anybody want to throw some buzzwords out?
+ What would you think of if you're
+ trying to search for the needle in the haystack here?
+ You've got a big point cloud, a little model.
+ You're trying to find the model in the point cloud.
+ What would you do?
+ Segmentation, awesome.
+ So in fact, the coloring there is
+ an example of a segmentation.
+ And these days, I think you're absolutely right.
+ The first thing I would do, I would train a deep network
+ to do some initial segmentation.
+ Nowadays, you can download deep networks
+ that are pre-trained, that you point them
+ at your environment, you're going
+ to get a fairly good segmentation right out
+ of the box.
+ But typically, you would try to throw
+ in some of the specific objects you're trying to segment
+ and at least fine tune a deep network model, which
+ we'll do in a few weeks.
+ So having an initial segmentation--
+ and I should say that there are geometric algorithms
+ for segmentation too.
+ Those have mostly been eclipsed, I would say.
+ I would say most of the time now,
+ it's deep networks for segmentation
+ for that part of the program.
+ What else would you do?
+ Yeah?
+ [INAUDIBLE]
+ Awesome.
+ Good.
+ So just take some random crops.
+ Maybe take a bunch of random crops of the scene
+ and check those random crops.
+ I think that's a really good--
+ both of those are very good suggestions.
+ So I think the way you said it was very good.
+ You said that-- I mean, because we have our points in 3D,
+ we know that the points we're looking for
+ are localized in 3D.
+ We could use our geometric intuition to take subsamples.
+ There's a more generic way that people do this,
+ of this random subsampling.
+ If you just have a random data set,
+ you don't have that same geometric intuition,
+ then you might just take that data set
+ and just at random pick some subset of the pixels.
+ And that is called RANSAC.
+ That is-- which would be random sample consensus.
+ It's typically done-- it's a general tool for regression
+ given outliers, where you can sample a subset of your data,
+ try to fit everything that's an outlier you discard,
+ and then you just do that initial sample a bunch of times
+ and take the best one.
+ It's an algorithm that has some theoretical guarantees,
+ but they're only probabilistic.
+ It's like, if you sample enough times,
+ you will eventually get lucky and sample the right thing.
+ So these are probabilistic type algorithms.
+ They can be useful.
+ We're going to have you implement a simple RANSAC
+ algorithm for the problem set.
+ But I think your observation about it being geometric
+ is often not discussed in the generic RANSAC literature,
+ but very relevant here.
+ And I'm going to list one more, which I particularly like.
+ I think it's particularly clever for the--
+ and I think uses our understanding of geometry
+ with our optimization.
+ And that's the pairwise distance ideas.
+ So what do I mean by that?
+ So the pairwise distance between points
+ is a-- the pairwise distance is invariant to translation
+ and rotation.
+ OK.
+ So let me just make a super simple example here.
+ I'll do my-- my daughter's doing 3, 4, 5 triangles at home,
+ so I'll do a 3, 4, 5 triangle.
+ We've got nice numbers.
+ OK, so let's say I've got points just in the corners to start,
+ although I think that's artificial
+ and we'll fix it in a minute.
+ So the distance between those two points is 4, 3, 5.
+ Every distance here for every pair of points
+ is either 3, 4, or 5.
+ If I take another--
+ if I just change the pose of that,
+ I could perturb it arbitrarily in translation and rotation.
+ If I compute the distances in that new point cloud,
+ the distances are still going to be only 3, 4, or 5.
+ OK, so it's kind of cool if you're
+ willing to take a relative measurement between just--
+ that's a distance relative to the points,
+ then that actually metric doesn't--
+ you can-- it's completely invariant to pose.
+ So before I have any estimate of my pose,
+ I can just look at the pairwise distances
+ and start asking, is that a pairwise distance that could
+ possibly exist in my model?
+ If it's not, I can possibly reject it.
+ So if I have now this setting where
+ I have a bunch of point measurements,
+ it's potentially an expensive sounding approach.
+ But I'll take pairwise distances from every possible pair.
+ For every possible point, I'll take every possible pair.
+ And in this case, I'll just check.
+ Is it 3, 4, or 5?
+ If the number is not 3, 4, or 5, what does that tell you?
+ That tells you that if this edge is not 3, 4, or 5,
+ that tells you that one of those two points
+ must not be in the mesh.
+ It could be that one of them is, but the other one's not.
+ OK, so there's various ways to leverage that.
+ The one I like that I'll show you now-- anybody here
+ working with Luca Carlone?
+ Luca and Hank and folks have been
+ working on an algorithm called Teaser, which
+ has a piece of it that leverages this idea.
+ It's actually, I guess I should--
+ I've got some other collaborators too.
+ They're at MIT.
+ OK, so they actually recommend-- so you can immediately
+ rule out some points if a point does not
+ have any edges that could make it feasible.
+ Then you can just remove that point immediately.
+ But you can do more aggressive pruning
+ by actually looking at the whole graph that gets constructed out
+ of these things.
+ So let me try to say that carefully.
+ So if Psi minus Psj squared--
+ I'm going to just use my cartoon here.
+ It's either 3, 4, or 5.
+ Then we'll add an edge.
+ If Pij is not one of those things, we won't add an edge.
+ So if I have k over here and it wasn't part of that,
+ then I won't add an edge.
+ So I'll have a bunch of points out there.
+ Some of them have edges.
+ Some of them don't have edges.
+ If I have anybody that's not fully connected,
+ then we know it's an outlier.
+ So if I have something like this,
+ I better be fully connected.
+ This guy happens to be 5 away from something.
+ But because it's missing the other pairwise distances,
+ it can't possibly be an element of my object.
+ So the expensive version of this,
+ in an NP-hard kind of sense, is to try to find the largest
+ clique of the graph.
+ Now, depending on exactly what your point cloud looks like,
+ they talk about in the paper actually using max clique.
+ I think, depending on the numbers of points flying
+ around, that's a hard argument to make.
+ But let's look for large cliques in the graph.
+ Now, that is a computationally hard problem.
+ But there are approximations that
+ can find at least-- allow us to discard
+ large numbers of points that don't exist in a clique
+ over some size, for instance.
+ OK.
+ Kind of a neat idea, right?
+ Without having any notion of the pose whatsoever,
+ or the position, I can just look at pairs of points
+ and reject a bunch of things that couldn't possibly match.
+ Now, I actually don't fully know.
+ My mind is not made up about how powerful this is in practice.
+ Luca, I think, is extremely positive about it.
+ I think-- and I believe him.
+ I think he's-- so, you know.
+ But here's the question I have, right?
+ So I think I have-- there's no doubt in my mind
+ that if you have an existing point
+ cloud, like a perfect point cloud,
+ you perturb that point cloud with its exact 3, 4, 5
+ kind of numbers, and you add a bunch of outliers,
+ and you try to recover it, I think
+ it would work extremely well in that case.
+ If I have a box, and I'm approximating it
+ with whatever returns I get, and I'm
+ going to have all kinds of distances that are like--
+ anything, it could be--
+ I could have-- this is the case I'm worried about,
+ is that I've got my nice box, but I'm actually
+ getting sample returns like this, right?
+ So in some sense, the only thing I really know
+ is that my-- I kind of know it's going to be less than 5,
+ but probably it's going to be greater
+ than my minimum resolution of my camera and less than 5.
+ So if you have this weaker version, where you can't
+ really expect these to match perfectly,
+ or some noise threshold or whatever, I just don't know.
+ I mean, how far--
+ I mean, we've run the algorithm.
+ I've seen some results.
+ But I think this would be a great project.
+ This would be a great final project,
+ would be to dig in and understand,
+ in the same teaser, in some of these kind of settings,
+ how effective is that clique reduction for real--
+ for point clouds that come out of simulation,
+ where you just throw a CAD model in?
+ That's a great question.
+ What do you think?
+ [INAUDIBLE]
+ Like, can you even expect a pairwise [INAUDIBLE]
+ sort of similar in the first camera world
+ or in the model world?
+ Like, what if it's like scaled faster?
+ [INAUDIBLE]
+ Awesome.
+ OK, so the question was about the camera world
+ and the original world might have other artifacts.
+ I mean, the camera might have a little bit of distortion.
+ There could be some scaling effects.
+ Scaling actually can be treated very nicely
+ in the same kind of way.
+ So there are similarly metrics.
+ There are things like the pairwise distance effects,
+ just take the squared away, that you can figure out
+ the scale without solving for the translation and rotation
+ using similar ideas.
+ Scale, they address nicely in the teaser paper, for instance.
+ Distortions and things like that,
+ I think you've got to just calibrate your camera.
+ That one's going to be bad.
+ Do something to get rid of that, because that's always
+ going to screw things up.
+ But you're right that those do exist,
+ and they can affect your point clouds,
+ especially if you have like a--
+ people will knock into your camera,
+ or your robot ran into a wall, and now it's
+ camera's a little bit off or whatever.
+ These things really do happen.
+ Yeah?
+ [INAUDIBLE]
+ Awesome.
+ So let me repeat the question.
+ So what if I had an occlusion?
+ Somehow this box was in front of me,
+ so I didn't get all these points.
+ I just got the partial view.
+ So if my camera is over here, I might have only
+ gotten these views, but not the ones
+ that were occluded by that box.
+ So I think this step is robust to that, in my mind.
+ It would basically-- so this is only excluding outliers.
+ So it's not going to--
+ in the later step, you've got just your inliers,
+ and you're going to do your pose estimation.
+ Now you have less points to do your pose estimation.
+ But I don't think this step would falsely
+ discard any points.
+ There might be-- you'll get some returns maybe on this front box.
+ If they don't match any of the expected distances,
+ they might even be discarded in a nice way.
+ But I would think the hazard there
+ is just that you have less points left,
+ rather than this would discard them artificially.
+ Yeah?
+ How many points do you expect to have [INAUDIBLE]??
+ That's a super good question.
+ So the question was, how many points do we expect to have?
+ So I think some of the initial point registration literature,
+ it was not that many points.
+ And then there's people that are trying
+ to apply it to big, raw point clouds that are coming straight
+ off the camera.
+ And I think some of the algorithms will scale to that.
+ Oftentimes, hidden inside the algorithm,
+ you'll see a subsampling step, where they're actually
+ using a small subset of the dense clouds.
+ And that can work.
+ In fact, I think the teaser picture I have here--
+ by the way, everybody uses that bunny.
+ Every paper I was looking at today,
+ there's at least one picture with a Stanford bunny.
+ So I'm going to have a series of pictures from bunnies here.
+ Oh, I didn't pick the one that had the--
+ did I?
+ No, I didn't pick the one that had this.
+ But oftentimes, if your algorithm
+ can't cope with the fully dense, then you'll just subsample.
+ And it tends to be fewer than you might think.
+ Yeah?
+ [INAUDIBLE]
+ If there's a lot of pairs of points,
+ then you can basically expect the distances
+ to have to be somewhat filling an entire range of what
+ the minimum distance is in the maximum distance.
+ And then if you also have some sort of [INAUDIBLE]
+ in terms of your period, then it's
+ basically any pairs of points that are within the certain
+ minimax are going to be [INAUDIBLE]
+ The question is, if you start having dense point clouds,
+ then don't you have pairs of points that are arbitrarily
+ close?
+ Yeah, so I think this is like noise floor almost zero.
+ This is what I worry about, is that if it really only tells me
+ a maximum distance, then it could
+ match the drill and the bucket and the whatever.
+ Everything that's roughly drill-sized could match.
+ And if you have a dense, cluttered scene
+ of similar objects, I would guess this heuristic
+ doesn't buy you as much.
+ It might form multiple cliques that
+ are all reasonable things to start searching for.
+ And that would be interesting to explore.
+ But I think as a global metric to find the biggest clique
+ or whatever, I feel like it's not as popular.
+ That would be my understanding without having
+ explored it deeply, waiting for someone's project to do it,
+ let's say.
+ Yes, Joe?
+ For the messy version of the algorithm,
+ is it productive to think about this
+ as like you have some sort of empirical probability
+ distribution on [INAUDIBLE] and you're
+ trying to match that by combining some [INAUDIBLE]
+ or is that a non-good [INAUDIBLE]??
+ Oh, I think that's probably an excellent way
+ to think about it.
+ So his question was, is there maybe a probabilistic way
+ to think about this, that you have some distribution
+ of possible pairwise distances, and you're trying to--
+ even the-- you'd like the statistics
+ of that distribution, for instance,
+ I think is what you're getting at to match your--
+ so I think that's an excellent way to think about that.
+ So this clique idea would be like a brute force version
+ of that.
+ And I think the probabilistic version would probably
+ be a softer statistical version of that, which
+ could be a very nice relaxation to make these NP-hard problems
+ less NP-hard.
+ So the idea of pairwise distances
+ has been around for a long time.
+ And there's lots of papers and computer graphics and the like
+ that have used it.
+ I'm guessing people have looked at it from that lens.
+ I can't think of one off the top of my head,
+ but I'm guessing that's--
+ so Justin Solomon teaches a great course
+ on computational geometry.
+ And he's done a lot of work in this over the last 10 years
+ or so.
+ But that's a great idea.
+ In fact, it leads in nicely to the next thing.
+ So let me just make sure that the story arc of the lectures
+ is good, right?
+ So we talked about more messy point clouds, the scene
+ versus model and the point to mesh.
+ And then we started talking about,
+ how do we actually reject outliers?
+ And in the hard case, pairwise distance
+ is a nice example of a geometrically inspired algorithm
+ that can do this.
+ And it's one of many examples, but it's one I think
+ is particularly insightful.
+ OK, but I think there's another way
+ to be more robust to messy point clouds, which
+ is to relax a little bit.
+ And not so different from Charles's question there
+ is to relax a little bit this super rigid notion
+ of correspondence.
+ Like this point corresponds to this point, period, right?
+ And it does not correspond to anything else or whatever.
+ So how do we slightly relax that notion of correspondence?
+ And how do we continue to flex our little optimization
+ toolkit?
+ So let's think about how do we generalize and make
+ softer versions of the correspondence.
+ [WRITING ON BOARD]
+ So far-- let me just use the shorthand here.
+ We've done P of O, M, or P i.
+ I guess I should have made one point early on, right?
+ So if I do switch this to be M and this to be S,
+ if I do switch this, that's not a big deal, right?
+ But what is it geometrically?
+ So algebraically, it doesn't look like a big deal.
+ I just move my decision variables
+ over to this side of the equation.
+ The math should still work, right?
+ What does it correspond to in terms of my frames?
+ Yeah?
+ [INAUDIBLE]
+ You get the inverse frame, right?
+ So geometrically, the version I've written here
+ is I'm taking my scene points and trying to--
+ sorry, I'm taking my model points
+ and trying to put them in world coordinates
+ so they match the scene points.
+ If I were to put the x over here, what I'm trying to do
+ is I'm trying to take my scene points
+ and warp them into my model coordinates.
+ So the difference is am I going--
+ am I trying to solve xow or am I trying to solve--
+ I said ow thinking that way, but yeah.
+ It's just the difference of which frame
+ you're doing the matching in.
+ And it doesn't matter.
+ You can do it in the object coordinates
+ or you can do it in the world coordinates.
+ So either one of those is OK.
+ But so far, our correspondence has entered the equations here,
+ right?
+ And that's a pretty limited way.
+ There's like-- that's just an integer
+ in an index of the data I'm putting into this equation.
+ There's not a way for me to make that less integer, right?
+ The way it's written right now.
+ So because this means that ci has to be j and only j and not
+ something else.
+ So let's write a different version
+ of this optimization that's just a little bit more flexible.
+ And then we can soften things, right?
+ So let's make a correspondence matrix where ci, j--
+ if we want to write the exact same rigid correspondence,
+ we could do something like this, right?
+ We say ci, j is 1 if i corresponds to j or 0 otherwise.
+ And then if I were to write this same objective as--
+ I mean, this I should have be--
+ this way I was summing over just the i's before.
+ Now I'll sum over both i and j.
+ I'll do my same objective now.
+ But I'll turn off all the ones that don't correspond.
+ I'll just multiply by 0 all the ones
+ that I don't consider to be corresponding.
+ Do we agree that algebraically or mathematically
+ that's the same as this?
+ This one, though, as you can see,
+ we could start being more flexible with our decision
+ about what's corresponding.
+ I could have some points that are--
+ I could have entire rows or columns of j
+ that are completely 0 if I want to have something that doesn't
+ correspond to anything.
+ Or I could even have multiple points from my model
+ correspond to my scene, or multiple points in my scene
+ correspond to my model.
+ There's just a lot more flexibility there.
+ I can also allow partial correspondences.
+ I could say that model point i kind of corresponds
+ with scene point j.
+ I could set c to be 0.5 or something, or 0.2.
+ So I can relax this hard constraint
+ to be-- let's say it doesn't even really
+ have to stay inside 1, but let's just say it stays inside there.
+ Similarly, only match model only matches one scene.
+ This looks like a constraint, like the sum over--
+ corresponds to-- depends on what I wrote here.
+ So if I say model j only corresponds to one scene,
+ so this would be sum over i, or model sum over i.
+ And if I wanted to say that the scene sum only matches
+ one model, I could put a constraint saying
+ that the sum of over j had to equal 1,
+ just the columns and rows of that.
+ But this is a pretty flexible representation.
+ I could add constraints to that if I
+ want to impose more rigid matching.
+ OK, so the same way that ICP goes through and tries
+ to compute the correspondences in an outer loop,
+ there's another well-known algorithm
+ called coherent point drift, CPD, which,
+ given my guess of my pose, will go through and compute
+ kind of a softer distance to compute these Cij's,
+ hold them constant, solve the x, same way we did before.
+ And then given x, solve for my Cij's,
+ but using just a softer version of that that gives me
+ values between 0 and 1.
+ OK.
+ OK.
+ [WHIRRING]
+ [CLATTERING]
+ So it's still an iterative algorithm.
+ It will go through, and given my current x, it will compute Cij.
+ And now, coherent point drift, the paper
+ is written completely in a Bayesian probabilistic
+ framework.
+ I'm translating-- I mean, you can write anything
+ as a Gaussian, and it's just a quadratic, and vice versa.
+ So I've converted it to stay in our notation,
+ to look just like the quadratic objectives
+ that we know and love.
+ But it's all the same.
+ You could take any of our quadratic forms
+ and give a probabilistic interpretation.
+ But because they have a probabilistic interpretation,
+ they choose a weighting function to say two points are not just
+ the distance, but I'm going to put a Gaussian kernel.
+ So I'm going to say that the points are corresponding based
+ on a Gaussian kernel that says how close they are to matching.
+ OK.
+ So I will just pick e to the distance, basically.
+ And this is a normalization constant
+ to get it all equal to 1.
+ OK.
+ So what does that look like?
+ Instead of in my-- I should make a nice little animation
+ of this, too, where I had my animations that
+ look like this, if I take one step,
+ you see the little green lines there?
+ This is actually-- that's a bad case,
+ because there's three scene points that
+ match to that one blue, but the blue only matches--
+ each scene point only matches to one blue.
+ Now, think of it as having a little Gaussian
+ around each of the points.
+ OK.
+ And based on the distance, I'm going
+ to score all of them, all of my neighbors,
+ as having some weight of correspondence that drops off
+ in the shape of a Gaussian.
+ Now, why is that more robust, potentially?
+ The word on the street is that it's more robust.
+ It tends to be more robust to outliers and everything.
+ First of all, the fact that it tails off nicely, right?
+ It's not just any arbitrary distance.
+ It's got an explicit tail, where the points that are far away
+ get zero correspondence, turning towards zero correspondence.
+ OK.
+ And it's a softer correspondence.
+ It doesn't have to have exactly a one-to-one matching when
+ that's an artificial thing, right?
+ So you're matching-- you can match up between two points
+ if you're just getting a different sample returns.
+ There's lots of reasons, maybe, to believe
+ that this is a slightly more robust version of the algorithm.
+ Because of the probabilistic interpretation,
+ they even have a way to schedule the covariance, right?
+ So you can look at your current fit
+ and tighten your covariance estimate
+ so that you're dialing in and converging to a good solution.
+ OK.
+ So this-- oops.
+ This paper also has bunnies all over the place.
+ Like, figures 1 through 6 are all bunnies, Stanford bunny.
+ And some people have been at Stanford before, right?
+ When you go running around Stanford,
+ the bunnies don't look like that, right?
+ They're hares.
+ They're like these big jackrabbits things.
+ So it's kind of funny that they have a New England
+ bunny or something that's the Stanford bunny.
+ Anyhow, bunnies everywhere.
+ And the evidence in the paper and the, I'd say,
+ consistent feedback from the community
+ is that these algorithms tend to be more robust to outliers
+ and noise in this, especially in the local convergence sense.
+ The downside is that they tend to be much more
+ expensive to compute.
+ You're looping through a lot more pairs of points,
+ as opposed to just picking for every scene point,
+ you just compute the distance for one.
+ Somehow you're computing this thing
+ for every possible pair of points,
+ and you're using it in your posed estimation
+ update, a lot more terms.
+ Wei Gao, who was a student with me not too long ago,
+ had a version of it that observed
+ that if you flip some of the terms around,
+ you can actually get a lot of the performance back.
+ And he has a CPD-like algorithm called
+ FilterReg that was a lot faster.
+ So CPD tends to be pretty slow but robust.
+ He had a version that was pretty fast and pretty robust.
+ Does that general idea of softening the correspondences
+ make sense?
+ No.
+ I feel that a lot of people get confused about CPD,
+ because the notation is so different.
+ But really, it's just that.
+ But if I think about that equation there--
+ I'll pull it back down.
+ I've been sort of preaching this make good choices,
+ I guess I said.
+ Did we make a good choice here?
+ It's fine for this implementation,
+ because we alternate between picking Cij and then
+ solving for the pose or whatever.
+ But what immediately jumps out to me
+ is that if I wanted to try to optimize C and x
+ at the same time, this gets me at least closer
+ to thinking about how I would do this.
+ There's two sets of decision variables
+ that look kind of similar.
+ I could potentially throw them into a solver.
+ But those things are being multiplied together.
+ So I'd have a term that would be quadratic in my terms
+ inside here, but multiply it again
+ by this set of decision variables
+ if I wanted to solve them jointly.
+ So that's not a good choice in terms of global optimization.
+ For the CPD, it's great.
+ So let me do one last optimization sort of idea
+ with you here, which would be, how do I massage
+ this equation one more time to try to get the Cij to enter
+ in a better way so that I could do joint optimization
+ on those things?
+, There's a handful of methods
+ that try to solve those problems jointly.
+ Here's one formulation that is the most logical successor,
+ I guess, the closest to that set of equations.
+ Let's try to minimize over P, R, and C all at the same time.
+ And what if I did this?
+ Sum over i again here.
+ We do the Si here, and I'll do M.
+ OK.
+ So flex your optimization muscles for a minute here.
+ So what is this saying?
+ This is saying for every scene point,
+ I want it to, with my correspondence function,
+ match some combination of the model points.
+ Not so different than what we did with the faces.
+ But this is a version of the soft correspondences
+ that you see there, too.
+ You can add hard constraints on Cij,
+ or you can allow them to be more soft.
+ You can ask for them to be one to many match,
+ or many to one match, or in whichever direction
+ with constraints like this.
+ And it fits inside this nice framework.
+ The trick with this and the one that I wrote earlier
+ is that these constraints are still bad.
+ And once I add these other constraints here,
+ you can't just solve the SVD.
+ So there's various ways that people
+ have tried to work with these kind of equations.
+ OK.
+ There's a form of it where you try
+ to stick to binary correspondences.
+ And you can write this whole thing as a mixed integer
+ optimization.
+ Is it good?
+ I forget the relaxation here.
+ Is it still a QP?
+ It's definitely mixed integer convex.
+ OK.
+ There are versions of this that use semi-definite programming.
+ If I don't do this, there's also another version
+ that does semi-definite programming.
+ These are more advanced optimization algorithms,
+ but they're still optimization algorithms
+ that you expect to be able to solve globally.
+ And they require relaxing these constraints a bit
+ to fit them into that framework.
+ And there's various levels of success
+ for those different algorithms.
+ Yeah.
+ [INAUDIBLE]
+ Right.
+ So that's what I was just saying is that it's also not
+ a semi-definite program by itself,
+ but you have to relax this to be-- yeah.
+ Both of these require relaxation.
+ Yeah.
+ We come up with some approximation
+ of those rotation constraints.
+ Yeah.
+ Just make sure I'm super clear about that.
+ And I won't cover the details.
+ I just want to get you to think about that equation
+ a little bit, because it's similar to what we've
+ been thinking about.
+ It's another way.
+ There's this kind of skill that you'll
+ pick up of how do you fit these harder formulations
+ into the same kind of toolkit.
+ This is a good, I think, way to think about that
+ and know that there are papers you can read, if you'd like,
+ to understand the details of how to try to do
+ more global optimization.
+ I'd say I would not call global optimization a technology
+ in really messy point clouds.
+ It's something that people are trying to do.
+ They're often very expensive.
+ They often don't work as well.
+ I mean, Luca is very keen on the teaser semi-definite programming
+ representation.
+ So maybe it's gotten a lot better.
+ The SDP relaxation in teaser and the like,
+ I think the way to think about it,
+ which I mumbled about last time, but it really
+ is 2D is not enough to show the picture that
+ would need to be shown.
+ But I think conceptually, thinking about this optimization
+ problem that we showed before and having that unit circle
+ constraint, saying that a squared plus b squared equals
+ 1.
+ And we're going to change that to a squared plus b squared
+ less than or equal to 1.
+ This picture of trying to solve for these things
+ jointly by relaxing the non-convex unit circle
+ constraint to the convex unit disk constraint,
+ that's basically what's happening
+ in these SDP relaxations.
+ So you'll hear people saying things like, well, it's tight.
+ And that's in the case where there's no noise,
+ it's tight because the objective function actually
+ lands right on the unit disk.
+ And if you pull it outside, this constraint
+ will pull it back inside.
+ But if you're inside, it will be loose.
+ So if that's helpful, I know that's--
+ I haven't given you everything you need to appreciate that.
+ But if that is helpful, I hope it helps a few people.
+ So that was today's story about dealing with messy point
+ clouds and about doing a little bit of geometry
+ plus optimization, which I really
+ think is a beautiful combination of those ideas.
+ So we talked about three specific ones.
+ I hope you come away with this point to mesh registration
+ idea, with the pairwise distance idea,
+ that it's a translation and rotation invariant quantity,
+ and this idea of generalizing correspondence to make it soft,
+ paying an increased computational cost,
+ but potentially robust, getting robustness benefits.
+ Good choices, yeah?
+ OK, cool.
+ There's one last big set of ideas
+ that I want to make sure we cover in pose estimation,
+ and we'll do that next Tuesday.
+ Sorry that DeepNote was having troubles this week.
+ They were having, I think, bad actors attacking their servers.
+ They're super responsive, actually.
+ They told me when it happened, and they said,
+ as of last night, it's back up.
+ So if you have any troubles, let me know.

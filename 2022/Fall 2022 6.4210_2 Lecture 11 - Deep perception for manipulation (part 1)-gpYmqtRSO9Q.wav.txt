@@ -1,0 +1,1628 @@
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ [SILENCE]
+ How are people feeling for their project proposals?
+ Good shape? Thumbs up? Thumbs down?
+ Still figuring it out? No idea? Thumbs down?
+ I'll stick around a little bit after lecture if anybody wants to chat right now,
+ but just reach out to us and we'll give you any feedback or ideas we can this week.
+ Okay, well, welcome back everybody.
+ We're going to talk today about the deep learning version of perception.
+ And actually, this is one of the harder lectures for me to give
+ because I think the variance of experience in the room is the highest of all the topics we cover.
+ I can sort of assume, it might be a few years since you've drawn a free body diagram,
+ but everybody's drawn free body diagrams at some point.
+ And here, I think some people have just heard, everybody's heard about it.
+ Some of you might be training deep networks right now on your laptop while we're in lecture,
+ some of you haven't dabbled yet, right?
+ And there are plenty of courses here that can teach you the details of deep learning,
+ which I would highly recommend. I'm not going to try to do any of that.
+ Even computer vision, right, there's huge, there's whole courses on computer vision.
+ I'm not going to try to cover that.
+ What I'm going to try to do is dial in a few of the key topics,
+ enough that if you haven't seen it, you can use it effectively.
+ If you have seen it, I hope to bring some ideas from manipulation
+ that you maybe haven't thought about the computer vision pipelines from this perspective.
+ More than any other lecture, I would say, I'm going to be reading you guys
+ and trying to speed up or slow down based on what you guys are feeling.
+ Feel free to ask questions, feel free to be like, within reason.
+ Okay, so I do think that the needs of manipulation for,
+ you know, put particular pressures on our deep learning pipelines
+ that are unique and interesting.
+ Let me just remind you sort of the motivation we talked about
+ is that we've done a lot of work with geometric perception
+ and we had a whole pipeline of clearing clutter out of the bins
+ that didn't use anything from deep learning, right?
+ And it's surprisingly good.
+ Like it can just pick up objects all day long,
+ you can throw any objects in the bin, it'll do its thing.
+ But it doesn't get done everything that we want, right?
+ It has flaws, even if your goal is object agnostic,
+ you don't care what objects are moved,
+ you might still have problems because it's not just the fact that it doesn't know about objects,
+ it can make silly decisions about where to put its fingers, right?
+ It might pick up the hammer from the corner and that's just a bad strategy
+ because there's a large wrench due to the gravitation
+ that would cause the grasp to be fragile, right?
+ So there's a lot, when you go to decide what to do,
+ where to pick things up, you're bringing a lot of background information
+ into the picture that geometry alone doesn't tell you.
+ Even physics alone doesn't tell you,
+ maybe don't touch the sharp part of the knife, for instance, right?
+ Okay.
+ In practice, in the particular tool chain that we gave you,
+ there are quirks like picking up two objects at once
+ because you don't even know where the extents of an object are, right?
+ And so that's a problem that these come in.
+ The geometric stuff can take its best effort with partial views.
+ If you have cameras only on one side,
+ there's a backside of the object that you can't see,
+ your point cloud reasoning is only going to get you so far.
+ At some point, inherently, the way to get farther
+ is to have previous experience which tells you what's on the other side of the object.
+ A data-driven method becomes a key approach, right?
+ And it happens that because of our sensors today,
+ it turns out that some of our geometric reasoning
+ falls down for transparent objects and other things like that.
+ But fundamentally, there are tasks that just require you to understand objects.
+ If you say, "I don't care about the cheese-it box, I don't care about the spam,
+ I want to move the mustard bottles over because someone just bought a mustard bottle
+ and I need to put it in the box and ship it," right?
+ Then that fundamentally requires knowledge of the objects.
+ Okay.
+ So, there's been a revolution in deep learning over the last few years.
+ It was powered mostly by data, right?
+ Among other things, and compute, and good ideas, and a lot of things.
+ But everybody talks about the big data.
+ So, one of the first topics I want to throw in and talk about here is,
+ how do we get to big data for manipulation?
+ [Writing on Board]
+ So, the watershed moments for deep learning for computer vision
+ ran through the ImageNet dataset and the ImageNet challenge,
+ where Fei-Fei and her team acquired labels of images, of like 128 million images.
+ A lot of images. I think it's 1.28 million.
+ I was off by a couple of orders of magnitude, but it's a big number. That's the point.
+ So, the go-ahead idea in ImageNet was to crowdsource image labels.
+ But it took a lot of acquiring images, cleaning images, and then labeling images
+ to make one big dataset which powered a lot of computer vision.
+ If I want to pick up mustard bottles, I don't want to start by labeling 1.28 million mustard bottles.
+ So, what are we to do?
+ So, I want to just talk that through, and how do we get there for manipulation?
+ To tell that story, let me just make sure I define our basic concepts.
+ When you're talking about the standard computer vision tasks in learning,
+ we have to distinguish between a couple of different categories.
+ The first one would be image recognition.
+ I just say, "Is there a sheep in the image? Is there a dog in the image?"
+ With what confidence would I say that there is a sheep in the image or a dog in the image?
+ That's the classic first task for computer vision.
+ That's what ImageNet had a lot of labels for initially.
+ ImageNet also got labels for object detection, which is to say not only that there is a sheep,
+ but here's a bounding box around the sheep.
+ So, the output would be two numbers, for instance, the two sets of four numbers,
+ the pixel location of the lower left and the pixel location of the upper right, for instance.
+ We'll talk about exactly how that's done, too.
+ And then there's two different types of segmentation, which is very common,
+ which would be the semantic segmentation.
+ I think the picture tells this very well.
+ Semantic segmentation says, "Make all of the pixels that are sheep pixels blue
+ and the dog pixels red," for instance, in this case,
+ versus instance-level segmentation, which is to say,
+ "For every different sheep, I want a different label."
+ So, that's the background for this.
+ Which of those do we want for our manipulation pipeline?
+ If we just want to pick the mustard bottles, for instance, out,
+ which of those is going to be the most useful?
+ Object detection is going to be super useful, right?
+ So, at least we could then go in and use our geometric reasoning
+ on the point cloud inside the bounding box, for instance.
+ If we can get pixel-wise segmentation, we could do even better, right?
+ If we can ignore, you know, we've talked about the limitations of ICP,
+ for instance, with outliers.
+ If you could really take away all of the points that are not associated
+ with the mustard bottle, then that's even the dream.
+ So, instance segmentation is actually the one that's proven to be
+ the most transferable, I would say, from the computer vision world
+ directly into manipulation context of this.
+ We're going to see where I'm going to spend most of the time on Thursday
+ talking about all of the things that computer vision people normally don't do
+ that help, that are more specific to manipulation.
+ But first, we'll try to understand how to get instance segmentation
+ into our manipulation pipeline.
+ Okay?
+ And there's actually two ways. We'll talk about it at the end.
+ So, I'd say both of our pipelines so far, we could say,
+ and people do actively use instance segmentation.
+ So, we'll take an RGB image, we'll pick out the pixels,
+ and we'll then do, for instance, ICP to find the known location
+ and then pick up a known, you know, use model-based grasp synthesis.
+ But you could also use instance segmentation with our
+ clutter clearing grasp selection.
+ So, if I just took the point clouds that were left,
+ the points in the point cloud that were left after a segmentation
+ and then I did my antipodal grasping, that'll work too.
+ Both of those are super powerful pipelines.
+ Okay, so ImageNet was mostly about object detection and image recognition.
+ Cocoa dataset was the sort of watershed moment for more instance segmentation.
+ They got many fewer, hundreds of thousands of labels,
+ but at the pixel-wise level.
+ Now, imagine going through and labeling every pixel of every image, right,
+ for a hundred thousand images.
+ It's a good annotation tools, right, and a lot of people on Amazon Turk at the time, right,
+ and they got it done, but that's a laborious task, okay.
+ Some of the first annotation tools came out of CSAIL.
+ Antonio Torraldo is upstairs.
+ He's got a lab that's done some of the really defining work in this.
+ And when this was all starting and he was educating the rest of us
+ about crowdsourcing image labels and stuff like this,
+ he said if you look at the quality of the image labels,
+ you pay people like a penny to do that, right,
+ it's incredibly good.
+ He's like if you paid me a penny, I'd be just like, you know,
+ go to the next one, but somehow people are just really, really meticulous
+ about getting every single pixel right.
+ And he said if you look at the statistics and there was an anomaly
+ of like someone who had labeled way more than anybody else,
+ and it turned out it was his mom.
+ He said my mom's an incredibly good labeler, yeah.
+ Okay, but that was this revolution where people started to get
+ crowdsourced large-scale datasets for image segmentation.
+ One of the crazy things, one of the magical things,
+ if you look at the COCO dataset, for instance,
+ it's got a bunch of different categories.
+ You can just go on the website and list them, right.
+ It's got bicycles, cars, motorcycles, traffic lights,
+ that's useful for autonomous driving, right.
+ Birds, cats, dogs, horses, sheep,
+ those aren't the things that I want to manipulate most of the time.
+ There's a few manipulation-specific ones.
+ You know, snowboards and plates, there we go, that's a useful one.
+ Plates and bottles and cups and forks.
+ I'd say more than, if you take something that's pre-trained on COCO,
+ it's going to call most of the things in your bin
+ a mug or a bottle or a fork or something like that, okay.
+ So this is super useful, but it's not quite enough
+ for us to do most of the things we want in manipulation.
+ One of the biggest ideas, and I don't think anybody really saw it coming,
+ it's even hard to justify still, given our best theory of deep learning,
+ but one of the amazing things that happened in deep learning
+ is the story of transfer learning, right.
+ So COCO is a hundred thousand image dataset.
+ ImageNet was 1.28 million images.
+ The crazy thing is that if you train on ImageNet first,
+ even though it's only got image detection and object detection labels,
+ and you take those weights and then you retrain on COCO,
+ instead of starting from scratch and only using COCO,
+ then you can actually do better on COCO
+ because you trained on ImageNet before.
+ Okay.
+ So this is the idea of transfer learning or fine-tuning, okay.
+ [Writing on Board]
+ Training on one dataset, pre-training, let's say, on one dataset,
+ almost always ImageNet, for instance,
+ because it's big and diverse in the right way.
+ Improves performance on a downstream,
+ let me just say on COCO here.
+ It didn't have to be that, right.
+ Why should you, you know, why would you do better
+ having trained previously on ImageNet
+ than just training directly on the objective?
+ From the optimization point of view, that's a super weird thing to think, right.
+ If I were to say, if you solve an inverse kinematics problem on a panda,
+ then you move it over and there you're going to solve
+ an inverse kinematics problem better on an IWA.
+ I'd look at you like you're crazy, because that's just a crazy thing to do, okay.
+ But that is a property that we've seen in the deep network architectures
+ that people are using day in and day out.
+ So a standard thing to do, even if you change tasks a little bit
+ from object detection to instance segmentation,
+ you can take your original, let's say, ImageNet dataset,
+ you've got a deep network with many layers, right,
+ and the last layer of ImageNet is a mapping from some weird,
+ you know, neural representation to the labels of ImageNet.
+ You don't have the same labels in your COCO dataset, okay.
+ So we rip off the last layer and replace it with a fresh last layer,
+ which has outputs for the labels that you want in the COCO dataset.
+ And then, you just retrain, but you don't retrain from scratch.
+ When you're training, I'll talk a little bit about training,
+ but not too much about training.
+ But when you're training, you take the weights that you already acquired from ImageNet
+ and you just fine-tune them for these layers,
+ and you've trained from scratch the last one
+ by just running more gradient descent on COCO.
+ This is the magic of transfer learning.
+ Yeah?
+ [inaudible]
+ That's right, up to the last layers.
+ Now, what we're going to see, for instance,
+ is for the instance segmentation,
+ you actually put a pretty sophisticated last layer that's different,
+ but still using the front half of the network from ImageNet, for instance,
+ is enough to do better on the full task.
+ Now, the intuition might be that you've somehow learned,
+ you know, ImageNet was big enough,
+ you learned something about natural images,
+ you learned some intermediate representations
+ that captured the diversity of natural images,
+ and this put you in the right part of the neural network parameter space
+ that somehow staying near there and finding the best instance segmentation
+ was better, you leveraged the diversity of the ImageNet dataset
+ to do better at COCO.
+ That's too hand-wavy for my taste, but that's the view of it.
+ Okay, so this fine-tuning is one of the biggest things
+ that happened in deep learning.
+ It didn't have to happen.
+ It's also what provides us the ability to do, you know,
+ the same things with smaller datasets in manipulation.
+ So now the prospect is I don't have to label 128,
+ or 1.28 million images for manipulation.
+ It turns out in many cases you can label tens of images,
+ hundreds of images, and do surprisingly well, sometimes zero, right?
+ But you have to somehow, you know,
+ at least that output layer needs to be trained with your new dataset.
+ Okay, so how do we make the instance-level training data for manipulation?
+ There's a few sort of standard tools that I'd say
+ almost every manipulation pipeline is using something kind of like this,
+ you know, that if you want to come up with a lot of labels,
+ pixel-wise labels of objects that you're going to manipulate,
+ this is one called Label Fusion.
+ Let me tell you the steps.
+ I mentioned it once before when we were talking about ICP,
+ but now you have more context here, okay?
+ So you've got a drill in the lab there.
+ You want to somehow use this to create a training dataset
+ with pixel-wise labels of the drill, okay?
+ The steps are pretty simple.
+ We're going to first just take a lot,
+ just move the camera around the drill in lots of different ways.
+ Then we're going to do a dense reconstruction,
+ which people do, you know, a few years ago,
+ it was always with point clouds and these fusion algorithms,
+ which are a lot like ICP, but basically you're going to make
+ all of these views with RGB data into one big point cloud.
+ The same way we fused our multiple views of the cameras,
+ just imagine doing that with a moving camera, right?
+ Join all the point clouds together.
+ So that next step is pretty effective at also estimating
+ the pose of the camera.
+ We assumed we knew where the pose of the camera was,
+ but this will just estimate the pose of the camera.
+ Okay?
+ Now we said that ICP isn't strong enough to label the drill
+ if you just give me a huge point cloud,
+ which we wanted it to be.
+ It's not, okay?
+ But it turns out with a good guess,
+ then ICP is fantastic, right?
+ So the pipeline is basically make a user interface
+ so that after taking a whole video of images,
+ a human clicks like three times to, you know,
+ they say here's three points on the drill CAD model.
+ Here's three points in the generated point cloud.
+ That's an initial guess.
+ Humans aren't very accurate at that,
+ but then it just snaps into place with ICP.
+ Now you know a ground truth, you know,
+ up to our ICP resolution,
+ location, pose of the drill.
+ But we want instance labels out.
+ Okay?
+ So given the CAD model and given the videos,
+ you can just render back the drill
+ into all of the images you took.
+ And now suddenly you have a bunch of,
+ now this isn't, you know,
+ these are very correlated images,
+ so it's not as good as having 100,000
+ completely different images.
+ But although they're very correlated,
+ you have perfect labels,
+ perfect labels of the pixel-wise mask
+ of that drill.
+ Okay?
+ And there's various ways to make that pipeline,
+ but something like that has been used
+ over and over and over again
+ to generate training data
+ for relevant manipulation items.
+ What's amazing is that, you know,
+ relatively small amounts of training data
+ with a pre-trained instance segmentation network
+ works incredibly well in practice.
+ Yeah? Does that make sense?
+ Okay.
+ So that's one way that we get
+ ground truth labels for our manipulation.
+ The other big way
+ is synthetic data.
+ Okay?
+ Over and over and over again now,
+ people have been turning their pipelines
+ to be more towards using
+ manipulation-based data generation
+ to train deep learning systems
+ that are going to work in the real world.
+ So I motivated our clutter clearing example
+ by this case,
+ but if you look at the RGBD sensor
+ that we've been using the whole time,
+ right, we've been using the color image out,
+ the depth image out,
+ in order to make our point cloud,
+ but there's another image that comes out,
+ which is the label image,
+ which the real camera, of course,
+ is designed entirely for generating training data.
+ And this is just a random example
+ of me dropping the objects in the bin
+ and then making perfect pixel-wide masks
+ from the label image.
+ It's super interesting that,
+ I mean, this doesn't look very realistic, right?
+ We can do a better job.
+ We have better renderers that are slower,
+ and I would absolutely recommend you use that
+ if you want your system-trained simulation
+ to work in reality,
+ but always, even the best rendering
+ is going to have some, we call it a domain gap, right?
+ That most of the time, a human eye
+ can tell you which one was simulated,
+ which one was real.
+ There's a really interesting trade-off
+ that happens, though.
+ So you can give me
+ some amount of hand-labeled data,
+ maybe using the label fusion kind of pipeline
+ where a human has annotated it.
+ It's close, but it's slightly imperfect,
+ but they're realistic images.
+ Or you can give me arbitrary gobs
+ of basically free data
+ that are perfectly labeled down to the pixel level
+ with a domain gap.
+ It turns out that, I think,
+ the standard recipe now is to use
+ a lot of simulated data
+ and a very little bit of real data,
+ but a lot of times,
+ the simulated data is actually enough
+ to outperform the real data.
+ Having a domain gap,
+ but absolutely perfect labels
+ can actually be better
+ than having the real images
+ that are imperfectly labeled.
+ There's a well-known story
+ that most of the big real data data sets,
+ even MNIST, which is the number data set
+ that everybody starts with in deep learning,
+ they have errors in the labels, right?
+ There's somehow a ceiling
+ in what total performance
+ the learning system probably can get
+ unless it has to learn the error,
+ which is probably almost random.
+ Human labels are imperfect.
+ Synthetic generation can get around that.
+ I went through and I made
+ just exactly from the clutter clearing.
+ I just dropped 10,000 images.
+ I just randomized the initial conditions,
+ picked from the random bin,
+ dropped it, waited until they settled,
+ took a picture, rendered both this
+ and the object labels, the masks,
+ the object instances,
+ a handful of metadata,
+ and I just made a big data set.
+ You'll use it on your p-set,
+ and we'll use it in the examples today.
+ I did 10,000 images,
+ which was probably way more than I needed,
+ but I was going for it.
+ Rather have too many than too few.
+ We're going to use this to train
+ our cheese-it box and mustard bottle detector.
+ Okay, questions about that so far?
+ Yeah.
+ [audience member]
+ The question being,
+ if the rendering was realistic
+ on synthetic data,
+ so you were able to render
+ completely realistic,
+ would there be any tradeoff
+ between the two?
+ [David]
+ That's a good question.
+ If I could render so that there was
+ really no domain gap,
+ I think I would probably always pick that.
+ The domain gap is more subtle
+ than you might think.
+ I emphasize the rendering quality.
+ Oftentimes, the shadows would look
+ just a little artificial,
+ or the lighting is a little too spotlight,
+ and the real image is more,
+ whatever.
+ It's almost always the material
+ that's rendering hard.
+ But that's not the part that,
+ I think the bigger part of the domain gap
+ that you might not think about,
+ is just that,
+ is like the random way
+ that I made these images.
+ I dropped objects from the sky,
+ and they rendered in some initial condition.
+ But if you look at real sinks,
+ probably people kind of put the plates
+ down first, and then the mugs.
+ There's some statistics of the environments
+ that I probably didn't capture perfectly
+ in the sink.
+ But there's probably,
+ I used 10 objects,
+ the ones I had 10 CAD files for.
+ And the real world is open world,
+ anybody could put anything in the sink.
+ So I think that's the domain gap
+ that's a bigger one.
+ It's more about the art assets,
+ and the distributions over
+ initial conditions,
+ than the render quality these days.
+ Yeah, sure.
+ (audience member speaking)
+ That's an awesome question.
+ So yeah, what about the noise?
+ So, I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ I think that's a really good question.
+ So I similarly don't want to tell the entire deep learning optimization story,
+ but I just feel I want to say a few words to connect the type of optimization landscapes we've talked about,
+ since this is an optimization problem that's being solved, with what's happening here.
+ OK, so when we talked about nonlinear optimization before, right,
+ we said we're going to minimize f of x, for instance,
+ and maybe f of x was this complicated landscape.
+ One of the ways that you could do that is with just a gradient descent kind of algorithm, right?
+ So you have some initial guess, and you go downhill, and you land at a minima.
+ It's not guaranteed to be the global optima, but it would get you somewhere.
+ For inverse kinematics, this can be a real problem.
+ We can get stuck in bad local optima.
+ There might be a good solution for inverse kinematics,
+ and we don't find it with gradient descent.
+ Deep learning is very much using gradient descent, right?
+ It's using a stochastic version of gradient descent.
+ The standard way that it's stochastic is just by taking, if you have a huge pipe,
+ I have my 10,000 bucket images.
+ I'm going to take a small subset of them, 32 of them or something, at a time,
+ pass them through the network, and I'll pick a random 32 each time.
+ That gives me a random evaluation of my gradient,
+ and I'll do stochastic gradient descent to get down.
+ That's when you hear people talk about SGD, that's stochastic gradient descent.
+ But for the purposes of our discussion here, it's almost the same.
+ What can happen, you know, the stochastic version,
+ in a general optimization problem, you would think that it has a lot of the same properties.
+ It might walk downhill a little slower, right?
+ You might kind of take a meandering path down to the optima.
+ It might also, the stochastic version of it might bounce out of a local minima, by luck, you know.
+ But it's roughly this same sort of picture.
+ So, just like fine-tuning and transfer learning was just an amazing thing that happened in deep learning,
+ something else amazing happened, which meant that my ability to train this with high confidence and good solutions,
+ despite it solving this nonlinear optimization, it's somehow working.
+ And that's been one of the mysteries that people are doing a lot of work in deep learning theory to understand why.
+ Do people know the basic story of that?
+ Have people heard the basic story of that?
+ There's a couple big ideas.
+ One of them is over-parameterization.
+ The idea is that the pictures I draw here are wrong.
+ They're not the pictures for deep learning because we have so many parameters,
+ even compared to our data, that the landscape is so high-dimensional
+ that even though I have many nooks and crannies,
+ they're with high probability probably connected in some weird way in the super high-dimensional space.
+ In particular, I can talk as little as you guys want about this,
+ and there's people that know much more about it for sure,
+ but the basic story is,
+ if you have, let's say, the simplest version of it is this.
+ If my second to last layer in my network,
+ imagine I have the last layer here, and it's really big.
+ Let's say it's a million possible neurons in my second to last layer,
+ and then I have a function I'm trying to learn from x to y.
+ Even if this first part of the network is just completely random,
+ if I have random vectors here in some high-dimensional space,
+ then I can actually, with just my last layer,
+ fit most functions almost perfectly.
+ And this last layer is actually typically a least squares problem,
+ and I can expect that to work, and I can expect my training error to go to zero.
+ For big, complicated networks, just because I had a ridiculously large,
+ even random network to start with.
+ That idea is called the neural tangent kernel, if you want.
+ Or ultra-wide networks.
+ OK, and then the second thing that seems to happen,
+ seems to happen,
+ is something that people refer to as implicit regularization
+ of stochastic gradient descent.
+ Which is that,
+ when I'm, let's say after I've gotten my training error to zero,
+ I've got sort of random vectors here.
+ Gradient descent seems to do something good
+ in the null space of the optimization
+ that makes the weights here
+ solve the problem not just in an arbitrary way,
+ but it somehow chooses not random vectors in here
+ in a way that generalizes incredibly well to new problems
+ in the fine-tuning sort of story.
+ And that's been a big object of study in theoretical machine learning,
+ is trying to understand why and how
+ the things we're accidentally doing for gradient descent on these data sets
+ leads to strong generalization.
+ But there's two points I want you to have from the user perspective.
+ It is not the case,
+ some of you might disagree with me on this,
+ it is not the case that you can put an arbitrary cost function
+ on the end of these networks and experience success.
+ This pixel-wise cost that they use in Mask R-CNN,
+ the particular architecture they used,
+ leveraged these ideas in a deep way
+ and was very successful.
+ You could mess it up very easily.
+ It can't learn everything arbitrarily.
+ If it did, then I would be using it for inverse kinematics
+ and I would probably be mining Bitcoin or something like this, right?
+ There's things that we've figured out that it does extremely well
+ and there's things that don't fit in that framework yet.
+ A good example actually is if you were to do pose estimation.
+ I mentioned this before, right?
+ If you trained a network for pose estimation
+ and you chose rotation,
+ if you parameterized rotations badly,
+ the network would have a very hard time learning.
+ But other pose parameterizations work well
+ and that's because the landscape,
+ even in the high-dimensional space,
+ is more suitable for learning.
+ So unfortunately, the story's a little bit complicated,
+ but it is all connected.
+ There's all one truth here,
+ which is that I'm trying to do nonlinear optimization
+ and these neural networks are setting up a rich landscape
+ that works shockingly well when my kid wants to identify Legos.
+ That's like from here to there.
+ Yeah, okay.
+ Questions?
+ At that level of detail. Yes?
+ [inaudible]
+ We're increasingly understanding, yes,
+ that these are good things.
+ And people would argue about what are the most important features,
+ but I think both of these have got a lot of consensus behind them.
+ Yeah, the overparameterization story,
+ there are two different pieces of the puzzle.
+ The first thing is that for most deep learning problems,
+ we put ourselves in a regime where we get training error equals zero.
+ You basically, for your training set,
+ you expect to basically perfectly recover your desired training set.
+ And the reason that that is possible is this overparameterization story.
+ That's the training error equals zero part of the story.
+ Why does it generalize to new things out of your training set?
+ That's the implicit regularization story.
+ This is the generalization part of the story.
+ Both are amazing and deserve more study.
+ [inaudible]
+ Yes?
+ [inaudible]
+ Great question. Yeah, yeah.
+ So, okay, you've probably heard of overfitting.
+ So the concern, the classic picture of overfitting,
+ would be if I'm trying to regress some points,
+ maybe the right function is something like this,
+ and the points had a little bit of noise.
+ But really I wanted some simple function to come out,
+ and accept that the data was generated with a little bit of noise.
+ My overfit solution, if I'm really trying to get the training error
+ to be almost zero on this, might have, in order to fit the function,
+ might have done something like this, which is not the solution I was looking for,
+ but it set the training error to zero.
+ This is the story of implicit regularization,
+ is that it tends to somehow find the solutions that are more like this.
+ That seem to generalize better, and not this.
+ Okay?
+ There's very good theory in detail, I mean, the noise story of how does it fit,
+ how does it do both of those at the same time?
+ It sounds like that's inconsistent, but it's actually not inconsistent.
+ People understand that the function it is learning,
+ even in noise, you know, at least my mental image,
+ I think this is a continually moving story,
+ is that it actually learns something like this,
+ but if you zoom in, it's actually learning like little delta functions
+ that explain the noise, and it does actually get the training error to zero,
+ but it learns these beautiful generalizing functions.
+ Okay?
+ Theory of deep learning is an awesome topic.
+ This is a poor representation of it,
+ but maybe just enough for you to put it in context.
+ I'm happy to take more, you know, those are useful questions.
+ Okay.
+ So, can we play with it for a second?
+ So this is, I made, you know, I made a,
+ I actually made three notebooks, okay?
+ All of them are there.
+ Now, it's actually, Deep Note is completely awesome in every way,
+ almost every way.
+ They give free compute, you know, it's incredible,
+ it's got a good interface, it's most of the time works.
+ Their GPU support is not free.
+ That's the one, you know, it's a buy-in.
+ If you needed it for your project, honestly,
+ there's a chance I could ask and get you, you know,
+ like a special thing for it, because they really are,
+ they like the class.
+ It happens that one of them that's high up in the company did robotics,
+ so it's like, yes, we got an in.
+ Okay, so, so, so that's great,
+ but these are the three notebooks that we're going to,
+ we actually point you to Google's Co-Laboratory instead of Deep Note.
+ And the reason for that is that Co-Lab is just another online server,
+ it's from Google, it happens to have a different pay structure
+ and gives you GPUs.
+ For training a deep network, you want a GPU.
+ Okay?
+ So I'm going to run it locally here, but it runs fine on,
+ on Co-Lab.
+ Okay, so, there's three notebooks.
+ One of them was the data generation notebook,
+ which I just, you probably don't want to run that ever.
+ You could look at it and say like,
+ oh, when you want to use it for your own pipeline, that's great.
+ It's the thing that runs the clutter clearing for like a while,
+ generates a huge file on my disk with all the labels and everything like that.
+ Then there's the training, which runs for a long time,
+ that will train the neural network,
+ given pre-trained weights from Cocoa v1,
+ which was pre-trained from ImageNet.
+ Okay?
+ And that works better than if I were to just train from scratch.
+ The last one is the inference network.
+ That's what I'm going to run now,
+ which is just, I'm going to put a new image in.
+ I'm going to just drop my bins again,
+ new image in, and render the output.
+ Okay, and we'll see how it works.
+ It's interesting.
+ So this is just in, it's using PyTorch.
+ If I didn't say it, we were using PyTorch
+ for these parts of the class.
+ So, he said, "Make sure you tell them that if you're really running,
+ you know, training PyTorch is great,
+ but when you're running it on the robot,
+ you should use TensorRT or something else
+ that would compile it into a much faster, you know,
+ PyTorch is not the fast inference engine.
+ It's the great training, flexible thing,
+ but you should compile it down into some more optimized code for runtime."
+ Okay.
+ The output of MaskRCNN, if you just say,
+ "Give me an input, what's the output?"
+ It has, oh, that's the model, sorry.
+ If you look at the output,
+ it gives you this big dictionary, right?
+ It gives you a dictionary that has, like,
+ it could do multiple images at a time.
+ This is, for each image, it tells you a list of boxes
+ that were possible detections,
+ a list of labels for those boxes,
+ which are the numbers I assigned in my training data.
+ It gives you scores on how confident it is.
+ It looks like in this one, it was actually very confident,
+ very confident, very confident,
+ and then not very confident at all.
+ So we'll probably see something ridiculous on the last detection,
+ because it's a 0.05 confidence compared to 0.99 for all the others.
+ Okay.
+ And then it gives me the images, which are the masks.
+ That's a crazy thing to come up--
+ let's just appreciate for a second that that's absolutely nuts,
+ that a network would produce all that stuff.
+ I mean, I remember-- I'm old now.
+ So, like, we had projects with Jan Lekun, for instance, a while ago, right?
+ And Jan Lekun used to come to our meetings,
+ and he would bring a camera around
+ and, like, train a neural network on the--
+ a little convolutional neural network on the fly,
+ and his demos were just always awesome.
+ But I completely admit that I--
+ every night, I would go home and be like,
+ "Okay, but there's just-- that just doesn't scale.
+ Like, what are you going to have, like,
+ a million outputs for all the different possible labels on your network?
+ Like, that's-- no one's ever going to do that."
+ People do do that, right?
+ You have, like, cats and dogs and elephants and everything.
+ He always had three labels that he was training on the fly,
+ and I thought that was great, but these things are enormous,
+ massive, millions of parameters, millions of outputs,
+ and it's all on the GPU and super fast.
+ I'm running on the CPU now, by the way, so--
+ This is my image in,
+ and this is my masks out, okay?
+ So let's take a look at your image.
+ Mask number one, amazing, right?
+ They found a mustard bottle.
+ Mask number two,
+ it's probably my Jell-O, right?
+ The other Jell-O.
+ Okay, and the last one is ridiculous, right?
+ Because it was-- it told me it was going to be ridiculous, right?
+ That one looks weird.
+ Oh, that's like the occlude-- oh, wow, right?
+ That's the occluded mustard bottle,
+ and it just gave the-- it gave a pretty darn good--
+ look at that, you can actually see the box cut out of it.
+ That's actually incredibly good, right?
+ And I didn't change anything.
+ This is just the default parameters of everything, okay?
+ Now let's change-- check the object detections.
+ Okay, that's a bit embarrassing.
+ Completely missed the Cheez-It box on the side.
+ That is pretty funny, but--
+ All right, the rest of them, incredibly good, right?
+ Incredibly good.
+ I wonder-- that might be-- I should have changed
+ my region proposal network parameters, right?
+ Maybe it didn't have one big enough to--
+ to get the big flat Cheez-It box.
+ It's probably dialed in for things that are about
+ the size of a dog in a picture.
+ Okay, right? Amazing.
+ So each one of those gives a bounding box,
+ which is the pixels, that's what--
+ the corners of the pixels, and a label,
+ which I can associate back with my text label.
+ Okay, so that's--
+ You can run it a few more times here.
+ This is-- finds spam cans, finds domino cans,
+ potted meat, sugar box.
+ It's incredible, right?
+ Absolutely incredible.
+ Amazing, right?
+ Okay, so that-- like, obviously we should use this
+ in robotics. It's just so good.
+ Any questions on that? Anybody-- you know,
+ we could poke it, if you have, like, something else.
+ I wanted to see what you try--
+ I mean, I can't retrain it on my laptop now,
+ but I could do any inference queries you're curious about.
+ Or you can-- tonight.
+ [Audience member] There was one that allowed us--
+ that allowed us to visualize the region proposal.
+ Could you go through that quickly?
+ Yeah, sure.
+ [Audience member] And see what happens with the Cheez-It box?
+ So, the-- the-- the--
+ So, there are--
+ Okay, I could probably get--
+ Let me do it so that it has the right image.
+ The caveat here is there's, like,
+ order a thousand or more images
+ proposed, and I didn't visualize all of them.
+ So, the test you-- I think your test is extremely good,
+ but-- oh, okay, well, so we did learn here that--
+ is that the boxes are at least big enough.
+ So, my concern about them not being big enough is wrong.
+ But I can't say that it didn't have a box around the Cheez-It.
+ I would guess it probably did.
+ There's, like, a thousand-- order a thousand region proposals.
+ [Audience member] So, do you have another idea
+ for what could have caused it to not pick up on the Cheez-It box?
+ It could-- I mean, it could be that I never had
+ a flat Cheez-It box in my data set.
+ Could be not a perfect network, you know?
+ That is the one-- as powerful and amazing as it is,
+ when it doesn't work, the only recourse we have
+ is to add more data, really.
+ I mean, you could change parameters and retrain
+ and do some hyperparameter sweeps, but--
+ You know, a lot of the stuff we're talking about in this class,
+ if it doesn't work, I could-- you know, we could tell you why.
+ We could tell you how to debug it.
+ Right now, this one, I can't.
+ Yes?
+ [Audience member] Wouldn't it predict, like, something
+ which is familiar within the image map of Cocoa
+ if it had, like, cornflakes, cornflakes boxes on there?
+ So, the question is, why wouldn't it produce cornflakes
+ or something from the Cocoa data set?
+ That's a good question.
+ So, it will never do that, because I've ripped off
+ the Cocoa head, and the last layer is specific
+ to my data set, so it will only ever say
+ the things in my data set.
+ It might be biased towards things that were
+ in the Cocoa data set because of its pre-trained layers,
+ but, you know, it has confidence thresholds
+ that it will only report that the object was there
+ if it was above some confidence threshold.
+ So, it might be that there's a great box
+ right around the Cheez-It, and it's just
+ slightly below some confidence threshold.
+ Good. Okay.
+ I want to land a few more sort of high-level ideas.
+ We can take our stretch today, yeah?
+ Let's take our quick stretch.
+ That's a good time.
+ (Pause.)
+ (Pause.)
+ (Pause.)
+ Okay. So, if you've learned one thing so far,
+ or, you know, I think the MaskRCNN is going to be
+ a tool that you will use if you understand
+ its inputs and outputs. You're already going to have
+ an incredibly powerful tool at your disposal,
+ and maybe you picked up a few of the buzzwords
+ from deep learning theory and the like
+ that I would encourage you to study further.
+ But I still think we haven't, I haven't told you
+ the complete story yet about how to get
+ big data for robotics, right?
+ I told you two examples.
+ The label fusion kind of idea, where we
+ annotated our lab captured, and then the synthetic data.
+ Both of those are somewhat limited, because,
+ for instance, I only have a handful of different
+ object models that I put in my simulator.
+ I can generate as many of them as I want,
+ but I don't have the diversity of the real world, right?
+ And the same thing, what I can get in lab
+ is not going to represent the diversity.
+ If I want to think about open world manipulation,
+ I want a robot that I got to program,
+ it leaves, and it's going to manipulate
+ anything in your house. I haven't given you
+ an answer for that yet, and I don't have
+ a complete answer yet, but this is what
+ people are working on hard now.
+ How do you have this kind of a tool chain
+ that could manipulate incredibly large
+ classes of objects?
+ There was one more point I was going to make,
+ but I think you know roughly that you
+ could go from the mass Garcian end
+ to the model-based grasp selection,
+ or the antipodal grasp selection.
+ Okay.
+ So, I'll come back to those at the end
+ to close things, but the big new trend
+ is that we're going to have a lot more
+ of this kind of self-supervised learning.
+ The big new trend is self-supervised
+ learning. I think many of you will
+ have heard that also. In particular,
+ we have this amazing property that if
+ I've trained on ImageNet, on object
+ detection for instance, then I could use
+ those weights to help me do better
+ on pixel-level segmentation.
+ I trained on one task on a relevant
+ layer, but I had a different task.
+ So, if you open up your mind then and say,
+ "Well, why did I pick object detection,
+ which required human labels for my
+ first task? Why don't I pick something
+ that doesn't require human labels,
+ that I can auto-label for my first task?
+ I just need to pick some surrogate task
+ that the network, in order to achieve,
+ learns something relevant in those
+ first layers to copy over."
+ So, the new thing is find clever new
+ tasks that don't require human
+ supervision, unleash them on the entire
+ internet, and use those backbones as
+ pre-training for your run time.
+ One of the most famous examples is
+ SimClear, where the idea is very
+ simple. It's basically, I'm going to
+ take my original image of my dog, and
+ I'm going to just start perturbing the
+ image in lots of different ways.
+ I'll crop and resize, whatever.
+ Google basically threw the, this was a
+ shotgun approach to research, which is
+ powerful and good, but they're like,
+ "Let's try every possible perturbation,
+ and then we'll take the 10 that worked
+ best, roughly, and we'll call that our
+ algorithm." But they just absolutely
+ tried all kinds of crazy stuff.
+ And then most of these, one of the
+ dominant ways to do self-supervised
+ learning is to set up something where
+ you take the training data, and you
+ just compare and contrast things that
+ you know to be true or false. So, this
+ is a contrastive learning paradigm. The
+ animation's a little annoying, but
+ hopefully it gets the point across.
+ So instead of having labels for the
+ dog, and labels for the chair, it turns
+ out to be enough to say, "The dog is
+ not the chair." If you can say that
+ this and this are the same image,
+ because they're just perturbations of
+ the same image, which you know to be
+ true, you've constructed that by
+ construction to be true, you say those
+ are the same image, and those are not
+ the same as the perturbations of the
+ chair, then you don't need any human to
+ annotate that. And what's amazing, okay,
+ the general trend is that they,
+ oftentimes, these don't do quite as well
+ in peak performance, but for free, you
+ know, you get so much, you can feed
+ them with so much data that they do
+ incredibly well. I mean, at some point
+ you can actually outperform some of the
+ original human labels. One more second,
+ one second. Another example that's a
+ little closer to robotics, which tends
+ to be, I think, learning representations
+ that are more about 3D understanding of
+ the world, is monocular depth
+ estimation. This is actually, this is
+ the one that works the best right now,
+ or one of the best right now, but the
+ original idea is even simpler. So,
+ imagine I have two cameras, and I could
+ say, from two cameras I can figure out
+ the depth using a stereo algorithm, and
+ I want to train to be able to guess
+ stereo from one camera. Okay, well, I'll
+ just carry my two cameras around and use
+ the two cameras to project the computed
+ stereo to give me the ground truth
+ answer, but just train the function from
+ one camera, and you train monocular
+ depth from an image to predict the
+ depth. Okay, the newer architectures are
+ a little bit more complicated. They're
+ doing reconstruction. They take your
+ current frame, you take your second
+ frame, either from in time or alongside,
+ you try to predict the relative, I mean,
+ it's more complicated architectures now,
+ but these work incredibly well, to the
+ point where people can take just an RGB
+ camera and move it around as if it's a
+ depth camera, except, by the way, it still
+ does well on blank walls, and by the way,
+ it still does pretty well on invisible,
+ you know, transparent objects and things
+ like that. It's incredibly good.
+ It's incredibly good. Sorry, did you have a question?
+ [inaudible]
+ Explain this? The cost function, instead
+ of saying it is a dog or it is a chair,
+ is to say, I want to, I'm going to
+ predict an outcome that says that the
+ dog and the chair are, the dog is not a
+ chair, and the pieces of dog that have
+ been translated are the same. So these
+ are contrastive learnings. You take
+ typically two images, you push them
+ through. The ones that are the same, you
+ try to make close together in some
+ representation space, and the ones that
+ are, you know to be different, you push
+ them apart.
+ [inaudible]
+ I wouldn't ever say you couldn't do
+ that with a deep learning perception
+ system. What I would say is you need
+ more data, maybe, or a bigger network,
+ right, or more hours of SGD. Yeah, it's
+ just a matter of levels of accuracy.
+ Yes?
+ [inaudible]
+ Okay, that's a really good point. Good
+ point. So, yeah, sorry, the point to say
+ it into the microphone here is that I
+ could have accidentally picked two
+ pictures of the same dog in my data set,
+ and then the contrastive learning is
+ actually sort of wrong, right, because I
+ could have had, I could have said this
+ dog is not the dog. The objective is
+ basically that that happens rarely
+ enough in a big data set that it's okay.
+ Yeah, good point, good point. Yeah,
+ there's no, there's no label dog, no
+ label chair anywhere here. It's just raw
+ images. Good point. Okay, so this is
+ actually, so Leroy's been playing with
+ this kind of, the self-supervised
+ paradigms, and asking about some of the
+ harder questions about what it means to
+ have representations for manipulation.
+ And it's actually super interesting if
+ you think about, I mean, everybody's on
+ this quest for finding, you know, the big
+ data moment in manipulation, right? And
+ so we've been working with Amazon, who
+ has big data, and they are doing
+ manipulation, right? And Leroy started
+ asking the question, you know, do they
+ have enough data? How should we process
+ that data in order to learn
+ representations that would be
+ incredibly powerful, okay? And the
+ interesting thing that happens in a lot
+ of these real-world applications is
+ something called distribution shift. So
+ if you think about, I mean, I took the
+ same image three times, that was sort of
+ antithetical to my point, but you can
+ imagine if you have similar robots
+ deployed in different warehouses, right,
+ then they have very similar data coming
+ in. But there's a big question of, should
+ you train only, but they're a little
+ bit different, like the, I'll show you a
+ couple different specific ways that
+ they're different, okay? So should the
+ robot in New Jersey train on the
+ perception data from Boston? Yes or no,
+ right? It seems like it's more data, but
+ the boxes in Boston might be
+ statistically a little bit different
+ than the boxes in New Jersey. Or the
+ boxes at peak season might be more
+ dense, for instance, on the conveyor
+ belt than the boxes off peak, right?
+ They have crazy shifts in distribution.
+ So there's this question of more data
+ is not actually, we know that more data
+ is not always better, that if you have
+ different data that is different,
+ from a different distribution, it can
+ sometimes hurt you. Sometimes it doesn't,
+ but we know that it can. So there's a
+ big question, how much should you share
+ data, how much should you snarf up, how
+ much should you specialize? And even
+ more interesting, I won't talk much at
+ all about this, is that you're doing
+ this training in a decentralized way. So
+ you have many different neural networks
+ potentially living in different places
+ and different copies of the neural
+ network, how do you do the gradient
+ descent update on that? Okay, but the
+ distribution shift is very real in their
+ data sets, right? They have different
+ lighting conditions, different densities,
+ they have different robots and
+ upstream handling systems. Things like
+ the sensors respond differently at
+ different altitudes and stuff like this.
+ They have different suction grippers in
+ different places. So, you know, if you
+ look at a few different locations, you
+ might see very different types of
+ packages or density of packages. This
+ place does mostly, you know, the envelopes
+ that you can almost recycle. And then,
+ you know, this one has more of these,
+ right, for instance. And sometimes you
+ have very dense, sometimes you have very
+ sparse. So it's just an interesting
+ question of like self-supervised
+ learning seems to work, but how exactly
+ do you deploy it at the scale? And is
+ it, you know, is it going to get us big
+ data and manipulation? And this is the
+ takeaway, is that if you just train
+ directly on doing image segmentation
+ with supervised learning, for instance,
+ on your local data, you can actually
+ overfit. I just, I said overfitting isn't
+ as big of an issue anymore, but you can
+ overfit still to your data and have
+ worse performance if you start applying
+ that across a distribution shift. You
+ have limited robustness to distribution
+ shift. If the, if peak season comes, your
+ distribution moves, you can have overfit
+ to your data. And there's a really big
+ thing that seems to be happening, and
+ I think you know this, you've seen like
+ the GPT-3 and DALI and stable diffusion
+ and all this craziness, right? But
+ there's something about these self-
+ supervised objectives that seem to be
+ learning something more general about
+ the internet or about the data in the
+ warehouses. And they tend to be more
+ robust to distribution shift. And this
+ is like the big, big question in
+ supervised learning, self-supervised
+ learning for manipulation is what's the
+ right way to learn these
+ representations using as much data as
+ possible that work for lots of
+ downstream tasks? And the
+ self-supervised objectives seem to be
+ learning representations that transfer
+ more generally than the supervised ones.
+ It's almost like saying that this dog
+ is not a chair forces me to learn
+ something general about images and
+ saying it's a dog, I could have
+ special-case the dog.
+ Okay, and the last thing I'll mention
+ here is all the GPT-3, everything, it's
+ coming into manipulation in a big way,
+ which is even if we can't get enough
+ labeled data or self-supervised data
+ locally, people are asking the big
+ questions of how do I take everybody
+ else's foundation models, right? So the
+ models that have been trained on huge
+ language corpuses, huge vision
+ corpuses, huge text-to-vision
+ corpuses, and somehow use that
+ information to augment my small data in
+ robotics. And CLIP is the one that I
+ think most roboticists have picked up
+ of the big models. CLIP is a vision-to-text
+ model and it's like every
+ roboticist is like, oh, I could have
+ taken my image and put it into this
+ encoding and I could have a sentence, I
+ could put that into the encoding. And so
+ people are finding lots of different
+ ways to use that. And the takeaway is
+ that compared to the MaskRCNN pipeline
+ which I talked about, which does
+ reasonable things on the labels you've
+ trained, these foundation models are
+ getting us to the point where out of the
+ box you now have potential labels from
+ the entire Internet, like kind of the
+ captions that everybody has put on the
+ screen, you could just walk around the
+ lab and point it at stuff and there's a
+ chance it will label some, it will give
+ you a sensible label out of the box in
+ the open world, right? It's not
+ perfect, it's not perfect, but it's
+ mind-blowing. It's mind-blowing. So how
+ do we use, even for the instance
+ segmentation problem, how do you
+ leverage super large data trained with
+ self-supervised learning, even on a
+ surrogate task, to make us pick up any
+ object and manipulate any object? Okay.
+ Good. So the instance segmentation is
+ very much a geometry computer vision
+ task. It is not enough for
+ manipulation. If I want to know how much
+ the objects weigh, right, Flickr
+ doesn't have a data set that where
+ people, everybody, I mean, actually
+ probably does. You can probably say how
+ much does that weigh and it would say,
+ you know, 2.7 kilograms and it would
+ probably be like almost right. But I'm
+ not a data pipeline, right? So if you
+ want to know like how, what's the
+ friction, where's a good place to pick
+ this up, right? That I don't think we
+ have the answer directly from this.
+ That's why I tried, I wanted to say in
+ this lecture, I wanted to give you like
+ a super fast overview of what computer
+ vision relative to, you know, the
+ standard computer vision pipelines for
+ manipulation can look like. On
+ Thursday we're going to say that the
+ computer vision pipelines don't answer
+ the question. We're going to use more
+ than computer vision to pick things up.
+ There's other properties of the
+ object that we care about rather than
+ just what it's every pixel label is.
+ Okay, so we'll talk about that on
+ Thursday. Any other big questions about
+ that?
+ [inaudible]
+ There's going to be an entire
+ lecture on it a little bit later.
+ Yeah, so, but on the control side
+ learning is having a big impact too
+ for sure. And the biggest impact is
+ connecting with vision. So a lot of
+ our classic pipelines didn't have a way,
+ they're incredibly good, but they
+ didn't have a way to talk to cameras
+ because that's handing a 640 by 480
+ RGB image into a PID controller
+ doesn't make sense. So we found,
+ we're getting new tools for
+ connecting those wires. Yes, good.
+ [inaudible]
+ Yeah, I didn't put it in. He told me I
+ should put in this. Yeah, I read the
+ paper. I read the paper, but I...
+ [inaudible]
+ There are more than models that do
+ this much, much better. And it's like you
+ input the text and like it could, can
+ find the object really accurately with
+ fine-grained detections. For example,
+ like some people say, I put a sticker,
+ a yellow sticker on my laptop. And now
+ like I take a photo of a room with all
+ the laptops and acquire with a laptop
+ with yellow stickers. In the latest state
+ of our model can do it pretty well. It
+ will only give you like a design, the
+ highest probability to the laptop with
+ yellow sticker. And I think it's going
+ to be very, very impactful in
+ robotics because previously we could
+ only do like a fixed, a fixed list of
+ like 20 categories or like a hundred
+ categories. Now it's just anything
+ described as soon as you can describe
+ it with language. Awesome. Yes. Thank
+ you. So yeah, I think that is a part
+ of, in my mind, a zoo of ways that
+ people have found to put these large
+ language models and connect them to
+ manipulation. Right. Good. Any other?
+ I mean, any other big commentaries?
+ That's good. Okay. I'll hang around
+ outside. I think we have a lecture
+ coming in. So I'll hang around outside
+ if anybody wants to talk about
+ projects, but I will see you Thursday.
+ [BLANK_AUDIO]

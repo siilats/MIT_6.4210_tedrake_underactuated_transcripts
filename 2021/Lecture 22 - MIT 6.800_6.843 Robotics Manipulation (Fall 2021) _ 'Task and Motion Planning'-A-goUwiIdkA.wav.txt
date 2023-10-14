@@ -1,0 +1,1200 @@
+ That wasn't weird at all.
+ All right.
+ So today is the second of our boutique lectures and actually the third to last lecture.
+ So we've spent the last four or five lectures, I think, on RL and learning.
+ And today we're going to take a slightly different perspective.
+ We've been working on how to generate more short-term behavior from scratch.
+ And today we're going to think more about multi-step manipulation and long horizon planning
+ and work that is general.
+ And so to set the stage, I want to give a couple of videos of examples, kind of giving
+ the motivation of the type of behavior that we're interested in producing.
+ So the kinds of things that I would like my robots to do-- this is a very simplified kitchen
+ example.
+ Here, a green block is supposed to be food.
+ Just believe with me.
+ And what we want our robots to do is it's doing what I'll argue is a complex series
+ of manipulation tasks.
+ It's placing things.
+ It's picking things.
+ It's sequencing the series of actions.
+ It's making a lot of different choices based off geometry.
+ It's doing all of that important motion planning stuff.
+ And this is a video you all have seen before.
+ Here again, we're doing multi-step manipulation.
+ And in addition to reasoning over all of the motion constraints here-- and we'll return
+ back to this example-- we're reasoning over force constraints as well.
+ And this is to open the bottle.
+ And the last example I'll give-- I believe so far every robot we've seen has been bolted
+ to a table.
+ I don't think we've seen a robot move.
+ But in the general sense, we have robots that move around.
+ And so you might imagine I have this robot that can move around and perceive the world.
+ And in this case, the goal of the robot is to escape the lab.
+ This is when we used to be on the fourth floor.
+ And so it's doing this kind of complex series of manipulations that it's planning.
+ How do I escape the lab?
+ Oh, there's chairs in the way.
+ Oh, I need to pick up and move the chairs out of the way.
+ I feel like often professors are showing off their students' videos.
+ And I have the joy of I am a student.
+ And this is showing off the professor's video.
+ This is by Leslie and Tomas.
+ They're actually coding in the background.
+ And at one point, you can see students come in and watch their advisors do work, which
+ is fun.
+ So I want my robot to do these kinds of things.
+ I want my robot to cook.
+ I want it to open bottles.
+ I want it to escape the lab.
+ And you might imagine we've talked about composing high-level behavior before.
+ If we go way back to lecture 10, we talked about you could script things.
+ You could do behavior trees, decision trees, finite state machines.
+ But I think you all got a taste for how complex finite state machines can blow up.
+ And if we think about accomplishing any one of these tasks, like having to write out the
+ finite state machine for what these robots do, it gets kind of intractable pretty fast.
+ So we want to do better.
+ And that's kind of what motivates what we're talking about today, which is task and motion
+ planning, which pretty much everyone abbreviates to the word TAMP.
+ So you're just going to hear the word TAMP over and over again today.
+ And the highest order bit is that TAMP is a computational mechanism for composing pieces.
+ Most of what we're going to talk about is planning.
+ But towards the end, we'll show how you can kind of bring in all of the pieces and that
+ TAMP overall is a framework.
+ So we're going to start off with a couple of building blocks of what is background knowledge
+ necessary.
+ Oh, I told Danny I wouldn't use this part of the board.
+ I'm so sorry.
+ We're going to go over some building blocks.
+ Then we're going to formalize.
+ I'm going to actually kind of go on a mini rant about how I like to define TAMP, talk
+ about the algorithmic components.
+ And then once we've had that established, I think to make things a little bit more concrete,
+ we're going to go through a case study example.
+ We're going to return to that bottle and think about if I wanted to actually code things
+ up, how would I do it?
+ And then we're going to end by returning to this idea of TAMP as a computational framework
+ and show kind of a bunch of different examples of how you can put different pieces in.
+ This is also a fun way for me to end by just showing you lots of videos of robots doing
+ cool stuff.
+ Any questions about where we're going today?
+ I will front that a lot of what we're going to be talking about today has basis in the
+ survey paper that our lab wrote last year.
+ So if you want to look into things further or get deep insight into how this lecture
+ was structured, I would very highly encourage you to look at our survey paper, which is
+ only slightly self-promotional.
+ But it's good work.
+ So let's dive into the building blocks.
+ I would argue task and motion planning builds off of kind of three key areas in terms of
+ where it pulls from.
+ It is perhaps not surprising that task and motion planning pulls from motion planning
+ and task planning.
+ And we're actually going to go through those very quickly because you all are super experienced
+ in motion planning and you've seen task planning in lecture 10.
+ And we're going to spend a little bit more time on multimodal motion planning.
+ Because this is a review in some parts, we can go through it a little bit quicker.
+ I'm going to actually ask you all to do half the work in terms of answering things.
+ So to walk through all of these, I'm going to set up a concrete example.
+ And this is a very, very simple TAMP problem.
+ Let's say that we have our little yellow robot.
+ And the red disk is a pizza.
+ Bear with me.
+ It's on a green plate.
+ And we have an oven, which is an orange box.
+ You could think of it as a hot plate.
+ And our goal is that we want our robot to cook pizza.
+ That is the task.
+ And for right now, we'll say the robot cooks pizza if it moves the pizza onto the hot plate.
+ That is about as simple as we can get tasks.
+ Check out.
+ So let's work through each of our three kind of building blocks.
+ So you all know motion planning.
+ It's lectures 15 and 16.
+ And I'm going to say in the most vanilla form that motion planning is if we have a start
+ configuration and a set of goal configurations, even our most basic motion planners that give
+ you the RRT from homework 9, that you're going to find a path from your start to your goal
+ such that you're collision free.
+ I'm reintroducing a little bit of notation because it'll help us later.
+ And so if I give you this RRT, the question I will pose to you all is, have we already
+ solved the problem?
+ Can the robot cook pizza if all I give you is an RRT?
+ Some people are shaking their heads no.
+ Why not?
+ You can just shout out.
+ You do not have to raise your hand.
+ [INAUDIBLE]
+ Yeah.
+ So Yang is arguing that you have two different-- that the problem changes if you enact with
+ the state.
+ So it's an excellent point.
+ What you cannot do with motion planning in its most basic sense is that you cannot capture
+ changes in the world.
+ And so right to Yang's point, you cannot capture the fact that now you are grasping that plate.
+ So that is going to motivate that in order to capture that kind of structure in the world,
+ what we want to-- what we use is multimodal motion planning.
+ By the end of this, you will understand and deeply appreciate the beauty of this figure.
+ We will get there.
+ So what we want to do is that we need to introduce modal structure into the problem.
+ This is where multimodal motion planning gets its name.
+ What does modal structure mean?
+ So let's say we have our scene from before.
+ And we're going to describe this scene with something called a kinematic graph.
+ And so a kinematic graph is going to represent the state of our world.
+ It's going to encode the dependencies.
+ So the-- oh, I'm not tall enough.
+ Each of our nodes corresponds to an object.
+ So we have nodes for our world and then attached to our world is our table, attached on top
+ of our table is our plate, on top of our plate is our pizza.
+ And the edges represent some level of dependencies, whether it's being supported by or rigidly
+ attached.
+ And we're going to call what's represented by this that this is mode sigma, that what
+ the state of the world as represented by this kinematic graph is mode sigma.
+ And I would argue that within mode sigma, we can do motion planning, that we can control
+ the state of our robot joints.
+ Now if we were to do motion planning and kind of plan for a new configuration queue, would
+ our kinematic graph change?
+ If we just do motion planning and we move, basically change our configuration queue,
+ we move our robot.
+ Why?
+ Because I guess the relationship is all the objects want to interact with them, so the
+ objects [INAUDIBLE]
+ Yep.
+ There are no relationships between the objects changed.
+ That's exactly correct.
+ So let's say something happens in the world, something mysterious, we'll get back to what
+ it is.
+ Something happens in the world and now the robot is holding the plate.
+ Same question.
+ Does the kinematic graph change in this case?
+ Why?
+ Anyone?
+ [INAUDIBLE]
+ Right.
+ So our kinematic graph changes such that our pizza is still supported by our plate, but
+ our plate, instead of being supported by a table, is now supported by our robot hand.
+ Now Yang actually alluded to this earlier, is that we can do motion planning within this
+ new mode, this mode sigma prime, but it is a different motion planning problem.
+ In this case, it's a constrained motion planning problem where you maybe have the constraint
+ that I want to keep my-- you have an orientation constraint and you want to keep your plate
+ upright, which we know how to do.
+ But you can do motion planning in both, but they are perhaps two different motion planning
+ problems.
+ Now if we have mode sigma and we go to mode sigma prime, how do we go from one to the
+ other?
+ So transforming to one to the other is what's called a mode switch.
+ It's also called a kinematic switch, and that's the instantaneous change in our kinematic
+ graph.
+ In this case, what action is represented-- what happened during our mode switch in this
+ case?
+ [INAUDIBLE]
+ Yes.
+ None of these are trick questions.
+ So what our robot had to do in order to switch from not holding the plate to holding the
+ plate is it had to hold the plate.
+ It had to grasp the plate, and it switched modes.
+ And there's a neat point in that in order to be able to switch from one mode to the
+ other, it had to be in a particular configuration where it can grasp, because that is a configuration
+ where it can switch to being in that next mode.
+ So if we take away our kinematic graphs, we can now understand one of my favorite figures
+ of all time, which is that this is the heart of multimodal motion planning, is that you're
+ basically sequencing planning within modes, switching to a new mode at an intersection
+ point, and planning within different modes.
+ And so if we connect that back to our example, we can do single mode motion planning where
+ we do not change mode, but we change our configuration.
+ You can imagine that as moving along that green manifold from one configuration to another
+ until you plan for a point where you can switch.
+ You have to find a point that's at the intersection of your two manifolds.
+ That's your mode switch.
+ Instantaneously-- we're dealing with discrete time-- you're going to not change configuration,
+ but you're going to instantaneously change mode.
+ And then you can go along your happy way in your new mode doing more single mode motion
+ planning.
+ So to summarize, what the robot's doing here is it has to plan for a sequence of modes.
+ It has to plan for single mode motion, and it has to plan for mode switches.
+ So if we return to our question from before, but slightly modified, if I were to give you
+ kind of a start configuration and a start mode, a goal configuration, a goal mode, and
+ a multimodal motion planner that does what we just described, can you cook the pizza?
+ Can the robot now accomplish the task?
+ I'm going to give everyone like 15 or 20 seconds to really think this one through.
+ If it can, why?
+ If it can't, why not?
+ Any thoughts?
+ Yeah?
+ [INAUDIBLE] Can you explain what you mean?
+ [INAUDIBLE] So the assumption in normal-- sorry, I should
+ have mentioned this-- is that we know the set of possible mode transitions.
+ So we know how we can transition from one mode to another.
+ Yeah?
+ [INAUDIBLE] That is exactly correct.
+ So you can actually solve this problem with multimodal motion planning.
+ This is enough.
+ Our robot could go home.
+ But in its most basic form, multimodal motion planning is kind of going to do a brute force
+ search.
+ So it's going to be horribly inefficient.
+ Actually for this problem, this problem is so simple enough that it'll be able to solve
+ it.
+ But if we wanted the robot to be able to escape the lab, then it's going to become quite a
+ problem.
+ Yeah?
+ [INAUDIBLE] This is my favorite question.
+ So there are two multimodal motion planning papers.
+ And the second one deals exactly with what you're talking about.
+ And so what it does is rather than having a mode for each grasp, which as you mentioned
+ could be infinite, they formalize it as that you have a mode family.
+ And there's a parameter for that family.
+ So the family is defined as grasping that object.
+ And the parameter for that is what is your actual grasp.
+ [INAUDIBLE] Yeah.
+ It has the-- wait, what do you mean by changing?
+ [INAUDIBLE] You would have a different manifold for each
+ grasp.
+ In picking the mode switch, it is picking up what grasp to do.
+ And the description of it being a little bit off would be if you were trying to do online
+ re-planning in the loop.
+ Other questions?
+ Yeah?
+ [INAUDIBLE] Yeah.
+ Sorry.
+ [INAUDIBLE] Yeah.
+ Oh, dear.
+ My bad.
+ So the question is, could you deal with basically not sticking contact is, I think, a way to
+ summarize that.
+ Generally in multi-modal motion planning, the assumption is made is that you have sticking
+ contact.
+ But you can imagine because the representation is like you are doing a single-mode motion
+ planning that if your mode was I do not have sticking contact, you would need a more complex
+ planner to handle that.
+ But you could.
+ OK.
+ So multi-modal motion planning might not be efficient enough.
+ This is where what we're going to do to get around that is we're going to leverage the
+ representational power that comes from task planning.
+ And I'm going to go through this part a little bit faster because you all have seen this
+ to an extent.
+ So for the next few slides, we're going to be in discrete world.
+ So you might imagine we have a discrete set of states.
+ You have some transition function that says what is your legal changes between states.
+ You have some start states, some goal states.
+ And your goal is to find a path from start state to goal state following your transitions.
+ This is the normal setup in task planning.
+ And you can imagine this as a graph where your nodes are your states and your transition
+ function just defines your possible, in this case, directed edges.
+ And so you could just apply graph search if you want to solve this.
+ So we take this formalism and we're going to apply it to a version of our pizza problem.
+ But I'm going to switch to making everything discrete for a minute.
+ And apologies for the icons.
+ But let's imagine that we have some set of movable bodies.
+ We have our robot got cuter, our pizza got prettier.
+ And we have some discrete set of locations that we could be at.
+ If this is the state of our world, there's a question of how do we define state and how
+ do we define transitions.
+ And so for state, we're going to leverage an idea that is critical but seems so obvious
+ that it's sometimes difficult to understand how critical it is.
+ And this is the idea called factoring, which is that I'm going to represent the state of
+ the world by different state variables.
+ And then I'm going to compose that by taking the Cartesian product of it.
+ That is to say, I'm going to actually break down what the state is and say, my robot is
+ at, in this case, the plate.
+ My pizza is at the box.
+ My book is at the sofa.
+ My pizza is not cooked.
+ And my robot is not holding anything.
+ And there are like-- we did up math-- like 600 possible states that the state of the
+ world could be at.
+ And by factoring things down very nicely, you can represent that super sparsely.
+ It's very obvious but super critical to being efficient.
+ So we're going to represent our states in this way.
+ How are we going to represent our transitions?
+ This is something you all have actually seen before.
+ This was in lecture 10, if people recall, preconditions and effects.
+ Does that vaguely ring a bell?
+ So preconditions is what needs to be true about our states in order to take some action.
+ And our effect is, what are the changes in our state once we take that action?
+ And so if I want to pick up an object at some location, we're going to say that the robot
+ has to be at that location.
+ You have to not already be holding something.
+ The object has to be at that location.
+ And then the effect, once I've actually done the pick action, is that now the object is
+ not at that location and I am holding the object.
+ That is what it means to define our pick operator.
+ So you can imagine defining a series of operators-- move, move holding, pick, place, cook.
+ In this case, cook is just going to be a discrete action of being on the oven.
+ And so if our plan was that we wanted our pizza to be cooked and our pizza to be at
+ the plate, does someone want to pretend to be a task planner for a minute and give a
+ feasible plan?
+ Yeah?
+ Yes.
+ You are an excellent task planner.
+ So that is that we can now find a plan for our task planning.
+ So that covers all of the preliminaries, all of the building blocks of that we have motion
+ planning, multimodal motion planning, and task planning.
+ And with that, I can give the definition of TAMP that I prefer, which is that TAMP is
+ an extension of multimodal motion planning that leverages the representational efficiency
+ of task planning.
+ Multimodal motion planning is abbreviated as MMMP, or you can just add arbitrary M's
+ as you say it.
+ OK.
+ TAMP is an extension of multimodal motion planning that uses the compact representational
+ strategies from task planning.
+ So if we have our representations from task planning, and now we want to bring it into
+ MMMP, we want to bring it into our robot, the question is, what has to change?
+ I would argue there are two things that we now have to account for, and that is continuous
+ parameters and constraints on those continuous parameters.
+ What does that mean?
+ So we have our pick action from before that we spent some time understanding.
+ And now if instead of being in a discrete world, you want it to be a real robot, what
+ has to change?
+ So now instead of being I have an object, and it's at a discrete location, now we're
+ going to be dealing with continuous variables.
+ And so in this case, we're going to have that we have some object.
+ Our robot is at a configuration Q. Q is a continuous variable.
+ Our object, instead of being at some discrete location, now we can describe our object as
+ being at a pose.
+ Pick your favorite pose representation.
+ And that we have some grasp.
+ And so we have a mix of possibly discrete and continuous parameters.
+ So this makes it a hybrid problem.
+ Additionally, we have some of the same preconditions and effects that we had before.
+ In order to pick something up, we assume that our robot is not already holding something.
+ But now we have to have constraints on our continuous parameters.
+ For example, the grasp operator-- sorry, Danny, I'm going to go horribly off screen-- is that
+ it's a constraint that our grasp G is a valid grasp on our object obj.
+ And we have the constraint that our pose P must be a stable pose for our object obj.
+ And Ken is that we have some constraint that if our robot is at configuration Q and our
+ object is at pose P, that is a valid grasp G on our object.
+ Questions about this?
+ We've transformed into now dealing with hybrid spaces.
+ [INAUDIBLE]
+ Ken is just a grasp.
+ It's just is that a valid grasp on the object?
+ And Ken relates in the robot as well.
+ So Ken is-- notice that grasp is just is that a valid grasp on the object relative to the
+ object versus Ken is like is your robot in a position where it can now use that grasp.
+ So we went through a little bit of detail for PIC.
+ You could do all of this for the same actions we described before.
+ Now we have to deal with trajectories.
+ We have to deal with poses and configurations.
+ And there's continuous but also discrete because we have objects.
+ So we have this set of operators.
+ So now we have discrete and continuous operators.
+ If we were to return to our goal, like our goal is to cook the pizza, I would argue that
+ a valid solution-- if we run our planner from before, a valid solution would be to move,
+ pick up the pizza, move, holding it, place it, and cook it.
+ And the difference here is that now these are over-- we have continuous parameters to
+ deal with.
+ It's that you move given a certain trajectory.
+ There's a reason that I like putting the solution in front of you.
+ And that is because to me it outlines what are the two things that you need to solve
+ for.
+ So I would argue that if we are leveraging all of this in order to find a solution like
+ this, what we have to do is search over action sequences.
+ So searching over action sequences is what is the strategy that I'm using.
+ Here the one that we find is move, pick, move, place, cook.
+ And then the other thing that we have to do is solve for those continuous parameters.
+ If that is the strategy that I'm taking, what are valid configurations and poses and grasps?
+ And you have the constraint that the pose that-- the grasp that you pick at is going
+ to be the grasp that you're move, holding, and that you're picking with.
+ And so there's constraints between the different actions.
+ Does it make sense that the-- sorry.
+ HDSP is hybrid constraint satisfaction problem.
+ We are hybrid because we have discrete and continuous parameters.
+ We're basically trying to find what is a set of variables that satisfies our constraints.
+ So it's a constraint satisfaction problem.
+ Yeah?
+ Which hybrid parameters are considered during the search and which are considered during
+ the HDSP?
+ Can you repeat the question?
+ Yeah.
+ So it's which parameters are considered during the search and which are considered during
+ the HDSP.
+ The exact ones may vary depending on implementation.
+ But in general, if it is a-- the parameters of the actions are going to be what you have
+ to find satisfying values for in the HDSP.
+ And so in this case, it would be q0, all the trajectories, but also a, in this case, object
+ that's found over.
+ Yeah?
+ So to compare this with the most naive level of the MMMT, would you do something like randomly
+ sample-- because in MMMT, you still need the discrete symbols to specify the goal.
+ You still need that--
+ You do not have access to those discrete symbols in the same way.
+ So then how can you then set the path?
+ How can you say, cook the food?
+ So you can define the mode where being cooked is true, but you do not have this ability
+ to describe this discrete notion of an object being cooked.
+ You do not have access to that representation.
+ That is what some of the representational power that we get.
+ So does that mean you just-- like in MMMT, if you wanted to do the figure, you would
+ have to specify the exact goal as well, if you're going to do the optional?
+ You would-- let's see.
+ You could specify the mode in a set of valid configurations.
+ You might not have to give the specific configuration.
+ I see.
+ So in MMMT, basically, you're trying to chain together these subsets of configurations.
+ So the idea is you-- so you have a bunch of subsets.
+ And I guess the thing that the PAMP is doing is replacing-- I guess it's kind of hard to
+ decide what order you would give the subset.
+ Which is why MMMT often ends up doing a brute force search.
+ OK.
+ So they just randomly sample the order of the subset.
+ Well, yeah.
+ We'll get back to what TAMP does instead in like two minutes.
+ OK.
+ Good question.
+ Which I'm probably not repeating.
+ So this is the mini rant that I promised.
+ My preferred way to think about what is task in motion planning is that your goal is that
+ you want to search over a set of action sequences.
+ And then you want to solve for those resulting parameters.
+ You have these two components.
+ And the reason that I prefer that is that, to me, it gets at the heart of what you actually
+ need to do and gives a point towards what algorithmically are going to be the components.
+ A lot of times people-- I understand why people do this.
+ They explain task in motion planning as there's some high level, symbolic, discrete task planning.
+ And then there's some low level, continuous motion planning.
+ And you just put them together.
+ And the more I work on TAMP, the more that deeply frustrates me.
+ And the problem is that it's not entirely wrong.
+ But the reason why I find it frustrating is that I don't think it's a helpful framing.
+ Because it leads you to be like, what is a task?
+ And what is high level versus low level?
+ And what do you mean by symbolic?
+ Jokingly, Leslie banned us from using the word symbolic when we were writing the TAMP
+ survey.
+ And I was like, what does it mean anyway?
+ And I think a lot of misconceptions people often have come from people thinking of it
+ as these two separate things, when actually what you need to do is you're finding a strategy,
+ a sequence of actions.
+ And then you're finding the parameters for those actions.
+ And you can't decompose high level and low level, because your continuous parameters
+ have an impact on what strategy you're doing.
+ And they're deeply intertwined.
+ So that is my-- you cannot think of these as two separate things.
+ And although we pull from motion planning and task planning, TAMP is not simply gluing
+ those two together.
+ There's a lot more deeper going on.
+ OK, thank you for listening to my rant.
+ So the two components that we've outlined is that you have to search over action sequences
+ and that you have to solve the constraint satisfaction problem.
+ Searching over action sequences, as we mentioned before, you can think of this as graph search.
+ And in the very simplest form, you could actually frame searching over the set of possible action
+ sequences as just A* search.
+ Luckily, the AI planning community, this is their bread and butter.
+ And they've developed really awesome planners that take advantage of domain independent
+ heuristics.
+ So something called fast forward or fast downward that are really great at doing this search.
+ So Richard, this goes back to your point of we can now leverage all of the awesome planners
+ from the AI planning community.
+ Fortunately, they're not open source, but that's a whole other thing.
+ So that's how we're going to deal with searching over action sequences.
+ For searching over hybrid-- for solving constraint satisfaction problems, it's actually a similar
+ story to the one we told in motion planning, which is that some people do it with sampling
+ base and some people do it with optimization.
+ And there are pros and cons between them.
+ But I don't think we're-- we can talk about that if we have extra time.
+ But the idea is that there are different ways that you can solve for constraining these
+ values.
+ OK, questions?
+ OK, these are our two components.
+ What we actually did, if I go back to our survey paper, is that you can actually group
+ most of the state of the art TAMP methodologies by how they order these components.
+ And so there's some category that primarily they first focus on.
+ I want to generate possible values that could be satisfying values for my constraint satisfaction.
+ And then I'm going to use those values to try to find possible action sequences.
+ And if I can't do that, I'm going to repeat.
+ That's like I'm going to try to satisfy my constraints and then sequence them into a
+ valid plan.
+ FF Robb, which is work done by my lab mate, is a good example of this.
+ On the other end of the spectrum, you can imagine, first I'm going to try to find my
+ action sequences.
+ And then once I have my action sequences, I'm going to try to find satisfying values
+ to those constraints.
+ And a great example of a work that does basically this, but using optimization, is Mark Toussaint's
+ Planner that he published a couple years back.
+ Those are two ends of the spectrum.
+ It will perhaps not surprise you that the majority of work is people who do interleaved,
+ that you more tightly couple searching over action sequences and solving for your hybrid
+ constraint satisfaction problems.
+ So we're going to look at one example to go into a little bit more detail of how this
+ actually ends up working out.
+ And specifically, again, this is work done by my lab mate, which is this planner called
+ Pitital Stream.
+ We're going to understand it graphically at a somewhat high level.
+ So what Pitital Stream does-- and again, this is a planner for solving TAMP problems-- is
+ that it's going to take in a domain, and you have a series of what's called streams.
+ This is why it's called Pitital Stream.
+ And those streams basically work to sample possible values.
+ So this is handling the solving the CSP.
+ We are sampling possible values.
+ So that might mean I am sampling possible graphs.
+ I am sampling possible poses, possible trajectories, possible wrenches, all my possible values.
+ Once I have that set of variables that I've sampled, I'm going to take my operators, start
+ state and a goal state, and I'm going to search over my action sequences.
+ In this case, we're going to use something from the AI planning community.
+ In this specific case, fast downward.
+ And it's going to search over possible action sequences using those sampled values from
+ our streams.
+ If it can't find something, it's going to use that information to kind of sample for
+ more values.
+ It's going to keep doing that until we find a possible plan.
+ Now one way to think about this is that if we think back to lecture 16, we talked about
+ PRMs.
+ People remember PRMs?
+ So PRMs sample configurations.
+ Then they build that graph and configuration space, and you search over for a plan.
+ Pitital Stream is the PRM of TAMP.
+ And that you can think of it in that it is sampling values, again, which may be discrete
+ and may be continuous.
+ It's going to use that to build a pitital search problem, which is then searched through
+ using an AI planner.
+ Sample values, search, repeat.
+ Set check out.
+ OK.
+ I'm going to skip over one part.
+ Not everything is perfect.
+ There are computational issues.
+ If we have time, we will come back to this at the very end.
+ Does the algorithmic components and then Pitital Stream as a specific example make sense to
+ people?
+ Are there questions so far?
+ Yeah.
+ Isn't the guidance for sampling required?
+ That was the part I was going to skip.
+ So the question for guidance for sampling in the shortest form, which you should go
+ read the paper if you want to know more, or you should already know, is that it's basically
+ going to use lazy instantiations.
+ And so it's going to delay sampling for as long as possible and use the information from
+ the search in order to be more specific about how it picks those samples.
+ Yes.
+ This is maybe going back a little bit, but the definition you wrote up there of sampling
+ and extension of MMMT, representational power of pathfinding, it seems like we not only
+ get representational power from pathfinding, but also computational efficiency.
+ Is that accurate?
+ Yes.
+ I would say that the representational power is what enables you to leverage that computational
+ efficiency.
+ But yeah, that's it.
+ But yeah, that's correct.
+ OK.
+ So what I want to do, we're kind of moving into the third segment, is that to make this
+ all a little bit concrete and kind of give you all a sense for like, if you had a problem
+ and you wanted to apply task and motion planning to it, what would that concretely look like?
+ And kind of give you a flavor of what it is like to use those systems.
+ So we're going to return-- and this is my bias, due to my work-- we're going to return
+ to an example that we presented earlier when we were dealing with the case study.
+ If you all remember, this is when we were talking about impedance control and hybrid
+ position control.
+ I introduced this problem.
+ I'll reintroduce it here.
+ But you might imagine that I want my robot to get me medicine when I am sick and old,
+ or either.
+ And so I want my robot to be able to open childproof bottles.
+ I'll argue that specifically for a push-twist childproof bottle, what the robot needs to
+ do in order to open it is that it has to both push down on the cap while twisting.
+ And that if we are exerting this kind of wrench onto our object, we also have to fixture in
+ place.
+ We have to hold it still.
+ My goal is I want my robot to be able to push-twist the lid and then be able to pull it off so
+ that it can then, I don't know, give me my vitamins.
+ Does the context for this problem make sense?
+ We're going to spend the next, I don't know, 15 minutes with it.
+ So in thinking through, if I think first about that push-twist operation, there are a lot
+ of different ways that we could get our robot to do that.
+ And so the way we brainstormed up is that we wrote out four different ways you can imagine
+ using the robot's hand or fingers in order to actually exert that push-twist.
+ I think we only talked about one of them in the context of the control before.
+ The exact details of them are not terribly important at the moment, but you can imagine
+ using your grasping it and twisting it, or using your fingers, or using what we call
+ the palm of the robot, or grasping it.
+ It could pick up and use a tool.
+ So these are a couple of different ways that the robot could do that.
+ If we think about the fixturing side of things, the robot has to hold the bottle still.
+ There are a couple of different ways that it could do that.
+ You could get another robot to actually hold the bottle still.
+ You could put the-- if you have a vice in your kitchen, which maybe you do, the robot
+ could put the bottle in a vice, or it could use frictional contact in order to hold the
+ bottle still.
+ So these are the different components of the different ways that I want to get my robot
+ to do things.
+ From this, we can think of is, what is the set of operators concretely for our task?
+ Before in our pizza example, we had pick, place, and move.
+ And we do have those same examples, because moving, picking, and placing is almost always
+ helpful.
+ We almost always need our robots to move, and pick, and place things.
+ But then we're going to define a series of operators that are those push-twist actions.
+ And for our fixturing methods, you don't actually have to-- some of this is just picking and
+ placing, so you don't have to find new operators.
+ All you have to do is define opening and closing the vice.
+ And then we're going to define a special operator, which is removing the cap.
+ Yeah?
+ So for these operators, you just define them ahead of time, and then you learn individual
+ skills, like with whatever type of controller you want ahead of time?
+ So we will define them.
+ In this case, we are also going to write the controller.
+ But later on, I'll show you a method that actually does learn the controllers.
+ Can you repeat the question?
+ Yes.
+ Sorry.
+ The question was, do you write down these controllers and then learn them?
+ And the answer is, you do write down the operators.
+ Whether you learn the controllers or you write them down is kind of a design choice.
+ But I promise we will get back to it.
+ So yeah, what you concretely do in this case is that-- what I did as the programmer is
+ I wrote down this set of operators and the samplers that go with it.
+ And so to make that a little bit more concrete, I'm going to look at, what does it mean to
+ actually write one of these operators?
+ If you had to think through for your problem, what does it mean to write an operator?
+ Because we've only worked through pick, and pick is one of the simpler ones.
+ So let's say that this action that we want to do is that the robot grasps the cap, and
+ it does this push twist.
+ And if we recall, what we talked about in the previous case study is that the controller
+ that's actually running to do that push twist is the impedance controller.
+ So we actually know how to write down that impedance controller, and we're not going
+ to do any learning in this case.
+ We're going to use the impedance controller we already wrote down.
+ So if I'm sitting in my computer, and I want to define the operator, I'm going to define
+ it over what are the parameters to this action.
+ In this case, I'm sorry, there are a lot of parameters.
+ We'll kind of walk through each one.
+ But we have the parameters.
+ Some of these are continuous, and some of these are discrete.
+ A in this case stands for arm, because I have two robots.
+ And so one of the discrete things that the planner has to reason over is which robot
+ arm do I use?
+ And it has two objects, and it has poses for those objects, P0, P1, a relative pose between
+ them, a grasp that it needs to choose, a wrench that it needs to decide to exert, and then
+ it needs to decide what is the actual trajectory.
+ These are the parameters of our action.
+ What are the preconditions?
+ What needs to be true?
+ I also say that before I showed that a thing that needs to happen is that you need to define
+ constraints.
+ We're going to actually represent those constraints on the continuous parameters by shoving them
+ inside our precondition.
+ And so we're only going to have preconditions of effects and not a separate kind of constraints.
+ Does that make sense?
+ So what are our preconditions?
+ I'm a programmer.
+ I'm going to write it down.
+ What I'm going to define is that our object that we're operating on has to be of type
+ cap, and the other one has to be of type bottle.
+ This is because in this particular framework, I have specific things that are true about
+ that object type, and so I want to give that object a particular type.
+ I'll then specify a constraint that I want to have on my continuous parameters is that
+ I want P0 to be the pose of the cap and P1 to be the pose of the bottle, and I have some
+ relative pose defined between them.
+ So these so far are kind of obvious constraints.
+ I want my robot to be at a certain starting configuration, Q0, and before I do all this,
+ I want the hand of my robot arm to be empty because it needs to be able to do this operation.
+ People following so far?
+ I know we're getting a little bit into the weeds.
+ The next two things-- first one is that I want my graph to be stable.
+ Now, I didn't do a mini lecture on mechanics, so in this case, we'll just say that this
+ grasp is stable with respect to some wrench.
+ Honestly, if you want to know more details about grasp stability and mechanics, come
+ talk to me after.
+ I love to talk about it.
+ In this case, we want a grasp such that our grasp is stable, and we want to make sure
+ that our bottle is stabilized.
+ And so that is that one of those things from before is true.
+ Either another robot is holding our bottle, or our bottle is in our vice, or we have enough
+ frictional contact in order to stabilize that bottle, and this is with respect to a given
+ wrench.
+ Wrench is a force and a torque.
+ Then comes the biggest and most powerful sampler, which is that we now want to define a relation
+ over all of our objects, and this is the sampler that's actually going to generate the trajectory.
+ And if we remember that this is the trajectory that it's generating, it's generating that
+ impedance controls parameters.
+ Does that stop me if that doesn't make sense?
+ So what this is generating is it's going to take in the object that is the cap and the
+ bottle in those poses, and it's going to say, what is the motion that the robot has to achieve
+ in order to, in this case, do this twisting motion?
+ So when we talked about the control parameters before, because of the impedance control,
+ it's generating a series of set points and a series of stiffnesses for what are our impedances.
+ And so what you can think of is that this is a sampler that basically takes in information
+ about our current state and outputs what our robot should do, in this case, Cartesian set
+ points and impedances.
+ Yeah?
+ So where do you encode the fact that how much of rotation it needs to have a [INAUDIBLE]
+ So the question is, where do I actually encode what it means to do this motion?
+ In this case, it's how much do I twist.
+ In this case, that is a predefined thing within the sampler, but you could also imagine that
+ being a parameter.
+ It could be yet another continuous parameter.
+ Yeah?
+ [INAUDIBLE]
+ It takes in, what is my robot, what are my objects, and where are those objects, and
+ what is the wrench that I want to be exerting as I do that push twist?
+ And it is going to return you the trajectory, which in this case is your Cartesian impedances
+ and your set points.
+ [INAUDIBLE]
+ Those are the outputs of your sampler.
+ [INAUDIBLE]
+ Some of these are inputs, and some of these are outputs, because it is simply defining
+ a relation over all of them.
+ Yeah?
+ [INAUDIBLE]
+ So this is-- yeah, that's an excellent question.
+ How do I go from-- you notice that there is an and on top, and so this is the precondition
+ has to be true.
+ And so what's happening here is that twist hand can is a relation over all of these parameters
+ and connected to that relation is a sampler that is generating satisfying values of those
+ parameters.
+ And so basically, if the sampler is able to return values, then that constraint is satisfied.
+ If it can't return things, then there isn't satisfying solutions, so it isn't satisfied,
+ and this thing would render as false.
+ Yeah?
+ [INAUDIBLE]
+ Don't believe I understand your question.
+ [INAUDIBLE]
+ It will also return the trajectory.
+ So what it does is it returns where there's true, and it populates that variable t with
+ the solution.
+ [INAUDIBLE]
+ Gets stored.
+ Yeah?
+ [INAUDIBLE]
+ It is just enough to loosen the cap.
+ We made the design choice that there is another operator which actually pops it off.
+ Actually the reason why we wanted to separate the twisting motion from the removing motion
+ is because I gave that picture that there are four different ways that you could do
+ the twisting, and so I want to separate twisting from removing it.
+ Because I'd have to copy the removing it into all four of those.
+ Good.
+ OK.
+ We're actually not done.
+ There's one other thing, which is that we want to check that our trajectory is collision-free.
+ So those are all of our preconditions.
+ These are the things that need to be true, and we built it together.
+ These are the things that need to be true, and these are the variables that we're basically
+ solving for that satisfy these constraints.
+ In order to fully characterize this, we also have to define what is the effect of this
+ action.
+ And so the effect of our action, the main thing is that we're going to say that the
+ cap is now twisted off, and that we are not at the configuration that we started at, and
+ we are now at the configuration that's basically at the end of our trajectory.
+ Our robot has moved as a result of this action.
+ Constraints are almost always easier to specify than preconditions.
+ That is a deep dive into what is it like to actually specify one operator.
+ And so that hopefully gives you all a sense for what it is like to write these operators,
+ is that you write what is the specification in terms of preconditions and effects, specifically
+ in this framework in Prediddle, and then you write all of those samplers that actually
+ does the controller generation.
+ In this case, we write it in Python.
+ So now you've done that work.
+ You've written all of your operators.
+ We're going to tape our operators, and we're going to put it in Prediddle stream, and we
+ can now actually appreciate the video that I showed from before, which is that the goal
+ of our robot is that we want to uncap.
+ So the robot is going to first do a move, pick, and then place it in the vice.
+ It's then going to do that push-twist that we just spent a while discussing before removing
+ that cap.
+ So it searched over to find that action sequence of move, pick, move, place, and it solved
+ for all of the continuous parameters.
+ What are the trajectories?
+ What are the paths?
+ What are the actual configurations and the grasps?
+ Yeah?
+ It has the on-flip, and then it's just dividing, so it's just going to do a--
+ It did.
+ Can you repeat the question?
+ So the question is, did it have all of the operators possible?
+ Could it have picked-- yes.
+ In that case, it chose to do a grasp twist.
+ And the beautiful thing is that if I give my robot the list of operators, there are
+ many, many different ways that it can solve the same task.
+ I've learned I can't talk while this video is playing because everyone just watches the
+ video.
+ Let it play.
+ I was asking it to do the same task.
+ The environment was different in each one in that the bottle was in different starting
+ locations and the objects were in different starting locations.
+ And in some cases, there was the tool, and in some cases, there was the mat, and there
+ was only a vice in one of them.
+ And the robot is essentially doing the planning of how do I sequence those set of actions
+ to accomplish this task?
+ And the really beautiful thing about this is that it is searching over a space that
+ is combinatorial.
+ This is showing not even all the possibilities, but I put all the possible push twists versus
+ all the possible fixturings.
+ And the beautiful thing is what I love so much about this is I gave my robot-- here
+ is a list of operators.
+ Here are the different things that you can do.
+ And then it does the work to find all of the different possibilities.
+ It does the combinatorial search to find how can I compose these operators to find a satisfying
+ plan to achieve my goal.
+ Yeah?
+ Is it possible to use the first two different levels?
+ I can imagine one of the steps would be like, I'm Captain Medicine Bottle, and then the
+ next thing would be like, do a bunch of other tasks.
+ Can you superimpose multiple levels of this?
+ Yeah.
+ So the question is, can you have hierarchy?
+ So the famous task in motion planners is hierarchical planning in the now.
+ It is actually Leslie and Tomas's task in motion planner is built upon this idea that
+ if you want to do truly long horizon tasks, then you have to have notions of hierarchy.
+ So yes, and a lot of people have thought about it.
+ Yeah?
+ It says a point of reference.
+ How long does it take to find a process in wall process?
+ You mean for each individual one?
+ If I wanted to find a plan?
+ A plan.
+ So I have the results of that in the paper that this work is based off of.
+ But if you want to do order of magnitude, sometimes under a minute or up to two to three
+ minutes in this case.
+ Part of that is because there are two reasons why it takes-- well, I don't know whether
+ you think a few minutes is a long time or not.
+ But there are a few reasons.
+ One is that I don't optimize any of my code for speed.
+ And so it almost certainly could be faster.
+ And I just don't care.
+ And the second is that there are actually-- and this is something that's good-- computational
+ bottlenecks that can make this search difficult.
+ And that you can imagine-- if you were solving a constraint satisfaction problem, and the
+ space of satisfying solutions is rather small, then-- and especially given that we, in this
+ case, are taking a sampling-based approach-- that it's going to take a while to sample
+ satisfying solutions.
+ So sometimes I can set up this problem such that it's like if I require exerting a lot
+ of force, such as there are only a few configurations that actually can achieve that, then I've
+ basically made my constraint satisfaction problem very hard.
+ And so the planer struggles.
+ And it takes longer.
+ OK.
+ So this is hopefully a little bit of an example of what it is like to use a task in motion
+ planer.
+ And in this case, although I did not emphasize it too terribly, this is a task in motion
+ planer instance where we are also bringing in aspects of control, leveraging impedance
+ control, and different mechanics.
+ I want to expand upon that point-- this is going to bring us to our last section-- about
+ TAMP as a computational framework.
+ And I want to hammer this home by showing-- I've been showing mainly kinematic things
+ and taking a very planning-based approach.
+ And I want to show you that a lot of the pieces that we've learned in this class so far fit
+ within this framework and that you can integrate them in.
+ And this enables you to do super awesome things.
+ Admittedly, this is also just going to be me showing off a lot of the work that our
+ lab has done.
+ Because nothing is more fun than bragging about your friends.
+ And so we're going to show a lot of videos of awesome stuff that task in motion planning
+ can do, which maybe hopefully gets you excited about things that you could do with task in
+ motion planning.
+ OK.
+ A valid complaint you can make about what I've shown you so far is that there is no
+ perception involved.
+ And personally, in my work, I do not deal with perception.
+ But that is not a limitation of task in motion planning.
+ So we've had people in the lab who wanted to integrate perception in to task in motion
+ planning.
+ And so you have your task in motion planner from before.
+ But instead of a priori assuming you know where everything in the world is, which is
+ what I do, is that we're actually going to use all the perception tools that we've learned
+ throughout this class.
+ In this case, they're going to take an image and operate on point clouds.
+ And in this work, they used a lot of pre-trained models and a lot of awesome stuff.
+ We talked about math, RCNN, in lecture 9, maybe?
+ No, I don't remember.
+ In this case, instead of operating on known poses and known objects, that your task in
+ motion planner is operating on the output of these pre-trained perception models.
+ And that allows you to do super cool stuff, like instead of having to have a notion of
+ object state, what you can do is I want to put everything that's red in the red bowl
+ and everything that is green in the green bowl.
+ Notice that bananas are green, which is-- I don't know what perception system did that,
+ but it's the decision made.
+ And right here, it's putting all of the objects in the opposite color regions.
+ And to go into a little bit of detail, the different perception elements that are getting
+ used is that it is segmenting out the table, and then it's segmenting out all of the objects.
+ In this case, for a lot of these, doing color detection and is operating directly on those
+ point clouds.
+ The other thing that it's doing is to specify a set of graphs that is using GDP, which is
+ the learning-based method, to generate those graphs as opposed to those graphs being generated
+ a priority.
+ So this gets back a little bit to the question of are things learned?
+ In this case, for this system, some elements are learned.
+ For each of these, I'm going to have to say, if you want to learn more, I've listed the
+ paper down below.
+ So this is just a little bit of a sampling.
+ There was a question before, which is you write out all of these things, and do you
+ learn your controllers, or do you specify your controllers?
+ This was your question.
+ And in the case that I showed, we wrote down our controllers.
+ But maybe you don't want to write down controllers all day.
+ And so there's a project in the lab that was, what if we want to acquire new skills by actually
+ assuming that we have the controller, and we want to learn the parameters of our controller
+ in order to use it?
+ Let's make that a little bit more concrete.
+ Let's say that I would like my robot to learn how to pour.
+ And I have some specification for what it's like to pour, and I want to learn how do I
+ have to move my arm such that I can have a successful pour?
+ And I do not want to have to write down this controller from scratch.
+ So what they did, step one of learning is we need to collect data.
+ And oh, man, I hope this video loads.
+ So our robot needs to learn how to scoop, how to pour.
+ And so we're going to first collect a lot of data.
+ I will point out that it is times 40x.
+ And we're going to have our robot collect a lot of data.
+ Z is the lovely grad student running around in the background.
+ The nice thing about this is that what we're going to do is it's going to pour over and
+ over again.
+ And this is actually labeled data for whether the pour is successful, because you can measure
+ that's actually a scale.
+ It's what is the weight of the amount that I've poured.
+ And so you can imagine if the weight is very high, then I've had a successful pour, because
+ most of-- those are chickpeas.
+ So the chickpeas went in the bowl.
+ And if the weight is very low, then that's an unsuccessful pour.
+ And so we ask our robot to do this over and over again.
+ And we collect a lot of labeled data about what are the control parameters that lead
+ to a successful pour.
+ Does the data collection make sense?
+ If you were worried about what happened during COVID, what did the statum mice eat?
+ They ate all of our chickpeas.
+ It was gross.
+ So you have some grad student, in this case, Z, collect a lot of data.
+ And it's labeled training data, which is super awesome.
+ And what they did in this case is given the kind of specification of our action and given
+ a lot of labeled data, what we're going to do is we're going to learn a constraint, which
+ defines what are the valid control parameters that lead to a successful pour.
+ In this case, they use a Gaussian process regression.
+ Their argument, which again, they make more beautifully in the paper, is that this is
+ useful for sampling and that it is great for data efficiency.
+ And having watched the video from before, you might imagine why they really cared about
+ data efficiency in this context.
+ So to summarize, they gathered a lot of data.
+ And they used learning method in order to characterize what are the control parameters
+ that lead to a successful pour.
+ I will say they use Gaussian process regression.
+ You could swap in any learning method that you wanted to if you wanted to learn the control
+ parameters.
+ But the nice thing is that they gathered enough data.
+ We cleaned up the chickpeas.
+ And that now our robot has effectively acquired a new skill, and that it can now do pouring.
+ There's nothing in the cup, the first pour, which I find super weird.
+ But there is stuff in the second pour.
+ So we'll wait for the second pour.
+ We'll notice the goal is to pour.
+ But because we've added a new skill, we haven't lost what we've had before.
+ And so we still have all of-- yeah, there it goes.
+ Is it still doing all of that geometric reasoning?
+ I'll pause it for a minute.
+ We've added a new skill of how to do pouring.
+ But we haven't lost the fact that we know how to do pick and place.
+ We know how to do all of these other things.
+ We've just added something in into our existing repertoire of skills.
+ And once we've added in our skill, we can now search over action sequences that involve
+ that new skill.
+ And you can imagine maybe you use a different method.
+ You learn a new skill.
+ You add it in.
+ Now your robot has more capability.
+ You just keep building.
+ Cool.
+ This is one way to integrate learning.
+ And there's a lot of different ways.
+ But one other way that I'll mention that's just skipping is that something that we talked
+ about that Charles asked about is like-- OK, you didn't ask why things are slow.
+ But that's an interpretation of what your question could be-- is that you can imagine
+ also using learning to speed up your search, that can we use prior experience to speed
+ up this search over action sequences?
+ And there was some work done by our lab.
+ This again shows off mobile robot manipulation in the PR2 style of moving.
+ And now what this does is actually, if you're searching over action sequences, it learns
+ a Q function in order to bias what action sequences you want to explore.
+ We mentioned that you get computational efficiency from task planning.
+ The question is, what if I'm planning really long horizon stuff and I want to move even
+ faster?
+ And what they showed with this work is that you can basically learn this Q function that
+ speeds up your planning by a couple of factors.
+ Cool.
+ Those are two ways to integrate learning.
+ Those are not all of the possible ways.
+ But I hope it gives you a flavor of the ways so far of how you can integrate perception,
+ how you can integrate control, and how you can integrate learning into task and motion
+ planning.
+ OK.
+ There's one more thing that I want to cover.
+ And to be honest, I'm sneaking a special topic inside a special topic.
+ Something that we haven't talked about so far that I'd be remiss if I didn't mention
+ is uncertainty.
+ If we think about what we've dealt with so far, we've kind of assumed that the world
+ is observable, that things are deterministic, that we know how the world is going to act.
+ I wrote out those operators and I said, this is what's going to happen in the world.
+ And it's making kind of a strong assumption, like I know what's going to happen.
+ Because the world is not deterministic.
+ The world is not observable.
+ The world is stochastic.
+ The world is partially observable.
+ The cabling is correct.
+ The world is a POMDP.
+ So how can we get our-- if we want to use this framework, how can we have a framework
+ that still deals with uncertainty?
+ Does the setup of what we want to do make sense?
+ OK.
+ So I don't know if this was mentioned previously, but we're going to introduce-- instead of
+ saying I know what the state of the world is, we're going to introduce this notion of
+ belief space.
+ And instead of saying the pose of the object is here, we're going to have a probability
+ distribution over your underlying world states.
+ Instead of saying the object poses here, I'm going to say I have a probability distribution
+ of where my object could be.
+ And what this means is I have a belief over where my object is.
+ So the robot, in now planning, has to maintain what is its belief over where things are.
+ And you might imagine that if I am a robot, I have some belief that my computer is on
+ the table.
+ But maybe I do not know exactly where it is because I'm not facing it.
+ And that if I use my perception system and I observe that I can update my belief on where
+ I believe the pose of my computer to be.
+ And so our system now needs to-- instead of saying this is the state of our world and
+ updating our state, we have a belief over our world.
+ And we may need to take actions that allow us to update what is the belief of our world.
+ And now instead of our effects being on state, our effects are going to be on our belief.
+ That setup makes sense.
+ Now, there's been a couple of different ways that people have done belief space planning.
+ This is perhaps one of the earlier ones.
+ This is actually-- the robot escaping the lab from earlier comes from this paper.
+ But the example I specifically want to show is a bit more recent and actually uses that
+ podidal stream planner that we discussed from before.
+ So this is going to keep track of belief specifically using particle filter.
+ If it doesn't mean anything to you, that is OK.
+ It is a representation for how we're going to represent our belief.
+ And what our robot's going to do is I'm going to show this by example.
+ That our robot's goal-- our robot's goal is to cook spam.
+ It's not for me, but it's cooking spam for someone.
+ And it doesn't know where the spam is at the beginning.
+ And so what it starts off is that we say that the robot has a prior that there is a uniform
+ distribution of where the spam could be on the table.
+ It does not know initially where it is.
+ It just knows that there's a uniform prior over positions on the table.
+ And so what the robot decides to do is it says, well, the sugar box is in the way.
+ And so I'm going to make a plan to pick up the sugar box to see if I can perceive the
+ spam and update my belief on where the spam is.
+ It's going to pick up the sugar box.
+ It does an observation.
+ It updates its belief that the spam is not behind the sugar box.
+ And so it says, OK, where else could it be?
+ Maybe it's behind the Cheez-It box.
+ This is the same Cheez-It box from the YCB object.
+ Everyone uses Cheez-It boxes.
+ And so it moves the Cheez-It box.
+ And the first times it moves it, it still can't perceive that the spam is there.
+ It cannot update its belief.
+ And so it tries again.
+ And it actually moves it further away.
+ And now it can finally perceive the spam.
+ It updates its belief about where it believes the spam to be.
+ And now it can cook the spam.
+ It cooks the spam.
+ But what we saw is that the robot had some belief on where things were.
+ And it had to do what's called information gathering actions in terms of, well, I can't
+ see it now.
+ I should-- this is a very weird set of videos to pause on.
+ And it's going to take information gathering actions in order to update its belief in order
+ to basically be sure of where things are before it acts.
+ This is the same Predictable Stream Planner that we had before.
+ And it has basically a few extensions.
+ One is that instead of operating on states, it's going to be operating on belief.
+ There's some notion of replanning, that as soon as you get an update about your belief,
+ you have to replan and pick what is my new sequence of actions and new satisfying values
+ based off that new belief.
+ And those are the two key elements that we need to do in order to enable belief-based
+ planning.
+ I'll show one other video just because it's super neat.
+ Our goal is that we want to have the spam in the bottom drawer.
+ And we have a uniform distribution on where our spam could be.
+ It could be either in the top drawer or the bottom drawer.
+ Our goal is for the spam to be in the bottom drawer.
+ And we do not know where it is initially.
+ So what the robot does is it first opens the bottom drawer.
+ Because if the spam were there, we would already be done.
+ And so it observes-- I will say, in this case, the camera is overhead.
+ And so it observes.
+ It says, the spam is not there.
+ Therefore, I update my belief.
+ Because it was not in the top drawer, it must be in the bottom drawer.
+ So I will go open the bottom drawer.
+ I will observe.
+ Sure enough, my spam container is there.
+ In this case, it actually has to put the spam on the tabletop in order to have its hand
+ free.
+ So it can close the drawer.
+ Then it uses its open hand to open the bottom drawer.
+ And now it can place the spam there and observe that we've achieved our goal, which is that
+ our spam is safely stored away in our bottom drawer.
+ Yes?
+ You said you pick the bottom drawer first.
+ But there's no optimization in that pattern, right?
+ No.
+ So there is actually two versions of this video.
+ One is that it picks the top drawer first.
+ Yeah.
+ So Russ's-- sorry, Russ's question is, there's no optimization happening.
+ So why would it pick the bottom drawer first?
+ And that actually gets to a point-- we've been talking about solving constraint satisfaction
+ problems.
+ But in this case, all of what we've been talking about is finding satisfying values and not
+ necessarily optimal values.
+ You can imagine having a constraint satisfaction solver that leverages optimization such that
+ you actually do get optimal values.
+ But in this case, it's not.
+ Another question?
+ Yeah?
+ [INAUDIBLE]
+ Yes.
+ The most general form of phrasing Richard's question is, why is all of this worth it?
+ And what is it value?
+ And so you could script this behavior.
+ If I gave you this environment and I said, hey, I want you to get the spam in the bottom
+ drawer and the spam is either in the top drawer or the bottom drawer, I have full belief that--
+ OK, pun not intended.
+ I think that you all could write a script where the robot does exactly that.
+ You could recreate this behavior.
+ It'd be kind of a weird final product, but you could do it.
+ If the environment changes at all, you have to re-script it out.
+ If I gave you a new robot or if I gave you a different object or if I said, now there
+ are three drawers or now my probability distribution is that I believe my prior is that the spam
+ is on the tabletop, you would have to re-script out that behavior.
+ And so the generality that this gets is that I have defined each of my operators and that
+ the task and motion planning element composes that in order to solve my problem.
+ And if I give you a new environment or new objects or a new robot or new settings, you
+ can still kind of throw all of this power at it.
+ You do not need to re-script out robot trajectory, then grasp, and then move, and then pick.
+ The robot is doing that sequencing for you.
+ One of the reasons I love task and motion planning is it allows me to be lazy.
+ I do not want to have to tell my robot what to do.
+ I want it to figure it out for itself.
+ And when you're scripting, you are telling it, do this and then this and then this.
+ Task and motion planning, it is figuring out what is my valid sequence of actions given
+ you've told me what I can do.
+ Yeah?
+ Is there any problem with the-- when you have the expectation part, is it a problem that
+ you get something that is resulted in a task?
+ So that you're--
+ Yeah.
+ So what about the deterministic part of each task?
+ So let's say like it drops a can or something.
+ Yeah.
+ So the question is, what if things are not deterministic and something changes midway?
+ So the case study that we walked through with the bottle, it would absolutely be a problem
+ because there is no replanning there.
+ It plans everything ahead of time.
+ And the robot basically closes its eyes and tries to do it.
+ And so if you, as like a pesky human, ran into the middle of my experiments, the robot
+ would not know what to do.
+ In this case, because it is perceiving and continuously updating its belief, it is doing
+ replanning.
+ It is replanning based off its belief.
+ And so if you were to kind of walk in and like steal the spam, it would update its belief
+ and replan accordingly.
+ OK.
+ So we are exactly at time.
+ I'll just leave with-- this is the list of kind of all of the papers in about rough order
+ of the things we covered.
+ We actually didn't cover some middle part of this.
+ But I think they're really cool.
+ And so if you're kind of interested in explaining this more, again, highest priority probably
+ goes to the survey paper, which kind of summarizes all of this.
+ But these are kind of neat extensions of things you can do with task and motion planning.
+ Yeah.
+ If there are no final questions, this has been the special topic on TAMP.
+ Thanks, everybody.
+ [APPLAUSE]

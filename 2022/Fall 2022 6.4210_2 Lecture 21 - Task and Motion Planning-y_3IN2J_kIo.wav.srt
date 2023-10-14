@@ -1,0 +1,4812 @@
+1
+00:00:00,000 --> 00:00:09,160
+ So task and motion planning is actually, well, let's see, it's a place that I think I would
+
+2
+00:00:09,160 --> 00:00:15,320
+ like to grow the class. I'd like to maybe even move this up in the syllabus into some
+
+3
+00:00:15,320 --> 00:00:20,320
+ of the more core material, because I think if you have this in your toolbox, then you
+
+4
+00:00:20,320 --> 00:00:26,040
+ can program more and more complicated things. And the state machines that some of you have
+
+5
+00:00:26,040 --> 00:00:33,400
+ been using will get you so far, but not to loading a dishwasher, for instance. It's also
+
+6
+00:00:33,400 --> 00:00:38,760
+ a topic that there's some really good research being done on campus. So Leslie and Tomas
+
+7
+00:00:38,760 --> 00:00:46,640
+ in CSAIL are leaders in this field. And Brian Williams also, who's an aero-astro in CSAIL,
+
+8
+00:00:46,640 --> 00:00:50,920
+ does some really nice work on a version of this problem. So there's a lot of expertise
+
+9
+00:00:50,920 --> 00:00:56,580
+ on campus if you get excited about these kind of topics. Okay, so let me try to set it up
+
+10
+00:00:56,580 --> 00:01:01,540
+ relative to what we've talked about before. And then remember, the plan is for me to talk
+
+11
+00:01:01,540 --> 00:01:04,660
+ for the first half, and then Boyan's going to talk for the second half. So I'll try to
+
+12
+00:01:04,660 --> 00:01:13,560
+ not talk too long. So remember, I used this as the example to motivate task-level planning
+
+13
+00:01:13,560 --> 00:01:19,560
+ before. When we were trying to load the dishwasher, this is, now that you've seen it and now you've
+
+14
+00:01:19,560 --> 00:01:25,640
+ thought about it, think about writing a state machine that would think about all the possible
+
+15
+00:01:25,640 --> 00:01:31,200
+ cases that this system might have to potentially be in. Maybe there's plates on top, maybe
+
+16
+00:01:31,200 --> 00:01:36,240
+ there's mugs on top, maybe there's the dishwasher's open, maybe it's not. It would blow the stack.
+
+17
+00:01:36,240 --> 00:01:40,680
+ You'd have an enormous state machine. And the way that the size of the state machine
+
+18
+00:01:40,680 --> 00:01:46,740
+ tends to grow as the number of tasks accumulate and the number of possible transitions accumulate,
+
+19
+00:01:46,740 --> 00:01:54,000
+ it can grow very, very badly. Okay? So in that project, we did not write a big state
+
+20
+00:01:54,000 --> 00:01:59,560
+ machine. We didn't write a big behavior tree. We used planning. And just to remind you that
+
+21
+00:01:59,560 --> 00:02:07,800
+ the way it looked back then was we defined task-level actions, right? And they were finite.
+
+22
+00:02:07,800 --> 00:02:12,560
+ There was a list of things that we programmed with different skills or different actions
+
+23
+00:02:12,560 --> 00:02:16,440
+ that would do things like open the dishwasher door, close the dishwasher door, start the
+
+24
+00:02:16,440 --> 00:02:22,880
+ dishwasher. We even loaded a soap packet if we needed to. Okay? And each of those was
+
+25
+00:02:22,880 --> 00:02:29,740
+ implemented in this sort of abstract class of an action primitive interface. Okay? Which
+
+26
+00:02:29,740 --> 00:02:35,340
+ had just a few sort of reasonable is candidate, get outcomes. We'll talk about those again
+
+27
+00:02:35,340 --> 00:02:41,340
+ in just a minute. Okay? What's interesting is to, so let's just think about is candidate
+
+28
+00:02:41,340 --> 00:02:49,500
+ for a second. So asking, could I run this skill right now? Or more carefully, if I was
+
+29
+00:02:49,500 --> 00:02:55,620
+ in this state, could I run this skill? That's potentially in a very advanced query of trying
+
+30
+00:02:55,620 --> 00:03:00,740
+ to understand when it's suitable to be, you know, to try to open the dishwasher door could
+
+31
+00:03:00,740 --> 00:03:09,300
+ involve solving intelligence or something. This is, but in this context, we have simplified
+
+32
+00:03:09,300 --> 00:03:15,700
+ the problem down so that the state is actually a discrete finite state. Even though the problem
+
+33
+00:03:15,700 --> 00:03:23,700
+ is very complicated, we, in that example, coded the state of the dishwasher as things
+
+34
+00:03:23,700 --> 00:03:29,220
+ like the number of clean items we've already put away, the number of, there's a few things
+
+35
+00:03:29,220 --> 00:03:33,300
+ that are more continuous value, but they were still sampled in a sort of slightly subtle
+
+36
+00:03:33,300 --> 00:03:36,900
+ way. But mostly I want you to think about this at the high level, that those choices
+
+37
+00:03:36,900 --> 00:03:45,580
+ were enumerated into a discrete set. And we could do search on this task level objective,
+
+38
+00:03:45,580 --> 00:03:49,900
+ primarily with graph search, a more advanced form of graph search and incremental type
+
+39
+00:03:49,900 --> 00:03:53,740
+ of graph search. But we roughly turned this into a big graph search problem in order to
+
+40
+00:03:53,740 --> 00:04:02,100
+ decide what we were going to do next. Okay? You know, there was really enumerate, explicit
+
+41
+00:04:02,100 --> 00:04:09,020
+ enumerations, enums of the different states that the system could be in. Okay? And that
+
+42
+00:04:09,020 --> 00:04:16,460
+ is an instantiation of this bigger idea from AI planning. You know, STRIPS is the language
+
+43
+00:04:16,460 --> 00:04:22,260
+ we mentioned very quickly before. It really is, it's a, you know, longstanding tradition
+
+44
+00:04:22,260 --> 00:04:28,500
+ of how to write planning problems, planning descriptions, where you can list initial state,
+
+45
+00:04:28,500 --> 00:04:33,820
+ all state, set of actions. For each action, you list the preconditions, you list the effects
+
+46
+00:04:33,820 --> 00:04:38,900
+ of the action, and this defines a planning problem. And the, you see the action primitive
+
+47
+00:04:38,900 --> 00:04:47,100
+ interface is candidate is exactly the preconditions that you would see from STRIPS. And get outcomes
+
+48
+00:04:47,100 --> 00:04:53,740
+ exactly represents the effect set of this, of that action. And just defining that, where
+
+49
+00:04:53,740 --> 00:04:59,260
+ the, if you can write the preconditions and the effects on a discrete state space, then
+
+50
+00:04:59,260 --> 00:05:06,060
+ you're in the land of AI planning and things. We have very strong tools for that.
+
+51
+00:05:06,060 --> 00:05:12,140
+ I mentioned quickly PDIDL before, the planning domain definition language, which you should
+
+52
+00:05:12,140 --> 00:05:16,900
+ think of as an extension of the STRIPS vocabulary, where there's concepts of like, there's an
+
+53
+00:05:16,900 --> 00:05:23,220
+ object oriented sort of concept in there. There's, so there's now then the notion of
+
+54
+00:05:23,220 --> 00:05:29,340
+ object instances. It's a more expressive way to write big, discrete planning problems.
+
+55
+00:05:29,340 --> 00:05:36,700
+ But it can, if you chose, the winning planners that use PDDL actually do not typically do
+
+56
+00:05:36,700 --> 00:05:42,380
+ standard graph search anymore. But you could convert this into a very big graph search
+
+57
+00:05:42,380 --> 00:05:49,460
+ and do graph search on it. The winning planners do much more heuristic search on a factorized,
+
+58
+00:05:49,460 --> 00:05:56,380
+ considering the factorization in the problem.
+
+59
+00:05:56,380 --> 00:06:04,640
+ And then if you have this high level planning power, then you can accommodate some of the,
+
+60
+00:06:04,640 --> 00:06:10,660
+ so we've made it weak in the sense by having to discretize the world into a handful of
+
+61
+00:06:10,660 --> 00:06:15,420
+ finite buckets. And that weakens our ability to describe all the things that could happen
+
+62
+00:06:15,420 --> 00:06:21,860
+ in the world. But you can overcome some of that with feedback and online replanning.
+
+63
+00:06:21,860 --> 00:06:29,260
+ So in the dish loading example, we would reevaluate our discrete symbol grounding of the world
+
+64
+00:06:29,260 --> 00:06:33,100
+ every time we took an action. And if something changed, we could handle unexpected outcomes.
+
+65
+00:06:33,100 --> 00:06:38,740
+ So that was the example I gave of that is that someone came and closed the dishwasher
+
+66
+00:06:38,740 --> 00:06:43,160
+ door and it would realize that, realize its preconditions were no longer met, choose a
+
+67
+00:06:43,160 --> 00:06:48,420
+ different path through the discrete search space to continue.
+
+68
+00:06:48,420 --> 00:06:57,140
+ Okay, so let me transition to that in a second. So there are cases, so this was a case where
+
+69
+00:06:57,140 --> 00:07:03,940
+ despite its complexity, we were able to get very far by doing things with discrete graph
+
+70
+00:07:03,940 --> 00:07:12,860
+ search first, and then filling in the details with motion planning second. And then the
+
+71
+00:07:12,860 --> 00:07:18,240
+ coupling between that, any gaps in the coupling between the discrete planning and the continuous
+
+72
+00:07:18,240 --> 00:07:24,640
+ motion planning were overcome with feedback. But there are similar problems where that's
+
+73
+00:07:24,640 --> 00:07:29,700
+ not good enough, especially if you have longer term consequences of your actions that you
+
+74
+00:07:29,700 --> 00:07:35,640
+ really cannot decouple the motion planning from the task planning, hence the name of
+
+75
+00:07:35,640 --> 00:07:37,900
+ the lecture.
+
+76
+00:07:37,900 --> 00:07:45,060
+ So Kalen Garrett, a recent graduate from Leslie and Tomas's group, had a number of nice examples
+
+77
+00:07:45,060 --> 00:07:51,100
+ that told that story. I'll use one of his here. I think he's talking, but here we go.
+
+78
+00:07:51,100 --> 00:07:59,660
+ So imagine we just have a little suction gripper, and the problem was to move the red object,
+
+79
+00:07:59,660 --> 00:08:14,900
+ the A, onto the red region. The B, let me do that again. Yeah, movable blocks, placeable
+
+80
+00:08:14,900 --> 00:08:21,220
+ regions. If you think about the continuous values of that problem, there's a continuous
+
+81
+00:08:21,220 --> 00:08:26,180
+ state that represents the location of the A block. There's continuous state that represents
+
+82
+00:08:26,180 --> 00:08:29,700
+ the location of the B block, where they are in the world, where the gripper is in the
+
+83
+00:08:29,700 --> 00:08:38,620
+ world. The only reason that you have to move the A block first, whatever, is because of
+
+84
+00:08:38,620 --> 00:08:44,740
+ the continuous location. There was a block that was impeding my ability to solve the
+
+85
+00:08:44,740 --> 00:08:47,820
+ simple version of the problem. I wanted to just pick up this block and put it in this
+
+86
+00:08:47,820 --> 00:08:54,020
+ region. There was a different block that was in the way. Because of its continuous value,
+
+87
+00:08:54,020 --> 00:08:59,380
+ I had to make a different set of, I had to order my discrete actions differently. Does
+
+88
+00:08:59,380 --> 00:09:04,980
+ that make sense? The coupling between the discrete and the continuous exposed itself
+
+89
+00:09:04,980 --> 00:09:11,460
+ that it really affected what your first action should be. So the planners, these stronger
+
+90
+00:09:11,460 --> 00:09:16,220
+ task and motion planners, will solve that harder version of the problem, where they
+
+91
+00:09:16,220 --> 00:09:21,260
+ jointly solve for the discrete path through the graph, and the continuous actions of the
+
+92
+00:09:21,260 --> 00:09:29,380
+ manipulator, task and motion planning.
+
+93
+00:09:29,380 --> 00:09:39,860
+ Here's another example that, let me talk through it again. So this is the PR2, the much-loved,
+
+94
+00:09:39,860 --> 00:09:48,220
+ no longer with us, PR2 that Leslie and Tomas used to use constantly. The PR2 slowly went
+
+95
+00:09:48,220 --> 00:09:53,700
+ out of existence. They bought every spare part on eBay possible, and it's not around
+
+96
+00:09:53,700 --> 00:10:03,460
+ anymore. So this task is to pour the contents of the blue mug into, I forget if it's the
+
+97
+00:10:03,460 --> 00:10:08,860
+ white or the red bowl, but basically pour that out. So you would think the simple strategy
+
+98
+00:10:08,860 --> 00:10:12,620
+ would just be, okay, first I have to pick up the mug, then I take it over and pour it.
+
+99
+00:10:12,620 --> 00:10:18,980
+ But because of the location of the green block at the initial time, and the kinematics of
+
+100
+00:10:18,980 --> 00:10:25,500
+ the arm, it was impossible to pick up the blue cup from an orientation that would later
+
+101
+00:10:25,500 --> 00:10:29,980
+ allow you to pour at an angle that would get it in. But these were the kinematics of the
+
+102
+00:10:29,980 --> 00:10:35,620
+ robot, the joint limits, the size of its hand, were affecting the order in which you had
+
+103
+00:10:35,620 --> 00:10:39,380
+ to execute things. You wouldn't have even needed to pick the green block if it wasn't
+
+104
+00:10:39,380 --> 00:10:43,260
+ for the kinematic limits and the continuous variables.
+
+105
+00:10:43,260 --> 00:10:53,540
+ So that's just another example here of, see the green blocks in the way. But the stronger
+
+106
+00:10:53,540 --> 00:11:03,580
+ task and motion planning algorithms will solve that big version of the problem with a sample-based
+
+107
+00:11:03,580 --> 00:11:14,460
+ planner. So I want to tell you just quickly a couple of the ideas from task and motion
+
+108
+00:11:14,460 --> 00:11:18,660
+ planning and make sure I leave plenty of time for Bojan.
+
+109
+00:11:18,660 --> 00:11:24,660
+ So there's a nice survey that Kalin and company wrote about integrated task and motion planning.
+
+110
+00:11:24,660 --> 00:11:29,140
+ It's not that old. It's still quite very relevant. So I'd strongly recommend it if you want to
+
+111
+00:11:29,140 --> 00:11:35,260
+ get a more encyclopedic coverage of this kind of material. But actually one of the things
+
+112
+00:11:35,260 --> 00:11:40,120
+ that they do in that survey is they make a taxonomy of the different approaches that
+
+113
+00:11:40,120 --> 00:11:44,820
+ people have taken to task and motion planning. So TAMP is what all the cool kids call task
+
+114
+00:11:44,820 --> 00:11:54,660
+ and motion planning. And I think the choices they made about the X and Y axis of the little
+
+115
+00:11:54,660 --> 00:11:57,620
+ grid are useful to understand.
+
+116
+00:11:57,620 --> 00:12:05,100
+ So I'll give a couple examples that I hope tell the story clearly. But let's think about
+
+117
+00:12:05,100 --> 00:12:11,780
+ sequence first versus satisfaction first. Roughly speaking, if I were to make choices
+
+118
+00:12:11,780 --> 00:12:17,500
+ about all of the continuous variables in my search problem, then I can reduce the problem
+
+119
+00:12:17,500 --> 00:12:25,140
+ back to a discrete graph search. And that would be sort of solve the continuous problems
+
+120
+00:12:25,140 --> 00:12:29,660
+ first and then go to the discrete.
+
+121
+00:12:29,660 --> 00:12:36,420
+ There's similarly, you could try to solve for a discrete path problem and then try to
+
+122
+00:12:36,420 --> 00:12:41,460
+ fill in the details of your motion plan. Now of course, because of the task and motion
+
+123
+00:12:41,460 --> 00:12:45,820
+ planning coupling, you can't just fix the high level sequence and then solve for the
+
+124
+00:12:45,820 --> 00:12:51,300
+ continuous. But some of these strategies really dominate by thinking about first let's pick
+
+125
+00:12:51,300 --> 00:12:57,100
+ a discrete set of actions, try to fill in the continuous thing. If I got a violation,
+
+126
+00:12:57,100 --> 00:13:02,260
+ I was not able to find a solution on the continuous problem, then I'll go back and revise my discrete
+
+127
+00:13:02,260 --> 00:13:08,780
+ plan. But in some of these problems, the discrete rules, people love their discrete planners,
+
+128
+00:13:08,780 --> 00:13:12,820
+ they're very strong. Let's try to find a way to jam continuous reasoning into the discrete
+
+129
+00:13:12,820 --> 00:13:13,820
+ planners.
+
+130
+00:13:13,820 --> 00:13:18,260
+ Similarly, there's some people, and I would probably put myself in the second class maybe,
+
+131
+00:13:18,260 --> 00:13:23,060
+ which is we love our continuous trajectory optimization, right? And we can find ways
+
+132
+00:13:23,060 --> 00:13:29,380
+ to jam discrete stuff into our continuous trajectory optimization. And so those are
+
+133
+00:13:29,380 --> 00:13:34,220
+ sort of the top and the bottom axes. And the interleaved are the people that are maybe
+
+134
+00:13:34,220 --> 00:13:39,300
+ trying to do a little bit more of let's do a little bit of planning, incrementally build
+
+135
+00:13:39,300 --> 00:13:44,260
+ my long term plan, and incrementally call my motion planner, and try to do a little
+
+136
+00:13:44,260 --> 00:13:49,180
+ bit more explicit coupling.
+
+137
+00:13:49,180 --> 00:13:56,660
+ So I thought I would pick two instances here that are two of my favorites here. So the
+
+138
+00:13:56,660 --> 00:14:02,420
+ logic geometric programming is people like me that think about trajectory optimization
+
+139
+00:14:02,420 --> 00:14:07,060
+ first and try to put some discrete planning into the trajectory optimization framework.
+
+140
+00:14:07,060 --> 00:14:12,380
+ And then Padiddle Stream, which was Kalen's work, is a little bit-- it's interleaved,
+
+141
+00:14:12,380 --> 00:14:15,940
+ but I would say it's still coming a little bit more from the sampling first and putting
+
+142
+00:14:15,940 --> 00:14:19,300
+ motion planning into the sampler.
+
+143
+00:14:19,300 --> 00:14:26,380
+ OK, let me tell you just a few things about logic geometric programming. First of all,
+
+144
+00:14:26,380 --> 00:14:33,020
+ it's awesome. There's just very compelling examples. This one's from Danny. This was
+
+145
+00:14:33,020 --> 00:14:39,060
+ actually follow on work that connected its perception and other things. But the basic
+
+146
+00:14:39,060 --> 00:14:44,860
+ idea that a trajectory optimization is solving for these very multi-step processes that are
+
+147
+00:14:44,860 --> 00:14:50,460
+ making long term decisions between multiple arms that need to coordinate in order to accomplish
+
+148
+00:14:50,460 --> 00:14:51,460
+ a task.
+
+149
+00:14:51,460 --> 00:14:56,560
+ Like that was put the yellow block on the red thing. Pretty similar to what we talked
+
+150
+00:14:56,560 --> 00:15:04,580
+ about before, right? But where you had to move block A to get block B there. But these
+
+151
+00:15:04,580 --> 00:15:10,960
+ are solving definitely multi-step handover kind of problems from a description which
+
+152
+00:15:10,960 --> 00:15:18,900
+ is not imposing that the system must make a handover. That is discovered as part of
+
+153
+00:15:18,900 --> 00:15:22,460
+ the sequences discovered along with the continuous motions.
+
+154
+00:15:22,460 --> 00:15:29,000
+ OK, so I think I could tell you the gist of how that works because I've already told
+
+155
+00:15:29,000 --> 00:15:35,600
+ you about kinematic trajectory optimization. So my toy version of kinematic trajectory
+
+156
+00:15:35,600 --> 00:15:39,780
+ optimization didn't even have a robot. It just had a point that was going around the
+
+157
+00:15:39,780 --> 00:15:45,560
+ red obstacle. And we wrote optimization problems which had a cost. In this case, it was just
+
+158
+00:15:45,560 --> 00:15:49,180
+ the shortest path kind of cost. Even a weird one in the square.
+
+159
+00:15:49,180 --> 00:15:58,180
+ OK, I started at the x start. My final thing was x goal. And that last one is just the
+
+160
+00:15:58,180 --> 00:16:05,740
+ constraint that said for all n, I want to be outside the obstacle. And more generally,
+
+161
+00:16:05,740 --> 00:16:17,780
+ I might write that as minimize x0 to xn. And it's important to realize I had to make a
+
+162
+00:16:17,780 --> 00:16:22,500
+ choice on the number of steps I'm going to optimize over.
+
+163
+00:16:22,500 --> 00:16:31,260
+ The sum over n. Maybe I've got some-- I'll use l for my loss function. And yeah, I'll
+
+164
+00:16:31,260 --> 00:16:34,580
+ stick with x since that's on the board. But it could probably just be my joint angles,
+
+165
+00:16:34,580 --> 00:16:46,900
+ for instance. Maybe it's xn plus 1 and xn. I wanted to have that. n equals 0 to n minus
+
+166
+00:16:46,900 --> 00:17:07,740
+ 1. Subject to-- generally, I might have constraints of the form like this, for instance. And then
+
+167
+00:17:07,740 --> 00:17:19,420
+ I had my initial condition, my final condition, right?
+
+168
+00:17:19,420 --> 00:17:28,100
+ What logic geometric programming is doing is solving a more complicated version of this,
+
+169
+00:17:28,100 --> 00:17:33,460
+ which I would call hybrid kinematic trajectory optimization. There's many different names
+
+170
+00:17:33,460 --> 00:17:37,900
+ for it. But if you've taken underactuated, you'll recognize hybrid trajectory optimization.
+
+171
+00:17:37,900 --> 00:17:46,940
+ This is a longstanding thing from more dynamic systems, in hybrid systems. But this is a
+
+172
+00:17:46,940 --> 00:17:50,220
+ kinematic version of that.
+
+173
+00:17:50,220 --> 00:17:56,060
+ So in hybrid kinematic trajectory optimization, I'll do it in a step. Let's call this like--
+
+174
+00:17:56,060 --> 00:18:08,980
+ I'll even call this action number 1. And then I'm going to have a second problem, which
+
+175
+00:18:08,980 --> 00:18:17,460
+ is action number 2. And for action number 2, I'll similarly write out my new n decision
+
+176
+00:18:17,460 --> 00:18:21,220
+ variables. Maybe it's even m decision variables. No need for them to be the same. And I'll
+
+177
+00:18:21,220 --> 00:18:38,060
+ have a loss function that's l subject to g and subject to x0 equals something, xm equals
+
+178
+00:18:38,060 --> 00:18:39,900
+ something, right?
+
+179
+00:18:39,900 --> 00:18:46,460
+ Think about it making just a complete copy of this algorithm. But perhaps when I'm taking
+
+180
+00:18:46,460 --> 00:18:52,460
+ action number 2, I'll have a slightly different set of constraints here. Maybe action number
+
+181
+00:18:52,460 --> 00:19:10,340
+ 1 represent move the arm without an object. And maybe action number 2 might be move the
+
+182
+00:19:10,340 --> 00:19:22,180
+ arm with block A in the gripper.
+
+183
+00:19:22,180 --> 00:19:27,940
+ So maybe if I know that block A is in the gripper, then I'll have a constraint here
+
+184
+00:19:27,940 --> 00:19:37,540
+ saying, for instance, the q of my robot or my gripper equals the q of block A for all
+
+185
+00:19:37,540 --> 00:19:43,260
+ of the steps m.
+
+186
+00:19:43,260 --> 00:19:48,020
+ And then maybe I've got an action number 3. You get the point here. But I've got an action
+
+187
+00:19:48,020 --> 00:20:01,940
+ number 3, which is move with block B. And I've got all the same things, but my g here
+
+188
+00:20:01,940 --> 00:20:08,380
+ would say that the q of the robot has got to equal the location of block B, that block
+
+189
+00:20:08,380 --> 00:20:12,340
+ B somehow moves with the robot.
+
+190
+00:20:12,340 --> 00:20:17,140
+ So I could solve those. If I knew the sequence a priori, I could solve those one at a time.
+
+191
+00:20:17,140 --> 00:20:21,140
+ I could say, I'm going to move block A. I'll run that first problem. And then I'll stop.
+
+192
+00:20:21,140 --> 00:20:26,260
+ And I'll take whatever the situation is right now. I'll try to move block B. I'll solve
+
+193
+00:20:26,260 --> 00:20:30,380
+ that second problem from the current initial condition.
+
+194
+00:20:30,380 --> 00:20:41,140
+ But if you want to solve them jointly, if someone has told you already, given the sequence,
+
+195
+00:20:41,140 --> 00:20:48,220
+ if I said, I want to do a sequence which would be, I'm going to move, let's say, action 0.
+
+196
+00:20:48,220 --> 00:20:54,980
+ And then I'll do action 1. I'll move block A. And then I'll do action 0 again, because
+
+197
+00:20:54,980 --> 00:21:03,980
+ I need to move my robot over to where the block B is. And then I'll do action 2.
+
+198
+00:21:03,980 --> 00:21:08,260
+ If someone tells me what the sequence is going to be, then I could solve that whole problem
+
+199
+00:21:08,260 --> 00:21:14,380
+ jointly as a single trajectory optimization problem, where I could just accumulate all
+
+200
+00:21:14,380 --> 00:21:18,740
+ the costs into one big cost for all the problems.
+
+201
+00:21:18,740 --> 00:21:32,620
+ And add extra constraints, saying that x0 from-- let's say xn from action 0 has to equal
+
+202
+00:21:32,620 --> 00:21:35,060
+ x0 from action 1.
+
+203
+00:21:35,060 --> 00:21:43,140
+ I'll use the constraints of the initial condition of this problem
+
+204
+00:21:43,140 --> 00:21:45,580
+ to match the final condition of that problem.
+
+205
+00:21:45,580 --> 00:21:47,500
+ I'll take the initial condition of this problem
+
+206
+00:21:47,500 --> 00:21:49,460
+ to match the final condition of that problem.
+
+207
+00:21:49,460 --> 00:21:54,420
+ And I'll just make constraints that link these two together.
+
+208
+00:21:54,420 --> 00:21:58,020
+ Is that clear?
+
+209
+00:21:58,020 --> 00:22:09,900
+ xn of action 1 has got to equal x0 of action 0 second time.
+
+210
+00:22:09,900 --> 00:22:15,620
+ And the decision variables that I'm handing to my optimizer
+
+211
+00:22:15,620 --> 00:22:21,660
+ now is a sequence of x's for this action, a sequence of x's at this action,
+
+212
+00:22:21,660 --> 00:22:23,780
+ a sequence of x's for this action.
+
+213
+00:22:23,780 --> 00:22:26,140
+ Each of those is a sequence of decision variables
+
+214
+00:22:26,140 --> 00:22:28,140
+ that I'm handing the solver.
+
+215
+00:22:28,140 --> 00:22:30,700
+ And then I've got a bunch of constraints, which
+
+216
+00:22:30,700 --> 00:22:34,100
+ allow those optimization problems to couple each other,
+
+217
+00:22:34,100 --> 00:22:37,100
+ so that the final condition of this matches the initial condition of that,
+
+218
+00:22:37,100 --> 00:22:38,660
+ so on and so forth.
+
+219
+00:22:38,660 --> 00:22:40,980
+ That's a much bigger optimization problem.
+
+220
+00:22:40,980 --> 00:22:44,340
+ It's potentially harder for the solver to cope with,
+
+221
+00:22:44,340 --> 00:22:49,700
+ but it fits still directly into the nonlinear optimization framework,
+
+222
+00:22:49,700 --> 00:22:53,300
+ if someone gives me the action sequence.
+
+223
+00:22:53,300 --> 00:22:55,860
+ And that's what you'd call a hybrid trajectory optimization,
+
+224
+00:22:55,860 --> 00:22:59,060
+ a hybrid kinematic trajectory optimization problem.
+
+225
+00:22:59,060 --> 00:23:01,580
+ And it turns out solvers can do pretty well with that.
+
+226
+00:23:01,580 --> 00:23:04,940
+ You can add-- I just used making the initial and final state
+
+227
+00:23:04,940 --> 00:23:08,620
+ match as the only requirement, but you could do more requirements.
+
+228
+00:23:08,620 --> 00:23:12,300
+ Like for instance, if I'm going to pick up the object,
+
+229
+00:23:12,300 --> 00:23:16,060
+ if I'm going to transition from moving the robot to picking up the object,
+
+230
+00:23:16,060 --> 00:23:20,740
+ then probably the final state of this had better put the robot
+
+231
+00:23:20,740 --> 00:23:22,580
+ where the object is, for instance.
+
+232
+00:23:22,580 --> 00:23:25,300
+ You can put the necessary constraints that
+
+233
+00:23:25,300 --> 00:23:30,860
+ couple those problems that were previously independent into one.
+
+234
+00:23:30,860 --> 00:23:35,580
+ Now why is that better than solving them independently?
+
+235
+00:23:35,580 --> 00:23:39,980
+ Because those continuous variables at the interface,
+
+236
+00:23:39,980 --> 00:23:43,820
+ if I had to solve this a priori before I even started moving,
+
+237
+00:23:43,820 --> 00:23:46,780
+ in order to solve this problem, I would have to make an arbitrary choice
+
+238
+00:23:46,780 --> 00:23:48,260
+ at the initial location of that object.
+
+239
+00:23:48,260 --> 00:23:54,460
+ I would have to lock in the continuous variables at each of these interfaces.
+
+240
+00:23:54,460 --> 00:23:59,540
+ But here it's free to solve for a trajectory only under the constraint.
+
+241
+00:23:59,540 --> 00:24:01,420
+ Not that it's at a particular goal, but just
+
+242
+00:24:01,420 --> 00:24:04,100
+ at a goal that's good enough to start up this optimization that's
+
+243
+00:24:04,100 --> 00:24:07,460
+ consistent with that second optimization.
+
+244
+00:24:07,460 --> 00:24:11,220
+ So this is the optimization beginning of task and motion planning.
+
+245
+00:24:11,220 --> 00:24:18,580
+ And those problems are well understood and good, again,
+
+246
+00:24:18,580 --> 00:24:20,580
+ if that action sequence is given.
+
+247
+00:24:20,580 --> 00:24:23,380
+ Not just you need to know the number of them,
+
+248
+00:24:23,380 --> 00:24:25,580
+ because you need to know how many decision variables,
+
+249
+00:24:25,580 --> 00:24:29,980
+ and you need to know the order of them.
+
+250
+00:24:29,980 --> 00:24:32,980
+ The second thing you can do is then formulate-- now
+
+251
+00:24:32,980 --> 00:24:37,140
+ this is the continuous optimization people sticking some discreteness in.
+
+252
+00:24:37,140 --> 00:24:38,460
+ OK?
+
+253
+00:24:38,460 --> 00:24:40,660
+ Let's do a search, a higher level search,
+
+254
+00:24:40,660 --> 00:24:44,620
+ that tries to permute the different possible discrete sequences.
+
+255
+00:24:44,620 --> 00:24:45,120
+ OK?
+
+256
+00:24:45,120 --> 00:24:48,340
+ And for each of those, we'll solve the continuous optimization problem
+
+257
+00:24:48,340 --> 00:24:49,540
+ underneath.
+
+258
+00:24:49,540 --> 00:24:53,540
+ And if we're smart about it, we don't have to solve all of the possibilities.
+
+259
+00:24:53,540 --> 00:24:58,220
+ We can use bounds on one solution to rule out
+
+260
+00:24:58,220 --> 00:25:01,300
+ some of the permutations of this.
+
+261
+00:25:01,300 --> 00:25:01,800
+ OK?
+
+262
+00:25:01,800 --> 00:25:05,940
+ So we saw that a little bit when I talked about branch and bound
+
+263
+00:25:05,940 --> 00:25:10,700
+ for-- I talked about it only quickly in the trajectory optimization.
+
+264
+00:25:10,700 --> 00:25:16,620
+ But for those of you that know it, I just want to connect to that.
+
+265
+00:25:16,620 --> 00:25:20,140
+ But there's a standard approach to mixing
+
+266
+00:25:20,140 --> 00:25:22,980
+ some of these discrete and continuous optimizations.
+
+267
+00:25:22,980 --> 00:25:25,300
+ It's very well understood and gives strong guarantees
+
+268
+00:25:25,300 --> 00:25:28,300
+ when the subproblems are convex.
+
+269
+00:25:28,300 --> 00:25:32,380
+ That is not the case, necessarily, in logic geometric programming.
+
+270
+00:25:32,380 --> 00:25:37,460
+ Nevertheless, you can set up a strategy
+
+271
+00:25:37,460 --> 00:25:40,780
+ where you solve a relaxed version of the problem at each time step.
+
+272
+00:25:40,780 --> 00:25:44,980
+ And then you try to refine your solution in order
+
+273
+00:25:44,980 --> 00:25:48,180
+ to search for this action sequence.
+
+274
+00:25:48,180 --> 00:25:49,980
+ That's the discrete decision.
+
+275
+00:25:49,980 --> 00:25:52,900
+ And at each level, you're solving continuous optimization problems.
+
+276
+00:25:59,100 --> 00:26:04,180
+ So in my mind, what logic geometric programming does very well
+
+277
+00:26:04,180 --> 00:26:07,380
+ is it does this branch-- it sets up this branch and bound over action
+
+278
+00:26:07,380 --> 00:26:09,060
+ sequences.
+
+279
+00:26:09,060 --> 00:26:13,180
+ It solves very efficiently the hybrid kinematic trajectory optimization
+
+280
+00:26:13,180 --> 00:26:14,140
+ problem.
+
+281
+00:26:14,140 --> 00:26:16,620
+ It does use non-convex solvers that are going
+
+282
+00:26:16,620 --> 00:26:18,540
+ to have local minima and everything like that.
+
+283
+00:26:18,540 --> 00:26:20,460
+ So there are no guarantees.
+
+284
+00:26:20,460 --> 00:26:25,620
+ But in practice, there's a lot of impressive results.
+
+285
+00:26:25,620 --> 00:26:28,620
+ And I think the thing-- my favorite part of the logic geometric
+
+286
+00:26:28,620 --> 00:26:32,500
+ programming approach-- so when we have done, in my group,
+
+287
+00:26:32,500 --> 00:26:36,620
+ mixed integer branch and bound type algorithms for, let's say,
+
+288
+00:26:36,620 --> 00:26:40,740
+ footstep planning of a humanoid, I've been, I think,
+
+289
+00:26:40,740 --> 00:26:44,940
+ a little stubborn about saying I want to take the problem instance
+
+290
+00:26:44,940 --> 00:26:49,540
+ and I'm going to hand it to Garobi or some well understood solver.
+
+291
+00:26:49,540 --> 00:26:52,500
+ And I want to come up with exactly the right problem instance
+
+292
+00:26:52,500 --> 00:26:55,260
+ that I can hand to that-- there's a clear problem
+
+293
+00:26:55,260 --> 00:26:57,060
+ instance of mixed integer convex.
+
+294
+00:26:57,060 --> 00:26:58,660
+ I'm going to formulate that instance.
+
+295
+00:26:58,660 --> 00:26:59,740
+ I'm going to hand it over.
+
+296
+00:26:59,740 --> 00:27:02,260
+ Mark Toussaint and company, they didn't use Garobi.
+
+297
+00:27:02,260 --> 00:27:03,900
+ They wrote their own solver on the end.
+
+298
+00:27:03,900 --> 00:27:07,300
+ And they made every-- took every advantage of that.
+
+299
+00:27:07,300 --> 00:27:09,100
+ Like anything you could do that would avoid
+
+300
+00:27:09,100 --> 00:27:12,580
+ solving the big problem downstream, they would take those shortcuts.
+
+301
+00:27:12,580 --> 00:27:17,900
+ So for instance, it might be that if action two required
+
+302
+00:27:17,900 --> 00:27:21,260
+ solving a kinematic trajectory optimization problem that would say,
+
+303
+00:27:21,260 --> 00:27:28,740
+ move my bag over to here, I could do an inverse kinematics query
+
+304
+00:27:28,740 --> 00:27:31,660
+ and understand very quickly that I can't even
+
+305
+00:27:31,660 --> 00:27:34,700
+ reach the bag after action zero.
+
+306
+00:27:34,700 --> 00:27:36,820
+ And I don't even have to solve the kinematic trajectory optimization
+
+307
+00:27:36,820 --> 00:27:38,100
+ problem.
+
+308
+00:27:38,100 --> 00:27:40,020
+ So there's a lot of very clever heuristics
+
+309
+00:27:40,020 --> 00:27:43,020
+ in there that leverage the kinematic problem in order
+
+310
+00:27:43,020 --> 00:27:46,600
+ to prune more and more branches of those trees.
+
+311
+00:27:46,600 --> 00:27:48,900
+ And I think that's what made it scale particularly well.
+
+312
+00:27:49,780 --> 00:27:51,780
+ Questions about logic geometric programming?
+
+313
+00:27:51,780 --> 00:28:00,660
+ This is, I think, one of Mark's favorites,
+
+314
+00:28:00,660 --> 00:28:02,740
+ Mark Toussaint's favorite version of it,
+
+315
+00:28:02,740 --> 00:28:07,380
+ where he picks up a stick and moves the box.
+
+316
+00:28:07,380 --> 00:28:10,060
+ However, it's pretty slick.
+
+317
+00:28:10,060 --> 00:28:12,100
+ There's also one I couldn't find quickly this morning
+
+318
+00:28:12,100 --> 00:28:15,380
+ where it grabs a hockey stick and pulls something from far away.
+
+319
+00:28:15,380 --> 00:28:17,300
+ That's a pretty good one, too.
+
+320
+00:28:17,300 --> 00:28:18,300
+ Yes?
+
+321
+00:28:18,300 --> 00:28:19,300
+ For the heuristics that prune the thing, how's that different from just hand-carving
+
+322
+00:28:19,300 --> 00:28:20,300
+ the-- what was described earlier of just like--
+
+323
+00:28:20,300 --> 00:28:21,300
+ OK.
+
+324
+00:28:21,300 --> 00:28:41,420
+ So the question is, so I think there are general heuristics just based on geometry,
+
+325
+00:28:41,420 --> 00:28:46,020
+ reachability of kinematics and stuff, which feel a little less bespoke
+
+326
+00:28:46,020 --> 00:28:50,460
+ than saying, does the dishwasher open at a certain time or something like that.
+
+327
+00:28:50,460 --> 00:28:55,020
+ But he still has to define the different actions.
+
+328
+00:28:55,020 --> 00:29:00,220
+ And that is the analogy to deciding that there's a move the mug now.
+
+329
+00:29:00,220 --> 00:29:03,300
+ The way that they decided, though, is by, in the subproblem,
+
+330
+00:29:03,300 --> 00:29:06,460
+ writing a constraint saying that the pick up the mug action
+
+331
+00:29:06,460 --> 00:29:09,940
+ means that the mug is welded to the hand for this part of that--
+
+332
+00:29:09,940 --> 00:29:12,060
+ during that action.
+
+333
+00:29:12,060 --> 00:29:15,820
+ So the encoding of semantics into the optimization
+
+334
+00:29:15,820 --> 00:29:17,820
+ happens by the definition of each subproblem.
+
+335
+00:29:17,820 --> 00:29:18,820
+ Yes?
+
+336
+00:29:18,820 --> 00:29:22,820
+ I guess in this type of example, would there be one that like,
+
+337
+00:29:22,820 --> 00:29:23,820
+ it's a [INAUDIBLE]
+
+338
+00:29:23,820 --> 00:29:29,280
+ Let's see.
+
+339
+00:29:29,280 --> 00:29:33,260
+ Probably go to the stick is one, move the stick is two.
+
+340
+00:29:33,260 --> 00:29:36,180
+ And then probably the third one is when it's in contact,
+
+341
+00:29:36,180 --> 00:29:37,180
+ I guess three.
+
+342
+00:29:37,180 --> 00:29:38,180
+ If I had to guess.
+
+343
+00:29:38,180 --> 00:29:40,540
+ And then maybe a move away is even four.
+
+344
+00:29:40,540 --> 00:29:41,540
+ But small number.
+
+345
+00:29:41,540 --> 00:29:42,540
+ Yeah.
+
+346
+00:29:42,540 --> 00:29:49,660
+ I think these are solving impressive, but maybe not super long duration horizon planning
+
+347
+00:29:49,660 --> 00:29:50,660
+ problems.
+
+348
+00:29:50,660 --> 00:30:04,460
+ The sequences tend to be 10-ish steps or less, let's say, not hundreds or thousands.
+
+349
+00:30:04,460 --> 00:30:10,020
+ The thing I worry about with these kind of methods is local minima.
+
+350
+00:30:10,020 --> 00:30:17,180
+ So I think the branch and bound performance will eventually-- so you can make stronger
+
+351
+00:30:17,180 --> 00:30:22,020
+ or less strong branch and bound type approaches.
+
+352
+00:30:22,020 --> 00:30:29,260
+ But I would worry more about local minima in this.
+
+353
+00:30:29,260 --> 00:30:31,780
+ OK.
+
+354
+00:30:31,780 --> 00:30:33,500
+ Let me quickly talk about Pudittal stream.
+
+355
+00:30:33,500 --> 00:30:34,660
+ Leave time for William.
+
+356
+00:30:34,660 --> 00:30:38,580
+ So Pudittal stream is a different example.
+
+357
+00:30:38,580 --> 00:30:43,860
+ So this is now coming more from the sampling-- or it's from the logical planning, symbolic
+
+358
+00:30:43,860 --> 00:30:48,340
+ planning side of the world, and pushing down and bringing a few of the motion planning
+
+359
+00:30:48,340 --> 00:30:50,940
+ ideas up into the sample-based planning.
+
+360
+00:30:50,940 --> 00:30:55,460
+ And so integrating symbolic planners and black box samplers.
+
+361
+00:30:55,460 --> 00:30:58,380
+ And don't tell Kalin.
+
+362
+00:30:58,380 --> 00:31:01,460
+ But I'm going to talk about it in a pretty different way than I think Kalin would talk
+
+363
+00:31:01,460 --> 00:31:02,460
+ about it.
+
+364
+00:31:02,460 --> 00:31:06,100
+ So this is just an example of it doing cool things.
+
+365
+00:31:06,100 --> 00:31:11,180
+ It's like put all the objects in the bowl that is most similar to its color.
+
+366
+00:31:11,180 --> 00:31:16,360
+ These are advanced, long horizon tasks that they're able to solve with this.
+
+367
+00:31:16,360 --> 00:31:21,260
+ But the way I want to think about it-- I hope it's OK-- I want to put it in my language,
+
+368
+00:31:21,260 --> 00:31:24,940
+ which is the graph of convex sets language.
+
+369
+00:31:24,940 --> 00:31:31,420
+ So if you remember, the graph of convex sets was this idea that you could take the standard
+
+370
+00:31:31,420 --> 00:31:38,180
+ shortest path on a graph problem and expand its vocabulary by saying, every time you visit
+
+371
+00:31:38,180 --> 00:31:45,880
+ a discrete set, you're allowed to pick one element from a continuous valued function.
+
+372
+00:31:45,880 --> 00:31:49,020
+ And we tried to say that the set of those was convex.
+
+373
+00:31:49,020 --> 00:31:54,680
+ So the shortest path problem, if you say I want to have a source here and a target here,
+
+374
+00:31:54,680 --> 00:32:00,080
+ the shortest path might be choose this real value, continuous value, this continuous value,
+
+375
+00:32:00,080 --> 00:32:02,500
+ this continuous value, this continuous value.
+
+376
+00:32:02,500 --> 00:32:07,620
+ And in the case of a graph search, where we have convex regions, we've been working on
+
+377
+00:32:07,620 --> 00:32:12,740
+ ways to make that solve with optimization.
+
+378
+00:32:12,740 --> 00:32:16,640
+ Pudittal stream does not make any assumptions about the convexity of those sets.
+
+379
+00:32:16,640 --> 00:32:18,700
+ It's solving a harder problem.
+
+380
+00:32:18,700 --> 00:32:21,900
+ And it's doing it with sampling instead of with optimization.
+
+381
+00:32:21,900 --> 00:32:27,420
+ And the reason I want to draw this is because this is how I think about the way Pudittal
+
+382
+00:32:27,420 --> 00:32:29,240
+ stream works.
+
+383
+00:32:29,240 --> 00:32:34,880
+ So one of the key observations in this kind of mixed continuous and discrete planning
+
+384
+00:32:34,880 --> 00:32:35,880
+ is this.
+
+385
+00:32:35,880 --> 00:32:41,580
+ So if you were to give me the path, if you were to tell me already I'm going to take
+
+386
+00:32:41,580 --> 00:32:47,940
+ this path of sets, then the optimization problem is easy for us because it becomes a convex
+
+387
+00:32:47,940 --> 00:32:48,940
+ optimization problem.
+
+388
+00:32:48,940 --> 00:32:52,180
+ It's only the continuous values that have to be decided.
+
+389
+00:32:52,180 --> 00:32:57,760
+ Similarly, if you were to choose the continuous values, the problem is easy.
+
+390
+00:32:57,760 --> 00:33:00,940
+ It becomes a discrete graph search.
+
+391
+00:33:00,940 --> 00:33:01,940
+ Either one of those is easy.
+
+392
+00:33:01,940 --> 00:33:04,480
+ It's only when you put them together that it's hard.
+
+393
+00:33:04,480 --> 00:33:15,280
+ What Pudittal stream is doing, in my mind-- so I have this picture of a graph here-- is
+
+394
+00:33:15,280 --> 00:33:16,280
+ it's sampling.
+
+395
+00:33:16,280 --> 00:33:22,280
+ So the streams in Pudittal stream are samplers, black box samplers.
+
+396
+00:33:22,280 --> 00:33:26,000
+ You can think about it for any set here.
+
+397
+00:33:26,000 --> 00:33:32,680
+ Every time I evaluate the stream, I pulled one more sample out of that potential set.
+
+398
+00:33:32,680 --> 00:33:37,920
+ The samplers, the streams, the samplers that are used in Pudittal stream are inverse kinematics
+
+399
+00:33:37,920 --> 00:33:41,880
+ queries or even a collision-free motion planning.
+
+400
+00:33:41,880 --> 00:33:47,200
+ Like GCS, you could say that if I'm in this set, one point in this set might correspond
+
+401
+00:33:47,200 --> 00:33:52,720
+ to an entire trajectory of a subproblem.
+
+402
+00:33:52,720 --> 00:33:56,560
+ So what Pudittal stream does is it-- well, let's see the straw man version of what Pudittal
+
+403
+00:33:56,560 --> 00:34:02,500
+ stream does, which Kalin uses as a straw man-- is that you could just pick a bunch of random
+
+404
+00:34:02,500 --> 00:34:13,920
+ samples, evaluate your stream 100 times for each set, and then make your edges from all
+
+405
+00:34:13,920 --> 00:34:16,280
+ of these points to all of these points.
+
+406
+00:34:16,280 --> 00:34:19,840
+ And you have just a really big discrete graph search problem.
+
+407
+00:34:19,840 --> 00:34:28,280
+ Similarly, for all the quadratic set of points here, I have to make all the edges here.
+
+408
+00:34:28,280 --> 00:34:30,720
+ And you'd get a really big graph search problem.
+
+409
+00:34:30,720 --> 00:34:36,760
+ But that would be a way to take your mixed discrete and continuous problem, sample, and
+
+410
+00:34:36,760 --> 00:34:38,240
+ turn it into a big graph search.
+
+411
+00:34:38,240 --> 00:34:44,600
+ And if you love the power of symbolic graph search, then that can get you far.
+
+412
+00:34:44,600 --> 00:34:48,040
+ Now Pudittal stream is much smarter than that.
+
+413
+00:34:48,040 --> 00:34:55,120
+ It doesn't do that as the-- you'd add potentially not only a lot of samples, but a lot of irrelevant
+
+414
+00:34:55,120 --> 00:34:56,120
+ samples.
+
+415
+00:34:56,120 --> 00:35:01,960
+ Because if the optimal path is up here, you're still making a bazillion edges down here.
+
+416
+00:35:01,960 --> 00:35:07,000
+ So what Pudittal stream is doing is-- well, there's a handful of different strategies
+
+417
+00:35:07,000 --> 00:35:10,040
+ in the Pudittal stream family, I guess.
+
+418
+00:35:10,040 --> 00:35:16,000
+ But they interleave the symbolic planning with the continuous sampling.
+
+419
+00:35:16,000 --> 00:35:21,040
+ So basically, think about like an A star type algorithm for graph search would expand only
+
+420
+00:35:21,040 --> 00:35:23,960
+ a frontier of possible sets.
+
+421
+00:35:23,960 --> 00:35:30,380
+ The high likelihood sets that have a likelihood of getting you to the goal with the path are
+
+422
+00:35:30,380 --> 00:35:33,440
+ worth sampling more.
+
+423
+00:35:33,440 --> 00:35:34,620
+ And so you add more samples.
+
+424
+00:35:34,620 --> 00:35:37,760
+ Every time you add a new sample, you connect it up with its parents, whatever.
+
+425
+00:35:37,760 --> 00:35:39,560
+ You do make the graph much bigger.
+
+426
+00:35:39,560 --> 00:35:43,960
+ But you can do selective sampling in order to scale this to much harder problems.
+
+427
+00:35:43,960 --> 00:35:45,880
+ And that's what Pudittal stream is doing.
+
+428
+00:35:45,880 --> 00:35:50,640
+ So each sample, again, would be calling an entire collision-free motion planner, for
+
+429
+00:35:50,640 --> 00:35:51,640
+ instance.
+
+430
+00:35:51,640 --> 00:35:53,600
+ So it's doing like this.
+
+431
+00:35:53,600 --> 00:35:58,240
+ But it's finding solutions to very, very hard problems.
+
+432
+00:35:58,240 --> 00:35:59,240
+ That's it.
+
+433
+00:35:59,240 --> 00:36:00,240
+ OK.
+
+434
+00:36:00,240 --> 00:36:02,520
+ So-- oh, I have to say one more thing.
+
+435
+00:36:02,520 --> 00:36:07,760
+ We will soon have GCS trying to solve TAMP problems.
+
+436
+00:36:07,760 --> 00:36:08,760
+ That's a goal.
+
+437
+00:36:08,760 --> 00:36:10,120
+ Sava's here.
+
+438
+00:36:10,120 --> 00:36:13,880
+ This is-- think about the-- let's see.
+
+439
+00:36:13,880 --> 00:36:20,040
+ Think about-- I changed this into a-- but the picture of the suction gripper picking
+
+440
+00:36:20,040 --> 00:36:23,920
+ up block A, moving to block B. This is just a top-down view.
+
+441
+00:36:23,920 --> 00:36:24,920
+ OK?
+
+442
+00:36:24,920 --> 00:36:27,200
+ So this is the suction gripper here, the arm.
+
+443
+00:36:27,200 --> 00:36:28,200
+ OK?
+
+444
+00:36:28,200 --> 00:36:29,200
+ These are the boxes.
+
+445
+00:36:29,200 --> 00:36:32,120
+ They have to move from here over to here.
+
+446
+00:36:32,120 --> 00:36:35,520
+ That's a combinatorial plus continuous planning problem.
+
+447
+00:36:35,520 --> 00:36:39,720
+ And what's interesting is the scale of it is there's lots of boxes and lots of possible
+
+448
+00:36:39,720 --> 00:36:42,640
+ permutations, lots of possible paths.
+
+449
+00:36:42,640 --> 00:36:49,480
+ And there's some initial success suggesting that keeping it in the graph of convex sets
+
+450
+00:36:49,480 --> 00:36:54,360
+ kind of framework, we can maybe solve the global optimality in a few seconds.
+
+451
+00:36:54,360 --> 00:36:59,640
+ So that's work that I hope we'll have a lot to say about soon.
+
+452
+00:36:59,640 --> 00:37:00,640
+ OK.
+
+453
+00:37:00,640 --> 00:37:05,240
+ Bojan, let's take over.
+
+454
+00:37:05,240 --> 00:37:08,160
+ By the way, I appreciate everybody coming.
+
+455
+00:37:08,160 --> 00:37:13,440
+ Tell your friends that next semester, Bojan will be presenting for five minutes, at a
+
+456
+00:37:13,440 --> 00:37:17,760
+ random five minutes, during every lecture.
+
+457
+00:37:17,760 --> 00:37:22,400
+ So you must come always to all the lectures to see him.
+
+458
+00:37:22,400 --> 00:37:23,400
+ OK.
+
+459
+00:37:23,400 --> 00:37:24,400
+ There you go.
+
+460
+00:37:24,400 --> 00:37:25,400
+ Oh, yeah.
+
+461
+00:37:25,400 --> 00:37:26,400
+ Good, good.
+
+462
+00:37:26,400 --> 00:37:27,400
+ Don't pull.
+
+463
+00:37:27,400 --> 00:37:28,400
+ There you go.
+
+464
+00:37:28,400 --> 00:37:50,480
+ Hello, everyone.
+
+465
+00:37:50,480 --> 00:37:52,080
+ Welcome to the second half of the lecture.
+
+466
+00:37:52,080 --> 00:37:56,000
+ First, I really appreciate that a lot of people showed up today.
+
+467
+00:37:56,000 --> 00:38:02,680
+ So you actually should do a show up in every single lecture so you don't-- yeah.
+
+468
+00:38:02,680 --> 00:38:09,040
+ So in this part of the lecture, we're going to talk about some recent progress in robotic
+
+469
+00:38:09,040 --> 00:38:12,720
+ research that is doing planning with large language models.
+
+470
+00:38:12,720 --> 00:38:18,780
+ And this is closely related to the advancement in natural language processing.
+
+471
+00:38:18,780 --> 00:38:22,920
+ So we've just talked about task and emotion planning.
+
+472
+00:38:22,920 --> 00:38:29,280
+ But in traditional task and emotion planning, what concerns these problems, like those Ross
+
+473
+00:38:29,280 --> 00:38:35,440
+ just represented, they are more like some kind of puzzles that requires a lot of logic
+
+474
+00:38:35,440 --> 00:38:36,440
+ and motion reasoning.
+
+475
+00:38:36,440 --> 00:38:42,060
+ Well, in this part of the lecture, we are going to talk about what if we plan like humans?
+
+476
+00:38:42,060 --> 00:38:49,960
+ What if we have priors about each discrete action, the description of the tasks?
+
+477
+00:38:49,960 --> 00:38:51,440
+ How do we humans plan?
+
+478
+00:38:51,440 --> 00:38:53,000
+ So here are some examples.
+
+479
+00:38:53,000 --> 00:38:54,280
+ I spilled my drink.
+
+480
+00:38:54,280 --> 00:38:55,940
+ Can you help?
+
+481
+00:38:55,940 --> 00:38:58,120
+ If you spill your drink, how would you do it?
+
+482
+00:38:58,120 --> 00:39:01,260
+ You will definitely find something to try to clean it up.
+
+483
+00:39:01,260 --> 00:39:06,840
+ You might want to go to the kitchen to find some napkins, wipe and throw it to the recycle
+
+484
+00:39:06,840 --> 00:39:07,840
+ can.
+
+485
+00:39:07,840 --> 00:39:08,840
+ Yeah.
+
+486
+00:39:08,840 --> 00:39:13,080
+ And also, so we all want future robots to help us in daily life.
+
+487
+00:39:13,080 --> 00:39:15,360
+ And we should be able to communicate to robots.
+
+488
+00:39:15,360 --> 00:39:20,960
+ And the robots should be able to complete the task we design.
+
+489
+00:39:20,960 --> 00:39:26,840
+ For example, whenever we want to ask a robot to clean up the spilled Coke, the robot should,
+
+490
+00:39:26,840 --> 00:39:31,360
+ if it's like a human, it should say, OK, I should generate this sequence of actions.
+
+491
+00:39:31,360 --> 00:39:35,160
+ And I should try to accomplish them one by one.
+
+492
+00:39:35,160 --> 00:39:41,600
+ So for example, you may want to-- if you've spilled Coke, you definitely put your Coke
+
+493
+00:39:41,600 --> 00:39:45,000
+ can in your upright position and find some napkins and wipe the table and throw everything
+
+494
+00:39:45,000 --> 00:39:47,340
+ away.
+
+495
+00:39:47,340 --> 00:39:55,840
+ So it turns out we humans always love to use language as abstractions to specify tasks
+
+496
+00:39:55,840 --> 00:39:57,780
+ and to specify plans.
+
+497
+00:39:57,780 --> 00:40:02,560
+ And when you think about it, you actually-- when you do a complicated project, you also
+
+498
+00:40:02,560 --> 00:40:06,600
+ communicate with your friends about all those kind of plans with language.
+
+499
+00:40:06,600 --> 00:40:13,440
+ It turns out humans' activities on the internet produces a massive amount of knowledge in
+
+500
+00:40:13,440 --> 00:40:14,940
+ the form of text.
+
+501
+00:40:14,940 --> 00:40:17,840
+ And that could be really useful with the power of deep learning.
+
+502
+00:40:17,840 --> 00:40:22,280
+ For example, on the right of the slide, you will see if I don't know how to make certain
+
+503
+00:40:22,280 --> 00:40:26,520
+ dishes such as egg fried rice, I'll be able to Google online.
+
+504
+00:40:26,520 --> 00:40:33,000
+ And they will tell me step-by-step instructions.
+
+505
+00:40:33,000 --> 00:40:38,520
+ So before we dive into how we solve these problems, let's talk about large language
+
+506
+00:40:38,520 --> 00:40:39,520
+ models.
+
+507
+00:40:39,520 --> 00:40:43,680
+ So I'm sure a lot of people have heard of language models these days.
+
+508
+00:40:43,680 --> 00:40:45,760
+ And many of you might have played with it.
+
+509
+00:40:45,760 --> 00:40:49,600
+ So for those who don't know, I'm going to give you a short introduction.
+
+510
+00:40:49,600 --> 00:40:51,280
+ What is a language model?
+
+511
+00:40:51,280 --> 00:40:57,280
+ Language model is a task of predicting what word comes next, given a context.
+
+512
+00:40:57,280 --> 00:41:02,680
+ For example, we have a sentence here that says, "The students opened their and asked
+
+513
+00:41:02,680 --> 00:41:05,060
+ you to predict the next word."
+
+514
+00:41:05,060 --> 00:41:07,880
+ And you will immediately have a list of candidates in your mind.
+
+515
+00:41:07,880 --> 00:41:11,160
+ And if I give you a word, you may say it's likely or unlikely.
+
+516
+00:41:11,160 --> 00:41:16,480
+ For example, if I say, "Apple here, opened their apple," you will see this is clearly
+
+517
+00:41:16,480 --> 00:41:17,480
+ not very reasonable.
+
+518
+00:41:17,480 --> 00:41:18,920
+ And you won't put "apple" there.
+
+519
+00:41:18,920 --> 00:41:21,360
+ Instead, you might put "books" there.
+
+520
+00:41:21,360 --> 00:41:24,760
+ Because you have an internal language model in your mind.
+
+521
+00:41:24,760 --> 00:41:30,320
+ More formally, it is like, given a bunch of words we provided as a context, you will be
+
+522
+00:41:30,320 --> 00:41:36,040
+ able to predict the next word, which is x t plus 1 here.
+
+523
+00:41:36,040 --> 00:41:37,840
+ And this is called language modeling.
+
+524
+00:41:37,840 --> 00:41:43,160
+ So you can also think of this as a system that designs a probability of a piece of text.
+
+525
+00:41:43,160 --> 00:41:48,040
+ For example, let's say x 1 is my first word, x 2 is my second word.
+
+526
+00:41:48,040 --> 00:41:52,720
+ And if you use all these conditional probabilities, you're able to chain them all together and
+
+527
+00:41:52,720 --> 00:41:59,720
+ predict the joint probability of a piece of text that actually makes sense.
+
+528
+00:41:59,720 --> 00:42:05,120
+ Like there is a probability here, x 1 to x t.
+
+529
+00:42:05,120 --> 00:42:07,520
+ So how can we use this?
+
+530
+00:42:07,520 --> 00:42:13,120
+ So the highlight here is that whenever you have an internal language model in your mind,
+
+531
+00:42:13,120 --> 00:42:19,080
+ given some task-- not some task, but given a piece of text, you are able to predict what
+
+532
+00:42:19,080 --> 00:42:21,260
+ is likely coming up next.
+
+533
+00:42:21,260 --> 00:42:26,000
+ So first of all, if you have a fixed list of options, like what Russell said here, like
+
+534
+00:42:26,000 --> 00:42:29,520
+ we just designed a piece of text describing action 1, 2, and 3.
+
+535
+00:42:29,520 --> 00:42:33,360
+ For example, action 1 is move the arm without the object.
+
+536
+00:42:33,360 --> 00:42:39,120
+ If you already have a fixed list of options, you can use a language model to evaluate its
+
+537
+00:42:39,120 --> 00:42:40,120
+ likelihood.
+
+538
+00:42:40,120 --> 00:42:44,480
+ For example, if my spilled my Coke and my available actions is like eat an apple, and
+
+539
+00:42:44,480 --> 00:42:49,080
+ second option is like find some napkins, you'll obviously see that finding napkins is more
+
+540
+00:42:49,080 --> 00:42:52,360
+ likely coming up next, given the context.
+
+541
+00:42:52,360 --> 00:42:59,600
+ So a second way we can utilize this is that if we have all the vocabulary in English,
+
+542
+00:42:59,600 --> 00:43:02,880
+ we can actually also sample with our likelihood model.
+
+543
+00:43:02,880 --> 00:43:10,680
+ So as I showed here, with a trained language model, it will assign a probability to each
+
+544
+00:43:10,680 --> 00:43:13,000
+ word in English dictionary.
+
+545
+00:43:13,000 --> 00:43:18,520
+ And then you can sample from that distribution and generate options.
+
+546
+00:43:18,520 --> 00:43:21,200
+ That is how text chatbots works.
+
+547
+00:43:21,200 --> 00:43:24,560
+ And you actually are already using language models every single day.
+
+548
+00:43:24,560 --> 00:43:33,360
+ For example, when you type, Google knows to suggest you something, because it already
+
+549
+00:43:33,360 --> 00:43:37,560
+ has a language model that, based on people's history, can predict what's likely coming
+
+550
+00:43:37,560 --> 00:43:38,960
+ up next.
+
+551
+00:43:38,960 --> 00:43:44,480
+ And when you use Google to search, when you type something, it also suggests a bunch of
+
+552
+00:43:44,480 --> 00:43:46,480
+ possible options.
+
+553
+00:43:46,480 --> 00:43:51,360
+ Then, OK, now everybody knows what a language model is.
+
+554
+00:43:51,360 --> 00:43:54,100
+ Then we are going to dive into large language model.
+
+555
+00:43:54,100 --> 00:43:57,520
+ So we've already seen a lot of neural networks these days.
+
+556
+00:43:57,520 --> 00:44:02,440
+ And many of them we've presented in this lecture are millions of-- let's say a million, five
+
+557
+00:44:02,440 --> 00:44:05,000
+ million parameters that are already considered large.
+
+558
+00:44:05,000 --> 00:44:12,800
+ But this really, really large language models of 540 billion parameters, and you can't use
+
+559
+00:44:12,800 --> 00:44:19,200
+ your tiny GPU to even inference on these models.
+
+560
+00:44:19,200 --> 00:44:22,920
+ So why do we have these huge language models?
+
+561
+00:44:22,920 --> 00:44:28,440
+ It is because if we train them on the entire internet, we can incorporate a lot of human
+
+562
+00:44:28,440 --> 00:44:33,920
+ knowledge into them and use them to do interesting things.
+
+563
+00:44:33,920 --> 00:44:37,880
+ So for example, you can use large language models to write essays for you.
+
+564
+00:44:37,880 --> 00:44:44,500
+ For example, I once wrote a blog about computer science schools ranked by BOBAs.
+
+565
+00:44:44,500 --> 00:44:49,520
+ And I actually used a GPT-3 to help me writing it, because my English is bad.
+
+566
+00:44:49,520 --> 00:44:52,300
+ And this is one example of how to use it.
+
+567
+00:44:52,300 --> 00:44:56,560
+ So you just type in best computer science schools ranked by BOBA, home blog, and write
+
+568
+00:44:56,560 --> 00:44:57,560
+ the first sentence.
+
+569
+00:44:57,560 --> 00:44:58,560
+ It generates things for you.
+
+570
+00:44:58,560 --> 00:45:03,480
+ And it knows that Berkeley has 20 BOBA show-offs in front of it.
+
+571
+00:45:03,480 --> 00:45:05,480
+ You can also use it to complete your homework.
+
+572
+00:45:05,480 --> 00:45:08,080
+ For example, I took this essay--
+
+573
+00:45:08,080 --> 00:45:11,560
+ [LAUGHTER]
+
+574
+00:45:11,560 --> 00:45:18,800
+ I took this essay prompt from one MIT class that is Minds and Machines.
+
+575
+00:45:18,800 --> 00:45:23,160
+ And given the prompt, it somehow knows to write something reasonable about that.
+
+576
+00:45:23,160 --> 00:45:26,400
+ And I highly suggest everyone to try that.
+
+577
+00:45:26,400 --> 00:45:29,160
+ [LAUGHTER]
+
+578
+00:45:29,160 --> 00:45:33,380
+ And with this, language models can actually also do question and answering really well.
+
+579
+00:45:33,380 --> 00:45:36,800
+ This is a really recent work from OpenEye that's using chat GPT.
+
+580
+00:45:36,800 --> 00:45:40,080
+ So you can ask it all kinds of questions.
+
+581
+00:45:40,080 --> 00:45:42,600
+ And it can answer really well for you.
+
+582
+00:45:42,600 --> 00:45:47,860
+ So before the age of deep learning, these question-answer models aren't that good.
+
+583
+00:45:47,860 --> 00:45:53,000
+ As we dive into the age of getting to the age of really, really big language models,
+
+584
+00:45:53,000 --> 00:45:54,400
+ they're getting better and better.
+
+585
+00:45:54,400 --> 00:45:58,440
+ It can answer really all kinds of questions.
+
+586
+00:45:58,440 --> 00:46:03,040
+ And it actually can relate to previous context as well and can give you a really realistic
+
+587
+00:46:03,040 --> 00:46:06,560
+ experience just like you are speaking with some humans.
+
+588
+00:46:06,560 --> 00:46:10,800
+ This is-- turns out large language models are really powerful planning.
+
+589
+00:46:10,800 --> 00:46:16,480
+ For example, in the most naive way to use this, you can ask it just for a plan of how
+
+590
+00:46:16,480 --> 00:46:18,000
+ can I do something.
+
+591
+00:46:18,000 --> 00:46:21,200
+ So give me a list of items I will need to make a cup of coffee.
+
+592
+00:46:21,200 --> 00:46:22,600
+ And it will show you something.
+
+593
+00:46:22,600 --> 00:46:28,440
+ For example, give me detailed robotic instructions to make a cup of coffee in the kitchen.
+
+594
+00:46:28,440 --> 00:46:31,040
+ It will give you a bunch of instructions.
+
+595
+00:46:31,040 --> 00:46:32,040
+ [VIDEO PLAYBACK]
+
+596
+00:46:32,040 --> 00:46:35,040
+ - Detailed robotic instructions matter?
+
+597
+00:46:35,040 --> 00:46:36,040
+ [END PLAYBACK]
+
+598
+00:46:36,040 --> 00:46:37,040
+ [LAUGHTER]
+
+599
+00:46:37,040 --> 00:46:41,360
+ Yeah, I still converse like a human.
+
+600
+00:46:41,360 --> 00:46:44,320
+ And I will talk about this problem later on.
+
+601
+00:46:44,320 --> 00:46:48,840
+ So these large language models are really powerful.
+
+602
+00:46:48,840 --> 00:46:51,680
+ And we really hope to use them for robotics.
+
+603
+00:46:51,680 --> 00:46:58,640
+ So however, when I try to use them, it's actually very hard.
+
+604
+00:46:58,640 --> 00:47:01,360
+ Because whenever you ask it to, I spilled my drink.
+
+605
+00:47:01,360 --> 00:47:02,360
+ Can you help?
+
+606
+00:47:02,360 --> 00:47:06,800
+ GPT will tell you you cannot-- you could try using a vacuum cleaner.
+
+607
+00:47:06,800 --> 00:47:08,760
+ Well, OK.
+
+608
+00:47:08,760 --> 00:47:14,240
+ And one funny fact is that when I was doing research as undergrad, one of my friends was
+
+609
+00:47:14,240 --> 00:47:16,440
+ playing with large language models in his project.
+
+610
+00:47:16,440 --> 00:47:23,200
+ He asked the language model, give me instructions to get a cup of-- give me a cup of coffee.
+
+611
+00:47:23,200 --> 00:47:27,680
+ And the language model tells him to go to a cafe.
+
+612
+00:47:27,680 --> 00:47:33,920
+ So we need to have more control about what we can get from the large language models
+
+613
+00:47:33,920 --> 00:47:37,240
+ to allow us to do actual robotic tasks.
+
+614
+00:47:37,240 --> 00:47:41,800
+ And one core challenge is that our robots can only do a fixed number of commands and
+
+615
+00:47:41,800 --> 00:47:45,520
+ need a problem broken down in actionable steps.
+
+616
+00:47:45,520 --> 00:47:48,240
+ So actionable is critical here.
+
+617
+00:47:48,240 --> 00:47:52,560
+ This is not what large language models usually output.
+
+618
+00:47:52,560 --> 00:47:57,200
+ For example, in this task, we have action 1, 2, 3.
+
+619
+00:47:57,200 --> 00:48:01,000
+ And there are different skills, but it's just three actions.
+
+620
+00:48:01,000 --> 00:48:03,680
+ We don't want large language models to arbitrate things.
+
+621
+00:48:03,680 --> 00:48:05,700
+ We want it to choose.
+
+622
+00:48:05,700 --> 00:48:12,000
+ So we need large language models to speak robotic languages.
+
+623
+00:48:12,000 --> 00:48:18,480
+ So solution 1-- so we can propose that we can just bind each executable skill to some
+
+624
+00:48:18,480 --> 00:48:23,960
+ text options, for example, whereas what we already have here is we have all three actions,
+
+625
+00:48:23,960 --> 00:48:25,680
+ and we wrote a description about that.
+
+626
+00:48:25,680 --> 00:48:31,780
+ And if these skills are actually real-life skills, you can expect the language models
+
+627
+00:48:31,780 --> 00:48:40,600
+ to give a reasonable guess about how to generate a sequence of actions like what we did here.
+
+628
+00:48:40,600 --> 00:48:43,120
+ This is doing the classification, so it's also easier.
+
+629
+00:48:43,120 --> 00:48:44,320
+ We have more control.
+
+630
+00:48:44,320 --> 00:48:50,660
+ So basically, as we see, language models can predict the probability of the upcoming task.
+
+631
+00:48:50,660 --> 00:48:57,940
+ So what you do is you give it instruction, and you can evaluate the likelihood, the log
+
+632
+00:48:57,940 --> 00:49:06,760
+ likelihood, log probability of each option coming up next in the form of text.
+
+633
+00:49:06,760 --> 00:49:09,240
+ So this is exactly what a lot of people tried before.
+
+634
+00:49:09,240 --> 00:49:14,880
+ So let's say we have a bunch of available options on the right that we can actually
+
+635
+00:49:14,880 --> 00:49:15,880
+ use a robot to execute.
+
+636
+00:49:15,880 --> 00:49:18,880
+ Let's say we already coded a skill.
+
+637
+00:49:18,880 --> 00:49:25,280
+ We can use large language models to complete this, just like how we did in an essay, for
+
+638
+00:49:25,280 --> 00:49:26,280
+ example.
+
+639
+00:49:26,280 --> 00:49:32,700
+ We can put an example on the table and prompt it to say, I would want-- and it will be able
+
+640
+00:49:32,700 --> 00:49:37,880
+ to predict the likelihood score for each option.
+
+641
+00:49:37,880 --> 00:49:38,880
+ There is a second solution.
+
+642
+00:49:38,880 --> 00:49:45,220
+ That is, we can also prompt the large language model to output in a more structured way,
+
+643
+00:49:45,220 --> 00:49:50,640
+ so not just random, actuarized instructions that are long paragraphs.
+
+644
+00:49:50,640 --> 00:49:54,240
+ And then we pass the more structured output, because as soon as they are more structured,
+
+645
+00:49:54,240 --> 00:49:56,240
+ it's easier for us to pass.
+
+646
+00:49:56,240 --> 00:50:01,480
+ So then there's come to this important skill called few-shot prompting of large language
+
+647
+00:50:01,480 --> 00:50:02,620
+ models.
+
+648
+00:50:02,620 --> 00:50:04,300
+ So what is few-shot prompting?
+
+649
+00:50:04,300 --> 00:50:09,880
+ As we just said, large language models can just finish an essay and try to predict the
+
+650
+00:50:09,880 --> 00:50:13,040
+ upcoming text in the most likely way.
+
+651
+00:50:13,040 --> 00:50:18,760
+ So what if I engineer my context before in a structured way?
+
+652
+00:50:18,760 --> 00:50:23,800
+ For example, here I type the United States, and I type this arrow that maps it to Washington,
+
+653
+00:50:23,800 --> 00:50:25,120
+ DC, the capital.
+
+654
+00:50:25,120 --> 00:50:29,880
+ And then one type of food the country is famous for, and the tallest-- the highest mountain
+
+655
+00:50:29,880 --> 00:50:31,000
+ in this country.
+
+656
+00:50:31,000 --> 00:50:34,840
+ So I gave it three examples-- United States, China, and Japan.
+
+657
+00:50:34,840 --> 00:50:38,320
+ And I prompted it to complete the essay for France.
+
+658
+00:50:38,320 --> 00:50:42,920
+ And you will see it actually outputted the capital, the food, and the tallest mountain
+
+659
+00:50:42,920 --> 00:50:43,880
+ in that country.
+
+660
+00:50:43,880 --> 00:50:49,960
+ So that is one of the-- so the highlight here is that large language models can just, given
+
+661
+00:50:49,960 --> 00:50:56,080
+ a context, we can-- if the context is in a structured way, it can copy the logic and
+
+662
+00:50:56,080 --> 00:50:59,840
+ extrapolate to what we are querying next.
+
+663
+00:50:59,840 --> 00:51:07,440
+ So this is called few-shot prompting.
+
+664
+00:51:07,440 --> 00:51:12,120
+ So how can we prompt large language models to do structure planning?
+
+665
+00:51:12,120 --> 00:51:19,240
+ So one immediate way to do this is I give it a few examples of a structure plan here.
+
+666
+00:51:19,240 --> 00:51:21,400
+ And then I give it new instruction.
+
+667
+00:51:21,400 --> 00:51:28,000
+ So I ask a GPT-3 here to generate a plan for bring me a banana from banana lounge.
+
+668
+00:51:28,000 --> 00:51:32,600
+ And it turns out, OK, it doesn't have knowledge about banana lounge, but somehow it gives
+
+669
+00:51:32,600 --> 00:51:37,240
+ a reasonable plan.
+
+670
+00:51:37,240 --> 00:51:42,680
+ We will be able to play GPT-3 for planning at the end of the lecture if we have time.
+
+671
+00:51:42,680 --> 00:51:47,040
+ You'll be able to try all kinds of tasks.
+
+672
+00:51:47,040 --> 00:51:54,840
+ OK, so given this, so we already know-- now we know what large language model is and how
+
+673
+00:51:54,840 --> 00:51:56,320
+ can we use for task planning.
+
+674
+00:51:56,320 --> 00:52:03,080
+ Then it remains to combine this kind of new capability and connect them to-- make them
+
+675
+00:52:03,080 --> 00:52:09,120
+ actually executable in real life.
+
+676
+00:52:09,120 --> 00:52:14,680
+ So the first paper I'm going to mention is a do-as-I-can, not as-I-say paper.
+
+677
+00:52:14,680 --> 00:52:19,400
+ It is from Google Robotics and Everyday Robots.
+
+678
+00:52:19,400 --> 00:52:26,520
+ And so now we know large language models can do planning for robotics.
+
+679
+00:52:26,520 --> 00:52:30,280
+ The problem is that large language models are not grounded in real world.
+
+680
+00:52:30,280 --> 00:52:34,480
+ They don't know what's actually possible from a state with a given embodiment.
+
+681
+00:52:34,480 --> 00:52:36,960
+ So let's say I already have a bunch of skills.
+
+682
+00:52:36,960 --> 00:52:43,480
+ Let's say I train everything either with learning or I have a motion planning algorithm that
+
+683
+00:52:43,480 --> 00:52:50,320
+ can give me a plan, like given current observation.
+
+684
+00:52:50,320 --> 00:52:58,160
+ We have a bunch of skills, each tied to a language description that we can classify
+
+685
+00:52:58,160 --> 00:53:00,200
+ from with the thing we mentioned before.
+
+686
+00:53:00,200 --> 00:53:06,720
+ So now we have this problem that large language models aren't actually grounded in real world.
+
+687
+00:53:06,720 --> 00:53:13,080
+ Maybe my language model will say, I would like to find-- I spilled my Coke.
+
+688
+00:53:13,080 --> 00:53:16,360
+ And obviously, there are a lot of options available.
+
+689
+00:53:16,360 --> 00:53:23,480
+ For example, I can either find some napkins, or maybe I need to first go to somewhere else
+
+690
+00:53:23,480 --> 00:53:25,120
+ to find napkins.
+
+691
+00:53:25,120 --> 00:53:28,600
+ Or I can also, instead of finding napkins, maybe--
+
+692
+00:53:28,600 --> 00:53:29,600
+ [INAUDIBLE]
+
+693
+00:53:29,600 --> 00:53:30,600
+ Yeah.
+
+694
+00:53:30,600 --> 00:53:54,800
+ And maybe you have multiple options that leads to the success or completion of the task.
+
+695
+00:53:54,800 --> 00:54:02,160
+ However, what's immediately in front of you may not be valid with respect to every single
+
+696
+00:54:02,160 --> 00:54:03,160
+ option.
+
+697
+00:54:03,160 --> 00:54:07,520
+ For example, let's say you want to find some-- you can pick up napkins directly, but there
+
+698
+00:54:07,520 --> 00:54:09,640
+ is no napkin in front of you.
+
+699
+00:54:09,640 --> 00:54:12,160
+ Then you shouldn't execute this task at all.
+
+700
+00:54:12,160 --> 00:54:15,360
+ Instead, you should go to find some napkins, maybe in the kitchen.
+
+701
+00:54:15,360 --> 00:54:26,080
+ So your plan should also be grounded from current state.
+
+702
+00:54:26,080 --> 00:54:33,640
+ And when we talk about grounded from current state, it's helpful to mention a concept called
+
+703
+00:54:33,640 --> 00:54:34,640
+ affordance.
+
+704
+00:54:34,640 --> 00:54:35,640
+ So what is affordance?
+
+705
+00:54:35,640 --> 00:54:44,120
+ It is saying that with respect to a certain task we desire, how likely it is for me to--
+
+706
+00:54:44,120 --> 00:54:49,840
+ or in terms of cost, how costly it is, how likely it is for me to accomplish it from
+
+707
+00:54:49,840 --> 00:54:54,400
+ my current state, and so on.
+
+708
+00:54:54,400 --> 00:54:59,120
+ So for example, we've all learned a little bit of our reinforcement learning.
+
+709
+00:54:59,120 --> 00:55:01,600
+ And we know that what a value function is.
+
+710
+00:55:01,600 --> 00:55:07,280
+ Whenever a current state is likely to lead to a higher expected return from the future
+
+711
+00:55:07,280 --> 00:55:14,040
+ when a state is more likely to lead to a successful completion of the task, we say a current state
+
+712
+00:55:14,040 --> 00:55:15,760
+ is of higher value.
+
+713
+00:55:15,760 --> 00:55:19,840
+ And in this paper, they used the reinforcement learning in combination with large language
+
+714
+00:55:19,840 --> 00:55:20,840
+ models.
+
+715
+00:55:20,840 --> 00:55:25,480
+ They first trained reinforcement learning from pixels.
+
+716
+00:55:25,480 --> 00:55:30,260
+ Then with the value function from the reinforcement learning algorithm, we can actually calculate
+
+717
+00:55:30,260 --> 00:55:35,720
+ if the skill is actually somewhat executable or likely to lead to success from a current
+
+718
+00:55:35,720 --> 00:55:38,400
+ observation that is directly from pixels.
+
+719
+00:55:38,400 --> 00:55:44,560
+ And so RL provides kind of task-based affordance.
+
+720
+00:55:44,560 --> 00:55:46,680
+ And they're encoded in the value function.
+
+721
+00:55:46,680 --> 00:55:51,640
+ So what we can do is now we have a list of options.
+
+722
+00:55:51,640 --> 00:55:57,960
+ And our language model gives us a prior probability based on the previous context.
+
+723
+00:55:57,960 --> 00:56:04,840
+ For example, my task, the description of my task, and then what I've already planned before.
+
+724
+00:56:04,840 --> 00:56:09,880
+ And then we can also calculate another probability from our current affordance from the value
+
+725
+00:56:09,880 --> 00:56:11,880
+ function of the reinforcement learning algorithm.
+
+726
+00:56:11,880 --> 00:56:15,200
+ For example, we can do multiple things at a time.
+
+727
+00:56:15,200 --> 00:56:19,720
+ For example, how would you put an apple on the table?
+
+728
+00:56:19,720 --> 00:56:25,680
+ Obviously, for a language model, it seems that find an apple and pick up the apple are
+
+729
+00:56:25,680 --> 00:56:27,760
+ both valid options.
+
+730
+00:56:27,760 --> 00:56:32,920
+ They are both likely coming up given the context of this task.
+
+731
+00:56:32,920 --> 00:56:38,240
+ But if I don't have an apple immediately in front of me in my field of view, it will realize
+
+732
+00:56:38,240 --> 00:56:42,360
+ I cannot directly pick up an apple at a certain position.
+
+733
+00:56:42,360 --> 00:56:49,880
+ So if we ground position making by both language models and value functions, we will be able
+
+734
+00:56:49,880 --> 00:56:51,200
+ to get a more reasonable guess.
+
+735
+00:56:51,200 --> 00:56:55,880
+ For example, if I don't have an apple in front of me, I will prioritize finding apple first
+
+736
+00:56:55,880 --> 00:56:56,880
+ instead of picking up an apple directly.
+
+737
+00:56:56,880 --> 00:57:05,400
+ Is it hard to learn a value function in the space of words with the basis function being
+
+738
+00:57:05,400 --> 00:57:06,800
+ the language model?
+
+739
+00:57:06,800 --> 00:57:07,800
+ Basis?
+
+740
+00:57:07,800 --> 00:57:09,560
+ Oh, you mean like state based on?
+
+741
+00:57:09,560 --> 00:57:10,560
+ Yeah, yeah.
+
+742
+00:57:10,560 --> 00:57:16,600
+ How do you-- I mean, learning a value function that works for apples and goats and all these
+
+743
+00:57:16,600 --> 00:57:18,200
+ things seems really hard.
+
+744
+00:57:18,200 --> 00:57:19,200
+ Oh, yeah.
+
+745
+00:57:19,200 --> 00:57:26,800
+ So actually, I think one thing I don't really like about-- like, I won't say one thing I
+
+746
+00:57:26,800 --> 00:57:27,800
+ won't really like.
+
+747
+00:57:27,800 --> 00:57:32,680
+ I think it's one limitation of what the vanilla approach in this paper is that they train
+
+748
+00:57:32,680 --> 00:57:40,160
+ the separate-- they actually train it with imitation learning for many of the skills.
+
+749
+00:57:40,160 --> 00:57:44,280
+ And they train one imitation learning policy for every single object.
+
+750
+00:57:44,280 --> 00:57:49,320
+ That is, they need some humans to collect the data for multiple days for your water
+
+751
+00:57:49,320 --> 00:57:54,280
+ bottles and for another water bottle, we'll hire another guy to collect it for another
+
+752
+00:57:54,280 --> 00:57:56,720
+ day, something like that.
+
+753
+00:57:56,720 --> 00:58:04,880
+ But I think one hope people are-- one thing that people think they have hopefully solved
+
+754
+00:58:04,880 --> 00:58:10,320
+ in the next few years is that instead of doing this kind of thing, we just have one huge
+
+755
+00:58:10,320 --> 00:58:16,800
+ value function model that can take in a current image observation and a piece of text embedding
+
+756
+00:58:16,800 --> 00:58:18,160
+ and output things.
+
+757
+00:58:18,160 --> 00:58:23,440
+ But the problem is that turns out all this kind of skill learning are in domains where
+
+758
+00:58:23,440 --> 00:58:25,240
+ data is extremely expensive.
+
+759
+00:58:25,240 --> 00:58:31,320
+ You either hire humans to do it, or you're training simulators, like, store for many,
+
+760
+00:58:31,320 --> 00:58:33,520
+ many days to get this kind of thing.
+
+761
+00:58:33,520 --> 00:58:37,680
+ So yes, it is currently a big challenge right now.
+
+762
+00:58:37,680 --> 00:58:40,080
+ But I think people propose a solution.
+
+763
+00:58:40,080 --> 00:58:41,080
+ It is just the data is not there yet.
+
+764
+00:58:41,080 --> 00:58:42,080
+ OK.
+
+765
+00:58:42,080 --> 00:59:05,560
+ [INAUDIBLE]
+
+766
+00:59:05,560 --> 00:59:12,480
+ So usually value functions is just conditional observation, or someone says state.
+
+767
+00:59:12,480 --> 00:59:19,160
+ So it is like they actually have one value function, like the function itself, for each
+
+768
+00:59:19,160 --> 00:59:23,080
+ of the skills, options.
+
+769
+00:59:23,080 --> 00:59:29,120
+ And then for each of the skills, you look into its value function, and you evaluate
+
+770
+00:59:29,120 --> 00:59:31,560
+ it by evaluating at the current observation.
+
+771
+00:59:31,560 --> 00:59:32,560
+ [INAUDIBLE]
+
+772
+00:59:32,560 --> 00:59:33,560
+ Yes.
+
+773
+00:59:33,560 --> 00:59:34,560
+ Yes.
+
+774
+00:59:34,560 --> 00:59:40,200
+ So in this setup, you need 50 value functions, although I said in the future, you may just
+
+775
+00:59:40,200 --> 00:59:45,080
+ have one that also can take on text.
+
+776
+00:59:45,080 --> 00:59:46,080
+ Yeah.
+
+777
+00:59:46,080 --> 00:59:49,080
+ Any other questions?
+
+778
+00:59:49,080 --> 00:59:50,080
+ Good.
+
+779
+00:59:50,080 --> 00:59:54,880
+ Everyone is with me.
+
+780
+00:59:54,880 --> 01:00:00,000
+ And then, so let's see how does this work.
+
+781
+01:00:00,000 --> 01:00:04,880
+ So in this slide, the authors are asking you to accomplish some really long, hard, and
+
+782
+01:00:04,880 --> 01:00:08,200
+ tasks that involves, like, nine steps here.
+
+783
+01:00:08,200 --> 01:00:10,600
+ And it says, I threw my Coke on the table.
+
+784
+01:00:10,600 --> 01:00:15,480
+ How would you throw it away and bring me something to help clean?
+
+785
+01:00:15,480 --> 01:00:20,560
+ This looks weird, but it's kind of deliberate to confuse the robot.
+
+786
+01:00:20,560 --> 01:00:23,640
+ And the robot just kind of sees accordingly.
+
+787
+01:00:23,640 --> 01:00:29,920
+ You'll be able to see that at the very beginning, it finds that finding the Coke can is very
+
+788
+01:00:29,920 --> 01:00:35,960
+ likely at the first step.
+
+789
+01:00:35,960 --> 01:00:42,560
+ And it's also executable because it's navigation, so it just chose that task.
+
+790
+01:00:42,560 --> 01:00:48,920
+ And then-- oh, by the way, if you didn't see, the blue bar indicates the likelihood score
+
+791
+01:00:48,920 --> 01:00:54,560
+ from language, and the red bar indicates the likelihood score from affordance.
+
+792
+01:00:54,560 --> 01:01:01,120
+ So you will see that-- so let's go to the fourth picture.
+
+793
+01:01:01,120 --> 01:01:07,040
+ If you look at that, you will realize that the affordance for dumb is actually extremely--
+
+794
+01:01:07,040 --> 01:01:12,160
+ the affordance for everything else is extremely high.
+
+795
+01:01:12,160 --> 01:01:13,160
+ No, sorry.
+
+796
+01:01:13,160 --> 01:01:15,800
+ I picked the wrong one.
+
+797
+01:01:15,800 --> 01:01:18,920
+ Let's look at number five.
+
+798
+01:01:18,920 --> 01:01:26,200
+ That model might suggest that actually immediate finish, but my affordance would suggest that
+
+799
+01:01:26,200 --> 01:01:31,640
+ many other options are really available for me to accomplish.
+
+800
+01:01:31,640 --> 01:01:37,240
+ And these two things together grant an entire plan for this low-horizon planning task.
+
+801
+01:01:37,240 --> 01:01:40,640
+ But do you have to predict the future observations then?
+
+802
+01:01:40,640 --> 01:01:41,640
+ No.
+
+803
+01:01:41,640 --> 01:01:50,960
+ >> How can you plan for the fifth one if you don't know what the image is at time zero?
+
+804
+01:01:50,960 --> 01:01:58,840
+ >> If it doesn't know the images at time zero, I think-- so I think one assumption that this
+
+805
+01:01:58,840 --> 01:02:06,080
+ type of work often assumes is that your language model is reasonable enough, that your plan
+
+806
+01:02:06,080 --> 01:02:08,240
+ generated by language model is already reasonable.
+
+807
+01:02:08,240 --> 01:02:15,160
+ And then what the language model sees is that at the time step five, it will see human instructions
+
+808
+01:02:15,160 --> 01:02:16,160
+ and robot.
+
+809
+01:02:16,160 --> 01:02:19,780
+ I would find a cocaine, pick up the cocaine on to step four.
+
+810
+01:02:19,780 --> 01:02:28,640
+ And so it sees a history of task plans like before, but not observations.
+
+811
+01:02:28,640 --> 01:02:32,280
+ So this somewhat requires the language model to be good.
+
+812
+01:02:32,280 --> 01:02:36,240
+ If the language model is not good enough, you cannot trust it.
+
+813
+01:02:36,240 --> 01:03:03,640
+ >> So I guess at the same time, are you saying that [INAUDIBLE]
+
+814
+01:03:03,640 --> 01:03:08,320
+ >> Yeah, currently this is set up in this paper, although there are future works that
+
+815
+01:03:08,320 --> 01:03:12,720
+ improves upon this.
+
+816
+01:03:12,720 --> 01:03:21,880
+ So nobody asked about this, but another thing people might ask is that how does it incorporate
+
+817
+01:03:21,880 --> 01:03:24,980
+ feedback in the scene for a stronger way.
+
+818
+01:03:24,980 --> 01:03:31,760
+ So it is like, for example, if I found certain tasks to be invisible, how can I adjust my
+
+819
+01:03:31,760 --> 01:03:33,300
+ plan accordingly?
+
+820
+01:03:33,300 --> 01:03:40,640
+ So this requires a feedback step from the environment that requires more information
+
+821
+01:03:40,640 --> 01:03:41,640
+ than just affordance.
+
+822
+01:03:41,640 --> 01:03:45,680
+ For example, let's say I try to open my door with my key.
+
+823
+01:03:45,680 --> 01:03:48,480
+ I saw my key is in my pocket, but it turns out it's not.
+
+824
+01:03:48,480 --> 01:03:53,240
+ So in my mind, I kind of know I need to adjust my plan accordingly and replant.
+
+825
+01:03:53,240 --> 01:03:59,160
+ So actually some follow-up works of this have proposed that we can do it, like we can prompt
+
+826
+01:03:59,160 --> 01:04:06,520
+ a large language model to do some interesting inner monologue.
+
+827
+01:04:06,520 --> 01:04:12,280
+ That is like, they have a success detector that detects certain expected events actually
+
+828
+01:04:12,280 --> 01:04:13,280
+ didn't happen.
+
+829
+01:04:13,280 --> 01:04:16,600
+ For example, the fact that my key is in my pocket is not there.
+
+830
+01:04:16,600 --> 01:04:26,000
+ Then it will just insert one line in the prompt here saying that, oh, I found something.
+
+831
+01:04:26,000 --> 01:04:27,080
+ It's not actually there.
+
+832
+01:04:27,080 --> 01:04:31,840
+ And then a large language model kind of incorporates that feedback and adjusts its plan in the
+
+833
+01:04:31,840 --> 01:04:33,480
+ future accordingly.
+
+834
+01:04:33,480 --> 01:04:37,680
+ So that is the magic of prompting large language model.
+
+835
+01:04:37,680 --> 01:04:45,240
+ Another interesting thing that people always do is that language models are very tricky
+
+836
+01:04:45,240 --> 01:04:48,080
+ and they are really naughty.
+
+837
+01:04:48,080 --> 01:04:53,520
+ And to make them actually plan good things, sometimes you need to give them some good
+
+838
+01:04:53,520 --> 01:04:54,520
+ incentives.
+
+839
+01:04:54,520 --> 01:04:59,240
+ For example, here I just say, let's say we are trying to accomplish a really, really
+
+840
+01:04:59,240 --> 01:05:00,920
+ long horizontal scale.
+
+841
+01:05:00,920 --> 01:05:06,760
+ If you directly ask a robot to give it an instruction, it will avoid giving you a really
+
+842
+01:05:06,760 --> 01:05:08,880
+ good sequence of actions.
+
+843
+01:05:08,880 --> 01:05:11,880
+ Instead, what you do is you insert something like a chain of thought.
+
+844
+01:05:11,880 --> 01:05:17,320
+ You say, now, after, like humans, I fill my code, after this instruction, I write this
+
+845
+01:05:17,320 --> 01:05:18,440
+ sentence.
+
+846
+01:05:18,440 --> 01:05:21,040
+ Let's think step by step.
+
+847
+01:05:21,040 --> 01:05:27,960
+ And then generate a plan, and you will find the quality of the plan significantly improves.
+
+848
+01:05:27,960 --> 01:05:32,600
+ Another thing is that you can have chain of thought, which is saying that instead of saying,
+
+849
+01:05:32,600 --> 01:05:40,480
+ let's think step by step, I give a few demos saying that, OK, someone spilled their code.
+
+850
+01:05:40,480 --> 01:05:45,040
+ I need to find something to wipe the table and finally throw everything away.
+
+851
+01:05:45,040 --> 01:05:49,720
+ So if you give it a few examples of this and now give it a new instruction, it will actually
+
+852
+01:05:49,720 --> 01:05:53,720
+ learn to follow the structure and generate a chain of thought, a new chain of thought
+
+853
+01:05:53,720 --> 01:05:54,720
+ for the new task.
+
+854
+01:05:54,720 --> 01:05:57,720
+ And it actually also helps it generate a plan better.
+
+855
+01:05:57,720 --> 01:06:03,840
+ So it is really naughty, and you need to find-- there are a thousand tricks how to prompt
+
+856
+01:06:03,840 --> 01:06:04,840
+ it to generate nice things.
+
+857
+01:06:04,840 --> 01:06:05,840
+ Is it used in this case?
+
+858
+01:06:05,840 --> 01:06:06,840
+ I think I--
+
+859
+01:06:06,840 --> 01:06:07,840
+ Yeah.
+
+860
+01:06:07,840 --> 01:06:14,600
+ In the latest version of the SACAM paper, they added chain of thought where I added
+
+861
+01:06:14,600 --> 01:06:17,600
+ line of reasoning to help language models do better.
+
+862
+01:06:17,600 --> 01:06:24,600
+ But I think this can be a non-generating instruction, and it's better to fix the problem
+
+863
+01:06:24,600 --> 01:06:25,600
+ of spilling.
+
+864
+01:06:25,600 --> 01:06:26,600
+ Yeah.
+
+865
+01:06:26,600 --> 01:06:27,600
+ Oh, no.
+
+866
+01:06:27,600 --> 01:06:28,600
+ It is-- oh, sorry.
+
+867
+01:06:28,600 --> 01:06:29,600
+ Sorry.
+
+868
+01:06:29,600 --> 01:06:30,600
+ I misinterpreted your question.
+
+869
+01:06:30,600 --> 01:06:34,560
+ So the point I'm making here is that if we want to add a chain of thought prompting to
+
+870
+01:06:34,560 --> 01:06:39,840
+ this, this is orthogonal to whether we are doing generative planning or classification-based
+
+871
+01:06:39,840 --> 01:06:43,480
+ planning.
+
+872
+01:06:43,480 --> 01:06:52,280
+ So if you look at this-- so when it came out, it actually really impressed me, because this
+
+873
+01:06:52,280 --> 01:06:56,400
+ make a future of-- future with home robots more likely.
+
+874
+01:06:56,400 --> 01:06:58,400
+ Because they-- sorry.
+
+875
+01:06:58,400 --> 01:07:01,400
+ I spilled the drink.
+
+876
+01:07:01,400 --> 01:07:04,400
+ Can you help with that?
+
+877
+01:07:04,400 --> 01:07:07,400
+ Large language models may hold the key to unlocking such tasks.
+
+878
+01:07:07,400 --> 01:07:08,400
+ SACAM, when tasks--
+
+879
+01:07:08,400 --> 01:07:09,400
+ We're not going to watch the entirety.
+
+880
+01:07:09,400 --> 01:07:10,400
+ --followed by picking up the Coke.
+
+881
+01:07:10,400 --> 01:07:11,400
+ Or just look at--
+
+882
+01:07:11,400 --> 01:07:12,400
+ I spilled my Coke on the table.
+
+883
+01:07:12,400 --> 01:07:18,800
+ How would you throw it away and bring me something to clean it up?
+
+884
+01:07:18,800 --> 01:07:23,600
+ The robot considers different skills that are available to it and selects the best one
+
+885
+01:07:23,600 --> 01:07:27,480
+ according to the SACAM process described above.
+
+886
+01:07:27,480 --> 01:07:33,280
+ It uses the affordance model as well as the language model to score the available options.
+
+887
+01:07:33,280 --> 01:07:38,480
+ The algorithm starts by finding a Coke can, which is then followed by picking up the Coke
+
+888
+01:07:38,480 --> 01:07:40,520
+ can.
+
+889
+01:07:40,520 --> 01:07:44,800
+ Once the robot accomplishes that part of the instruction, the skill is appended to the
+
+890
+01:07:44,800 --> 01:07:49,920
+ prompt, and the method continues with the next set of skills.
+
+891
+01:07:49,920 --> 01:07:54,040
+ On the right, you can see different skills being considered and their scores by the language
+
+892
+01:07:54,040 --> 01:07:59,220
+ model, the affordance model, and the combination of the two.
+
+893
+01:07:59,220 --> 01:08:05,080
+ Each skill, once it's chosen and executed, gets appended to the prompt, which then allows
+
+894
+01:08:05,080 --> 01:08:08,240
+ the model to generate the next part of the solution.
+
+895
+01:08:08,240 --> 01:08:14,160
+ In this case, the robot ends by finding a sponge, picking it up, and then in the seventh
+
+896
+01:08:14,160 --> 01:08:18,760
+ step of this extended plan, it brings it to the table and puts it down.
+
+897
+01:08:18,760 --> 01:08:23,720
+ Since the robot doesn't have the wipe table skill in its repertoire, it finishes the task
+
+898
+01:08:23,720 --> 01:08:29,720
+ at this point with a termination.
+
+899
+01:08:29,720 --> 01:08:41,680
+ Next, we show two other un-narrated examples of tasks that Seikan is able to accomplish.
+
+900
+01:08:41,680 --> 01:08:45,800
+ Because now the large language models are able to parse really, really complex human
+
+901
+01:08:45,800 --> 01:08:46,800
+ instructions.
+
+902
+01:08:46,800 --> 01:08:51,240
+ You can see examples here, like you give the instruction, like, "I just worked out.
+
+903
+01:08:51,240 --> 01:08:53,360
+ Can you bring me a drink and snack to recover?"
+
+904
+01:08:53,360 --> 01:09:07,680
+ So you can input with our human language.
+
+905
+01:09:07,680 --> 01:09:09,320
+ We are not going to watch the entire video.
+
+906
+01:09:09,320 --> 01:09:13,960
+ Let's just assume this is finished successfully.
+
+907
+01:09:13,960 --> 01:09:20,320
+ So as you just saw, because we want to emphasize the capability of large language models for
+
+908
+01:09:20,320 --> 01:09:31,400
+ planning this paper, we have to have a bunch of skills associated with each executable
+
+909
+01:09:31,400 --> 01:09:32,400
+ option.
+
+910
+01:09:32,400 --> 01:09:41,840
+ And that is one of the hardest parts that I hope we will solve in the next decade.
+
+911
+01:09:41,840 --> 01:09:46,720
+ And then I think we can dive into my paper.
+
+912
+01:09:46,720 --> 01:09:52,400
+ It's also with Robotics at Google and Everyday Robotics when I was interning.
+
+913
+01:09:52,400 --> 01:09:54,000
+ So we've just saw Seikan.
+
+914
+01:09:54,000 --> 01:09:55,760
+ It is amazing.
+
+915
+01:09:55,760 --> 01:10:01,040
+ But Seikan didn't tell you that you hard-coded all object locations.
+
+916
+01:10:01,040 --> 01:10:05,280
+ If you move the object a little bit, it doesn't work anymore.
+
+917
+01:10:05,280 --> 01:10:08,640
+ And it assumes that all the objects are available in the thing.
+
+918
+01:10:08,640 --> 01:10:13,280
+ If you remove something, it will not be able to find the alternative thing.
+
+919
+01:10:13,280 --> 01:10:16,640
+ Also, it has no perception.
+
+920
+01:10:16,640 --> 01:10:22,440
+ You have to let it know where objects are and what objects are available.
+
+921
+01:10:22,440 --> 01:10:26,160
+ And by the way, it only can deal with around 30 objects.
+
+922
+01:10:26,160 --> 01:10:29,000
+ So this is quite limiting.
+
+923
+01:10:29,000 --> 01:10:32,520
+ And also, because of this, you have no perception.
+
+924
+01:10:32,520 --> 01:10:35,160
+ And you have a finite list of executable options.
+
+925
+01:10:35,160 --> 01:10:44,560
+ So in this project, I'm trying to significantly expand the capability of Seikan.
+
+926
+01:10:44,560 --> 01:10:48,920
+ So previously, as I mentioned, Seikan has no perception system.
+
+927
+01:10:48,920 --> 01:10:52,680
+ So it is not grounded with what's in the thing and where they are.
+
+928
+01:10:52,680 --> 01:11:00,480
+ So in this project, what we do is we can just let the robot navigate the thing, look around,
+
+929
+01:11:00,480 --> 01:11:02,000
+ take a lot of pictures.
+
+930
+01:11:02,000 --> 01:11:10,760
+ And then with the open vocabulary detector, that is, whenever it sees a new image, let's
+
+931
+01:11:10,760 --> 01:11:19,240
+ say it saw this bag, this table, it will do this kind of class agnostic regional proposals,
+
+932
+01:11:19,240 --> 01:11:25,800
+ like crop these bags and the table out, and store their locations, three locations.
+
+933
+01:11:25,800 --> 01:11:32,080
+ And we do multi-fusion such that we build a single presentation of this entire scene.
+
+934
+01:11:32,080 --> 01:11:38,560
+ And then whenever the human asks it about certain object-- for example, I want a bag--
+
+935
+01:11:38,560 --> 01:11:43,440
+ and then it will query this single presentation using the visual language models and find
+
+936
+01:11:43,440 --> 01:11:48,800
+ its correct location, and also tells me whether it is actually in the scene or not.
+
+937
+01:11:48,800 --> 01:11:55,120
+ So for example, here, it just proposed a bunch of objects in the object section at Google.
+
+938
+01:11:55,120 --> 01:12:01,600
+ There is this Coke can, this cheap bag, some trash cans, and the yellow sign there.
+
+939
+01:12:01,600 --> 01:12:05,760
+ You can actually query with it all kinds of nature language input object names.
+
+940
+01:12:05,760 --> 01:12:09,280
+ You can query the plant, like potted plant, green plant, it's all fine.
+
+941
+01:12:09,280 --> 01:12:13,080
+ And it will be able to find that object.
+
+942
+01:12:13,080 --> 01:12:15,240
+ So this is open vocabulary detection.
+
+943
+01:12:15,240 --> 01:12:16,760
+ This is a valid paper.
+
+944
+01:12:16,760 --> 01:12:24,200
+ So basically, if you know visual language models, basically, this clip model can give
+
+945
+01:12:24,200 --> 01:12:30,480
+ you a likelihood score between text and image describing-- the score describes how closely
+
+946
+01:12:30,480 --> 01:12:33,380
+ does the text describe the image.
+
+947
+01:12:33,380 --> 01:12:35,060
+ And then we build on that.
+
+948
+01:12:35,060 --> 01:12:40,960
+ This paper proposes open vocabulary detection, where I combine object proposal, and we can
+
+949
+01:12:40,960 --> 01:12:41,960
+ query everything with text.
+
+950
+01:12:41,960 --> 01:12:47,960
+ For example, for the crocodile there, we can query it with toy, green toy, or toy crocodile.
+
+951
+01:12:47,960 --> 01:12:54,560
+ And it will be able to estimate the likelihood score for that.
+
+952
+01:12:54,560 --> 01:12:57,400
+ So how can we ground planning with scene?
+
+953
+01:12:57,400 --> 01:13:02,240
+ So now the robot has been navigating the scene, and I give an instruction called recycle the
+
+954
+01:13:02,240 --> 01:13:03,280
+ Coke can.
+
+955
+01:13:03,280 --> 01:13:07,840
+ So what it would actually do, just like humans, I would immediately have a list of items in
+
+956
+01:13:07,840 --> 01:13:10,240
+ my mind that I should plan with.
+
+957
+01:13:10,240 --> 01:13:16,440
+ So somewhat like an established planning domain, I propose this object.
+
+958
+01:13:16,440 --> 01:13:20,680
+ This actually might-- this skill might need a Coke can and a recycle bin.
+
+959
+01:13:20,680 --> 01:13:25,200
+ And then, because I already built this open vocabulary context, I'm able to find this
+
+960
+01:13:25,200 --> 01:13:29,600
+ location of the Coke can and recycle bin in the scene, and how can I approach them?
+
+961
+01:13:29,600 --> 01:13:35,920
+ And then, because I have this object-- I have these objects, we can generate executable
+
+962
+01:13:35,920 --> 01:13:36,920
+ options.
+
+963
+01:13:36,920 --> 01:13:41,960
+ For example, let's say you-- let's say you-- the most naive way to do this is with templates.
+
+964
+01:13:41,960 --> 01:13:47,000
+ That is, for every object, I generate options that is go to something, pick up something,
+
+965
+01:13:47,000 --> 01:13:48,000
+ put down something.
+
+966
+01:13:48,000 --> 01:13:52,800
+ But you can actually also generate it with large language models as well, if you have
+
+967
+01:13:52,800 --> 01:13:55,120
+ the skill to execute them.
+
+968
+01:13:55,120 --> 01:13:56,120
+ So this is really powerful.
+
+969
+01:13:56,120 --> 01:13:59,600
+ For example, I tried before with large language models.
+
+970
+01:13:59,600 --> 01:14:04,200
+ If you just give it a few demos like we did with the country and the food and mountains
+
+971
+01:14:04,200 --> 01:14:07,240
+ before, you can let large language models to generate possible options.
+
+972
+01:14:07,240 --> 01:14:12,880
+ For example, for knife, you can generate peel, cart, and different type of options.
+
+973
+01:14:12,880 --> 01:14:16,280
+ So it can get more powerful.
+
+974
+01:14:16,280 --> 01:14:20,960
+ Then given all these options, we can do scene-aware context-aware planning.
+
+975
+01:14:20,960 --> 01:14:23,680
+ That is, what's available in the scene, what is not.
+
+976
+01:14:23,680 --> 01:14:27,200
+ And then I can do this kind of planning.
+
+977
+01:14:27,200 --> 01:14:28,200
+ Sure.
+
+978
+01:14:28,200 --> 01:14:29,200
+ [INAUDIBLE]
+
+979
+01:14:29,200 --> 01:14:32,200
+ Oh, like available objects?
+
+980
+01:14:32,200 --> 01:14:33,200
+ [INAUDIBLE]
+
+981
+01:14:33,200 --> 01:14:41,800
+ Yes, actually, also done with large language models.
+
+982
+01:14:41,800 --> 01:14:47,480
+ I give it a few examples of instruction followed by a list of objects involved, instruction
+
+983
+01:14:47,480 --> 01:14:51,840
+ of a list of objects involved, and I can propose it really reliably.
+
+984
+01:14:51,840 --> 01:14:57,000
+ For example, we will be able to play with this at the end of the class, I think.
+
+985
+01:14:57,000 --> 01:15:01,800
+ So it is like, for example, I just give it-- I don't know, like throw the Coke can in the
+
+986
+01:15:01,800 --> 01:15:02,800
+ bin.
+
+987
+01:15:02,800 --> 01:15:04,320
+ It's like Coke can, bin.
+
+988
+01:15:04,320 --> 01:15:09,800
+ And then when it actually-- it's really, really powerful, because when I test it with really
+
+989
+01:15:09,800 --> 01:15:14,360
+ weird, wild task for a robot, for example, fillet a fish, it actually proposed cutting
+
+990
+01:15:14,360 --> 01:15:17,760
+ board, a knife, and a fish.
+
+991
+01:15:17,760 --> 01:15:21,760
+ So it's all about large language-- prompting large language models here.
+
+992
+01:15:21,760 --> 01:15:28,440
+ Every single step can be done with large language models here, except actually executing this
+
+993
+01:15:28,440 --> 01:15:35,880
+ is why we still need to carefully-- we need to start in this class really hard, because
+
+994
+01:15:35,880 --> 01:15:36,880
+ it is unsolved.
+
+995
+01:15:36,880 --> 01:15:40,240
+ It's really hard.
+
+996
+01:15:40,240 --> 01:15:45,800
+ Then compared to Seiken-- so above, it is Seiken, where I use language models and value
+
+997
+01:15:45,800 --> 01:15:50,320
+ functions to find the most likely action among a fixed set of candidates.
+
+998
+01:15:50,320 --> 01:15:57,480
+ So what we can do here is that we can actually propose executable options in the framework,
+
+999
+01:15:57,480 --> 01:16:04,040
+ and we can also use affordance as before and try to find the most plausible action among
+
+1000
+01:16:04,040 --> 01:16:05,700
+ the candidates we generated.
+
+1001
+01:16:05,700 --> 01:16:15,080
+ So although the skills we have is still limited, in this case, we are able to expand the comparability
+
+1002
+01:16:15,080 --> 01:16:19,280
+ from a finite set of skills to infinite, because now we can navigate to arbitrary objects.
+
+1003
+01:16:19,280 --> 01:16:21,600
+ Previously, everything had to be card coded.
+
+1004
+01:16:21,600 --> 01:16:27,920
+ Now, like in the Google Kitchen, I'm able to ask you to go to-- I ask you to find Band-Aids
+
+1005
+01:16:27,920 --> 01:16:28,920
+ for me.
+
+1006
+01:16:28,920 --> 01:16:31,440
+ I heard myself find some Band-Aids or find some medicine for me.
+
+1007
+01:16:31,440 --> 01:16:35,280
+ It will propose I should go to the first aid station and then navigate there.
+
+1008
+01:16:35,280 --> 01:16:42,840
+ There is options that are previously not available in the original Seiken paper, and we are doing
+
+1009
+01:16:42,840 --> 01:16:43,840
+ that here.
+
+1010
+01:16:43,840 --> 01:17:12,480
+ And you will be able to see the-- Sorry, I should-- So this is-- So this is the-- So
+
+1011
+01:17:12,480 --> 01:17:22,560
+ this is-- So this is one task that's not achievable by Seiken before, because it just doesn't
+
+1012
+01:17:22,560 --> 01:17:29,720
+ have a lot of-- doesn't have this concept of a brown-- a woven basket in mind, because
+
+1013
+01:17:29,720 --> 01:17:32,040
+ it's not in their hard-coded list.
+
+1014
+01:17:32,040 --> 01:17:38,480
+ And here, I'm showing that with my new framework, it is able to achieve this task that's unachievable
+
+1015
+01:17:38,480 --> 01:17:39,480
+ before.
+
+1016
+01:17:39,480 --> 01:17:43,440
+ >> Brown multigrain chips in the woven basket.
+
+1017
+01:17:43,440 --> 01:17:48,360
+ The robot proposes two objects, woven basket and brown multigrain chips, to look up in
+
+1018
+01:17:48,360 --> 01:17:50,160
+ the same representation.
+
+1019
+01:17:50,160 --> 01:17:56,040
+ As visualized in the map at the bottom right, both objects are found and localized.
+
+1020
+01:17:56,040 --> 01:18:01,840
+ The robot then plans and does a task by combining large language model and affordances as visualized
+
+1021
+01:18:01,840 --> 01:18:04,840
+ on the top right corner.
+
+1022
+01:18:04,840 --> 01:18:16,160
+ To wash an apple, the robot proposes three objects, apple, tab, and sink.
+
+1023
+01:18:16,160 --> 01:18:21,600
+ Training a policy to wash items is beyond the scope of the project, so a simpler pick-and-place
+
+1024
+01:18:21,600 --> 01:18:24,680
+ version of the task is demonstrated here.
+
+1025
+01:18:24,680 --> 01:18:28,400
+ The robot correctly picks up the apple and puts it in the sink.
+
+1026
+01:18:28,400 --> 01:18:32,960
+ If we are unconstrained by available manipulation policies, we can lift the constraint on large
+
+1027
+01:18:32,960 --> 01:18:43,520
+ language models, and then it will output steps like turn on the tab as next action.
+
+1028
+01:18:43,520 --> 01:18:45,920
+ >> And the last one is also water the potted plant.
+
+1029
+01:18:45,920 --> 01:18:52,600
+ So all these tasks are previously unachievable by Seiken, because they have to have a finite
+
+1030
+01:18:52,600 --> 01:18:55,920
+ list of objects, while we don't.
+
+1031
+01:18:55,920 --> 01:19:05,740
+ So although this is really powerful, you know that we always need to bind available executable
+
+1032
+01:19:05,740 --> 01:19:08,760
+ actions to our language options.
+
+1033
+01:19:08,760 --> 01:19:12,480
+ And that is one of the hardest challenges now, and I think it's an exciting area of
+
+1034
+01:19:12,480 --> 01:19:13,480
+ research.
+
+1035
+01:19:13,480 --> 01:19:24,680
+ Once we can solve that problem, combined with this, we can actually have real everyday robots.
+
+1036
+01:19:24,680 --> 01:19:29,400
+ And then there is one last paper, which I'm going to go through very shortly.
+
+1037
+01:19:29,400 --> 01:19:35,560
+ Basically, with really powerful language models, you are able to synthesize programs, and you
+
+1038
+01:19:35,560 --> 01:19:37,760
+ can execute them as programs.
+
+1039
+01:19:37,760 --> 01:19:44,800
+ But I think we are running out of time, and I hope to show everyone some interactive demos.
+
+1040
+01:19:44,800 --> 01:19:47,920
+ For example, this is my chat GPT demo.
+
+1041
+01:19:47,920 --> 01:19:49,720
+ This is a conversation model.
+
+1042
+01:19:49,720 --> 01:19:54,880
+ So right here, I'm giving you a step-by-step instruction to make Beijing Kouya.
+
+1043
+01:19:54,880 --> 01:19:59,440
+ It's like deliberately confusing it by mixing two languages.
+
+1044
+01:19:59,440 --> 01:20:01,800
+ And it kind of gives me this instruction.
+
+1045
+01:20:01,800 --> 01:20:03,600
+ And you can ask a crazy thing.
+
+1046
+01:20:03,600 --> 01:20:08,400
+ Someone even built a virtual machine inside it, because you can CD into something and
+
+1047
+01:20:08,400 --> 01:20:12,800
+ can generate what's inside the directory, your home directory.
+
+1048
+01:20:12,800 --> 01:20:19,840
+ You do conversation with it, like make directory, and it will output what's in the directory
+
+1049
+01:20:19,840 --> 01:20:22,080
+ is your newly created folder in it.
+
+1050
+01:20:22,080 --> 01:20:24,840
+ It's really crazy.
+
+1051
+01:20:24,840 --> 01:20:25,840
+ You should play with it.
+
+1052
+01:20:25,840 --> 01:20:27,500
+ It's free.
+
+1053
+01:20:27,500 --> 01:20:28,880
+ And then this is not free.
+
+1054
+01:20:28,880 --> 01:20:31,480
+ I paid a little bit for it.
+
+1055
+01:20:31,480 --> 01:20:33,080
+ So this is GPT-3.
+
+1056
+01:20:33,080 --> 01:20:36,920
+ So here is what we actually used in the second paper in my follow-up.
+
+1057
+01:20:36,920 --> 01:20:42,800
+ So basically, I give it a bunch of demonstrations.
+
+1058
+01:20:42,800 --> 01:20:44,700
+ These are the few short examples.
+
+1059
+01:20:44,700 --> 01:20:48,720
+ And before the class, I just tried bring me a banana from the banana launch.
+
+1060
+01:20:48,720 --> 01:20:51,640
+ And it's kind of generated the things.
+
+1061
+01:20:51,640 --> 01:20:57,480
+ Although in the actual paper, we use a much bigger, even bigger language model compared
+
+1062
+01:20:57,480 --> 01:20:59,840
+ to GPT-3 here.
+
+1063
+01:20:59,840 --> 01:21:04,720
+ And in the context, I give 10 demonstrations that have a great variety.
+
+1064
+01:21:04,720 --> 01:21:06,240
+ Here it's just pick and place.
+
+1065
+01:21:06,240 --> 01:21:08,120
+ I think it's still really powerful.
+
+1066
+01:21:08,120 --> 01:21:10,600
+ So what about-- let's try something.
+
+1067
+01:21:10,600 --> 01:21:12,760
+ Let some students suggest something.
+
+1068
+01:21:12,760 --> 01:21:16,800
+ Who wants to suggest a task for you to play?
+
+1069
+01:21:16,800 --> 01:21:17,800
+ [INAUDIBLE]
+
+1070
+01:21:17,800 --> 01:21:18,800
+ Folder laundry?
+
+1071
+01:21:18,800 --> 01:21:19,800
+ I see.
+
+1072
+01:21:19,800 --> 01:21:20,800
+ Is this a correct way to spell laundry?
+
+1073
+01:21:20,800 --> 01:21:21,800
+ OK.
+
+1074
+01:21:21,800 --> 01:21:22,800
+ [LAUGHTER]
+
+1075
+01:21:22,800 --> 01:21:23,800
+ OK.
+
+1076
+01:21:23,800 --> 01:21:24,800
+ [LAUGHTER]
+
+1077
+01:21:24,800 --> 01:21:39,040
+ Well, at least it says fold.
+
+1078
+01:21:39,040 --> 01:21:40,040
+ But like in-- yeah.
+
+1079
+01:21:40,040 --> 01:21:43,600
+ I got the results on that.
+
+1080
+01:21:43,600 --> 01:21:44,600
+ On charge GPT.
+
+1081
+01:21:44,600 --> 01:21:45,600
+ OK.
+
+1082
+01:21:45,600 --> 01:21:46,600
+ So I'm going-- yeah.
+
+1083
+01:21:46,600 --> 01:21:47,600
+ I asked for step-by-step.
+
+1084
+01:21:47,600 --> 01:21:48,600
+ Yeah.
+
+1085
+01:21:48,600 --> 01:21:49,600
+ You kind of need to-- it's naughty.
+
+1086
+01:21:49,600 --> 01:21:50,600
+ And then you're prompted to--
+
+1087
+01:21:50,600 --> 01:21:51,600
+ [LAUGHTER]
+
+1088
+01:21:51,600 --> 01:21:52,600
+ Yeah.
+
+1089
+01:21:52,600 --> 01:21:58,000
+ This is just the most naive demo.
+
+1090
+01:21:58,000 --> 01:22:01,840
+ But with more templates, you'll be able to-- if you give it more diverse demos, it will
+
+1091
+01:22:01,840 --> 01:22:04,040
+ also be able to generate more diverse things as well.
+
+1092
+01:22:04,040 --> 01:22:08,640
+ For example, here you already know that I need to use action fold.
+
+1093
+01:22:08,640 --> 01:22:09,640
+ OK.
+
+1094
+01:22:09,640 --> 01:22:14,520
+ Let's try something else.
+
+1095
+01:22:14,520 --> 01:22:17,600
+ You can also type things like-- I don't know.
+
+1096
+01:22:17,600 --> 01:22:18,600
+ Let's try this.
+
+1097
+01:22:18,600 --> 01:22:19,600
+ I'm thirsty.
+
+1098
+01:22:19,600 --> 01:22:20,600
+ Help me out.
+
+1099
+01:22:20,600 --> 01:22:21,600
+ Ah.
+
+1100
+01:22:21,600 --> 01:22:22,600
+ How about solve a Rubik's Cube?
+
+1101
+01:22:22,600 --> 01:22:23,600
+ [LAUGHTER]
+
+1102
+01:22:23,600 --> 01:22:24,600
+ Yeah.
+
+1103
+01:22:24,600 --> 01:22:25,600
+ I'll probably ask you to find someone who knows how to solve Rubik's Cube.
+
+1104
+01:22:25,600 --> 01:22:26,600
+ [LAUGHTER]
+
+1105
+01:22:26,600 --> 01:22:27,600
+ OK.
+
+1106
+01:22:27,600 --> 01:22:28,600
+ So I'm going to try this.
+
+1107
+01:22:28,600 --> 01:22:29,600
+ I'm going to try to solve a Rubik's Cube.
+
+1108
+01:22:29,600 --> 01:22:30,600
+ [LAUGHTER]
+
+1109
+01:22:30,600 --> 01:22:31,600
+ OK.
+
+1110
+01:22:31,600 --> 01:22:32,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1111
+01:22:32,600 --> 01:22:33,600
+ [LAUGHTER]
+
+1112
+01:22:33,600 --> 01:22:34,600
+ OK.
+
+1113
+01:22:34,600 --> 01:22:35,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1114
+01:22:35,600 --> 01:22:36,600
+ [LAUGHTER]
+
+1115
+01:22:36,600 --> 01:22:37,600
+ OK.
+
+1116
+01:22:37,600 --> 01:22:38,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1117
+01:22:38,600 --> 01:22:39,600
+ [LAUGHTER]
+
+1118
+01:22:39,600 --> 01:22:40,600
+ OK.
+
+1119
+01:22:40,600 --> 01:22:41,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1120
+01:22:41,600 --> 01:22:42,600
+ [LAUGHTER]
+
+1121
+01:22:42,600 --> 01:22:43,600
+ OK.
+
+1122
+01:22:43,600 --> 01:22:44,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1123
+01:22:44,600 --> 01:22:45,600
+ [LAUGHTER]
+
+1124
+01:22:45,600 --> 01:22:46,600
+ OK.
+
+1125
+01:22:46,600 --> 01:22:53,600
+ So I'm going to try to solve a Rubik's Cube.
+
+1126
+01:22:53,600 --> 01:22:54,600
+ [LAUGHTER]
+
+1127
+01:22:54,600 --> 01:22:55,600
+ It's not bad.
+
+1128
+01:22:55,600 --> 01:22:56,600
+ Yeah, yeah, yeah.
+
+1129
+01:22:56,600 --> 01:23:02,040
+ If you coded this kind of skills with the trajectory planning algorithm, maybe I will be able to
+
+1130
+01:23:02,040 --> 01:23:03,040
+ solve it.
+
+1131
+01:23:03,040 --> 01:23:04,040
+ [LAUGHTER]
+
+1132
+01:23:04,040 --> 01:23:05,040
+ Yeah.
+
+1133
+01:23:05,040 --> 01:23:06,040
+ Also, feel free to play with chat GPT.
+
+1134
+01:23:06,040 --> 01:23:07,040
+ You can find all kinds of crazy stuff.
+
+1135
+01:23:07,040 --> 01:23:08,040
+ What do you want to ask?
+
+1136
+01:23:08,040 --> 01:23:09,040
+ [LAUGHTER]
+
+1137
+01:23:09,040 --> 01:23:10,040
+ OK.
+
+1138
+01:23:10,040 --> 01:23:11,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1139
+01:23:11,040 --> 01:23:12,040
+ [LAUGHTER]
+
+1140
+01:23:12,040 --> 01:23:13,040
+ OK.
+
+1141
+01:23:13,040 --> 01:23:14,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1142
+01:23:14,040 --> 01:23:15,040
+ [LAUGHTER]
+
+1143
+01:23:15,040 --> 01:23:16,040
+ OK.
+
+1144
+01:23:16,040 --> 01:23:17,040
+ Yeah.
+
+1145
+01:23:17,040 --> 01:23:18,040
+ Yeah, yeah, yeah.
+
+1146
+01:23:18,040 --> 01:23:19,040
+ Exactly.
+
+1147
+01:23:19,040 --> 01:23:20,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1148
+01:23:20,040 --> 01:23:21,040
+ [LAUGHTER]
+
+1149
+01:23:21,040 --> 01:23:22,040
+ OK.
+
+1150
+01:23:22,040 --> 01:23:23,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1151
+01:23:23,040 --> 01:23:24,040
+ [LAUGHTER]
+
+1152
+01:23:24,040 --> 01:23:25,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1153
+01:23:25,040 --> 01:23:26,040
+ [LAUGHTER]
+
+1154
+01:23:26,040 --> 01:23:27,040
+ OK.
+
+1155
+01:23:27,040 --> 01:23:28,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1156
+01:23:28,040 --> 01:23:29,040
+ [LAUGHTER]
+
+1157
+01:23:29,040 --> 01:23:30,040
+ OK.
+
+1158
+01:23:30,040 --> 01:23:31,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1159
+01:23:31,040 --> 01:23:32,040
+ [LAUGHTER]
+
+1160
+01:23:32,040 --> 01:23:33,040
+ OK.
+
+1161
+01:23:33,040 --> 01:23:34,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1162
+01:23:34,040 --> 01:23:35,040
+ [LAUGHTER]
+
+1163
+01:23:35,040 --> 01:23:36,040
+ OK.
+
+1164
+01:23:36,040 --> 01:23:37,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1165
+01:23:37,040 --> 01:23:38,040
+ [LAUGHTER]
+
+1166
+01:23:38,040 --> 01:23:39,040
+ OK.
+
+1167
+01:23:39,040 --> 01:23:40,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1168
+01:23:40,040 --> 01:23:41,040
+ [LAUGHTER]
+
+1169
+01:23:41,040 --> 01:23:42,040
+ OK.
+
+1170
+01:23:42,040 --> 01:23:49,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1171
+01:23:49,040 --> 01:23:50,040
+ [LAUGHTER]
+
+1172
+01:23:50,040 --> 01:23:51,040
+ OK.
+
+1173
+01:23:51,040 --> 01:23:52,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1174
+01:23:52,040 --> 01:23:53,040
+ [LAUGHTER]
+
+1175
+01:23:53,040 --> 01:23:54,040
+ OK.
+
+1176
+01:23:54,040 --> 01:23:55,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1177
+01:23:55,040 --> 01:23:56,040
+ [LAUGHTER]
+
+1178
+01:23:56,040 --> 01:23:57,040
+ OK.
+
+1179
+01:23:57,040 --> 01:23:58,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1180
+01:23:58,040 --> 01:23:59,040
+ [LAUGHTER]
+
+1181
+01:23:59,040 --> 01:24:00,040
+ OK.
+
+1182
+01:24:00,040 --> 01:24:01,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1183
+01:24:01,040 --> 01:24:02,040
+ [LAUGHTER]
+
+1184
+01:24:02,040 --> 01:24:03,040
+ OK.
+
+1185
+01:24:03,040 --> 01:24:04,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1186
+01:24:04,040 --> 01:24:05,040
+ [LAUGHTER]
+
+1187
+01:24:05,040 --> 01:24:06,040
+ OK.
+
+1188
+01:24:06,040 --> 01:24:07,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1189
+01:24:07,040 --> 01:24:08,040
+ [LAUGHTER]
+
+1190
+01:24:08,040 --> 01:24:09,040
+ OK.
+
+1191
+01:24:09,040 --> 01:24:10,040
+ So I'm going to try to solve a Rubik's Cube.
+
+1192
+01:24:10,040 --> 01:24:11,040
+ [LAUGHTER]
+
+1193
+01:24:11,040 --> 01:24:12,040
+ OK.
+
+1194
+01:24:12,040 --> 01:24:19,320
+ So why is that I can-- instead of using doc, I can use my code.
+
+1195
+01:24:19,320 --> 01:24:26,280
+ And the chat GPT actually gave him a bunch of answers, saying that because the code,
+
+1196
+01:24:26,280 --> 01:24:31,280
+ it has first, and it's a valid alternative to doc to make this dish.
+
+1197
+01:24:31,280 --> 01:24:32,280
+ [LAUGHTER]
+
+1198
+01:24:32,280 --> 01:24:35,280
+ So you can actually, yeah, scan it.
+
+1199
+01:24:35,280 --> 01:24:36,280
+ Awesome.
+
+1200
+01:24:36,280 --> 01:24:39,280
+ Yeah, feel free to--
+
+1201
+01:24:39,280 --> 01:24:41,280
+ [APPLAUSE]
+
+1202
+01:24:41,280 --> 01:24:50,280
+ People can come up and play, I guess.
+
+1203
+01:24:50,280 --> 01:24:51,280
+ Yeah.
+

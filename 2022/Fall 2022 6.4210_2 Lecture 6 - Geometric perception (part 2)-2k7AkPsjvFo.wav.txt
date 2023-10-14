@@ -1,0 +1,1332 @@
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ >> It's on now.
+ I'll keep talking for a second here for you.
+ Yeah.
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ [BLANK_AUDIO]
+ >> Okay, let's get started.
+ So last time we started our work on perception, right?
+ And I had intended to get through iterative closest point.
+ We didn't quite get through it, so I'll finish that off today.
+ And the goal for today, last time we sort of assumed perfect point clouds.
+ We assumed that our sensors were giving us the best possible information that
+ they could given the projection through the lens.
+ But there was no noise, there was no outliers, there were nothing like this.
+ So today we're gonna think about what happens when those point clouds get messy,
+ because real point clouds are very messy.
+ And think about ways we're gonna sort of modify our basic computational framework
+ to make this more robust.
+ And I think there's a couple particular algorithms I'll try to show you.
+ And I think they kind of represent a nice way to understand the problem,
+ understand what you can do with it.
+ There are many different variants out there, but
+ I think there's a few that you can get a taste for what's possible.
+ So just to set that up again, remember that our goal for today, for
+ this week I guess, is to do the same thing we did before.
+ But we've added these D415 cameras, and now we are reasoning about where
+ in the scene, I hid my point cloud there, but
+ we're actually using those cameras to find the mustard bottle.
+ First by taking pictures, then by turning those pictures,
+ those depth return, RGBD images into a point cloud.
+ This is actually the result of after filtering the point cloud,
+ getting it down to just the mustard that's left there, and
+ removing the bins and all the distractors and stuff like this.
+ And then what we'll see is we run ICP on this mustard bottle in order to
+ then accomplish the task.
+ Okay.
+ So we started last time with a really important component of the algorithm
+ that started us thinking about sort of connections between the kinematics
+ problems we've talked about and the perception problems we're starting to
+ talk about.
+ So we started off by saying we were given a few things.
+ We were given a model in the form of a point cloud, so our model points,
+ where we wrote them as a bunch of points, model i, and
+ we had this canonical model frame in the object frame, right?
+ I'll write bigger, I remembered.
+ Okay.
+ And then we also had scene points.
+ This is what we got from the camera with a little bit of processing to put it
+ into a point cloud format.
+ And this was originally, we obtained some scene points in the camera
+ coordinates, and then we assumed we had the camera pose.
+ So this is the camera.
+ Right?
+ And then the biggest assumption we made last time
+ was that point mi corresponded with scene point si.
+ Right?
+ So we somehow could look through our camera and know that there was a
+ particular point in the point cloud, and that should be associated with a
+ particular point in our model.
+ Okay?
+ If we have this setup, then it's incredibly useful to know that given
+ that setup, we can write an objective like this, minimize over the unknown
+ pose, which would be the pose of the object in the world.
+ And when I'm writing it as an optimization, I want to be clear, our
+ notation sort of makes it clear, but I want to be super clear that as an
+ argument to a mathematical program, that this is an object that is the poses.
+ So especially you put it in group three.
+ Okay?
+ And the objective is that for all of the eyes, I'd like that if I take both
+ the model points and the scene points into the world frame, then their
+ distance is small.
+ And I tried to show you the landscape of this.
+ This is a quadratic objective.
+ Right?
+ When I plotted it with just two decision variables, which I could do in 2D
+ with just rotations, right, then it looks like just this quadratic bowl.
+ And then this constraint here, the fact that these are not arbitrary
+ rotation matrices inside here, meant that there was an extra constraint,
+ which was that unit disk.
+ We'll see that picture again.
+ But this was sort of a nice optimization problem, and it has a closed form.
+ It's numerical, but an algorithm that's almost as good as closed form
+ solution via SVD, singular value decomposition.
+ That's where we were last time.
+ Right?
+ I want to just point out again, point out quickly here, because we're
+ going to play with different formulations of this today, and different ways
+ that are going to be good optimizations, ugly optimizations, that are going
+ to give certain robustness properties.
+ Maybe there's a point to plane version of this, where you can try to
+ correspond points to whole faces of a mesh, for instance.
+ There's a bunch of versions of this, but we're going to be doing
+ manipulations on these basic equations.
+ OK?
+ So the first one, just to observe right off the bat, is that if I had
+ written instead, if I wanted to transform the scene points into the
+ object frame, for instance, if I had done-- what do I want?
+ I want the transform from the world, let's say, into object frame,
+ should be the inverse of this transform.
+ And I'd written this optimization with this guy.
+ OK?
+ That's solving for a different transform.
+ This is trying to put the points together, everything in the object
+ frame.
+ OK?
+ But from the point of view of an optimization problem, this looks
+ identical, and can also be solved with SVD.
+ Right?
+ This is still linear in the decision variables here, plus some
+ constraints that are solved by SVD.
+ OK?
+ So you can go back and forth, and we're going to move these
+ things around, and we'll understand where it breaks and where it
+ works.
+ OK, but I want to address this big assumption, because really, how
+ could you possibly know which point in the model-- if I get a
+ point cloud of a mustard bottle, how am I possibly going to know
+ which one goes to the top, which one goes to the bottom?
+ That's maybe the hardest part of perception, is to make that leap.
+ OK, so I think a picture-- well, actually, the picture on the
+ screen is a pretty useful one.
+ So this is-- remember, my blue is my model.
+ My salmon-colored is my scene.
+ Right?
+ The brown is what I get when they overlap, and it wasn't
+ artistically chosen, clearly.
+ OK?
+ And the green here, the green lines, are the correspondences.
+ I just drew in, saying, if I said that this point corresponds
+ to this point, I'll just draw a line.
+ OK, so let's say I didn't have those correspondences, but I had
+ this initial frame of the model points and these initial scene
+ points.
+ You can imagine-- and the algorithm's name is a pretty
+ good indication of what the first thing we're going to try
+ is-- a fairly good heuristic would be to say, let's just
+ guess that the points that are-- the correspondences are the
+ points that are closest in space.
+ I'll have an initial guess of the object, and I'll have the
+ actual scene points.
+ And let's just start by saying the ones that are closest in
+ Euclidean distance are the ones that correspond.
+ OK?
+ It's interesting.
+ Right here, you'd see that this one on the first guess
+ might get it wrong, that this point would correspond to this
+ point, probably.
+ But if enough of the points correspond to the right points--
+ I'll make this precise in a second here-- then we can have
+ an algorithm that can be, I think, actually very effective.
+ So this is the iterative closest point algorithm, which
+ is doing exactly this.
+ And I'll write the equations down to make that precise in
+ just a second.
+ And what you can see is, even if the first guess is wrong,
+ and then you solve for a new pose, given this singular value
+ decomposition, it puts you in a new condition where you can
+ try to make your correspondences again.
+ And as long as that alternation converges, you can get
+ global solutions to this.
+ Now, we're going to-- this is also susceptible to local
+ minima.
+ You'll see the bad cases in a minute, too.
+ But this is the basic algorithm I want to understand next.
+ So the iterative closest point algorithm
+ is going to try to solve for the correspondences.
+ So we need a notation for our correspondences.
+ We're going to have an initial guess for the object.
+ I'll stick with the original one.
+ We're moving the model into the scene points.
+ When I'm going to do an estimate,
+ I'm going to try to use this hat notation to say,
+ this is my guess at the true x.
+ So given this, I want to find correspondences.
+ So step one.
+ And I'm going to write the correspondences
+ in a correspondence vector.
+ OK, so let's just write it like this.
+ I'll call it the vector c here, where I'll say c-- let me do--
+ ci, the i-th element of this vector c.
+ I'll choose as my heuristic to take the point that
+ is the minimum distance.
+ I'll make sure this notation's clear in just a second.
+ Given my initial estimate x hat, argument over j.
+ I'll search over all of the j's, psi x squared.
+ And since this is just going to be
+ a guess at the correspondences, I'll put a hat there too.
+ OK, so what is this?
+ This is saying that I'll take each point--
+ for every scene point i, I want to find a corresponding model
+ point j.
+ So I'm going to loop through all of the possible j's,
+ try all the possible model points,
+ and compute the distance between that model point
+ j and my scene point i that I'm considering.
+ And whichever one minimizes it-- so min
+ would be the value of the optimization,
+ and arg min is the element j which
+ causes this to be smallest.
+ That's the difference between min versus arg min, yeah?
+ So this is returning the element j,
+ and I'll tuck that into the vector c.
+ Is that notation clear?
+ So this is a vector of integers.
+ So how would you compute this in general?
+ So we talked about quadratic optimization over there.
+ This is now an integer optimization,
+ but it's just a list of numbers.
+ So you can just compute-- worst case,
+ you can compute all of the distances
+ and just take the smallest one.
+ There's a finite number of things to compute.
+ Just take the smallest one.
+ In practice, we don't do that.
+ In practice, there's efficient data structure
+ for nearest neighbor queries, so we're going to use those.
+ So kdtrees, there's public libraries
+ that make these very fast, approximate nearest neighbor
+ queries and the like.
+ So in practice, you can make this computation
+ use your best nearest neighbor data structures.
+ And then step two, the reason I chose this notation
+ is that I can just say my new x hat is
+ the result of that optimization with just the correspondence
+ is written in here.
+ So I've got model point ci hat in here minus psi.
+ See what I did?
+ I've got to sum all these up over i.
+ So I used to just have mi here, assume that I knew
+ one-to-one correspondence.
+ Now I'm going to say I'm going to take whichever model point
+ corresponds to that scene point.
+ And I'll sum over all the scene points,
+ and I can still-- it's, from the optimization perspective,
+ the same as that optimization.
+ So I can use my SVD.
+ Is the algorithm clear?
+ It's the simplest.
+ It's like the bread and butter point cloud algorithm.
+ You'll see it used in lots of places.
+ Yes?
+ I thought the question was still like,
+ what if the dimensions don't match?
+ Good.
+ Yeah, so the question was, what if the dimensions don't match?
+ So I made a choice here with my notation
+ to say that I'd like to say for every scene point,
+ I'll try to find a model that corresponds.
+ We're going to talk about that.
+ So that has implications.
+ So in the case of partial views, for instance,
+ that makes a lot of sense.
+ I'll say this very carefully in a minute.
+ But I made a choice so far to say that all I'm requiring
+ is that every scene point, it corresponds
+ with one model point.
+ You could have many model points for ones
+ that are used by the same-- sorry,
+ one model point that's used by many scene points.
+ You could have some model points that
+ are used by no scene points.
+ But this notation says that for all the scene points,
+ I'll do this.
+ Good question.
+ Yes?
+ Is this honoring Merck if you don't go around all
+ of the top [INAUDIBLE]
+ That's a great question.
+ So the question is, what happens if you
+ don't take all of the correspondences,
+ but you take a few of them?
+ And I think we're going to have to do that at some point
+ to address some messiness.
+ So we're going to think about the right way to do that.
+ So at some point, we're going to have to deal with that.
+ And let me give you an example right away that sort of, I
+ think, makes that point.
+ Imagine if I had my object of interest here.
+ And this is the ghost of the-- I'll
+ use my reddish color for my scene points.
+ You get the idea?
+ And what happens if, I don't know,
+ there was a reflection or something,
+ and I got a couple scene points way over here?
+ And I have my model that started off with some initial guess.
+ So this is nicely getting pulled in this direction.
+ But I said so far that every scene point corresponds
+ to at least one model point.
+ So these points are still going to pick some point on the model.
+ And they're going to pull this in this direction.
+ They're trying to minimize the distance
+ between the corresponding points.
+ See, I've got all the colors here.
+ I can say, if I've got some green correspondences here--
+ I guess that would be the shortest one would be a straight
+ line, like this.
+ And then even if I have a lot of good correspondences here
+ that's pulling me this way, I can
+ have even a very small number of correspondences
+ that are far off.
+ But because that distance is large,
+ they can have overwhelming effect
+ on the quality of the algorithm.
+ So that's a reason maybe that it feels unnatural
+ to say that every scene point has
+ to match with at least one model point.
+ That makes you susceptible to outliers.
+ But the reason I chose that was because there's
+ another direction, too, which is that what if I only
+ have partial views?
+ So I've got a camera.
+ I'll use white for my camera here.
+ I've got my camera over here.
+ And it's looking down.
+ And I can see this part of the object.
+ But I'm not seeing any points over here.
+ OK.
+ So if I said, for instance, that every model point
+ has to correspond with one scene point,
+ that would be the opposite choice
+ if I had made the opposite choice over there.
+ Then again, I've got some model points here
+ which don't have a correspondence here.
+ And they will cause big artifacts potentially here.
+ So you can choose either to correspond scene to model
+ or model to scene.
+ One of them, the scene to model, I think,
+ makes you susceptible to outliers.
+ And the model to scene makes you susceptible to partial views.
+ OK.
+ And that's kind of the point of the lecture
+ is that we're going to have to do a little bit better
+ than both of those.
+ I would say that these are the dominant problems,
+ the important ways that real point clouds are messy.
+ I would say messy is a silly term.
+ But noise is taken.
+ I would say I want to reserve noise for something
+ like I'll say in a minute.
+ So what would noise be in the context of a perception system
+ like this?
+ Maybe I measure the true scene point,
+ but plus or minus some Gaussian noise, for instance.
+ So every one of those points is just
+ perturbed with some Gaussian.
+ I shouldn't say this.
+ That's what all the theorists pick
+ when they try to prove something about perception
+ or something like this.
+ They always assume Gaussian noise.
+ But that's not what real cameras do.
+ In fact, I would say that it's the easiest thing to analyze.
+ But it's not a property.
+ I'd say that the real cameras are actually
+ very low in terms of noise.
+ And this kind of noise is relatively easy
+ to be robust to.
+ In fact, we've already got relatively good robustness
+ to noise just by writing it in this least squares objective.
+ To some extent, if you've got Gaussian noise added in here,
+ then you'd expect this least squares objective
+ to be the right metric for rejecting that noise.
+ So by virtue of not asking David Urest
+ the last time about whether we should make this a quality
+ and what that looks like, by asking for it to be softer,
+ this gives us nice robustness to that Gaussian noise.
+ But I think partial views are a very big one.
+ You're never going to see the bottom of your object that's
+ sitting on the table until you pick it up.
+ No amount of looking around or whatever is going to get you
+ to see the bottom.
+ So you're going to have partial views.
+ Another way that you get partial views is from occlusions.
+ Partly it's just by having a camera looking from one angle,
+ but also when you get more cluttered scenes,
+ you'll have occlusions.
+ Something will block your view of an object.
+ And I think the last big one is-- it's a type of noise,
+ maybe, but the outliers are-- let's define them
+ as spurious random points added to the image
+ in arbitrary locations.
+ A reasonable model, I think, of this
+ would be just choose uniformly over the viewing window points
+ at random.
+ If you can be robust to that kind of outliers,
+ that's a first order sort of robustness.
+ More interesting outliers are where you have other objects.
+ For instance, maybe you have a mustard bottle,
+ but you have a ketchup bottle nearby,
+ and it's kind of got some of the same shapes,
+ but clearly your perception system
+ should be able to disambiguate them.
+ But maybe these kind of algorithms
+ might get pulled towards the ketchup bottle
+ and never break free if they're similar enough.
+ So those outliers can be pretty complicated.
+ I think there's at least one more type
+ that you have to worry about with real cameras, which
+ are dropouts.
+ You remember the picture I showed
+ of some of the real cameras?
+ Yeah, like this.
+ This is what real things look like.
+ You'll just have no returns from the side or shiny parts
+ of the images.
+ So we want to be robust to that.
+ But given this basic algorithm, I
+ guess I got ahead of myself a little bit.
+ This is a very powerful basic algorithm.
+ This is just the ICP, and this is the Stanford bunny,
+ which you basically-- if you were ever to write an ICP
+ paper, it seems you must use-- a condition for acceptance
+ is that you ran your system on the Stanford bunny data set.
+ And you will do this on your problem set,
+ so you can join the ranks.
+ That bunny shows up everywhere.
+ But this is ICP in actions.
+ If you remember the dish loading robot from Toyota Research
+ Institute, did you see what happened there?
+ So there are two perceptions at work in that video.
+ Let me show it again.
+ There's an initial one that's actually using mostly
+ deep learning to try to find where the mug is in the sink
+ roughly.
+ But then when it gets close, you see this little realignment?
+ That was an ICP-based algorithm that
+ was using the local camera on the hand,
+ comparing it to the expected mug,
+ and dialing it in and going in for the grab.
+ And that's a pretty common pipeline.
+ That was it again right there.
+ Right there.
+ A little refinement and then go.
+ Can the camera see it that close?
+ Yeah, right here you can see it.
+ Once it gets too close, it becomes blind.
+ Right here.
+ Right there it can still see it, yeah.
+ You're right.
+ They do have minimum depth.
+ And it gets blind pretty quick.
+ And let me give you one more sort
+ of high-level motivation for the ICP class of algorithms.
+ This is actually when deep learning
+ started approaching some of these perception problems.
+ And everybody was trying to train their first deep networks
+ to try to estimate the pose of objects, which
+ is an extremely powerful pipeline now.
+ But the first versions of these algorithms
+ all required you to label the ground truth
+ pose in real data sets.
+ So this was a tool that was very useful for--
+ and still is useful.
+ We would take real data in the lab.
+ That's the messy lab upstairs.
+ And we had a model of the drill.
+ And we would just have a user interface,
+ which after collecting a video stream of data,
+ would just click-- you'd click two or three times
+ in the interface.
+ Let me stop that.
+ And you click two or three times just
+ to give ICP an initial guess.
+ It would fit the point cloud into this really noisy point
+ cloud, this big complicated one.
+ And then all of the images that you
+ had from all the different interactions
+ were suddenly perfectly labeled, or labeled by ICP.
+ And then you use that to train a higher level perception system.
+ Yes?
+ In the dishwasher example, do you have models of the cups?
+ In that case, yes.
+ So in the dishwasher example, we had a model of the cup,
+ the plates, the spoons.
+ In fact, that's why we chose dish loading,
+ was because you can sort of imagine going into a restaurant
+ and having a finite number of things.
+ It's a pretty good case for the known model assumption.
+ And we tried to take that as far as possible.
+ And then anything we didn't have a model for,
+ that we couldn't register to one of the known models,
+ we'd throw in the trash.
+ Yeah.
+ Every once in a while, we'd throw something important
+ in the trash.
+ OK.
+ So partial views, I think-- partial views,
+ it makes sense to do scene to model correspondences.
+ For outliers-- I'm sorry, did I say that right?
+ You'd like everything in the scene
+ to correspond to at least one model.
+ But for outliers, you'd like the opposite.
+ And at some point, we have to do better
+ than these hard correspondences of trying
+ to correspond all the points to all the points.
+ And we need some sort of mechanism
+ to do something better than that.
+ We're going to talk about soft correspondences.
+ And we're going to talk about outlier robust correspondence
+ rejection, basically.
+ OK.
+ Is that the sun changing?
+ The lighting's just changed a lot.
+ OK.
+ Let's talk about soft correspondences first.
+ Well, let me just-- I had a couple animations here, too.
+ This is ICP running in the partial view case.
+ It can do pretty well, but it can really mess things up.
+ OK.
+ And this is what happens with a few outliers,
+ chosen how I did, where I just picked some random points
+ in the world.
+ And those points, even as it tries to converge,
+ are going to have potentially an overwhelming effect
+ on the convergence of the algorithm.
+ So that's what we're trying to fight.
+ OK.
+ The first way we're going to try to fight it
+ is by taking these hard correspondences
+ and softening them.
+ OK.
+ [WRITING ON BOARD]
+ So let me write the same thing we're doing here.
+ I used this notation right here.
+ I used this-- I'm going to sum over all seen points
+ and look into the index of my correspondence.
+ I'm going to write the same equation,
+ but I'm going to write it a little differently.
+ And it's going to lead to another algorithm here.
+ So I'll take my min over x0 in SE3.
+ I want to keep my x0, p0.
+ But now I'm going to do mj minus psi.
+ And I'm going to hit this up front with a correspondence
+ matrix, Cij.
+ And I'm going to sum over j and sum over i.
+ This is now a correspondence matrix.
+ And Cij is going to be 1 if i corresponds to j and 0
+ otherwise.
+ So this is just-- I'm taking my original single sum
+ with an index.
+ I'm going to write it as a double sum.
+ And basically, every time I sum through this,
+ if I wanted to get exactly the same correspondences,
+ I just set a lot of the terms of the sum to 0.
+ But out of the box, I'm going to say there's a chance
+ that any of the model points can correspond
+ to any of the seen points or any combination thereof.
+ That's why it's a generalization.
+ Now, if I wanted to impose something like every seen
+ point must correspond to some model point, or vice versa,
+ I could put a constraint on the rows or columns of this
+ if I wanted to.
+ But let's not.
+ Let's leave it as a slightly more general case.
+ This could have a row that's all 0's.
+ It could have a row that has multiple 1's
+ if there's multiple correspondences.
+ Is that clear?
+ No?
+ So minimizing this is actually-- since this is just
+ a constant-- if I use this as a constant matrix,
+ if someone gives me this coefficient matrix,
+ this is still something I can solve with SVD.
+ It's got more terms, but it can still
+ be solved in the same way.
+ The trick is that this has to be fixed.
+ [WRITING ON BOARD]
+ I would love to optimize c and x simultaneously
+ to be able to leave this as a decision variable.
+ But in this problem, the correspondences
+ are given in a slightly more general way,
+ and I'm still just finding x.
+ And the interesting case, then, the soft case--
+ this so far is the same as what I've written before.
+ I can make these soft now if I change and allow cij is just
+ between 0 and 1, for instance, instead of saying
+ it must be 0 or 1.
+ I'm allowed to correspond a little bit
+ with some of the points.
+ Right?
+ Does that make sense in the equations?
+ It turns out that's exactly what's
+ happening in one of the famous softer correspondence
+ approaches called CPD-- coherent point drift.
+ [WRITING ON BOARD]
+ This is just another coherent point drift CPD.
+ It's one of the famous alternatives, if you will,
+ to ICP.
+ But you can really just think of it as a soft version of ICP.
+ The CPD paper, actually, is all written
+ in terms of the language of probabilities
+ and trying to say I've got an estimator and the like.
+ But the math is the same.
+ You're still-- there's a probabilistic interpretation
+ of what I'm writing, but it's just a Gaussian,
+ and the math is the same.
+ So in the CPD paper, basically, they just
+ say on each iteration of the algorithm,
+ I'm going to still initial guess x hat o.
+ And then I'm going to set cij to be basically
+ like a soft version of the distance,
+ like a Gaussian kernel around the points.
+ Right?
+ I'm going to take one of my points
+ here and score the-- if I just have one dimension here.
+ If this is my scene point here and my model point is here,
+ then I'm just going to score in some Gaussian kernel
+ the distance from the points.
+ So there's a normalization term.
+ And there's some parameters of that Gaussian,
+ but roughly it's the distance we know.
+ That's our estimated distance, right?
+ Over some variance here.
+ And I'm just going to use this as my distance function,
+ my correspondence function.
+ And there's a beautiful Bayesian interpretation of that,
+ but you can think of it just as a distance function that's
+ giving you these correspondences.
+ And then on step two, you solve SPD, and then you repeat.
+ The word on the street is that this is much more robust than--
+ it tends to be more expensive because you're
+ summing over a quadratic number of points
+ instead of a linear number of points.
+ And so some people actually choose
+ not to use the algorithm because of that quadratic cost.
+ When point clouds get big, that can be expensive.
+ But it tends to be-- just the word on the street
+ is it's more robust.
+ I think I have the snapshot of the Stanford bunny from the--
+ oh, this is the CPD one.
+ But this is roughly what you see in every paper.
+ I could have put CPD on the bottom,
+ and it would have been a similar picture where
+ you see the Stanford bunny, and you see it
+ with some noise and stuff in it.
+ And then you see my algorithm is better than their algorithm.
+ I thought I had the CPD one in here, too.
+ Hey, here's CPD.
+ You see they corrupted it with Gaussian noise.
+ It's all good.
+ OK?
+ But in practice, people do like CPD apart from its speed.
+ Yes?
+ In the SYNC robot--
+ Yes.
+ --is that ICP because of the quadratic [INAUDIBLE]??
+ That's a good question.
+ So the ICP in the SYNC-- why did we use ICP and not
+ CPD in the original one?
+ There are many variants of ICP also,
+ and sometimes more mature implementations.
+ I think probably if that had been
+ a pain point in our pipeline, we would have explored CPD.
+ But I think the off-the-shelf ICP implementations
+ were good enough for that job, and we worried more about--
+ yeah, it was about the computational cost.
+ In fact, because ICP is local--
+ I can tell you specifically-- because ICP is a local
+ algorithm, it can run into minima.
+ We would actually take a handful of initial guesses
+ for the pose of the mug, given our original perception system,
+ and we would be in parallel, run multiple versions of ICP,
+ and take the one that fit the best.
+ Go, and we optimized that pipeline,
+ maybe before we fully thought about whether we should use a CPD
+ or not.
+ Yeah.
+ We did explore, actually, a CPD-like version, too,
+ and I think that was also viable.
+ Yes?
+ What did it address [INAUDIBLE]??
+ In this algorithm?
+ [INAUDIBLE]
+ Yep.
+ So we still need the initial guess
+ to come up with some initial correspondences.
+ The notion of distance, which sets my initial correspondences--
+ before, we were just using it to down-select which thing
+ to correspond with at all.
+ Now we're setting the soft correspondence with it.
+ But it should not be x hat?
+ I should use x hat in this.
+ Yes.
+ Thank you.
+ And soft [INAUDIBLE]
+ I'd like one of those to be j.
+ I wrote that whole term too quickly, clearly.
+ Thank you.
+ And this is also a function of i and j.
+ I think that's right.
+ Good catch.
+ Yes?
+ [INAUDIBLE]
+ To CPD?
+ I think I would guess that there's
+ somebody who's put RGB into CPD.
+ But I don't see any reason why you wouldn't.
+ I just wouldn't think that any Euclidean distance in RGB space
+ is going to be only good very locally.
+ People do it for ICP also.
+ There's an RGB version of ICP, where
+ you put your distance across the RGB values in addition
+ to the xyz values.
+ I've always thought it was a little weird.
+ There's things you can do that use descriptors, more
+ general descriptors, to do the point matching and stuff
+ like this.
+ And that makes more sense to me than RGB.
+ Great.
+ OK, so this tends to be-- so how does this handle outliers,
+ for instance?
+ Compared to the ICP algorithm, what
+ is this doing with outliers?
+ If I had the picture I drew initially,
+ where I had a perfect point cloud here with two points way
+ over here, what happens?
+ Yeah?
+ [INAUDIBLE]
+ Exactly, right?
+ So this one, unlike the original one, which is even
+ at convergence is getting pulled by those outliers,
+ depending on which direction you put your correspondences,
+ this one is effectively ignoring points
+ that are a long distance away.
+ So it handles outliers in a soft way.
+ It also means that if you're too far away in your initial guess,
+ you have no hope of converging.
+ But this is intentionally introducing
+ some notion of locality in our distance function,
+ which is good.
+ Yes?
+ [INAUDIBLE]
+ These days, you use deep learning
+ to get an initial guess.
+ And then maybe you use ICP, or there's
+ even deep versions of the refinement
+ that can work very well.
+ But I think that's a very natural pipeline.
+ Use a data-driven thing to take an initial shot,
+ and then refine it with ICP.
+ There are versions of this that we will cover--
+ I'll mention, at least, at the end, in our last variance--
+ that try to solve the global point correspondence problem.
+ And they don't work great.
+ There are some algorithms that will
+ solve a global optimal problem, but it will take, potentially,
+ to the age of the universe to solve.
+ And there are other ones that are close to global,
+ but in practice, people don't consider
+ global point correspondence in noisy point clouds
+ to be a solved problem.
+ There's two important versions to think about
+ when you're thinking about this initial guess.
+ How do you think about this initial guess?
+ If you have a point cloud that looks like this--
+ it's a bunny, but it's a little furry--
+ then, actually, it's not too hard to get an initial guess.
+ It's not too hard to solve ICP.
+ If you're in this setting, for instance,
+ where there is a drill in there, for sure,
+ but there's also every other tool and a bunch of, probably,
+ student lunch or something like this.
+ There's all kinds of other stuff in the point cloud,
+ and you have to find the needle in the haystack.
+ That's a much harder problem for initializing ICP,
+ and we don't have strong point registration algorithms that
+ will solve that global problem.
+ In fact, when we did this project to try to just label,
+ we figured, who cares if it's slow?
+ Let's take a global point correspondence algorithm
+ to just generate the labels.
+ It's offline.
+ We'll just generate a big data set, no big deal.
+ But we couldn't get a global point correspondence method
+ to be robust enough to do the job.
+ So it required having a human click.
+ But those are two very different cases.
+ It would be the needle in the haystack versus a fuzzy bunny.
+ So this is a soft version of rejecting outliers.
+ But let's try to work-- let's think about how
+ we could work a little bit more towards the rigorous sort
+ of outlier rejection case.
+ The problem with this is that I still
+ had to come up with that kernel function.
+ I chose some parameters of a Gaussian,
+ which was sort of arbitrary.
+ Nothing about my data told me really
+ what those coefficients should be.
+ I picked some kernel.
+ I tried it.
+ I maybe tweaked the knobs until I got
+ something I was happy with.
+ But really, if I could solve this jointly,
+ saying that both c and x are decision variables,
+ find me the best fit among any correspondences,
+ that would be the dream.
+ That would solve the global ICP problem.
+ We can't do that.
+ But we're going to do something a little bit closer.
+ So let's talk about rejecting outliers.
+ [WRITING ON BOARD]
+ Basically, removing spurious correspondences.
+ [WRITING ON BOARD]
+ And I think there really are two cases.
+ There's the easy case.
+ I guess I called that the fuzzy bunny.
+ Let's just stick with that.
+ That's not what I called it here,
+ but that's what I'll call it for today.
+ The fuzzy bunny case, where we have almost our model
+ in the data, but it's just been corrupted
+ by a handful of outliers.
+ So really, I guess maybe to make that more formal,
+ you could talk about the rate, the percentage of outliers
+ in your data set.
+ So if you have 1,000 points in my point cloud, and 990 of them
+ are bunny-like, and 10 of them are just spurious points,
+ then that's sort of an easier setting.
+ And then there's the, I've got a drill
+ in that 100 of my points are associated with the drill,
+ but there's another 900 associated
+ with other things that are interesting.
+ That would be the hard case.
+ The easy case, there's a bunch of heuristics
+ that I should acknowledge, but I don't want to dwell on.
+ You can imagine heuristics, which
+ are-- and you could sort of call this CPD approach heuristic.
+ Or you could just say, let's say, I'll truncate distances.
+ If I have my ICP loop, and any distance that's greater than 5,
+ I'll just put a threshold on distance, for instance.
+ I'll just remove those from the correspondence list,
+ and that's fine.
+ Right?
+ Other thresholds that sometimes people will put in,
+ they'll say, I'm going to look for 100 best correspondences.
+ I'll just put an upper limit on the number of correspondences
+ to consider, and I can just put in sort of a threshold on that.
+ And there's a bunch of algorithms like that,
+ which are useful.
+ The hard case has more interesting algorithms,
+ in my opinion.
+ And I'll list a few.
+ So one of them-- actually, David, you said RANSAC last time.
+ Right?
+ RANSAC is random sample consensus.
+ We're going to ask you to play with that one on the homework,
+ because it's a pretty simple algorithm to understand.
+ In a few words, it is, I'm going to take my 1,000 points
+ in my point cloud, and I'll try to pick 100 of them at random,
+ and start using ICP from those 100.
+ And maybe I can combine it with a few of these thresholds
+ on distance, or whatever, to bring in other point clouds
+ that are fitting.
+ But then I'll stop, and I'll pick a different 100
+ initial point clouds.
+ And I'll do that a bunch of times.
+ And when I've happened to pick-- if I do that enough times,
+ then I will hopefully, luckily pick
+ some subset of the point cloud where those initial subset
+ gives me a good initial guess, and I can go from there.
+ So it optimizes on random subsets, roughly.
+ I'd say initialize with random subsets.
+ [WRITING]
+ RANSAC is useful more generally in ML kind of problems
+ and the like.
+ I hope the problem set will step you through that,
+ and you'll get a basic understanding of that.
+ I want to spend my time here talking about one
+ that I think is much more clever.
+ It leverages some of the geometry
+ in the problem, which is using pairwise distances.
+ OK, what are pairwise distances, and why is that a useful idea?
+ So here's an observation.
+ You remember how I said that the relative distances
+ between points depends on the rotation?
+ The relative positions between points
+ depends on the position, but not the translation.
+ We use this trick.
+ I have a bunch of points on my point cloud.
+ Then the relative positions, this vector here,
+ I take any two points, right?
+ If I do P of, let's say, mi, I'll
+ just do m2 versus m1 in some frame,
+ this depends on the rotation, but not translation.
+ That's what we used to justify-- that's
+ how we designed, actually, our SVD algorithm,
+ because we said we actually only have to worry about rotations.
+ Because that vector, if I slide this thing around on the board,
+ that relative position is invariant to translation.
+ OK, the pairwise distance-- this is the pairwise distance.
+ --is invariant to rotations and translations.
+ OK, so if I put this object in some completely different
+ configuration here, the distances between these points
+ here is the same, even though it's
+ been under any rigid transform.
+ If I just look at the length of the pairs, does that make sense?
+ So if I were to go through my original model
+ and compute all possible pairwise distances,
+ and now I go through my scene and I
+ compute all possible pairwise distances,
+ if my scene has a point whose pairwise distance isn't
+ in the model up to some noise, then one of those two points
+ had better be an outlier.
+ Did I say that well enough?
+ Right?
+ If the scene-- I'll write it like this-- s1, s2 distance
+ is not a pairwise distance in the model,
+ then 1 or 2 is an outlier.
+ Now that's a little bit weird, OK?
+ Because-- so I think that that analogy is perfect
+ if I take an initial point cloud, if I have my model,
+ and I think the real data is just
+ a perfect translation of that, and then
+ some extra things thrown in.
+ The mustard bottle, right?
+ In practice, I made some point cloud representation
+ of my mustard bottle once, and I've
+ got a different set of points that
+ are all on the surface of the mustard bottle later.
+ So you have to put some margins on this.
+ You can't say that with exact equality
+ these distances have to match.
+ But in practice, there's a distribution
+ of expected pairwise distances that
+ represent your object, which you can look for in the data
+ without having solved any pose estimation problem.
+ If you can find a clump of points in your data,
+ then you can actually reject a lot of outliers.
+ So there's a nice algorithm called Teaser,
+ which is from an MIT group.
+ Luca Carlone and Hank was the lead author.
+ Teaser actually had a bunch of different components of it,
+ but one of the pieces that I'm highlighting here
+ is this outlier rejection step.
+ [WRITING ON BOARD]
+ Hank wrote a bunch of papers, and I'm sure that the piece--
+ I think he had a different name for every piece
+ of the algorithm, so there's a better name for just this piece,
+ but it's all under the Teaser umbrella.
+ Yes?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ OK, so you're worried about reflections.
+ So that's true.
+ If you had a perfectly mirrored object,
+ you wouldn't be able to distinguish it,
+ I think, with the pairwise distance computation.
+ I completely agree.
+ I think that's-- I mean, in practice,
+ if I accidentally found the mirrored mustard,
+ I guess maybe that's not the biggest problem.
+ But you're right.
+ It's exacerbated, I think, in 2D on the board.
+ It looks like the mirror operation is very natural.
+ But if you think about objects of interest
+ going through any rigid transformation,
+ the case you're worried about, I think,
+ would be a reflection, where you're really
+ going through some axis.
+ And you're right, this would not distinguish that.
+ But at the very least, it could reject a lot of outliers,
+ maybe not all.
+ Good question.
+ So this Teaser algorithm by Hank and Luca
+ made a really clever idea.
+ They said, we've got this cluster of-- there's
+ some distribution of possible pairwise distances.
+ And they said, make a graph where the edges--
+ I'm going to put the picture up that'll help.
+ You make a graph connecting all the matching pairwise
+ distances.
+ And that actually, if you can find the maximal clique
+ in the graph, that is likely your object
+ of interest in the data.
+ So let me show you the picture that I
+ used to think about this algorithm.
+ So there's maximum clique in correspondence graphs.
+ And this is actually-- they showed it
+ in very complicated settings, big point clouds and the like.
+ I was like, Hank, just explain this to me.
+ I have a triangle.
+ It has the sides 3, 4, and 5.
+ Let's just work out that case first.
+ And I liked his answer so much that it's not in the notes.
+ So hopefully, this will help you guys too.
+ So this is the setting.
+ I have my same model blue and salmon scene.
+ And the setting I was worried about
+ was what if I have the object of interest, my model, my blue,
+ if it appears in the scene perfectly--
+ and a bit like what your reflections question here--
+ if it appears in the scene perfectly,
+ but there's enough similar distances that
+ appeared also in the scene.
+ So I said, imagine you have the exact triangle, the 3, 4, 5
+ triangle, but you also had a prism or a pyramid
+ there that had 3, 4, 4, 4, 3.
+ Right?
+ You see what I was trying to do?
+ Was make a lot of similar distances.
+ The distance 4 shows in my data.
+ The distance 4 shows more on the object on the right
+ than on the left, even though the left is the right answer,
+ correct answer.
+ Similarly, the number 3 shows up a lot on the right.
+ By counting, there's more correspondence,
+ pairwise distance matches on the right.
+ But the correct answer is on the left.
+ The way their algorithm works is like this.
+ So we're going to make a node here.
+ If A in the model, point A here, corresponds to A over there.
+ If A corresponds to B over here.
+ Each of these circles, each of these nodes in the graph
+ is one possible correspondence from model to scene.
+ An edge in the graph happens if the pairwise distances match.
+ Yes?
+ So if A to A and B to B here is the same distance,
+ then I'll put an edge in the graph.
+ Otherwise, I won't put an edge in the graph.
+ OK, so that gives you this graph structure
+ of possible pairwise distance correspondences.
+ And the claim in their paper was that the maximum clique is
+ likely the object of interest.
+ And indeed, this object here on the left
+ has a bigger clique of 3 than any of the pairwise comparisons
+ on the right.
+ So they defeated my counter example and won me over.
+ That's a very clever idea, isn't it?
+ That you can use this invariance without even
+ knowing the pose of your object at all,
+ the rotation nor the translation.
+ You can compute this quantity.
+ And you can look for the statistics of your object
+ roughly in the data.
+ I think it gets a lot harder when you have noise in the data
+ and you expect those to be almost pairwise distances.
+ Then you'll have probably many more edges in your graph.
+ And it's not as clear what the maximal clique looks like.
+ But it's a very clever idea.
+ Questions about that?
+ Yes?
+ [INAUDIBLE]
+ Yes, that's a great question.
+ So first of all, never do that with a robot.
+ I'm kidding.
+ So I actually think this is a very, very good question.
+ So Tom's asking, he says, what if my object is long and flat?
+ And I'm looking at it like this.
+ First of all, especially on your iPad,
+ you're going to get no returns on the side.
+ So that's just dead in the water probably.
+ But even, I would say, long, flat objects on tables
+ are a good example of how the ICP objective that we've
+ been writing all day is actually probably not
+ the right objective.
+ Because I could get a lot of good matches
+ in terms of distance, even if this is shifted by a lot.
+ If I'm looking at this object on the table,
+ I'm probably weighting the edges a lot.
+ Those are where all the information is.
+ But the density of points I'm going to get
+ is mostly on the top.
+ So my ICP objective, I think, is deficient in that case.
+ And you shouldn't think of this as definitely
+ the right objective.
+ That's the point I always try to make at the end,
+ is that it's not clear that ICP is the right objective.
+ And I think long, flat objects on tables, or books on tables,
+ is a great-- or iPads on tables is a great example of that.
+ OK, people understand the pairwise distance?
+ I mean, roughly understand?
+ I think you should think through that example.
+ It's in the notes, obviously.
+ And it's worth thinking through.
+ That one was very impressive to me.
+ OK.
+ OK, last version that I'll try to do today here,
+ for being robust, is trying to solve jointly
+ for the correspondences and the poses.
+ So let's try to take the slightly more interesting
+ version of the algorithm.
+ And I'm going to do that first with just a small modification
+ of the original algorithm.
+ I'll do the point-to-plane ICP.
+ It's going to be a window into, I think, a bigger idea here.
+ So the idea here is I want my model
+ is a triangle mesh, a triangular mesh,
+ instead of a bunch of points.
+ And I'm going to do my example here just in 2D.
+ OK, so let's just say I have my model looks like this,
+ whatever.
+ OK.
+ Rather than represent the model only as a series of points,
+ I'm going to model my-- in 2D, I'm
+ going to model it as a line segment.
+ These line segments are the models.
+ And I want to correspond points in the scene,
+ not necessarily just to the vertices,
+ but to the closest point on the face.
+ In 3D, this is point-to-plane.
+ Is that clear?
+ I'd like to measure not the distance from point to point,
+ but the distance from point to plane
+ and allow it to match anywhere on the plane.
+ OK, so how would I write this?
+ How do I represent these meshes, these triangular meshes?
+ OK.
+ So typically, you have a list of vertices
+ plus a list of faces, which are-- these are points in x, y,
+ z.
+ And these are vertex indices, i, j, k.
+ So this would have vertices-- I don't know-- 1, negative 1.
+ It's going to have another one, 1, 2.
+ It's going to have all these vertices listed.
+ And then it's going to have a face saying that vertex 1
+ and vertex 2 are connected.
+ In 3D, it would have three numbers.
+ But in 2D, it's got two numbers.
+ It's got another one that says vertex 2 and vertex 3
+ are connected.
+ This is my list of faces.
+ This is a perfectly reasonable on-disk--
+ you'll find CAD formats that are basically just this.
+ OBJs are basically just this.
+ OK, so I would like to now take a scene point
+ and somehow correspond it to this face.
+ So I want to correspond to the face
+ and then have the math be the closest distance
+ point to plane.
+ There's a bunch of different ways to do that.
+ You probably know the equation of the distance
+ between a point and a plane.
+ You can absolutely write that into your algorithm
+ and work from there.
+ I'm going to show you an optimization version of it,
+ which I like a little better.
+ So let's try this.
+ Before I even write the full optimization,
+ I'll make one point here.
+ Instead of saying that my point is-- I
+ could compute the point to plane, the normal distance.
+ I can write this equation for the point to plane distance.
+ But let me instead say I'm going to correspond this point,
+ this red point, with an equation that
+ describes all possible points on that line segment.
+ So let me say that carefully.
+ If a point on a face is the sum over alpha i of the vertices--
+ I've got a notation that I liked here--
+ bi in face f, subject to all of my alpha i's
+ being greater than 0 and the sum of my alpha i's equaling 1,
+ then a perfectly good way to describe
+ all points in this set, in this vertex face representation,
+ would be as a linear combination of the points on the vertex
+ that sums to 1.
+ That's a way to parameterize the set based on the boundary.
+ Did I write that clearly enough?
+ So if alpha is 0, it might be all on this point.
+ If alpha 1 is 1 and the rest are 0's,
+ it might be at this point.
+ If alpha 2 is 1 and the rest are 0's,
+ it might be at this point.
+ And if I go between them, I'll get alpha 0.5, 0.5,
+ somewhere in the middle.
+ That's a standard sort of parameterization
+ of any convex set.
+ And it works for a plane, for sure.
+ OK, so now let's try to write minimize
+ over x0 in SE3.
+ Going to minimize over my scene points.
+ This time I'm going to use the x transform the other way.
+ So I'm going to modify my scene points into my model
+ coordinates so that I can write sum over i alpha ij p vertex j
+ in face i squared.
+ OK, there's one big point you have to get here.
+ The details are less important to me.
+ The big point here is that-- so if you contrast this
+ to the CPD, where I had a coefficient
+ matrix off to the front, which was a hard optimization
+ because I was multiplying c times my other decision
+ variables.
+ This is a clever trick where this term on the inside
+ is linear in these decision variables,
+ and it's also linear in these decision variables.
+ So I'm optimizing over this, and I'm optimizing over alpha.
+ That's very nice.
+ It looks very nice.
+ I have to still say alpha ij for all ij alpha ij greater than 0
+ and sum of alpha ij over-- which one did I do it over?
+ Over i over the face equals 1.
+ That's something to work with.
+ Now, remember that this optimization,
+ if I didn't have these constraints,
+ this optimization still has a solution via SPD.
+ Unfortunately, once I put these constraints in, it does not.
+ So we have to open up an optimization playbook
+ that I've only given a few tools towards, but not
+ the full playbook.
+ But this is another form of optimization,
+ a more complicated form of optimization
+ that you can use to try to solve this harder joint problem.
+ OK.
+ It turns out-- so remember, there's also
+ these hard constraints hiding in here.
+ The RR transpose equals identity,
+ and the determinant of R equals positive 1.
+ It turns out that I don't know how
+ to solve this big problem well.
+ But if you're willing to relax this constraint to a softer
+ version of this constraint, then we
+ have nice solutions for this.
+ And this is actually the crux of a lot of the point cloud
+ algorithms that are trying to use heavy optimization
+ to solve this kind of problem.
+ And the picture, actually, I think, is very intuitive.
+ OK.
+ You remember this picture, which is my ICP objective?
+ The quadratic bowl is a beautiful object
+ for optimization, and it's still present here.
+ This is still a quadratic objective.
+ The red circle is a horrible object for optimization.
+ It just happened that we had a special case
+ that we could solve with SVD.
+ If I start adding other constraints on top of this
+ that might look like lines through this or something
+ else, then I don't have a solution with SVD.
+ The things we know how to do with optimization
+ are typically about convex sets.
+ So the standard relaxation that people
+ do for this sort of a constraint in the 2D case
+ is precisely you're changing the circle to a disk.
+ OK.
+ I'm only intending to give you the fringe.
+ I've got a few furrowed brows.
+ But the geometry of this is that the relaxation
+ of this hard optimization problem
+ turns that circle constraint into a disk.
+ And so when you hear people talking
+ about semi-definite programming relaxations of point cloud
+ algorithms, that's what's happening.
+ It's happening in high dimensions.
+ It's hard to think about.
+ But it's just turning the circle into a disk.
+ And I think if you're willing to say--
+ so remember what happened before is
+ I have some rotation matrices that describe my data as well
+ as possible.
+ In the simple case, they ended up just landing--
+ in the noise-free case, they landed directly on the circle.
+ OK.
+ With noise, they might move away from the circle a little bit.
+ The circle pulls them back.
+ If you change the circle into a disk,
+ then there's one type of noise you reject very well.
+ If you're going outside the disk,
+ then your relaxation is tight.
+ If you're inside the disk, you're
+ going to possibly get things wrong.
+ You're going to come up with rotation matrices that are not
+ proper rotation matrices.
+ The orthonormal vectors are a little too short, roughly.
+ OK.
+ So I know I haven't equipped everybody with that.
+ But I wanted to just make those connections.
+ That this picture I gave you before,
+ which I hope you did understand when it first came up,
+ actually is the lens by which you
+ can look at much more complicated versions
+ of the algorithm, where you can do things like attempt
+ to find correspondences at the same time as poses.
+ And they typically fall under the heading
+ of semi-definite programming type relaxations.
+ OK.
+ Of point cloud-- of point registration algorithms.
+ And the theory will say that they're
+ tight in some settings.
+ And that's typically the noise-free setting.
+ They're tight.
+ OK.
+ And when you get noise, they become loose.
+ So I think like 10% of you are happy with me for that.
+ Maybe in a couple years, you'll be like,
+ oh, it was worth him saying that.
+ But OK.
+ Good.
+ I said that.
+ All right.
+ So I think we did a pretty good job with our agenda.
+ Yeah?
+ So you guys know what ICP is?
+ Have some intuition about when it works, when it doesn't?
+ Some of the biggest sources of noise in our point clouds--
+ dropouts, partial views, outliers, and then
+ a little bit of noise.
+ But that's, I think, a small factor.
+ Hopefully, soft correspondences landed.
+ That was a pretty smooth transition, I guess.
+ And then there was a bunch of different algorithms.
+ The pairwise distance was a good one.
+ And this SDP relaxation is another powerful one.
+ OK.
+ I'll see you next time.
+ Good job.
+ [SIDE CONVERSATION]
+ [SIDE CONVERSATION]
+ [SIDE CONVERSATION]
+ (crowd murmuring)
+ [BLANK_AUDIO]

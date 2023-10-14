@@ -1,0 +1,1528 @@
+ [INAUDIBLE]
+ So the real problem is not that [INAUDIBLE]
+ I'm just asking what causes the sale, what do you do?
+ And I think that the second half of the strategy
+ is to reduce the number of cash that catch this growth.
+ Because we do not need to do it with cash all the time.
+ So the second half, the cash growth, I mean,
+ if this was a reason, I'm not in an ideal trajectory.
+ [INAUDIBLE]
+ OK.
+ Welcome back, everybody.
+ So today I'm going to try to split the lecture roughly.
+ I mean, probably do a little bit more than half
+ on planning under uncertainty.
+ There's a lot to say there.
+ But I think in the spirit of this
+ is a boutique lecture, kind of at the end,
+ we're going to give you some of the reasons
+ why you might want to learn more and just
+ some of the key ideas of planning under uncertainty.
+ And then I'd really like to spend a little bit of time
+ just kind of summarizing what we did.
+ We picked up a lot of tools.
+ I think the connective tissue that puts them all together
+ is still forming.
+ And I think it's just useful to kind of make
+ some of those connections again.
+ Remember what we learned, why we learned them,
+ how they've come up in your projects,
+ and wrap it up like that.
+ So let's give a few examples about why
+ you might want to do planning under uncertainty.
+ So maybe--
+ [INAUDIBLE]
+ Maybe one example would be at the task level, right?
+ So if I asked one of Boolean's chatbots or whatever,
+ if I said, hey, robot, get me-- I don't know,
+ I have to think of something that has uncertainty,
+ but get me the mustard.
+ And maybe because of our massive understanding of the way
+ kitchens are laid out and where people put things,
+ maybe there's, I don't know, a 40% chance
+ that it's in the fridge.
+ I don't know if you refrigerate your mustard or not.
+ I know it's a personal choice, right?
+ Maybe there's a 30% chance it's in the cupboard.
+ Maybe there's a 10% chance there's one in the pantry.
+ And maybe, I don't know, a 20% chance we're just out.
+ You've got to go to the store, right?
+ So a planner thinking about the task level that's only
+ thinking about, let's say, the most likely scenario
+ is going to be impoverished in its ability
+ to accomplish the task, for sure, right?
+ But not only in the total success, right?
+ If it's not in the fridge, it fails.
+ But also, maybe if the robot is already
+ in the pantry for something else,
+ even if it's a low probability, maybe
+ it's worth a quick check before you take the time
+ to drive over to the fridge, right?
+ So reasoning about probabilities at the level of decision making
+ is hugely important.
+ And I think at the task level, it's sort of clear, I think.
+ I guess with all the large language models
+ that Bojan was talking about, maybe there's a 10% chance
+ that it'll tell you to pour water over your head
+ or something like this, too, right?
+ But that's the wild west.
+ OK, but it turns out it's super useful down
+ at the dexterous manipulation control level, too.
+ So let me think of a good example.
+ So I actually brought a plate so I can make--
+ one of my favorite examples is one
+ that came up when we were loading dishes a lot, right?
+ So I brought a dish.
+ I would have brought the dish rack, but that didn't work out.
+ OK, so it turns out the way that the robot--
+ imagine this is the rack in the bottom of the dishwasher, OK?
+ And the way that our robot loaded dishes
+ was very characteristically, it would grab the plate,
+ have a pretty good thing, and then it
+ would line up the plate above and go down, right?
+ And that always bugged me.
+ It always bugged me, right?
+ Because humans don't do that whatsoever.
+ They do it much faster, first of all,
+ but they also take a fundamentally different
+ strategy, right?
+ They come in.
+ They almost always make contact.
+ They're compliant, and they go in like this.
+ Does that make sense, right?
+ Instead of having a sort of straight line trajectory
+ where the plate-- you kind of estimate, possibly
+ with some accuracy, the location of the tines in the tray, right?
+ And line up the plate perfectly and try to put it straight down.
+ And I think a human would come in at an angle,
+ intentionally make contact here, then passive mechanics
+ would have it rotate up a little bit,
+ and it would kind of slide down.
+ The only explanation for that is something
+ about being more robust, something about uncertainty,
+ not needing to accurately understand
+ the orientation of the plate or the position of the tines,
+ right?
+ And it's actually just a fundamentally different
+ strategy at the level of the controller
+ because we are implicitly thinking about uncertainty.
+ We saw another one, too, in our journey here, right?
+ Remember the example of pushing the book?
+ This was the example of force control
+ where you wanted to control the friction cones between the finger
+ and the book.
+ You also wanted the book and the table.
+ [AUDIO OUT]
+ But right there, what's that motion right there, right?
+ And then he's going to go around and pick it up.
+ The only justification for that second motion
+ was that he could reduce the uncertainty
+ of the orientation of the book, right?
+ So as he slid it around, he even rotated the book,
+ it was all about the friction cones, right?
+ And the exact orientation of the book
+ was some relatively subtle function of the friction cones.
+ But by coming in with this known position of the fingers,
+ even if the book was at a relatively different orientation,
+ if he starts pushing, it's going to line the book up nicely.
+ It's a very robust strategy that would get it
+ to the end of the table at a known location.
+ That's the only justification for that middle move.
+ Otherwise, it was completely worthless, right?
+ So even at the level of planning control,
+ reasoning about uncertainty really matters.
+ And I think the hallmarks of a system that
+ is reasoning about uncertainty and planning and control
+ are pretty clear, right?
+ So one of them is certainly just a level of robustness
+ that you can obtain if you're thinking about all the things
+ that could possibly happen, not just planning optimistically
+ through the world, right?
+ And there's various ways to talk about robustness.
+ And some of them I would certainly
+ put under this umbrella, but there's other approaches that
+ can achieve robustness, I guess.
+ But I think the absolute hallmark identifying feature
+ of a system that's reasoning about uncertainty
+ when it's making its decisions is information
+ gathering actions.
+ We will see examples throughout the lecture
+ here of cases where the robot does something fundamentally
+ different.
+ You need to program it fundamentally different,
+ not for the sake of accomplishing
+ the task of getting the book to a certain orientation,
+ but actually just for the sake of gaining information,
+ reducing uncertainty, and using that reduced uncertainty
+ to accomplish the task with higher confidence.
+ So I think that's the hallmark of a system
+ that's reasoning about robustness.
+ Using uncertainty to accomplish the task with higher
+ confidence.
+ So really, if you don't have uncertainty
+ flowing through your system, you will never
+ see robots making actions just to gain information.
+ That's a property that only happens
+ if you're trying to think about optimizing uncertainty
+ or something like that.
+ OK, so you need a whole stack to start
+ reasoning about uncertainty.
+ You need to think about uncertainty
+ at the level of perception.
+ And then we're going to talk mostly about how
+ to use it in planning and control.
+ Luckily, our perception systems are actually pretty good.
+ There's lots of ways that we already have probabilities
+ flowing through a lot of our state-of-the-art perception
+ systems.
+ So the image recognition was putting out
+ probability that it was a sheep, probability that it was a dog,
+ probability that it was a cat, so on and so forth.
+ That's just one example.
+ But we talked about pose estimation,
+ where it was outputting entire distributions
+ over possible orientations of the mugs.
+ We talked about key point estimators
+ that weren't putting out x, y, z coordinates of the key points,
+ but were actually putting out a heat map
+ over possible locations of the key point.
+ And over and over and over again,
+ you'll see people have-- I mean, certainly neural networks
+ are capable of putting out lots of interesting things.
+ Oftentimes, those interesting things
+ include distributions over possible outcomes.
+ And I don't think there's a big barrier anymore
+ to asking your perception system to tell you a little bit
+ about how confident it is.
+ There are different types of uncertainty.
+ You might have heard about aleatoric
+ versus epistemic uncertainty.
+ And there are different ways to ask
+ neural networks to address them.
+ I won't dig into those.
+ But they are great, actually, at the perception level.
+ I think there's many good ways to think about uncertainty.
+ The challenge, though, becomes-- and the thing we'll focus on
+ here-- is how do you consume those estimates of uncertainty
+ down through the planning and control stack?
+ Because we haven't said anything about that yet.
+ So how do you make long-term decisions
+ that reason about uncertainty?
+ Well, if you're going to make long-term decisions,
+ if you're going to make a plan, you need a model.
+ So we need to think about a model of how
+ our uncertainty is going to change over time
+ if we make certain decisions.
+ So that I know if I make this decision,
+ my uncertainty might evolve in some way.
+ If I make a different decision, I
+ would like it to evolve in some other way.
+ And that way, I'm going to choose my actions
+ based on the way the uncertainty is going to evolve.
+ So we need a model for the way the uncertainty evolves,
+ the dynamics of the uncertainty.
+ And there's lots of ways to think about this.
+ This is stochastic processes and stochastic dynamics.
+ There's lots of things to think about.
+ But we've actually already written down
+ everything we need.
+ When I write this general form of f of x is potentially x,
+ n, where I had my randomness coming in here,
+ if I've authored my systems in this way,
+ where the randomness, the random variables come in here,
+ then I actually already have a model of uncertainty
+ and how the uncertainty can propagate through the system.
+ But so far, we've been just talking about this dynamics
+ here.
+ And we've been only saying, for simulation, for instance,
+ we've just been saying, I'm going
+ to take a random draw of this.
+ I'm going to evaluate what the next xn is.
+ For planning, we've so far pretended
+ that that's just 0, for instance.
+ And we've done deterministic planning.
+ And today, I want to say, well, let's say
+ we want to do planning where we admit that this one's not 0.
+ And I think it's easiest to think about that first,
+ if we look at this just for notational reasons,
+ if only, to look at this in the case
+ where I have a finite state, x, u, and finite noise, w.
+ So that would be the standard tabular Markov decision
+ process.
+ Or we're going to do a partially observable Markov decision
+ process.
+ So to start, let's say that state, action,
+ and observations are all discrete.
+ So there's a finite number of discrete and finite--
+ there's a finite number of states
+ I could be in, a finite number of actions
+ I could be in, a finite number of observations.
+ That's not what our manipulation systems look like.
+ But that's just how I'll write the-- I'll just
+ avoid writing more probability notation than I need to,
+ in order to tell that basic story.
+ So this, I could have done-- there's
+ nothing in those equations that say that x is a continuous
+ variable or u is a continuous variable.
+ I could write exactly those equations where x is just--
+ this is a transition map.
+ But when we talk about belief space planning,
+ we normally write this in a slightly different way.
+ We'll write now the probability over initial conditions,
+ let's say, would be a function of x,
+ which would be the probability distribution
+ over initial conditions.
+ And then I'll write the dynamics here,
+ which is coming in as a random variable here.
+ But I can write that just as a probability of transitioning
+ to some new state, given I'm in some current state.
+ It depends on p, but it doesn't depend on w here.
+ This would be my transition probabilities.
+ And similarly, I can write my observations
+ as being probabilities that are conditioned
+ on my state and my action.
+ So is that-- I don't know how comfortable everybody
+ is with probability notations, but I just
+ want to make it clear that this is sort of a deterministic way
+ to write a stochastic equation, where
+ I say there's a random variable coming in,
+ but this is a deterministic function.
+ I could equivalently write that as saying,
+ I want to know, given x, u, and p, for instance,
+ what is the distribution over y?
+ And that sort of removes this from the argument,
+ and I have a distribution over possible.
+ Is that clear how I could write the same thing
+ in two different ways, with two different notations?
+ For instance, if this was a Gaussian,
+ and I'm pushing this through, and maybe this
+ is a linear equation with a Gaussian here,
+ then I could write the output as a Gaussian distribution.
+ That would be not a function of w.
+ Or I could say, make a specific draw,
+ and tell me the specific value that comes out
+ on the other side.
+ And the reason it's so nice to do the fully discrete case
+ is that I can represent each of these
+ just with a finite set of numbers then.
+ So how would I represent a probability over possible x's?
+ Well, maybe if x is drawn from just some number of possible x's,
+ or maybe I realize I've got a notational overlap there,
+ but I've got some notational-- some finite set of x's,
+ then my probability over x-- I'll write of x0.
+ That'll clear up my notational overlap.
+ My probability of x0, I could just
+ write it as a vector, which is the probability that x0 is x
+ like this.
+ Probability of x0, x1.
+ It's just a vector.
+ And similarly, the transition probabilities,
+ they're going to be-- it's almost a matrix,
+ but since I've got two variables,
+ it's actually a little easier to think about it as a tensor,
+ actually, now.
+ I wouldn't have done that a few years ago,
+ but now I can just say tensor, and it's good.
+ Think about that as a tensor.
+ For every u, I have a matrix that maps from my current x
+ to my next x prime.
+ And all the machinery goes through very nicely when you
+ just have tables of numbers.
+ And the question of how do you represent a probability
+ distribution is just not there when you
+ have a finite list of numbers.
+ OK, so what's going to happen now is we're going to have--
+ we're going to watch how this system can evolve
+ under the probability distributions.
+ What is the sort of state evolution of my probabilities?
+ Sorry, I moved twice.
+ OK.
+ The state of the system, I would say,
+ is clearly-- the state of the plant is clearly x.
+ That's what we've always been calling the state.
+ But from the perspective of the observer,
+ someone who's trying to track what's happening going on
+ with x, we need a little bit more than just x
+ to summarize what's going on.
+ So it actually gets very deeply into the things
+ we've been talking about.
+ We've talked about how to learn different state
+ representations, what makes a good state.
+ Do people know what's the definition of a state?
+ What is the fundamental property that sort of defines a state?
+ You.
+ [INAUDIBLE]
+ OK.
+ So he says minimal and sufficient information
+ to predict the next state.
+ Yes, I mean almost.
+ So we could argue about whether states
+ need to be minimal or not.
+ I think you could talk about a minimal representation
+ for state.
+ I'll forego minimalism for now.
+ OK.
+ The question is, so a state is something
+ that lets you fully predict the next state.
+ That's a super good definition.
+ But it's not actually the definition we want here.
+ Because the system is stochastic,
+ we can't perfectly predict the next state.
+ So we need a slightly richer notion of what's state.
+ A slightly richer definition, but completely
+ consistent, is that a state is a set of information,
+ a set of numbers, for instance, that
+ lets you forget all of the other things you've seen.
+ It's a sufficient statistic for all
+ of the history of your observations.
+ OK.
+ So if I wanted to write the evolution of this system,
+ if I wanted to predict, for instance,
+ what is the probability of y at the n-th step being,
+ I don't know, the i-th y, conditioned on all
+ of the things I've seen so far, u0, u1, u2, up to, let's say,
+ un minus 1, but also y0, y1, up to yn minus 1,
+ potentially the next y I expect to see,
+ or the distribution over y's I expect to see,
+ is a function of all of the things I've seen in the past.
+ OK.
+ What we want is to summarize all of the things
+ I've seen in the past, so that the prediction based
+ on a state that represents this is the same as if I
+ had all of the histories.
+ So I want to say the probability over yn equals yi,
+ conditioned on some b-- I'm going to call it b here-- bn,
+ and maybe un, since that's coming in right now,
+ is equivalent to having all of that prior information.
+ OK.
+ So this state here, what does it mean to be a good state?
+ It means it's a sufficient statistic for the history,
+ or a sufficient summary, let's say,
+ of my entire history of observations.
+ OK, so for the purposes of the observer,
+ the state that you want to track, this state,
+ this thing called b, is called a belief state.
+ And we want to make sure we get our head around that,
+ and then use it for planning.
+ OK, so a belief state is some efficient, hopefully,
+ not always, but some, let's say, numerical summary
+ of all the things that I've seen in the past that
+ is sufficient for me to predict what's
+ going to happen in the future.
+ OK?
+ And for these sort of Markov processes
+ and dynamical systems of this form,
+ there's a natural choice for the belief state.
+ It's not a unique choice.
+ It's certainly not a minimal choice in most cases.
+ OK?
+ A minimal choice would be to say that the belief--
+ let me say the-- I'll use it as a vector again,
+ since everything's nice in the continuous thing.
+ So I've got a belief vector.
+ And the belief for the element i of that vector
+ is going to be the probability that x at n
+ equals xi conditioned on u0, u1, y0, y1, and so on and so forth.
+ So the belief, a sufficient statistic
+ that allows me to forget everything I've seen,
+ is a probability distribution over all the possible states
+ I might be in.
+ OK?
+ That's a super powerful thing.
+ It says that all I need to keep-- no matter how long my history
+ was, how many observations I have,
+ if I just summarize my current estimated probability of what's
+ in the-- of being in state 0, in state 1, state 2,
+ it's just a vector, one vector, right?
+ If I can just keep track of that, then I have everything.
+ I don't need to remember anything else about the past.
+ And more because of that, because it's
+ sufficient to summarize the past and to predict the future,
+ it's also sufficient for optimal decision making.
+ So it turns out we know that the optimal controllers,
+ optimal policies, must be of the form un is some pi star--
+ it could be a function of n, potentially-- of bn.
+ Even when the system is partially observable, right?
+ So in the case where y just shows me x without noise,
+ for instance, then x actually-- b can just be x.
+ And all the things we already know still
+ work if they still fit in this framework.
+ Because my probability distribution
+ collapses to just a single point.
+ But in general, I have to keep an entire state distribution
+ over x.
+ Yeah?
+ AUDIENCE: Sir, would you mind explaining a bit more
+ why the probability distribution of x at the point
+ captures the whole [INAUDIBLE]
+ PROFESSOR: Yeah.
+ Yeah.
+ I wish I had a one-liner for that.
+ But it is true.
+ So you can derive it recursively from these equations.
+ If I wrote out all the equations,
+ you can see it recursively in the algebra
+ and everything like that.
+ It's also the tenant of filtering.
+ So the Bayes optimal filter, for instance,
+ takes exactly this form.
+ But without all that machinery, I
+ have to ask you for a little bit of a leap of faith maybe.
+ Yeah.
+ But thank you for asking.
+ OK.
+ So now our new commodity is to traffic in these beliefs.
+ Now the problem, caveat, spoiler alert,
+ sometimes it's hard to keep track of all the possible--
+ to write a distribution over big, complicated things.
+ This might be the shape of the mustard bottle.
+ It could be the time of the day.
+ It could be that there's a lot of things
+ to potentially keep track of in the world.
+ And it becomes untenable to try to keep
+ track of all the distribution over everything
+ that could possibly happen.
+ But in the smaller problems, and with selected, targeted
+ reasoning about uncertainty, you can do very well with this.
+ OK.
+ So this is amazing.
+ I mean, I'll give you a few examples here.
+ So there's a classic example that people
+ talk about in the partially observable Markov decision
+ process of discrete worlds that have discrete observations.
+ One of them is a cheese maze.
+ It's a silly thing, but there's, I don't know, cheese here.
+ OK, and the mouse has to go and find the cheese.
+ OK.
+ And there's a discrete number of places
+ that the mouse might be, for instance.
+ And there's observation.
+ So when you're in a certain place on the board,
+ if the mouse-- I'm not going to draw a mouse.
+ Well, maybe I could draw a mouse.
+ But yeah, something with the tail and the ears.
+ OK.
+ There's a mouse running around the maze.
+ Luckily, the mouse can see the numbers
+ that we put down, which are like signposts, which
+ tell it where it is.
+ And the interesting cheese mazes are
+ the ones that have observations that don't tell you
+ exactly where you are.
+ They give you an indication.
+ They give you information about where you are,
+ but they don't instantly determine where you are,
+ because maybe there's the number 2 appears in multiple places.
+ OK.
+ Something like this is a classic one.
+ Maybe there's 5 in all these places.
+ 6, 7, 6.
+ OK.
+ So what is the evolution of this belief going to be?
+ So if the mouse wakes up and is following Bayes optimal--
+ it's a Bayes optimal mouse, then it's
+ keeping track of a finite list of probabilities.
+ B at 0, maybe it thinks-- I think there's 11 things here.
+ So maybe there's equal probability everywhere
+ that it could be anywhere in the board.
+ And then it sees-- maybe I should have started down
+ at a more interesting place.
+ But maybe it sees 2 at the first time step.
+ And after one observation, it's collapsed its belief
+ to being 0 in most places.
+ But there's still half of probability
+ that I'm in this place and wherever the next one is.
+ And the rest are 0's, right?
+ And as the mouse moves through the board,
+ it's updating its probability distribution
+ over possible states.
+ And the recipe for updating that falls directly out
+ of Bayes' rule applied to those forward dynamics.
+ For a more complicated and more robotics version of that,
+ people might know a lot about state estimation and Monte
+ Carlo filtering and the like.
+ This is one of the first ones, the kind of popularized
+ probabilistic robotics.
+ So this is a robot, a trash can robot moving around
+ with a sonar, because that's what we had back in the day.
+ And you could think about this as being a much more
+ complicated cheese maze.
+ And the observations are now the depth returns of the sonar.
+ And if I start it over again, it starts off
+ with probability all over.
+ This is sampled versions of that probability.
+ And as it gets sonar returns, it gets information
+ about where it is, but it doesn't completely
+ determine where it is.
+ And it has a probability mass, which
+ is like that vector, all over the space.
+ And as it evolves, it can do pretty complicated things.
+ That's just a more sophisticated version
+ of this super simple example.
+ Now, what's essential?
+ Now, this is the point of this part of the lecture.
+ What's essential is that the rules that
+ govern the update of the belief distribution
+ just have dynamics that we can write down.
+ It's just another system.
+ You can write down the evolution through Bayes optimal filter.
+ B is a function of n plus 1.
+ It's just some function of B of n, U of n, and Y of n.
+ It's a system that looks like this.
+ U going in, observations coming in.
+ It's got an internal state B inside it.
+ Maybe you can put the B on the output board if you want.
+ That isn't actually essential here.
+ And if you have goals that are specified, for instance,
+ that I want to get to a certain belief,
+ I want to, with high probability,
+ be where the cheese is, or I want
+ to be in some room in the map with high probability,
+ then the task is just like what we've done before,
+ where it's a task of choosing the U subject to the dynamics
+ F that moves around the target B.
+ As a result, all of the tools that we've already
+ talked about-- well, with some caveats--
+ but the basic tools we've talked about can work.
+ So once you have this problem, for instance,
+ you can do trajectory optimization.
+ And I would say the dominant approaches, maybe,
+ for large scale things would be a trajectory optimization
+ kind of approach, or a sampling-based motion planning
+ type approach.
+, OK?
+ And so we've talked mostly in this class
+ about kinematic trajectory optimization.
+ This is really a dynamic trajectory optimization.
+ That's the biggest caveat I have for you,
+ is that you do have to think about the fact
+ that you can't take arbitrary paths through B.
+ The dynamics of this function F do limit you.
+ So it's an under-actuated system.
+ Pretty good, right?
+ But it is actually interesting and hard,
+ because it's an under-actuated system.
+ You don't have enough actuators to control your entire belief.
+ And so actually, the trajectory optimization versions
+ we do in under-actuated are more suitable
+ than the kinematic trajectory.
+ But it's a small extension from the types
+ of things we've done.
+ So you can do trajectory optimization over U,
+ subject to constraints that B has some initial condition,
+ final condition.
+ You could put a cost on B, so on and so forth.
+ Now, almost, right?
+ So there's one important difference here.
+ Why, as I've written it here, is this system's perspective,
+ why is still a random variable coming in?
+ It's a function of X and U, but also it
+ could be a noisy measurement.
+ So you actually have to do a form of stochastic trajectory
+ optimization, or you can make a choice
+ to be optimistic about your observations, y.
+ But people have studied nicely how you can do this.
+ You could do stochastic trajectory optimization.
+ If you've heard of iterative LQG,
+ that actually would be-- if I were to recommend one thing
+ to solve these problems, I would recommend iterative LQG.
+ We had some work that tried to be optimistic about y
+ and used deterministic trajectory optimization
+ to do it.
+ But actually, the flavor of this is very much just trajectory
+ optimization.
+ Gets you pretty far.
+ So let me tell you that version of it.
+ So this is a toy version of the problem.
+ Imagine you're a point robot.
+ Starting here, that's the initial conditions.
+ We call this the light-dark domain.
+ It's the simplest kind of instance
+ of a problem, which has state-dependent observation
+ noise.
+ So the basic thing is that it's dark over here.
+ Your position sensors are noisy when it's dark.
+ And over here, it's light.
+ Sensors are pretty accurate when it's light.
+ Your goal is to get to 0, 0, 0.
+ If you didn't reason at all about uncertainty,
+ and you felt like you were in this initial condition, that
+ was the mean of your initial conditions,
+ then you'd take a straight line here.
+ But if you have process noise, too, for instance,
+ you might end up actually very far from there.
+ If you write an optimization to say, I'd like to get here,
+ but I'd like to get here with some confidence--
+ I'd like my belief to be narrowly distributed
+ around that goal-- then it actually
+ makes sense to go into the light in order
+ to come back to the dark.
+ So this is explicitly an information-gathering action
+ that you don't get from deterministic reasoning,
+ but you do get from reasoning over belief state.
+ The reason there's two curves is that we're
+ talking about two different ones.
+ This is one just based on linearizing the whole equations
+ and doing basically one step of the iterative LQG
+ kind of algorithm.
+ And this one's based on a direct trajectory optimization,
+ dynamic trajectory optimization.
+ But the principle is the same, is
+ that only because you're learning about uncertainty
+ did you choose to go into the light to come back.
+ The specific objective here-- oh, yeah,
+ please.
+ So in this method, it's like you need
+ to know how the uncertainty will evolve
+ in all possible different future--
+ That's true.
+ --in order to figure it out.
+ But then in real life, I don't know--
+ at this time, I don't know how my uncertainty would evolve
+ 10 steps down the line.
+ So how can I find an optimal trajectory right now
+ all the way to the end if I don't know how it will evolve?
+ You don't know-- so this is a very deep question.
+ Thank you.
+ So the question is, now I can't know how my distribution is
+ going to evolve.
+ So you can know how the distribution over distribution
+ is going to evolve.
+ So you don't know what sensor measurement
+ you're going to get at time 3 in the future.
+ That you have to either think about all possible,
+ the random variable of possible measurements I get at time 3.
+ Or you can say, I'm going to propagate
+ where I think I'll be at time 3 and then
+ assume that I'm going to get a particular measurement at time
+ 3 in order to keep going.
+ But actually, you do-- this is a complete-- if we
+ agree that we have a dynamic model of how things go
+ and what my measurement noise is, for instance,
+ I do have-- understand things like if I
+ were to look around here, I would
+ have a different view of what's behind here.
+ And I would expect to get-- I don't know what's behind here,
+ but I know that I get more information
+ to reduce my uncertainty about what's behind this paper
+ if I were to move here.
+ And that turns out to be very powerful,
+ enough that it causes you to take information gathering
+ actions.
+ And then, because you might be surprised,
+ and what you find there might very much determine
+ what you do, we often use this in a replanning cycle.
+ So you plan, but if you ever see something
+ that then dramatically changed your view of the world,
+ you just replan.
+ But that's a great question.
+ The particular objective here, just to think about it--
+ so instead of representing this as a table of possible
+ locations here, the representation here
+ was a mean and covariance over possible locations.
+ And the goal was to say, I'd like
+ to be here where my mean was at the goal,
+ but my covariance was as small as possible.
+ Find a trajectory, and there was some cost on--
+ I should have put in the cost on action, too.
+ But it would go across here, and then come back
+ with as small as possible.
+ And it was better to go into the light
+ than to take the straight path.
+ OK, so that's still a little abstract.
+ Here's a robotics version of it, a manipulation version of it.
+ So let's say that you know there's
+ going to be two boxes in front of you,
+ but you don't know the size or location of the boxes.
+ Let me just read it carefully.
+ The robot must localize the pose and dimensions of the boxes
+ using a laser scanner mounted on the wrist, on the left wrist.
+ It's relatively easy when the boxes are separated,
+ but when they're squished together like C on the right,
+ then it's actually pretty hard.
+ So this is a simple example of if the robot is taking
+ information gathering actions, it'll actually
+ do something different in order to increase
+ its confidence of the location of the box
+ before it picks it up.
+ And you put this into the trajectory optimization
+ simulation where you take measurements as laser scanners
+ out there, and it actually decides
+ to go off and push on the left in order
+ to get a better sensor reading of the right.
+ And it's tracking a distribution over possible poses
+ of the box and the like.
+ And it makes the decision, just with trajectory optimization,
+ to take that information gathering action
+ to reduce its uncertainty.
+ And then it goes to pick up the box.
+ But that same algorithm, if the boxes started off separate,
+ it did its first scan and found it was fairly confident,
+ would have just gone in to pick up the box.
+ Same thing here.
+ You can actually see the-- this is
+ a rendering of the distribution over those possible locations.
+ Of course, it's a high dimensional thing,
+ so it's plotted down in a way that's a little bit hard--
+ that's why it's periodic is because it's
+ the raft of higher dimensional things plotted
+ on a single line.
+ And the big robot would make those decisions.
+ [INAUDIBLE]
+ You're saying local minima of trajectory optimization?
+ Yeah.
+ It's a really big question.
+ Is this kind of trajectory optimization more sensitive
+ to local minima, for instance?
+ In some way, I actually think it might be less sensitive,
+ even though it's solving a harder problem.
+ Because for the same reason we talked about with
+ the randomized smoothing and the whatever,
+ I actually think that putting distributions
+ over possible outcomes smooths out
+ some of the kinks in the cost landscape,
+ and it might be a little less sensitive.
+ But it would still have-- the big local minima
+ will still be there, but it might get rid
+ of some of the small local minima.
+ [INAUDIBLE]
+ Awesome.
+ Awesome.
+ Yeah, that's actually the last point I want to make.
+ So that's really good.
+ So just to be clear, this is doing information gathering.
+ That is, that push I would consider
+ to be only valuable for the sake of gathering information.
+ [INAUDIBLE]
+ Nope.
+ The goal here is to, with high probability, pick up the box.
+ And the only reason it does that is to reduce its uncertainty,
+ to gather information.
+ OK, but the second part of Leroy's question
+ was actually the biggest last point I want to make here,
+ which is that this really does have deep connections
+ to the state realization questions
+ we've been talking about.
+ I'll put it in a different slide,
+ just so we're not watching that.
+ OK, so now imagine I'm doing system ID, right?
+ Input output system ID, for instance,
+ to try to learn a state representation.
+ [WRITING ON BOARD]
+ In order to accurately predict my future observations,
+ if I'm going to learn a state space model for this,
+ in the linear system ID setting, we thought about this
+ as we've got a deterministic system we're trying to recover.
+ And it did recover the A, B, C, D matrices pretty well.
+ But if I have a stochastic system here
+ that is trying to recover, and its objective
+ is to predict y with its highest confidence possible,
+ then the state it has to learn is actually, I think,
+ better thought about as a belief state.
+ Now again, the belief states are not unique.
+ All the stuff we talked about with similarity transforms
+ and the like is still present here.
+ And it might be that the belief state is not minimal,
+ that tracking all the things that the real state might do
+ might be more than you need to predict y.
+ When we talked about approximate information states,
+ that's exactly the idea of finding a state representation
+ in here, which is an approximate belief state.
+ Similarly, if I'm doing RL, let's say,
+ let's say via policy gradient, or if you
+ do a policy gradient with a dynamic policy,
+ like an LSTM or something, or if you have a value function or a Q
+ function that has some dynamic, some states-- by the way,
+ I think if you do that, you've walked away from RL theory.
+ I think there's-- I mean, people are working on that theory now,
+ but that's not the standard thing to do in theory.
+ But if people do it in practice now,
+ they'll put an LSTM representing the value function or the Q
+ function.
+ And the states that this thing has
+ to acquire in order to accomplish the task-- let's
+ say we had an oracular agent that would just
+ solve the RL problem and solve the representation along
+ with it.
+ Then the dynamic, the state in the controller
+ is probably best understood as being
+ an approximate state of the belief space of the system.
+ That's what's required to make optimal decisions.
+ Similarly, the value function, if trained--
+ so this would be a task-relevant approximate state.
+ And this one, similarly, would be just the part
+ of the belief space you would need in order
+ to accurately predict values.
+ So I do think RL is potentially doing this.
+ And I think that the language of belief
+ is exactly the right way to think about what
+ RL is doing in those cases.
+ So you should learn more about belief space planning.
+ It's good stuff.
+ OK, let me step back and just cover the course again
+ in a few minutes.
+ I think it's really helpful to just sort of connect it
+ all together.
+ So we've done a lot of things, covered a lot of tools,
+ sometimes at a level that I wish I could spend four lectures on.
+ We spent less.
+ But I hope you came away with a lot of tools.
+ And it's been very rewarding for me
+ to see you guys hit some of the subtler points in your projects,
+ for instance.
+ So let's do a kind of a where have we been.
+ People also asked in the survey for things
+ like predict manipulation 40 years in the future.
+ That's hard, but I'll try to say a few things about where
+ it's going, too.
+ So we started off, after the basic introduction,
+ we started off with just basic kinematics, Jacobians,
+ stuff like that.
+ The multibody notation is something
+ that I doubt too many people will move forward
+ with as part of your major, part of your life.
+ But if you do, you'll be happier.
+ I promise.
+ I've seen bugs in notebooks that-- I mean, I've made my own.
+ If you find yourself frustrated that the Jacobian you got out
+ of diff IK is in the wrong frame,
+ or your forces somehow seem to be in the wrong space
+ or something like this, more careful use
+ of multibody notation will save you.
+ Consider it.
+ It really does help, I think.
+ And I think the general view-- I try
+ to push sort of less about the mechanics
+ of the kinematic equations, which is a slightly more
+ standard treatment.
+ But I think thinking of it as a spatial algebra
+ and understanding the basic operations of how rotations
+ affect frames and stuff like this,
+ that's a lesson that we came back to multiple times.
+ And I really do think a lot of you
+ found that the differential IK pipeline became
+ a workhorse for your projects, a lot of people using it.
+ And some of you really, I think, got to appreciate it.
+ Or maybe you're mad at it.
+ But a month from now, you'll be really appreciative of it,
+ maybe.
+ For instance, one of my regrets is
+ that a bunch of people copied the IWA Painter notebook.
+ And that had only used pseudo-inverse control, not
+ the full diff IK.
+ Because that was sufficient for that notebook.
+ And I hadn't sort of pictured everybody
+ copying it and trying to use it for more than it was good for.
+ The pseudo-inverse controller can run into singularities.
+ And some of you did.
+ And it blows up.
+ Unfortunately, the way it blows up
+ is it causes multibody plant to say, I can't--
+ or it says the integrator-- I run into time step
+ equals 1e to the minus 14.
+ And that's not a very clear message.
+ But fine, that was just the pseudo-inverse
+ being insufficient.
+ And if you switched over to the diff IK, which
+ was the least squares interpretation, which
+ allowed you to have constraints, then those issues went away.
+ So the differential IK, as an optimization,
+ I think is a workhorse and a thing I
+ hope you feel like you learned.
+ We jumped into geometric perception.
+ There's a party going on somewhere.
+ Of course, we learned iterative closest point and its variance.
+ I would say both the kinematics and the ICP kind of work
+ helped me start talking about many of these problems,
+ kinematics problems as optimizations, too.
+ And I think the takeaway that some of you
+ are seeing when you're playing with perception on the project
+ is that these point cloud processing algorithms
+ are very good for refinement if you have a known geometry.
+ But they're not great for the global part
+ of the perception problem.
+ And you really wanted to bring in the deep learning
+ pipeline to help with the bigger part of the problem.
+ And it requires those require models.
+ They're great for accuracy, let's say for refinement,
+ if you will.
+ But they need an initial guess.
+ And remember I said that if you were to take away--
+ if you told me I could only have RGB or I could only have depth,
+ my answer would have flipped a few years ago.
+ And I'd say, take my depth.
+ I'll keep my RGB.
+ We built up more into the clutter clearing
+ was the example that I used for a few reasons.
+ We started to talk about perception in clutter, richer
+ perception that could handle the occlusions and things
+ like that, about more complicated simulation
+ mechanics, and about even programming at the task level.
+ So this was scaling up the basic recipe
+ into a really much more sophisticated version
+ of the problem.
+ It also helped make the point that we didn't
+ need to estimate the pose perfectly in order
+ to be successful.
+ Because that clutter clearing demo
+ was just using antipodal grasps.
+ It wasn't even thinking about what objects were.
+ And it went pretty far.
+ We jumped into deep perception.
+ We talked about Mask-RCNN and the like.
+ That was the first workhorse.
+ If you're starting to do perception in the real world,
+ you might very well still be using Mask-RCNN.
+ We talked about deep pose estimation,
+ the category level versions of this,
+ with, for instance, dense descriptors and key points,
+ for instance, being an alternative to actually
+ estimating the pose.
+ Maybe key points are enough, or dense descriptors.
+ These are super powerful methods.
+ They're getting better.
+ They're data hungry.
+ I think if there's one thing that we're
+ seeing as today's trend that will continue
+ is that a lot of the pipelines that started off
+ being hugely successful based on supervised learning
+ are now turning over into self-supervised learning
+ versions of these problems.
+ Finding good ways to train a visual representation that's
+ sufficient for these kind of downstream tasks
+ using unlabeled data is the big new trend.
+ Not even that new anymore.
+ We did motion planning.
+ We covered a lot of stuff.
+ We did motion planning, which started with just richer
+ spelling of inverse kinematics.
+ All the power you use.
+ And a lot of you guys are using inverse kinematics only,
+ actually, I'd say, calling a lot of sequential inverse
+ kinematics calls.
+ And a handful of times I've been saying,
+ maybe you should turn that into a kinematic trajectory
+ optimization.
+ Why?
+ Because solving a bunch of inverse kinematics
+ calls independently is good, but it doesn't actually
+ ask them to be related to each other in any smooth or subtle
+ way.
+ And so I tried to say the kinematic trajectory
+ optimization was just inverse kinematics with the constraint
+ that the inverse kinematics solutions are
+ consistent with each other.
+ They can all be described from one spline.
+ And we talked about sample-based motion planning, too.
+ I'll say sampling-based.
+ Some powerful tools.
+ I threw in some stuff about graph of convex sets there,
+ too, of course.
+ If you remember RRT and PRM, then you've
+ got that basic vocabulary.
+ Do you remember then all of the stuff about the different ways
+ we're doing control on the manipulator?
+ We had our next foray into force control and manipulator
+ control.
+ Can you remember why PID control is good,
+ but inverse dynamics control is better if you have a model?
+ And why we actually use joint stiffness control?
+ In a lot of cases for the robot, we
+ like to think about executing joint trajectories,
+ but relatively with a low stiffness controller,
+ so that if we bump into stuff, we're
+ still compliant enough to keep moving and not
+ break our robot or the environment.
+ But we also talked about direct force control,
+ where you're thinking explicitly about the forces,
+ or indirect force control, like Cartesian impedance control,
+ or Cartesian stiffness control.
+ One of my favorite examples that came up with that, actually.
+ Remember the-- a few people are doing writing projects, right?
+ And I gave the Meshcat painter a little thing that just says,
+ put a chalk, weld it to your hand if you want,
+ and draw some lines.
+ And it was interesting to have the conversations with people,
+ because in the case where the chalk is welded to your finger,
+ the difference between force control and just a Diff IK
+ control, for instance, with joint stiffness
+ controller, or inverse dynamics, is small.
+ Because you just put yourself into a reasonable amount
+ of penetration, you move yourself around,
+ and that's all good.
+ The robot will-- you might have to do a little tuning
+ to not push too hard, because otherwise the chalk will
+ get stuck.
+ If you don't push hard enough, it might not draw.
+ But pretty much, you just tune in once how deep to push.
+ You follow your trajectory.
+ Life is good.
+ But the people who switched from welding it to the finger
+ to holding the chalk had a different experience.
+ So as soon as you push down, the chalk
+ might move in your fingers.
+ As you draw, it might start moving in your fingers.
+ And suddenly there, if you just picked a nice trajectory
+ and started moving around, then you
+ might have drawn for a little while,
+ and now you stopped drawing, because it
+ moved in your fingers.
+ And it's hard to know where the chalk is in your fingers.
+ So actually, this is a beautiful case
+ where, if you think about the space of forces,
+ you just say, I'd like to be pushing down
+ with a certain amount of force.
+ Then even if the chalk moves, the end effector
+ will move for you in order to keep yourself
+ in contact with the table.
+ So we talked about controlling not just the robot,
+ but then the objects in the world.
+ I used the language of visual motor policies
+ to talk about that.
+ I really think something great happened
+ when we started putting cameras at high rate
+ into our controllers.
+ And we need to understand it better.
+ Right now, I'd say our ability to get visual motor policies
+ is still a little weak.
+ We did it with behavior cloning.
+ We talked about it with RL policy search, for instance.
+ But we should have more powerful, reliable ways
+ to get visual motor policies.
+ They're very good.
+ We're still working on it.
+ But this is the stuff that's making the rock star
+ manipulation demos right now.
+ I showed you rolling dough.
+ There's all kinds of things that visual motor policies
+ can do that are surprising.
+ And then we wrapped up with intuitive physics,
+ learning models, task and motion planning,
+ and a little bit of belief space today.
+ So that's a lot of coverage.
+ We've covered a lot of things, some of them more carefully
+ and some of them just quickly at the end.
+ But I think it's a pretty good representation of what's
+ happening in a modern manipulation system.
+ When I reflect on the class, and maybe what I'll do next time,
+ let's say, but the one thing that I
+ think this overly emphasizes, and maybe I
+ wish I would emphasize more, I think
+ I'm going to put mobile manipulation earlier
+ in the class.
+ Because I think it opens up-- I didn't realize-- I mean,
+ I think the tools are actually not that different to solve
+ mobile manipulation.
+ The math is the same.
+ But the ideas you would have for your projects, I think,
+ are going to be different.
+ I think Brian's lecture yesterday really
+ emphasized that, right?
+ You wouldn't ask a chatbot, what should I do with-- go get me
+ a Coke or something like that, if you're limited
+ to the world of your table.
+ And I think the open vocabulary ideas,
+ the anything could happen in the world,
+ you're going to send your robot off and do anything,
+ wheels help you think about that.
+ You could bring a lot of things to yourself in a conveyor belt,
+ and that's not the same.
+ So even though the math is actually very similar,
+ I'm going to probably make a bigger
+ emphasis on mobile manipulation next time.
+ There are some different parts of the math
+ where people think about navigation and mapping
+ and other scene level kind of perception problems
+ that would come along with that.
+ But I think the biggest thing for me
+ is just the needing to think about the open domain,
+ open vocabulary part of the world.
+ [PAPER RUSTLING]
+ For me-- and I'm saying this partly so you can agree with me
+ or disagree with me over anonymous feedback is fine.
+ You can shout it out right now, that's fine.
+ The other thing that I think I want to emphasize--
+ and I said it on Tuesday-- I want
+ to give a few more tools that you could, in your projects,
+ for instance, use for the task level reasoning.
+ I think if you could have just written a Pudittles
+ specification, you might not love writing Pudittles.
+ It's kind of weird.
+ But it's very powerful to be able to think
+ about longer term tasks, more abstract tasks.
+ And I'm thinking that the presentation focused
+ a little bit more on the dexterous part of manipulation
+ and a little less about the world part.
+ But you can leave with a slightly-- knowing
+ that there's other parts.
+ In fact, it's interesting to think about--
+ when I was thinking about that dichotomy,
+ it just happens that at TRI, the org chart is kind of telling.
+ So there's a dexterous manipulation team.
+ But there's also a mobile manipulation team, separate.
+ And it really does bring-- they're complementary.
+ There's a lot of problems that you get into,
+ where you don't need-- the mobile manipulation team,
+ I showed you their grocery store robot.
+ They were happy with a suction gripper for a lot of things.
+ They weren't thinking about the dexterity required.
+ But they're moving through the world
+ and experiencing things that my robot on the table
+ is not experiencing.
+ And once I said that, I realized, OK, well,
+ I haven't said enough about soft robots.
+ There's a soft robotics team.
+ And there's also a human-robot interaction team.
+ I'll write it out.
+ We mentioned soft.
+ And I offered to spend a lecture talking about tactile sensing.
+ But we didn't get to that one.
+ And human-robot interaction is hugely important.
+ It's just not my expertise, really.
+ But any thoughts or questions or anything
+ about that high-level scope stuff?
+ Feedback?
+ Yeah?
+ What would be the next steps?
+ What would be the next steps for you
+ as a manipulator, a robot programmer?
+ [INAUDIBLE]
+ Yeah, for you as students, yeah.
+ There are a lot of really good classes.
+ I don't know which of them you've taken
+ and which of you haven't.
+ I'll be teaching underactuated, which
+ I've advertised a few times in the spring.
+ But there's great classes by Luca Caralone
+ about perception and state estimation and the like.
+ In fact, I could just summarize a list
+ of some of the great classes, maybe on a Piazza post.
+ I'd be happy to do that.
+ We have a lot of good classes on campus.
+ Maybe not enough, actually.
+ I'd love to see more.
+ Yeah?
+ Is this more of a research toolkit
+ rather than what people are applying to robots
+ when they start a robot?
+ That's a great question.
+ Is this a research toolkit?
+ Or is this a, I need a robot to move today
+ to make my startup work kind of toolkit?
+ I think there's a lot of robots that
+ do things that you'd consider to be manipulation that don't
+ use a big part of the stack.
+ But they are the places where the world is more constrained.
+ So the classic example would be a factory room floor
+ where you're welding or something like this.
+ It uses maybe force control, a lot of position programming
+ and the like.
+ But it doesn't need to think about perception.
+ It doesn't need to think about all the uncertainty
+ and complexity or even planning that
+ comes with the fact that the world could be very diverse.
+ And I think in industry, startups, big companies
+ are now investing a lot in the next generation of robots,
+ starting with more flexible manufacturing,
+ flexible logistics, the Amazon problem, the delivery problems.
+ And I think that they are hitting this straight up.
+ This is core material for that kind of a job.
+ And then absolutely, there's research
+ that is taking every one of those
+ and pushing farther.
+ But I think as soon as you start needing
+ to perceive the world in order to do your manipulation,
+ and that's driven by the task, then the old stuff
+ isn't getting it done.
+ And this stuff is bread and butter.
+ Yeah, thank you.
+ So people ask me to predict the future.
+ I can't do that.
+ But I'll give you a few thoughts if you want.
+ So in fact, Rod Brooks, another famous roboticist
+ that got to-- went off and was lab director
+ and then started a company.
+ But I took his class when I was a student,
+ embodied intelligence.
+ I think it was called embodied intelligence, yeah.
+ He always says that people have a tendency-- he reminds us.
+ It's not his quote, I guess.
+ But people have a tendency to overestimate
+ the importance of a new technology in the short term
+ and dramatically underestimate the potential
+ in the long term.
+ So I'm just saying everything I'm about to say is wrong.
+ But I do think there's some huge trends that we've
+ seen enough of to lean into, right?
+ I'd say, actually, Bojan's talk last time
+ is one of the biggest ones.
+ The idea that we could have more common sense, priors,
+ to make decisions with robots, I think,
+ is the biggest change coming to the field in a long time,
+ maybe.
+ And it's starting-- we've always wanted it.
+ And I don't think we're quite there with large language
+ models.
+ But I'd say the large language models
+ and the visual language models and the like that Bojan talked
+ about, that's the first compelling approach
+ to say we're going to get something
+ that smells like an unnatural intelligence common sense.
+ And I don't even know how to measure
+ the potential change in that that's
+ going to happen with that.
+ It's going to be weird.
+ I can guarantee that.
+ That's a high probability prediction, right?
+ But I think it's really one of the biggest things that's
+ going to change what we're doing.
+ It's sort of interesting.
+ The people I talk to about this, they actually
+ say that-- maybe they're just trying to make me feel better.
+ But they say it's interesting because there's
+ so many people are excited about this.
+ And they want to think about how to make robots
+ do these multi-level tasks that, in some ways,
+ it actually puts a premium on motion planning that just works
+ and feedback control and skills and other things.
+ The stuff I did maybe emphasize a lot in the class
+ is suddenly really important because there's
+ engineers everywhere that don't know that yet.
+ And the robots don't work all the time.
+ But if they did, we could do incredible long-term tasks now.
+ So I actually think, in a weird way,
+ this not manipulator equation driven thing
+ is probably going to put a premium on some
+ of the core manipulation skills, let me say.
+ The slightly lower level stuff, including
+ extra style manipulation.
+ I would say that we're going to see--
+ so I obviously like simulation.
+ But I think we've turned a few corners with simulation.
+ And I would expect that the use of simulation is--
+ I think it's just like at the beginning of what we're
+ going to see in this field.
+ And it's going to continue to change rapidly.
+ I think some percentage of the robotics population
+ is converted and says, I believe that if it worked
+ in simulation, I'd have a pretty good chance of it working
+ in reality.
+ The people that are training perception systems
+ on simulated data are pretty convinced, I think.
+ I think less people are convinced about the contact
+ mechanics.
+ I mean, we focused on it more than a lot of people.
+ And there's a sim-to-real gap in the contact mechanics.
+ And you definitely have to be a skilled user of simulation
+ to make that transfer.
+ You could set parameters wrong.
+ But I think if you're a skilled user of simulation,
+ then more and more people believe
+ that you can do your work in simulation.
+ The bottleneck there is content.
+ How do you get your robot, your art assets, your objects
+ that you want to manipulate into simulation?
+ And I think there's going to be just probably
+ a huge change in content.
+ We're already seeing it with-- it's funny.
+ When someone says-- like five years ago, let's say 10 years
+ ago, just to be safe, people said, I built a simulator.
+ They mean they wrote like F equals ma down.
+ And maybe they wrote a renderer that's part of a simulator.
+ But now if someone says, I've got a new simulator,
+ they don't even-- they built something
+ on top of a physics engine.
+ And they don't even cite the physics engine.
+ But they're like now-- there's these, I think,
+ very important content aggregators, people that just
+ say, I've scanned a bunch of houses.
+ And I've put a bunch of different objects
+ in those houses.
+ And that's my new simulator offering.
+ And I think that's valuable.
+ That's hugely valuable.
+ So we're seeing people generate that data
+ in lots of different ways, sometimes with manual effort,
+ sometimes with procedural generation.
+ You can make a program that spits out random living rooms.
+ And increasingly, what we're seeing
+ is real-to-sim kind of work.
+ I think this is just going to be a huge component.
+ The fact that you can drive around Stata
+ with just an RGB camera, come out
+ with a perfect neural radiance field representation of it.
+ And then, so what do you do with that?
+ How do you get that into a simulator?
+ It's not enough, it turns out, to feed the simulator.
+ But people are thinking about this now.
+ How do I just ingest so that the robot, every time it
+ sees something new, it adds it to the simulator.
+ And we build the matrix.
+ I predict that that would be a huge-- that's
+ going to just ramp up more and more and more.
+ I guess along that route, I think--
+ maybe an easy one to say, but let's just
+ think about it for a minute.
+ I think big data hasn't come to robotics yet, but it's coming.
+ It's come through large language models and visual models.
+ But the thing that we're waiting for is, let me say,
+ interaction data, data that has forces.
+ We talked about in the system ID world
+ that if I watched an object fall on YouTube,
+ there's limits to what I can learn about it.
+ I can't learn its math, for instance.
+ And I think we're getting to the world
+ where people are deploying enough robots
+ and thinking seriously about how to aggregate that data.
+ Fleet learning is a huge potential.
+ All the robots as edge nodes pool their understanding,
+ pool their models, pool their data
+ to learn something more about the world
+ than they can learn by surfing the web.
+ And that's coming.
+ But every year we say it's coming,
+ and it's still taking a long time.
+ Considering how important it is, it's taking a long time.
+ It's sort of frustrating that we don't quite have it yet.
+ It's hard to-- because the data that you
+ generate on your robot, that's not exactly the data
+ I want to generate on my robot.
+ And so it's not immediately useful.
+ You have to think about off-policy RL and all these.
+ But even the distribution shift can be really tough.
+ But there's going to be a crossing point where
+ we have enough robots, and they're similar enough,
+ or we have enough copies of the same robot,
+ and maybe we consolidate hardware or something
+ where suddenly I'm going to program my robot completely
+ differently because you generated a lot of data.
+ Also, the same thing, too, is that a lot
+ of the work we're doing here, we're
+ kind of programming the robot as if it's the first time it ever
+ experienced this.
+ And we think a lot about learning as, OK,
+ I started with my policy parameters as random numbers
+ around 0.
+ How do I do that?
+ And that's not the world we're going to be living in.
+ We're going to be living in a world
+ where there are many robots that have already
+ done most of these things, and I should start with their hive
+ mind global model and maybe specialize
+ for my current situation.
+ So that's definitely coming to this neck of the woods, too.
+ And maybe just to say a last one,
+ I think I've said it a few times,
+ but I'm just very optimistic about theory of ML, RL, control
+ coming together with empirical stuff.
+ I think the empirical success of these things raced ahead.
+ But now we have many of the best theorists
+ in the world that are excited about understanding
+ those better, and I think that is just going
+ to be a very harmonious future.
+ I mean, we have Scott Aronson, right,
+ is our quantum computation guy.
+ He saw GPT-3, and now he's open AI for, I think--
+ I hope I'm not wrong, Scott.
+ But the quantum computation people
+ get so excited by these large models
+ that they have to go figure them out.
+ That's good.
+ That's great, right?
+ That's like bringing all the really great people together.
+ And I'm just very--
+ I mean, the controls people are so smart.
+ They're so, so smart.
+ And they now see that some of the things that
+ have happened in RL, and they're moving in that direction.
+ And I'm very optimistic about that
+ and how that changes things.
+ So if I were to just, at a meta level,
+ try to convince you of something,
+ it's maybe-- I think it's in this space, which is--
+ and I said it on day one, and I'll say it again
+ to close this off here.
+ I mean, for me, this class, even, and the notes
+ as they slowly evolve, and the way I think about it,
+ I think because the systems we're building here
+ are so complicated, we have to think rigorously about them.
+ And I think having a foundation of the things we know
+ and rigorous thinking about the things
+ that we're still inventing is just so important.
+ And I think if you talk to the best empirical machine
+ learning people and the most influential papers,
+ and you look at the authors, or you look
+ at the style of the papers, they're extremely rigorous.
+ I think people get the impression
+ that you can put a quick algorithm together,
+ you can make some curves, and you're good.
+ But those aren't the papers that are having massive impact.
+ And so I really want us to take the time
+ to think deeply about these problems
+ and build a foundation across these complicated disciplines.
+ And I think that's what's going to push the field forward.
+ Maybe more now than in some other times.
+ There's just been such a bubbling up of ideas.
+ And it feels to me like it's time
+ to consolidate a little bit and then push forward again.
+ Good.
+ OK, so that's it for me.
+ It's your turn.
+ So Anthony sent out the logistics for Tuesday.
+ But basically, I think-- and his text
+ is the gospel, if I say anything different right now.
+ But the basic gist is please come.
+ Come at 2, because it's going to take longer than an hour
+ and a half to do it.
+ If you come at 2.30, that's fine.
+ But if you can come at 2, it's great.
+ It really is like the best part of the class.
+ And please, when you're presenting or making
+ your videos, think about what you
+ learned that you wish other people knew.
+ That's the value.
+ I get tons of value out of that, of learning about the things
+ that you thought were going to work that didn't work.
+ Algorithm you tried that we haven't covered
+ or I haven't thought about that much.
+ I hear your experiences.
+ And I understand things better because of them.
+ And so I think you can all get that out
+ of each other next week.
+ The goal is-- so once you put your name on the sheet,
+ we're going to march down the sheet.
+ People in the room will put up first.
+ We've had a few times where someone would sit
+ in the room for a really long time watching
+ people who aren't there.
+ And so if you're here in the room,
+ and you've marked your video as public,
+ so when you upload to YouTube, you
+ can make it public or unlisted.
+ The public videos means we're going to show it.
+ And we'll show it even on the live stream,
+ because some people will watch remotely.
+ If it's unlisted, it's still on the spreadsheet.
+ So you can watch everybody's videos.
+ I mean, the class-- your members of the class
+ are your audience, whether you're unlisted or public.
+ But the broader world is only your audience
+ if you mark your video public.
+ And I've got a room till 5.
+ We'll see what we do.
+ We're going to march through as many as we can.
+ Try to give a little space for questions.
+ There's a lot of you, and it takes time
+ to march through the videos.
+ But please come.
+ It's really, really a fun part of the class.
+ I know there's people all over that
+ are going to be watching, because they've
+ seen awesome projects in the past.
+ And I think they're going to see awesome projects this time.
+ And it's not about how well your robot works.
+ It's about how much you learned and how
+ you can communicate that.
+ OK, good.
+ See you Tuesday.
+ I'm excited.

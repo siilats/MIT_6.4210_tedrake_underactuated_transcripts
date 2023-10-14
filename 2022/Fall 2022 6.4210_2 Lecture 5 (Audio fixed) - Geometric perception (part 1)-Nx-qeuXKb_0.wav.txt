@@ -1,0 +1,1938 @@
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ th
+ in the chapter.
+ And you can and should play with it.
+ I put that into the systems framework.
+ And so just to think of it from a systems perspective,
+ we had this diff_ik system, which
+ took in a desired spatial velocity of the gripper.
+ It also had to take in the current q, the EWA positions.
+ And it output v, the joint velocities,
+ the EWA joint velocities.
+ I have to write bigger.
+ And we'd use the pseudo-inverse in the simple case,
+ or a quadratic program as the generalization,
+ in order to implement that differential inverse kinematics
+ system.
+ To wire that all up, though, if you remember,
+ we have the station here, the manipulation station,
+ which takes in desired positions.
+ Right?
+ So to make this all work, there's
+ actually one more block in the middle, which
+ is just doing an integration.
+ You give it some initial conditions,
+ and it will take these desired velocities out and integrate
+ them back into desired positions.
+ The station had an output port for the EWA position, which
+ has to get wired back up into this.
+ That's all good.
+ We have direct access to the EWA position.
+ And then in the full demonstration,
+ this came from a trajectory.
+ We had our initial pose trajectory,
+ and we took a derivative of that pose trajectory
+ to get a velocity trajectory, a spatial velocity trajectory.
+ So this took that spatial velocity,
+ and then this trajectory system just
+ plays out as a function of time, the spatial velocities, which
+ get pulled at every time into this differential IK pseudo
+ inverse.
+ And the whole thing went around, and we have a complete demo.
+ It's actually kind of interesting
+ that if you were to simulate a little too long,
+ for instance, then this thing would run out
+ of interesting things to say.
+ We've only defined a trajectory up to the final segment
+ time of our plan.
+ So your mileage may vary if you try to keep simulating,
+ because you could just define this more carefully,
+ but I didn't.
+ So you could simulate that farther and get a little off.
+ One other thing just to say about that,
+ because we're going to build on this this week,
+ but there's two multi-body plants flying around here,
+ at least two.
+ But you can imagine having more.
+ So inside here is one plant, which
+ is simulating the physics of the world.
+ Our physics engine is buried inside this station diagram.
+ But the diff IK system also needs
+ to call the kinematics methods of a plant.
+ So there's another plant that's being used inside here,
+ and they're not the same.
+ And that's OK.
+ So this plant has the robot and the red brick and the bins
+ and all the details of the world.
+ It is one mathematical model of the world,
+ and it has everything inside it.
+ Diff IK is using a more narrow view of the world.
+ It has a mathematical model of the world
+ that only thinks about the arm and ignores everything else.
+ And this is not unusual.
+ This is not an artifact of diff IK.
+ You could think, for any simulation,
+ your robot might have some internal model of what's
+ going on, and then there's what the real world is giving you.
+ So you could think about this as sort of the internal model
+ that the robot has of what's going on.
+ And in this case, it's very simple.
+ It just pretends there's nothing except for the robot arm.
+ And there's another one out there,
+ which is this is our simulation of the real world.
+ So there's cases where we see multiple different plants
+ flying around, and that's OK.
+ It's just different models that are used for different pieces.
+ Does that make sense?
+ OK, so the big thing that was the assumption last time
+ is that we assumed that somebody gave me
+ the position of the red-- the initial position
+ of the red brick.
+ And in fact, we did that before this diagram was even
+ created so that I could-- before I even make this whole system,
+ I can design this trajectory.
+ And that's just a fixed thing over time.
+ Yes?
+ AUDIENCE: So you're talking about the two
+ EWA positions are the same thing?
+ PROFESSOR: Yes, so this is the desired EWA position.
+ This is commanded.
+ I forget exactly what I called it in the diagram.
+ I'll see it in just a second.
+ This is the commanded, and this is the measured.
+ And those are joint positions of the EWA.
+ Yeah, thank you for asking.
+ [TYPING]
+ OK, so there was this very artificial assumption
+ that the robot woke up and knew exactly where the red brick
+ was, the pose of the red brick in the world.
+ And the goal of the next few lectures
+ is to remove that assumption.
+ In particular, in the manipulation station--
+ so here, I can answer your question now.
+ It was called the EWA position on the way in,
+ and it's EWA position measured on the way out.
+ And we were also using these--
+ if we wanted to write this completely,
+ we were sort of using the cheat ports on the manipulation
+ station.
+ We were saying, go ahead and tell me
+ the exact position in the world of the red brick.
+ And I put those in the manipulation station simulation
+ so that they're available, and we can write algorithms
+ against them.
+ But you don't have those in the real world.
+ So in the hardware version of the manipulation station,
+ those ports are not there.
+ Nobody's going to tell you exactly where the red brick is.
+ What you have instead are cameras as sensors.
+ And we have to now start using those cameras
+ to infer the position of the red brick,
+ and of course, much, much more down the line.
+ So the demonstration, by the time we're done,
+ is not server-- oh, there we go.
+ OK, good-- is going to look fairly similar.
+ I've upgraded from a red brick to a mustard bottle.
+ So that's good.
+ That's progress.
+ You'll also see there's a bunch of cameras around the scene.
+ That's new.
+ I had ignored them.
+ And you'll also see that there's some perception happening here.
+ So this is a point cloud that we're
+ going to talk about that is obtained from a perception
+ system that was looking at the cameras at time 0
+ and doing some algorithms to try to estimate
+ the position, the pose of the mustard bottle in the frame.
+ So the goal of today is to give you that basic algorithm,
+ and we'll do better and better as we go forward.
+ But that's our pipeline.
+ So it's going to look fairly similar,
+ but there's going to be some initial work where
+ I look at the camera outputs, extract that pose,
+ and then create the trajectory.
+ And when we get even better, we'll
+ use that in real time feedback.
+ But today, we're just going to say, look at the world once.
+ Now design our trajectory, because that's
+ the pipeline we already have.
+ [AUDIO OUT]
+ OK, so here's the thing.
+ Turns out computer vision is hard.
+ So looking at your cameras, it's hard.
+ It's a hard problem.
+ It's gotten a lot easier now that we've had our machine
+ learning revolution.
+ But it's still a hard problem, and you
+ should understand maybe why computer vision
+ is a hard problem.
+ I think it's fairly intuitive, but to say it in a word or two,
+ why is computer vision hard is if you're
+ given an image, the red, green, blue values, the RGB values
+ at a bunch of pixels, then a very small change in the RGB
+ values can mean a very different--
+ can have a very different effect on what you're
+ trying to infer from the scene.
+ And the flip side is that a very small change in the world
+ can lead to a very large change in the RGB values.
+ So the mapping from RGB image to, for instance,
+ the pose of the red brick, this is a very complicated mapping.
+ A small change here can lead to a dramatic change here,
+ and vice versa.
+ Discontinuous changes, right?
+ If I have two objects that were to occlude each other,
+ for instance, it might be a very discontinuous change
+ in my ability to estimate this or know this and the colors
+ and color values that come out.
+ If I change the lighting conditions,
+ this can change dramatically, even though this changes not
+ at all.
+ So this map has traditionally been very, very hard
+ to reason about, and now we're doing a lot better than that
+ by trying to learn that map with data-driven methods
+ in deep learning.
+ But before that, I would say that we
+ have had another revolution, not just the machine learning,
+ deep learning revolution.
+ Oh, sorry, go ahead.
+ [INAUDIBLE]
+ That's a great question, yeah.
+ And the survey questions, which I totally read,
+ asked me to repeat the questions better.
+ So the question is, yeah, has there
+ worked beyond camera sensors?
+ It happens, not as much as I would like.
+ So absolutely, the other big sensors--
+ so we talk about our joint sensors a lot.
+ We talk about inertial sensors, maybe an IMU in the robot,
+ especially if it's a mobile robot.
+ The other obvious one for manipulation is tactile sensing.
+ And we are going to talk about that,
+ but that has been much slower to evolve
+ than camera-based sensing, partly just because the computer
+ vision world is enormous, and there's
+ massive data sets online for computer vision research,
+ and there's not the same availability of research
+ for tactile.
+ So that field is growing more slowly.
+ But it's an obviously important signal.
+ Now, you could go beyond that, right?
+ So I think we use smell.
+ I think we use sound.
+ I mean, you can hear things collide and stuff like this.
+ I was talking to--
+ I visited the Culinary Institute of America.
+ They have a very good group of researchers, and they do a lot
+ of research on the world of smell.
+ And they have a very good team of researchers.
+ And they have a very good team of scientists, and they have a
+ very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And they have a very good team of scientists.
+ And actually, this is the sensor that we're going to use for class.
+ And actually, this is the sensor that we're going to use for class.
+ And I happen to have one in my pocket.
+ Not always, just today.
+ It looks about like this.
+ And this is what you saw in the simulation
+ that was suddenly around the bins
+ in the manipulation station demo there.
+ in the manipulation station demo there.
+ It's an Intel RealSense D415.
+ This series has been discontinued.
+ There was a momentary scare where we thought Intel was cancelling the whole line.
+ There was a momentary scare where we thought Intel was cancelling the whole line.
+ But the line has continued.
+ And these,
+ the nice thing
+ about projected texture stereo
+ as opposed to some of the active
+ time of flight sensors is that you can put
+ multiple cameras in the same scene
+ multiple cameras in the same scene
+ and they don't interfere.
+ It used to be as soon as we had some of these time of flight sensors
+ we would have to really carefully
+ synchronize the frames of each camera
+ synchronize the frames of each camera
+ otherwise they would interfere with each other.
+ And these that are passive, but they're just
+ assigning some texture. Any texture is good.
+ And they don't assume anything about the
+ particular texture they're putting on.
+ These now have the ability to sort of work
+ multiple cameras at the same time.
+ Yes?
+ Yeah. Well this is the one that's most relevant
+ so I'll tell you this one.
+ So if I do the block matching stereo
+ this picture
+ this cartoon I had here
+ there's a tree in the left, there's a tree in the right
+ I'm trying to find the same image.
+ If it really does look like this where most of the image
+ is white
+ because I'm looking at a white wall or something
+ even this chalkboard probably has enough
+ texture because of my erasing
+ and stuff. But that's the problem
+ is that you won't know the depth
+ if two parts of the image look very similar.
+ So the trick there
+ is just in the infrared spectrum
+ throw some random dots
+ project texture.
+ And then, even if they're random
+ at least when I do my matching
+ this block will look different than this block
+ and it's once again able
+ to extract the depth.
+ And you see now if you're two different cameras
+ because I haven't assumed anything
+ about the specific texture that I projected
+ the two cameras won't interfere.
+ They will both just have enough texture.
+ Okay. So
+ of course we're going to be able to simulate
+ these cameras.
+ Now, let's just think about
+ what's happening here. So this is a very simple
+ diagram. I'm going to let it explode
+ because I know it's too small in this current frame.
+ But the new thing we've added here
+ is a RGBD sensor
+ system. Just
+ taxon. It listens to the scene graph
+ and it publishes
+ color images and depth images
+ which is RGB
+ red, green, blue
+ depth sensor.
+ Okay.
+ And its
+ simplicity in this diagram
+ hides the massive
+ complexity behind it, right?
+ So it's potentially a full game
+ engine renderer that's happening behind the
+ scenes there. The one we tend to use
+ in class here is just a relatively
+ simpler OpenGL renderer
+ that doesn't
+ do photorealistic but it's
+ very fast and very low computational
+ overhead and it runs fine on DeepNote and all
+ these things. But when we're
+ trying to do things like train a perception
+ system with deep learning, we will
+ have a version of that that
+ renders with photorealistic
+ rendering.
+ Okay. So then
+ what you get out of that
+ is a color image, the standard thing you'd
+ like to see.
+ In this I only put the mustard bottle in the
+ world. The background
+ is just whatever
+ zero in one coordinate
+ system mapped into the RGB space.
+ Okay. And you also
+ get this depth image.
+ So for every pixel, what these cameras
+ mostly give you, is for every pixel that
+ you have a red, green, blue value, you also have
+ an estimated depth.
+ Okay. That's the natural
+ interface that you have
+ to all these depth based sensors.
+ Okay. So the system is very
+ simple. You just go multibody plant scene graph.
+ I'm going to show you this example
+ that has both, renders the
+ ground truth
+ mustard bottle with
+ a standard meshcat visualizer.
+ And then I'm adding the RGBD sensor
+ which gives me a depth
+ image, but to
+ put it, to render it, I'm going to turn it into a
+ point cloud, which we're going to talk about,
+ and then hand it out to another visualizer.
+ And this is what it looks like.
+ [silence]
+ There it is.
+ Okay. So I have a camera right
+ here. I put my
+ frame on my camera so you could see,
+ you know, understand everything in frame
+ coordinates. Okay. And what you see
+ mostly here is the ground truth
+ mustard bottle. But if you go
+ in and you
+ turn off the ground truth,
+ you can see what
+ the camera sees, which is the rendered
+ point cloud. Okay.
+ And I think what's very
+ important to understand, just from this very simple
+ example, is that
+ the camera being where it is,
+ which I turned off,
+ yeah,
+ the camera being where it is,
+ can only see part of the mustard bottle.
+ Right? This is going to
+ have a dramatic effect on the way we think about
+ these algorithms, right? So occlusions,
+ partial views,
+ are part of the problem with perception.
+ You're only going to see parts of objects
+ in general. You're rarely going to see
+ perfect, especially you'll never see the bottom.
+ Basically, if it's on a table or something
+ like that, you'll certainly never see the bottom
+ and you'll probably put multiple cameras
+ around to get multiple views
+ when you have the luxury to
+ do that.
+ For instance,
+ when we did the dish-loading
+ example that I told you about,
+ these little D415s,
+ we just took the philosophy, alright, just put them everywhere.
+ The problem's hard enough.
+ I don't want to mess too much.
+ We still have partial views and occlusions
+ that we have to deal with. I'll define those.
+ But there's D415s
+ all over the environment.
+ This one's trying to look into the dishwasher
+ when it was there. There's two
+ on the wrist of the robot.
+ Okay?
+ So,
+ there's interesting operations
+ we'll think about, about how do you fuse all those
+ point clouds together and the like.
+ Yes?
+ [inaudible]
+ Yes.
+ This one was not a mobile robot,
+ but if you have a mobile robot, then
+ you quickly need that requirement that you've
+ actually integrated them directly into the robot.
+ So, absolutely.
+ The most common
+ place, of course, to put them is in the robot head
+ for no other reason than we like humans,
+ I guess.
+ Another natural thing you would think of is
+ you put it in the hand, and we have
+ some of the hands I brought down before had cameras
+ inside them. And those are
+ useful. I'll show you an example later of them being
+ useful. But they aren't quite
+ the tactile sensors that we were talking about a
+ minute ago, because
+ one of the problems with these types of sensors
+ is that they have a minimum
+ range in addition to a maximum range.
+ And if you get too close to an object, then
+ they will become blind again.
+ So, yes, absolutely.
+ That's an interesting question about where do you put them on the
+ robot, and the dream would be that a robot
+ is only instrumented by itself and can go into
+ any environment.
+ Yes?
+ [inaudible]
+ Yes.
+ [inaudible]
+ Okay.
+ Yeah, so we're not going to talk about psychotic.
+ The question was about psychotic
+ eye movements. I showed one example.
+ So there's
+ the example I showed you of the super fast
+ hand that was going like this and catching
+ a phone. It was actually doing a simple
+ computer vision algorithm, but it was tracking
+ really fast.
+ It didn't have the psychots that
+ a human does, but it was doing a continuous tracking.
+ And that can be good
+ in many applications.
+ The other thing that's really
+ popular now is event cameras,
+ which will try to, at super high rates,
+ just tell you the pixels that changed.
+ Maybe we'll get to that
+ later, but think
+ slow stationary cameras for today,
+ just to get us started. Yes?
+ [inaudible]
+ Oh, saccade. So it turns out if you were
+ to have me look, if you
+ were to have me track my finger
+ moving across here,
+ my eye doesn't move as smoothly as you'd like.
+ It actually jumps.
+ So you tend to have
+ a fixed gaze and quick transition
+ to another gaze.
+ So eyes, human eyes, tend to
+ jump in discrete
+ quick events. The idea
+ there is, it's even better
+ if you were to spin around, I see people moving their fingers.
+ It's even better if you were to spin yourself in a chair,
+ which I'm glad you don't have rotary chairs,
+ otherwise I would have lost a few minutes.
+ But, yeah.
+ So the idea is that
+ humans are mostly blind when their eyes are moving.
+ And so roughly
+ we do as much as we possibly can to keep our eyes
+ fixed, and then move very quickly to the next thing.
+ This is also why
+ birds, this is going away,
+ this is also why birds sort of walk like this, right?
+ Right?
+ [laughter]
+ That's a saccade.
+ That's a saccade, right? That's just,
+ they don't have the ability to move their eye in their head,
+ so they move their whole head.
+ But it's because they're blind
+ when their eyes are moving, roughly.
+ Yes, see?
+ Watch out what you ask, right?
+ Okay, good.
+ Moving on.
+ The other thing to know
+ about these is that, although I
+ do think the revolution has
+ given us beautiful sensors that we didn't
+ have before, enabling new algorithms,
+ they're not perfect sensors still, and we
+ have to think a lot about
+ the noise in these sensors.
+ We're going to talk about
+ clean sensors today, and talk about
+ noisy sensors in the next lecture.
+ But if you look at the,
+ you know, we point this in the lab to a
+ pile of interesting objects,
+ if we simulated
+ those objects, we would get, this is the
+ depth image I would love to get out of my sensor.
+ The one you really get looks
+ more like this. And it's
+ accurate, it's very accurate
+ in some places, and it's very inaccurate
+ in other places. And it depends exactly,
+ the properties of that
+ error depends on which technology
+ you're using, but it's very common
+ when you see things that are at
+ sharp angles to the camera,
+ that your projected texture doesn't do so well.
+ For instance, and you'll
+ get, like, the sides of objects tend
+ to be, have dropouts. These black
+ frames were the places where it didn't
+ get a depth return, was unable to estimate.
+ So it just said, I don't know, there's nothing there.
+ Right? And that happens a lot on the side
+ of objects. Also, shiny
+ objects tend to be defeating
+ for this, or transparent objects aren't so
+ good for stereo.
+ So, a lot of those things
+ are still challenges with these
+ sensors. Now, the NERF
+ type technology, when we get
+ to it, but some of the
+ only RGB based technology
+ can do better in
+ many of those situations, and that's one of the things
+ that's exciting about it. But
+ these sensors, still
+ very common in robotics,
+ have artifacts that we have to think about.
+ This is
+ the particular sensor that we have here, the D415.
+ Everybody who talks about it
+ says it's an awesome sensor,
+ but it's a little lumpy.
+ Right?
+ This is just somebody
+ having some interesting objects on their desk,
+ and if you look at it, and you zoom in,
+ or whatever, it has
+ consistent artifacts in its
+ depth estimation. It kind of looks like
+ there's a little bit more of a wavy field
+ than you'd expect.
+ It's interesting that
+ there's a science of
+ simulating the noise
+ that you get from a depth sensor,
+ and I think
+ autonomous driving companies are doing that
+ exceptionally well, even trying to simulate
+ what happens with the plume
+ of exhaust coming off a car, how does that
+ mess up with my sensors?
+ We haven't done that level of modeling
+ in Drake yet,
+ but I think that
+ field is advancing.
+ Okay, so
+ from there,
+ let me stop that,
+ okay, from there now
+ we have a particular
+ depth image coming out
+ of the camera, and we need
+ to think about how we're going to work
+ with it. And there's various,
+ a bit
+ analogous to how there were many
+ different representations for orientation,
+ there are many different
+ representations for geometry.
+ So,
+ the
+ RGBD
+ image, depth image,
+ is one,
+ it's the one that comes out of this camera.
+ We're going to talk about
+ converting that to point clouds
+ in just a minute.
+ That's what
+ I drew in the visualizer.
+ But these are just two
+ examples, and there's many more.
+ If you've ever used a CAD program,
+ you've probably thought about
+ using triangular meshes,
+ which tend to represent
+ the surface of objects with triangles,
+ right? Or you might,
+ if you've done more complicated
+ things, you might have used a tet mesh,
+ a tetrahedral mesh,
+ for volume,
+ which would represent
+ the entire, you know, you can imagine
+ triangles for the surface, but if you want to
+ have the whole volume represented,
+ you'd use four points
+ for each piece,
+ a tetrahedron.
+ There are
+ other representations, like signed
+ distance functions.
+ So,
+ this is
+ a
+ simplified
+ representation of
+ a tetrahedral mesh.
+ This is
+ an implicit
+ representation. We'll get to it, we'll cover it more
+ soon, and it's the stuff
+ of deep SDF and
+ SDF
+ for short.
+ And NERF is
+ grids
+ or occupancy
+ maps.
+ Right, so I might
+ actually represent
+ geometry by just saying, I'm going to put a bunch
+ of cubes in space, and I'm going to put
+ a one everywhere that there's, I think,
+ space is filled, and a zero everywhere else.
+ Right, that would be a voxelized
+ grid, and it's actually a pretty
+ common representation.
+ And there's more, too.
+ Okay.
+ And again, a bit analogous
+ to the rotations,
+ each of these is going to be useful for
+ different types of computations.
+ And for the most part,
+ you should be, I think,
+ relatively optimistic of being able to
+ convert back and forth between them.
+ There's some cases where
+ that conversion is lossy,
+ and you might not be happy
+ going here and then coming back,
+ for instance. You might not get the
+ perfect reconstruction.
+ But
+ we get our data in
+ one particular format, a depth image,
+ and it makes sense to convert
+ it into many different formats to make
+ different algorithms efficient.
+ Okay.
+ Let's dive in and actually do a little bit of
+ perception work.
+ It's not a coincidence that
+ we talked about kinematics last
+ lecture
+ and differential kinematics and the like,
+ because
+ the first step of
+ perception, really, I think, is thinking about perception
+ as an inverse kinematics
+ problem. Okay?
+ [writing on board]
+ The way this is going to go, I'm going to make some
+ silly, simple
+ objects in 2D
+ on the board that are supposed to be
+ visibly asymmetric.
+ No symmetries to worry
+ about first. Okay?
+ So let's say I have an object O.
+ Okay?
+ This is my object.
+ This is a
+ known object.
+ The things we're going to talk about first are going to be
+ are going to work
+ best if you know, have a model
+ of the object to start with.
+ A known object O.
+ So maybe I've got a
+ CAD file that somebody gave me,
+ and I'm going to try to find the object
+ in the scene, like a mustard bottle
+ for instance.
+ Maybe that CAD
+ file has a triangular mesh.
+ Okay? But I'm going to
+ convert it from that format into
+ a point cloud format
+ to make the first algorithm work.
+ So imagine I've chosen
+ as my representation for this geometry
+ to be a series of
+ points on the
+ surface of the object.
+ They don't necessarily
+ need to be beautifully sampled,
+ evenly sampled.
+ It's rare that you get that, have that luxury, but
+ we're going to represent
+ our object
+ with just a bunch of points
+ that are at some position
+ in space.
+ We'll call them the model points
+ in an object
+ frame. Okay? So this is the
+ model point
+ and this is the i-th model point.
+ And I'm going to write it, I'm going to
+ denote its position in the
+ object frame with my standard
+ you know, mi
+ is the position in that frame.
+ My depth camera
+ gives me
+ something different, right?
+ It gives me roughly
+ what I'll call
+ scene points.
+ This is the i-th
+ scene point in the camera.
+ And I'm going to call it
+ the i-th scene point in the camera frame.
+ To go from the depth image
+ to the 3D location
+ of the points, even in the camera frame,
+ you do have to go through
+ the geometry
+ of the camera. There's some perspective
+ geometry that
+ you know, the lens for instance
+ like this, that will help you convert
+ from the image, the depth
+ image, into a
+ bunch of 3D points.
+ And this, you know, we won't
+ use points, if the depth camera said the
+ depth was infinite or the depth was zero,
+ all those black regions we saw there,
+ we won't include those in the scene points, we'll just discard
+ them. But there's a relatively
+ simple operation that goes from a
+ depth image into this, which is
+ what we're calling our point cloud representation.
+ The list of these points, the point cloud
+ can have its own, can live in whatever frame.
+ So these scene points might
+ hopefully look sort of
+ as if they were roughly generated
+ from that shape.
+ Okay?
+ Maybe I put it like that.
+ And there's going to be some points here.
+ Right? Maybe if I'm
+ looking at it from this angle, I only have points on
+ one side, but for now I'll just say I've got points
+ roughly everywhere around
+ the object. Okay?
+ And the next lecture we'll talk a lot more about
+ partial occlusion, partial views and occlusions.
+ And I'm going to assume that I
+ know
+ I know where the camera is.
+ So I'll assume I know where
+ the camera is in the world.
+ If it's the camera mounted to the hand,
+ that's just done through forward
+ kinematics, right?
+ If it's a camera bolted to the world,
+ it's just a fixed, constant value.
+ And my task
+ is to estimate
+ the object's pose in the world.
+ Yes?
+ Yes, so if
+ it could be a function of
+ the joint angles, if you like.
+ Yeah? And then absolutely
+ that would be the result of a forward kinematics computation.
+ But even
+ in my simple example, they were fixed, and that's
+ that's fine.
+ I will in general
+ throughout the class, when we're talking about estimation,
+ I will use this hat
+ notation.
+ Put a hat over it, okay?
+ To denote the estimate.
+ Okay, so x hat is the estimate of x.
+ Okay, so how do we do it?
+ It turns out, like I mean, you can tell I'm already
+ using the language of kinematics
+ and frames and the like.
+ So finding the missing transform
+ is just
+ a kinematics problem.
+ Right, if I line up my
+ if I line up my different
+ transforms, then it
+ becomes a simple, a relatively simple
+ task with one
+ big assumption.
+ [writing on board]
+ I'm going to assume
+ that
+ model point mi
+ corresponds
+ [writing on board]
+ to scene
+ point
+ i.
+ We're going to remove that assumption in just
+ a few minutes, but to start,
+ let's just say that, you could
+ imagine if I looked through my camera, if for instance
+ like every point that I
+ found had a completely unique and
+ reliable color, for instance.
+ So I had no doubt that when I looked at this
+ that this
+ point here absolutely goes
+ with this point over here.
+ That's a
+ too strong of an assumption for reality,
+ but it's going to be the first step of our algorithm, right?
+ Is to assume that for every one of these
+ points here, I know
+ which of the points in my model
+ it corresponds to.
+ And that
+ correspondence is actually
+ in general
+ is one way. I'd like to be able to correspond
+ every point in my scene
+ to some point in my
+ model. But it could be that
+ many points go to one point,
+ and it could be that not all model points
+ have a corresponding scene point, but
+ I want that all scene points
+ correspond to some model point.
+ And to begin with, we're just going to assume that
+ there's a one-to-one mapping, just to
+ make it very simple, to just avoid
+ extra notation.
+ If I do that,
+ then the problem
+ is really
+ just a kinematics problem.
+ I know that the
+ position of the
+ model points in the world should
+ just be the world to the
+ object.
+ I have this.
+ This is something I've
+ been given, right?
+ And it also had better equal
+ the
+ position of the camera
+ for all i.
+ This is two
+ different ways to put the
+ same point into the
+ world coordinates.
+ Now, this is
+ known.
+ This is unknown.
+ We need to
+ estimate this, right?
+ And we said both of these are
+ known, right?
+ This is
+ measured, and this is known.
+ So I've got an equation here
+ where I just need to back out
+ what is this transform,
+ given that.
+ Now just think about, a little bit about
+ the
+ properties of this.
+ For instance,
+ let's just say that there's no noise whatsoever.
+ This
+ is going to have a unique
+ solution, assuming
+ I have enough points, right?
+ If I had just exactly one point,
+ then there's going to be
+ multiple solutions to this.
+ There's some for
+ a 2D estimation,
+ there's some number of points required.
+ For 3D, there's some number of points
+ required. As long as they're unique points,
+ whatever, there's very simple conditions.
+ Basically two points, and then at least
+ three non-
+ collinear points, right?
+ That will mean that this matrix has a unique solution,
+ given I know these
+ correspondences.
+ But,
+ because this system has noise and other things,
+ this, I would prefer
+ to write this not as a "solve
+ some linear equations perfectly,"
+ but try to solve this in a
+ least square sense, just like we did with the
+ with the differential IK last time.
+ So it's going to be,
+ you know, solve this
+ in a least squares sense.
+ This, I would say, is an inverse kinematics
+ problem. Not differential inverse kinematics,
+ but inverse kinematics,
+ right? There's no Jacobians involved here.
+ This is actually trying to estimate
+ the transform.
+ So it's a natural question. We talked a lot about
+ differential inverse kinematics last time.
+ Why are we doing inverse kinematics this time?
+ What's different?
+ Does anybody
+ have an immediate sort of idea
+ for why we should jump right to
+ inverse kinematics this time?
+ Why aren't we using Jacobians?
+ Yes?
+ Perfect. Perfect.
+ So he says that you don't have an initial ground truth, right?
+ So in the case of driving
+ the robot around, I knew what
+ the initial joint angles were,
+ so it made sense to ask the question,
+ "If I made a small change, what happens
+ to the end effector?"
+ So the Jacobian, the differential kinematics
+ and the differential inverse kinematics
+ became the right object,
+ or a natural object.
+ This is a different problem. This is the robot woke up
+ and it has to find, with no good initial
+ guess, where the object is.
+ So we have to solve the harder problem
+ of solving the complete
+ inverse kinematics problem. We have to find that entire
+ transform. This is still
+ of course easier than when we have joints
+ in a big robot. This is the one object
+ case, but this is our first
+ example of solving the real inverse kinematics
+ problem.
+ Kinematics was going from
+ positions, the
+ generalized positions, to
+ poses.
+ And inverse kinematics is going from poses
+ back to positions.
+ I understand it's a little weird the way I've
+ written here, but I'm trying to back out the positions
+ of the represented here
+ as a pose, I admit.
+ I'm trying to find the
+ positions description, the generalized positions
+ of that object
+ from a series of these chains.
+ [inaudible]
+ Yeah, but I would probably address it
+ before or after. Thank you.
+ That was probably my one chance.
+ [laughter]
+ Right, I probably should have just said
+ I'll stop everything, let's fix this.
+ I've tried so hard to get their attention.
+ So let's write it as an optimization.
+ So, instead of just saying
+ I want those to match with equality,
+ what if I said I want them to match in a least
+ square sense? So, if I
+ said that x
+ w o, whoops,
+ w o times
+ p,
+ I can't even see my own writing up there,
+ minus
+ x w c
+ s i,
+ I'm going to do the
+ sum of this over all i,
+ and I'd like to minimize this
+ over my decision variable,
+ which was the object
+ position of the world.
+ Okay?
+ And just to remember,
+ to be explicit, that
+ this thing is
+ a particular
+ mathematical object that represents
+ a pose, let me write this down
+ as saying I'm going to look for this
+ inside
+ S E 3,
+ okay, which is the special
+ Euclidean group.
+ It's a fancy way to say a pose, basically.
+ In three dimensions, okay?
+ A valid
+ rigid transform.
+ Okay, so this is a
+ sort of a robust way to try to estimate
+ that pose.
+ This thing, since both of them are known,
+ I'll start
+ just writing p w
+ s i, or even just p s i,
+ since the w is implied.
+ Save me a little bit of writing.
+ And this
+ thing we know
+ from our spatial algebra,
+ I can write this as
+ p of O in the world
+ plus the rotations of
+ the O in the world times
+ m i.
+ Okay?
+ So I can write this
+ alternatively as I'm going to minimize
+ over p O
+ and r O,
+ where this is some
+ potentially abstract
+ representation of orientation,
+ but it had better live in
+ the special orthogonal group, okay,
+ which is just another way to say
+ it's a valid rotation matrix.
+ A valid rotation.
+ Okay, so this is the problem we want to solve,
+ and we want to think about the
+ sort of the geometry of that problem
+ and how we solve it
+ robustly.
+ Does that make sense?
+ Questions about that? Yes?
+ Okay.
+ Yes. So in the case
+ where we have enough points
+ and that there's no noise
+ and there's perfect
+ correspondences, you could try to
+ solve that as a bunch of
+ equalities and find the exact solution.
+ But even, if you think about,
+ if you count how many numbers here, for instance,
+ right,
+ if I'm going to search for, let's say this is
+ a rotation matrix, so I have nine
+ numbers here, a three by three rotation matrix,
+ and I have three more numbers here, so I have
+ 12 numbers I'm trying to solve for
+ in general.
+ And let's say I have
+ 50 points in my
+ model, then I've got an
+ over-constrained, you know, they should,
+ if there's no noise, there should be
+ a solution, but I still sort of
+ don't like the idea of
+ solving a system of
+ equations that could be, you know,
+ that is defined
+ based on some transformation where I have
+ like 50 equations to solve
+ for 12 unknowns. That seems
+ fraught with, like, numerical problems
+ and stuff like that. So you
+ could, you know, the no noise case
+ you could just pick your favorite 12 and,
+ you know, as long as they were, and do that. But
+ we're going to just move ahead to the case that's
+ going to go the distance for us, which is as soon as you have
+ a noise or whatever, we're going to say
+ find me the best possible match
+ that describes this data.
+ Good question.
+ Okay.
+ So let's work with, let's chew on this a little bit.
+ I need to pick now some
+ representation for R
+ to turn this into a mathematical
+ program.
+ The state-of-the-art methods
+ in this world will tend to
+ either rotation matrix
+ representation for this or
+ quaternion representation for this.
+ Okay. I'll do the
+ rotation matrix representation.
+ Yeah.
+ So it's a, the, so RANSAC
+ would be a good way to handle
+ outliers, for instance, if you have
+ random points that don't correspond with your
+ object, then RANSAC is a very natural way to
+ handle that.
+ Yeah? Yeah, for sure, we're going to get to that.
+ Okay. So let's choose R as a rotation
+ matrix, and I'll write exactly the same thing,
+ but instead of this
+ relatively abstract saying that my
+ decision variables live in some special
+ group, you know, valid rotation,
+ valid rotations, now I can
+ write exactly the properties of a rotation
+ matrix, which are constraints on
+ the variables in my
+ decision, right? So now I can say
+ I'm going to minimize over
+ P
+ and R,
+ now a rotation matrix, okay?
+ I'll just call that R here.
+ O, M, I
+ minus
+ P, S, I, same thing
+ squared, okay?
+ But if I represent this
+ by 3 by 3 numbers,
+ then
+ I need to add constraints
+ to make it a valid rotation matrix.
+ So the
+ important properties
+ of the rotation matrix is
+ the most important one is that it's an orthonormal
+ matrix, right?
+ So the columns are unit length,
+ and the
+ transpose is the identity.
+ This is an orthonormal
+ matrix, and the simplest way to
+ write that would be to say that R, R
+ transpose is the
+ identity matrix.
+ And that's most of what we need.
+ It turns out there's one more that
+ you need to be a valid rotation,
+ is you need the determinant of R
+ to be a positive
+ 1, okay?
+ If you allow,
+ so given this condition,
+ the determinant will only be positive
+ 1 or negative 1,
+ but if you don't add
+ this constraint, then it's possible you could get
+ something that's a rotation plus a reflection.
+ It would still be an
+ orthonormal matrix, okay?
+ So, I just
+ meant to make, I was trying to emphasize that,
+ and I realized it looked like plus or minus.
+ Okay, so,
+ if you have a determinant
+ negative 1,
+ then that would be
+ called an improper rotation.
+ And we want to be, I guess, proper
+ here, so.
+ Okay, so
+ this is interesting now.
+ This is
+ almost like the optimization
+ we wrote last time, where we have,
+ we still, I see this,
+ and I see a quadratic objective.
+ Do you see a quadratic
+ objective yet? I mean,
+ the decision variables are here,
+ right?
+ In this inside of the equation,
+ all of the decision variables
+ enter linearly,
+ okay?
+ Because this is known, this is
+ known.
+ So the decision variables
+ enter linearly,
+ and when I square it,
+ I will get at most
+ a quadratic term in the decision variables.
+ And it's going to be,
+ because it's this nice, you know,
+ some quantity squared, that means
+ my objective is still some nice
+ quadratic form
+ in my P and R.
+ That's good.
+ We're in the land of
+ quadratic optimization.
+ This one, however,
+ is also quadratic,
+ right? If I take the
+ two terms here and multiply
+ the coefficients of the matrix
+ together, then I'm going to get terms that are
+ quadratic in the elements
+ of R. And I'll do the two-by-two case in just a second.
+ But this is now
+ also a quadratic constraint.
+ So last time we talked about quadratic objectives with linear constraints, and we said there's beautiful solutions. That's the quadratic program.
+ Quadratic objectives with quadratic constraints are not quite as nice.
+ These are called
+ QCQPs,
+ quadratically constrained quadratic
+ programs.
+ And they don't
+ admit, in some cases they admit
+ solutions beautifully, but in general
+ don't admit the same
+ natural solution techniques.
+ Okay?
+ And then this one
+ is actually a cubic.
+ Oh no, so it depends on
+ the thing. At worst it could be a cubic
+ constraint.
+ So we're going to tend to,
+ I'm going to just, full disclosure, we're going to
+ tend to ignore this.
+ And I'll justify that
+ in a little bit.
+ So let me just do this in a, since that was
+ a little bit abstract, I can make
+ it very clear
+ I think in the two-by-two case.
+ In a 2D
+ optimization.
+ So rotation matrix
+ in 2D
+ you probably think of
+ for instance writing
+ cosine of theta,
+ negative sine of theta,
+ sine theta,
+ cosine theta.
+ That's the sort of,
+ when you think 2D rotation matrix
+ maybe you think about this.
+ That is the map that goes from
+ theta to a rotation matrix.
+ I'm going to here,
+ I want to avoid
+ this non-linearity of cosine
+ and sine, so I'm just going to
+ over-parameterize it here. I'm going to call
+ that AB, negative
+ BA.
+ Like this.
+ So after I solve for A and B
+ I can back out what theta is.
+ If I want. But I'm going to parameterize it
+ like this. And I'm going to take advantage
+ of the fact that I know that
+ I could use four numbers
+ to do it, but I don't have to because
+ I know that proper
+ rotation matrices
+ have this structure.
+ In 2D.
+ So if I then write
+ what is the
+ RR transpose
+ equals I constraint.
+ If I just multiply
+ this times the transpose of this
+ then I get two constraints
+ basically. The four elements
+ all give me
+ being one or being zero.
+ This constraint
+ converts into just A squared
+ plus B squared equals
+ one and
+ AB minus BA
+ equals zero.
+ So when I say this is quadratically constrained
+ that's exactly, you can see it
+ multiplied out here.
+ If I did choose to parameterize
+ with theta, I
+ can do that. People do do that. We will
+ find examples where we do that.
+ It's still potentially a
+ reasonable problem, but it becomes a non-linear
+ optimization problem.
+ And the language of sort of
+ unique minima describing
+ the solution is no longer valid
+ for us. So that's why
+ we go from this representation to this representation.
+ To be linear in our decision
+ variables.
+ And then quadratic in our decision variables.
+ Okay.
+ So let me consider for a moment
+ since we've written now this thing
+ with only two parameters
+ A and B.
+ Let's pretend I want to solve the optimization
+ and I just won't worry about
+ the positions and I'll just solve for rotations.
+ What does that
+ optimization landscape
+ look like?
+ Right?
+ I have a quadratic objective
+ and I have
+ this constraint.
+ I made a plot.
+ Here we go.
+ This is what it looks like.
+ Okay? I'm going to, as I move
+ the true rotation
+ around, this is, on the left
+ is the math
+ that takes a handful of points
+ and computes that objective.
+ The green is the objective
+ function.
+ And the red is the constraint.
+ Okay?
+ This is A, this is B.
+ For instance.
+ A and positive B
+ over here.
+ As I move the desired
+ formula around
+ then the objective
+ moves around.
+ Okay?
+ And beautifully, in this setting
+ actually the minimum
+ always lands on the unit circle.
+ Okay?
+ That's because I have no noise.
+ In that case, it turns out
+ if I ignored the
+ constraint completely,
+ I would get a valid rotation.
+ That makes sense, right? Because if I
+ wanted to minimize
+ this cost
+ and the true cost
+ is a valid rotation, right?
+ Then the thing I get back out should be a valid rotation also.
+ As soon as you have
+ noise though, this objective
+ of trying to reconstruct the points,
+ if you will, can move away
+ from the unit circle and having
+ this constraint that it better, find the best
+ true rotation matrix
+ that satisfies the constraints
+ can be visualized in the optimization
+ landscape as pulling you back in 2D
+ just to the unit circle.
+ Does that picture make sense?
+ Okay.
+ Now that's just
+ for the rotation only case.
+ But it turns out
+ the rotation only case is
+ all we actually need.
+ There's a very clever trick.
+ Actually, so
+ Tom, do you remember
+ a couple of lectures ago you asked me why
+ I can go from
+ we talked about spatial transforms, right?
+ In our
+ spatial transforms, we said
+ BA
+ expressed in, let me actually
+ use the same letters I used before.
+ If I want to change
+ from PAB expressed in F
+ to PAB expressed in G,
+ I claimed I only needed the rotations.
+ And you asked, "Why don't I have
+ a position and a rotation?" And I said,
+ "It's an exercise for the reader, but
+ you only need rotations."
+ It's not that hard to see.
+ This is the relative
+ distance, the relative position
+ between two points.
+ So if I move a frame in translation,
+ the relative position
+ between two points doesn't change.
+ It's only when I
+ rotate the frame that the relative position
+ changes.
+ It turns out
+ we can exploit this trick
+ to simplify that
+ optimization problem. If instead
+ of trying to write everything relative to
+ the world frame, we
+ do it relative to another point
+ in the same frame,
+ then the positions
+ drop, and
+ I can only optimize for rotation.
+ Okay?
+ The relative position
+ only depends
+ on rotation.
+ So the
+ way that that manifests itself in this
+ equation is you just
+ basically pick some canonical point
+ in the point cloud.
+ Typically people pick the centroid
+ of the point cloud.
+ And you write all of the model points
+ relative to the centroid.
+ And if
+ you do the algebra, this term
+ disappears.
+ And then you can always back it out
+ later after you've estimated the rotation.
+ So once I get to this relatively simpler
+ optimization, the same one
+ I was working on here,
+ this one
+ actually has a nice solution.
+ Although QC, QPs in general don't
+ have a great solution, this is a
+ special case, and it has
+ an excellent solution. And it's
+ obtained by just calling SVD.
+ Okay? This is one of the magic
+ cases where SVD just
+ solves the problem.
+ So the problem of minimizing
+ over R,
+ the sum over I,
+ R P0
+ Mi minus P0
+ Si squared,
+ subject to R
+ transpose equals I,
+ has a closed form solution.
+ with the singular value decomposition.
+ That's amazing, right?
+ And this becomes a staple
+ of our perception algorithms.
+ So what does that mean in practice?
+ I can do things like this.
+ I have a
+ model
+ and a scene.
+ Let me make sure I get the right ones
+ correct. I'm going to move my model
+ into my scene, okay?
+ Given this transform.
+ So the scene is my
+ salmon color, I think, when I picked it.
+ And the light blue
+ is the model.
+ Let me just say this one thing.
+ And then I'm going to, I assumed,
+ I made a huge assumption,
+ that we knew which point in the scene
+ corresponded to which point in the model.
+ That's what these lines indicate.
+ For every one of those
+ I knew which point it should correspond to.
+ And I did it in this example
+ by just perfectly causing a rotation on that.
+ And it turns out, in that setting
+ where I have the known correspondences,
+ and I only have to
+ estimate translation
+ and rotation,
+ there's effectively a closed form solution
+ that will snap and find the rotations.
+ Yes?
+ [inaudible]
+ Oh, over here.
+ So
+ what I did here was I
+ moved the
+ two point clouds,
+ the scene, salmon colored scene,
+ and the blue colored model
+ to be in the same world frame,
+ or the same frame.
+ So the fact that it's this brown thing,
+ that's salmon plus blue.
+ [inaudible]
+ I could have moved them
+ both into
+ a world frame.
+ I plotted it, what did I do? I guess
+ I think I moved the
+ model into
+ the scene in this case.
+ I'm consistent.
+ The scene I estimated in the world frame.
+ That's what the salmon is.
+ I solved for the
+ rotation and translation that would move
+ the model into the scene.
+ And then I applied that
+ to the blue color.
+ And the result was that points landed
+ right on top of each other.
+ And I got a lovely mud brown
+ for the geometry.
+ [inaudible]
+ So the, um,
+ I have to remember to repeat the questions.
+ What is the scene and what is the model?
+ This is too perfect to get from a real
+ depth sensor, but the scene is what you get
+ from your camera.
+ And right now I've assumed it's perfect and everything.
+ We're going to remove those assumptions.
+ The model is the, for the mustard bottle,
+ I'm going to make a perfect
+ model in CAD
+ or something of a mustard bottle.
+ And I'm going to go through the world, through my
+ cameras, trying to find that model in the scene.
+ Right?
+ And I chose to represent that, instead of
+ using a mesh, I'm going to represent it
+ as a point cloud and just do,
+ this is called point set registration
+ or point cloud registration, what we're doing here.
+ Take this point cloud and this point
+ cloud, find the relative transform so that they
+ become the same.
+ (Question from audience)
+ (Question from audience)
+ The
+ result of the brown thing is complete
+ success. We've dominated this
+ problem and the result
+ was mud brown.
+ It's the same mud brown that's here, yeah?
+ (Question from audience)
+ (Question from audience)
+ Good.
+ (Question from audience)
+ (Question from audience)
+ So,
+ let me instead of,
+ well, let me foreshadow
+ what's going to happen next time.
+ Which is that
+ if you no
+ longer know the correspondences, and you
+ have to estimate the correspondences,
+ then there's a relatively simple algorithm
+ that I'll do at the beginning of next time, that
+ will do this for you, and the results look
+ something like this. It becomes an
+ iterative algorithm, where you try to guess
+ the correspondences,
+ and then you apply this magic
+ SVD solution,
+ right? You apply the correspondences,
+ you apply the magic SVD solution,
+ and in the good cases,
+ this works beautifully and can solve the harder
+ problem. I will also
+ show you outtakes next time, when it doesn't solve that
+ perfectly. Right? And that's on
+ a loop, which is why it's
+ it gets bad again. It looks like it gets bad again.
+ Okay?
+ So, let me just ask a few questions
+ about
+ the version we already have here. So,
+ what happens
+ if the objects
+ are perfectly symmetric?
+ Remember my little...my shapes here were
+ chosen to be intentionally asymmetric.
+ So if I just go back to the simpler
+ case here,
+ what happens
+ if the object is perfectly symmetric?
+ If I just did a square,
+ or something like that. What changes in this optimization?
+ [inaudible]
+ Right. That's the
+ right question. It says, "Do we still have those
+ correct correspondences?" If the shape of the
+ object was symmetric, in this part
+ of the problem, that is irrelevant.
+ Because I've already given you perfect
+ correspondences, so there is no problem
+ with symmetry.
+ The next part of the problem, where we have to find
+ the correspondences, will be susceptible
+ to symmetries.
+ Great. Okay. What happens
+ if I don't have enough data
+ points?
+ That's kind of an interesting question. What if I
+ had...if I'm trying to estimate this and I only
+ have one data point, for instance?
+ What's gonna happen?
+ [inaudible]
+ There'll be an infinite number of solutions.
+ And, in practice,
+ since I'm solving this in this sort of quadratic
+ form, the solver
+ will probably find the one that's closest to zero
+ in these parameters.
+ Okay? SVD would even do that, I think.
+ Okay?
+ So it's not...it
+ will pick something, but it will be one of the
+ infinite number of solutions.
+ [inaudible]
+ Good.
+ Let me stop there, and we'll
+ not try to jam the next
+ thing into the next five minutes.
+ I will see you Tuesday.
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ How's it going?
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ [inaudible]

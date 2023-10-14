@@ -1,0 +1,5992 @@
+1
+00:00:00,000 --> 00:00:03,720
+ Part two of our motion planning week.
+
+2
+00:00:03,720 --> 00:00:08,400
+ I want to just quickly say a few of the key ideas
+
+3
+00:00:08,400 --> 00:00:11,920
+ from last time to kind of launch us into this time.
+
+4
+00:00:11,920 --> 00:00:16,840
+ So last time we started talking about motion planning.
+
+5
+00:00:16,840 --> 00:00:21,600
+ Wow, that's a bad start.
+
+6
+00:00:21,600 --> 00:00:22,400
+ Last time.
+
+7
+00:00:22,400 --> 00:00:28,040
+ And there were a couple important ideas that came up.
+
+8
+00:00:28,040 --> 00:00:29,800
+ One of them was almost hidden.
+
+9
+00:00:29,800 --> 00:00:32,040
+ I didn't emphasize it particularly.
+
+10
+00:00:32,040 --> 00:00:37,040
+ But one important idea was the idea of just configuration
+
+11
+00:00:37,040 --> 00:00:37,540
+ space.
+
+12
+00:00:37,540 --> 00:00:45,840
+ And we're going to lean on that more today.
+
+13
+00:00:45,840 --> 00:00:49,640
+ So remember that I drew some plots.
+
+14
+00:00:49,640 --> 00:00:52,120
+ One of them, for instance, I used
+
+15
+00:00:52,120 --> 00:00:55,720
+ this example of a simple pendulum with two links
+
+16
+00:00:55,720 --> 00:01:07,840
+ and a ball on the end of the hand that had q1, q2.
+
+17
+00:01:07,840 --> 00:01:11,800
+ And so this picture, when I draw it in sort of the 2D world,
+
+18
+00:01:11,800 --> 00:01:13,640
+ I guess in this case, this is what
+
+19
+00:01:13,640 --> 00:01:17,120
+ we call our task space, or our world space, if you will,
+
+20
+00:01:17,120 --> 00:01:18,960
+ or work space.
+
+21
+00:01:18,960 --> 00:01:28,640
+ But-- and then we drew similar pictures
+
+22
+00:01:28,640 --> 00:01:34,200
+ talking about the geometry in the-- if I drew it instead
+
+23
+00:01:34,200 --> 00:01:40,920
+ of-- this is sort of in our canonical xz world axes, right?
+
+24
+00:01:40,920 --> 00:01:47,280
+ But we also tried to draw the same geometry in our q1, q2
+
+25
+00:01:47,280 --> 00:01:49,920
+ space, right?
+
+26
+00:01:49,920 --> 00:01:51,720
+ And this is our configuration space.
+
+27
+00:01:51,720 --> 00:02:04,680
+ Joint space, if you will, but more generally,
+
+28
+00:02:04,680 --> 00:02:07,280
+ configuration of the robot.
+
+29
+00:02:07,280 --> 00:02:11,240
+ And we drew-- this was-- if you call this, for instance,
+
+30
+00:02:11,240 --> 00:02:21,760
+ a task space obstacle, then we could also draw--
+
+31
+00:02:21,760 --> 00:02:25,560
+ this would be an excellent time to go multicolor, right?
+
+32
+00:02:25,560 --> 00:02:34,080
+ Then we could also draw these regions in task space
+
+33
+00:02:34,080 --> 00:02:35,320
+ in the configuration space.
+
+34
+00:02:35,320 --> 00:02:37,520
+ You remember I had curves that looked a little bit like this,
+
+35
+00:02:37,520 --> 00:02:38,020
+ right?
+
+36
+00:02:38,020 --> 00:02:40,460
+ [DRAWING]
+
+37
+00:02:40,460 --> 00:02:49,100
+ For this region, right?
+
+38
+00:02:49,100 --> 00:02:53,420
+ And so what does this obstacle in configuration space
+
+39
+00:02:53,420 --> 00:02:54,380
+ look like, right?
+
+40
+00:02:54,380 --> 00:02:59,380
+ So if I take a particular set of joint angles, q1 and q2,
+
+41
+00:02:59,380 --> 00:03:03,660
+ and my robot is in collision with this obstacle,
+
+42
+00:03:03,660 --> 00:03:06,060
+ then I'm going to mark that similarly,
+
+43
+00:03:06,060 --> 00:03:07,740
+ you know, for that configuration.
+
+44
+00:03:07,740 --> 00:03:10,420
+ If it's in collision, I'll mark that
+
+45
+00:03:10,420 --> 00:03:14,980
+ as an obstacle in the configuration space, right?
+
+46
+00:03:14,980 --> 00:03:18,780
+ And that geometry is such a strong sort of-- there's
+
+47
+00:03:18,780 --> 00:03:21,180
+ such a strong correlation there that we often
+
+48
+00:03:21,180 --> 00:03:24,340
+ refer to these as configuration space obstacles.
+
+49
+00:03:24,340 --> 00:03:34,940
+ OK?
+
+50
+00:03:34,940 --> 00:03:36,580
+ So this notion of configuration space,
+
+51
+00:03:36,580 --> 00:03:38,740
+ I drew it a handful of times, but I didn't maybe
+
+52
+00:03:38,740 --> 00:03:41,660
+ call it out as important as it really is.
+
+53
+00:03:41,660 --> 00:03:45,780
+ And we're going to use it more again today.
+
+54
+00:03:45,780 --> 00:03:48,380
+ And one of the important things to observe
+
+55
+00:03:48,380 --> 00:03:50,380
+ that this picture was meant to show
+
+56
+00:03:50,380 --> 00:03:53,660
+ was that even geometries that are
+
+57
+00:03:53,660 --> 00:03:57,260
+ sort of simple in the task space-- this is just
+
+58
+00:03:57,260 --> 00:04:00,580
+ a half plane or a wall, right?
+
+59
+00:04:00,580 --> 00:04:03,860
+ It's certainly a convex geometry, if you will,
+
+60
+00:04:03,860 --> 00:04:05,980
+ in the task space.
+
+61
+00:04:05,980 --> 00:04:09,700
+ It got a little curvy, a little bit more complicated
+
+62
+00:04:09,700 --> 00:04:11,180
+ in task space.
+
+63
+00:04:11,180 --> 00:04:13,060
+ Because if you think about it, the conditions
+
+64
+00:04:13,060 --> 00:04:15,860
+ that make this hand run into that wall
+
+65
+00:04:15,860 --> 00:04:22,580
+ depend on the sines and cosines of the kinematics, right?
+
+66
+00:04:22,580 --> 00:04:25,640
+ So those warp my task space obstacles
+
+67
+00:04:25,640 --> 00:04:28,420
+ into configuration space.
+
+68
+00:04:28,420 --> 00:04:32,140
+ OK, so that was one really important idea.
+
+69
+00:04:32,140 --> 00:04:33,860
+ And then we actually started motion planning
+
+70
+00:04:33,860 --> 00:04:35,280
+ by talking about inverse kinematics.
+
+71
+00:04:35,280 --> 00:04:48,700
+ And inverse kinematics is just trying to find one--
+
+72
+00:04:48,700 --> 00:04:51,460
+ especially the type we wrote, the richer form,
+
+73
+00:04:51,460 --> 00:04:57,980
+ was just trying to find some point in my configuration
+
+74
+00:04:57,980 --> 00:04:59,940
+ space that I like, right?
+
+75
+00:04:59,940 --> 00:05:01,900
+ By some objective.
+
+76
+00:05:01,900 --> 00:05:06,100
+ And probably that is not in collision, right?
+
+77
+00:05:06,100 --> 00:05:09,740
+ So we tried to write inverse kinematics as an optimization.
+
+78
+00:05:09,740 --> 00:05:12,420
+ Say, find me some q.
+
+79
+00:05:12,420 --> 00:05:17,020
+ Maybe that's close to my comfortable q.
+
+80
+00:05:17,020 --> 00:05:19,760
+ That's the way I wrote it a bunch.
+
+81
+00:05:19,760 --> 00:05:24,460
+ Maybe I want it to have that the end effector is
+
+82
+00:05:24,460 --> 00:05:25,820
+ in a desired position.
+
+83
+00:05:25,820 --> 00:05:30,620
+ So I put my kinematics as constraints, right?
+
+84
+00:05:30,620 --> 00:05:35,460
+ And maybe I'd say that the minimum distance
+
+85
+00:05:35,460 --> 00:05:42,140
+ to any collisions is greater than something like this,
+
+86
+00:05:42,140 --> 00:05:42,620
+ right?
+
+87
+00:05:42,620 --> 00:05:44,060
+ This is the kind of thing we wrote down
+
+88
+00:05:44,060 --> 00:05:45,380
+ in our optimizations last time.
+
+89
+00:05:45,380 --> 00:06:00,060
+ And then we said that kinematic trajectory optimization--
+
+90
+00:06:00,060 --> 00:06:05,220
+ tradjopped, if you're-- the cool kids call it tradjopped--
+
+91
+00:06:05,220 --> 00:06:09,380
+ then was just finding now, instead of finding one point,
+
+92
+00:06:09,380 --> 00:06:12,980
+ was trying to find a series of points in the configuration
+
+93
+00:06:12,980 --> 00:06:14,340
+ space.
+
+94
+00:06:14,340 --> 00:06:16,660
+ And it may be a trajectory of points
+
+95
+00:06:16,660 --> 00:06:19,980
+ in the configuration space that satisfied some optimization
+
+96
+00:06:19,980 --> 00:06:20,480
+ problem.
+
+97
+00:06:20,480 --> 00:06:28,540
+ So in the optimization view, the way I described it last time,
+
+98
+00:06:28,540 --> 00:06:34,620
+ I said, let's try to find some trajectory.
+
+99
+00:06:34,620 --> 00:06:45,100
+ And I'll parameterize it with parameters alpha.
+
+100
+00:06:45,100 --> 00:06:47,540
+ You could describe your trajectory
+
+101
+00:06:47,540 --> 00:06:50,100
+ as, let's say, a neural network that took t as an input
+
+102
+00:06:50,100 --> 00:06:54,540
+ and put q as the output with weights alpha if you wanted to.
+
+103
+00:06:54,540 --> 00:06:57,220
+ I wouldn't recommend it, probably for this case.
+
+104
+00:06:57,220 --> 00:06:59,300
+ But if you think about things in that space,
+
+105
+00:06:59,300 --> 00:07:04,180
+ this is just a parameterized class of curves.
+
+106
+00:07:04,180 --> 00:07:06,860
+ And the ones that we use the most
+
+107
+00:07:06,860 --> 00:07:11,540
+ are actually just polynomials.
+
+108
+00:07:11,540 --> 00:07:12,700
+ These are polynomial bases.
+
+109
+00:07:12,700 --> 00:07:20,220
+ So we just parameterized some class of curves.
+
+110
+00:07:20,220 --> 00:07:25,420
+ Typically, they're defined well over some finite interval,
+
+111
+00:07:25,420 --> 00:07:29,820
+ maybe some-- that's a nice curve.
+
+112
+00:07:29,820 --> 00:07:33,720
+ It doesn't blow up or something in some finite interval.
+
+113
+00:07:33,720 --> 00:07:37,380
+ And then we just did only a little bit more than this.
+
+114
+00:07:37,380 --> 00:07:40,460
+ We said, let me find-- minimize over the parameters
+
+115
+00:07:40,460 --> 00:07:41,060
+ of my curve.
+
+116
+00:07:41,060 --> 00:07:46,140
+ You can have various interesting objectives, maybe shortest
+
+117
+00:07:46,140 --> 00:07:52,500
+ path, maybe minimum time kind of objectives.
+
+118
+00:07:52,500 --> 00:07:54,580
+ And you put some additional constraints,
+
+119
+00:07:54,580 --> 00:07:59,020
+ like maybe my starting hand position
+
+120
+00:07:59,020 --> 00:08:02,580
+ is where at the beginning of my trajectory.
+
+121
+00:08:02,580 --> 00:08:07,620
+ So let's say q of alpha at 0.
+
+122
+00:08:07,620 --> 00:08:16,900
+ And maybe my goal satisfies the kinematics at time t,
+
+123
+00:08:16,900 --> 00:08:18,740
+ for instance.
+
+124
+00:08:18,740 --> 00:08:21,420
+ And so you could put collision avoidance constraints
+
+125
+00:08:21,420 --> 00:08:23,580
+ and joint limit constraints and all the other things
+
+126
+00:08:23,580 --> 00:08:26,260
+ off the end of this.
+
+127
+00:08:26,260 --> 00:08:28,460
+ I think the one thing-- I got a couple good questions
+
+128
+00:08:28,460 --> 00:08:28,980
+ after lecture.
+
+129
+00:08:28,980 --> 00:08:30,860
+ One thing I wish I had said better last time
+
+130
+00:08:30,860 --> 00:08:38,740
+ was that this looks a lot like this.
+
+131
+00:08:38,740 --> 00:08:42,800
+ If I'm going to hand this to my optimization package,
+
+132
+00:08:42,800 --> 00:08:45,340
+ and it's solving it as a nonlinear optimization,
+
+133
+00:08:45,340 --> 00:08:48,340
+ then it's doing things like taking the gradient,
+
+134
+00:08:48,340 --> 00:08:52,900
+ partial f, partial q, for instance.
+
+135
+00:08:52,900 --> 00:08:55,260
+ And that's how it's doing gradient descent
+
+136
+00:08:55,260 --> 00:08:57,180
+ or sequential quadratic programming
+
+137
+00:08:57,180 --> 00:08:59,660
+ to get to the bottom.
+
+138
+00:08:59,660 --> 00:09:04,020
+ This is not much worse for the optimizer.
+
+139
+00:09:04,020 --> 00:09:14,180
+ This is just saying now f of kin of sum of alpha i and i at time
+
+140
+00:09:14,180 --> 00:09:17,340
+ 0, I guess.
+
+141
+00:09:17,340 --> 00:09:20,980
+ I can still take the gradient of this constraint with respect
+
+142
+00:09:20,980 --> 00:09:23,380
+ to just alpha instead of q.
+
+143
+00:09:23,380 --> 00:09:25,140
+ That's just you just use the chain rule
+
+144
+00:09:25,140 --> 00:09:26,620
+ or call it back propagation if you
+
+145
+00:09:26,620 --> 00:09:30,140
+ want to take the gradients of this thing with respect
+
+146
+00:09:30,140 --> 00:09:33,180
+ to alpha instead of with respect to q.
+
+147
+00:09:33,180 --> 00:09:34,980
+ And this is a similar type of constraint
+
+148
+00:09:34,980 --> 00:09:37,060
+ you can hand to the optimizer.
+
+149
+00:09:37,060 --> 00:09:39,860
+ And it can do sequential quadratic programming
+
+150
+00:09:39,860 --> 00:09:41,360
+ or gradient descent or whatever it's
+
+151
+00:09:41,360 --> 00:09:43,820
+ going to do to try to satisfy these constraints
+
+152
+00:09:43,820 --> 00:09:47,420
+ and find the best alpha.
+
+153
+00:09:47,420 --> 00:09:51,780
+ The one we did last time was a little bit fancier.
+
+154
+00:09:51,780 --> 00:09:54,220
+ It also allowed you to search for the time horizon.
+
+155
+00:09:54,220 --> 00:09:56,660
+ You didn't have to specify the time horizon.
+
+156
+00:09:56,660 --> 00:10:00,220
+ So it made that a decision variable too.
+
+157
+00:10:00,220 --> 00:10:04,980
+ And then you could put things like minimize time here.
+
+158
+00:10:04,980 --> 00:10:07,020
+ But that's just a detail on top of that.
+
+159
+00:10:11,780 --> 00:10:14,380
+ So everything we did in that space
+
+160
+00:10:14,380 --> 00:10:21,860
+ was with nonlinear, nonconvex optimization.
+
+161
+00:10:21,860 --> 00:10:25,260
+ In general, this is a nonconvex problem.
+
+162
+00:10:26,220 --> 00:10:26,720
+ All right.
+
+163
+00:10:26,720 --> 00:10:45,540
+ Which means it's subject to local minima.
+
+164
+00:10:45,540 --> 00:11:00,700
+ And local minima sounds like-- I almost
+
+165
+00:11:00,700 --> 00:11:03,700
+ want to call something more dramatic than local minima.
+
+166
+00:11:03,700 --> 00:11:06,500
+ Local minima is not just you always get a solution
+
+167
+00:11:06,500 --> 00:11:08,680
+ and it might not be the best solution.
+
+168
+00:11:08,680 --> 00:11:11,860
+ In this case, local minima could mean
+
+169
+00:11:11,860 --> 00:11:15,820
+ the solver was not able to satisfy all the constraints,
+
+170
+00:11:15,820 --> 00:11:21,900
+ was not able to find a path even if the path exists.
+
+171
+00:11:21,900 --> 00:11:22,940
+ It could just get stuck.
+
+172
+00:11:22,940 --> 00:11:30,140
+ And I think there's two particular ways--
+
+173
+00:11:30,140 --> 00:11:32,860
+ I want to sort of distinguish between the two particular ways
+
+174
+00:11:32,860 --> 00:11:35,660
+ that that nonconvexity comes in because we're
+
+175
+00:11:35,660 --> 00:11:39,260
+ going to try to address that today.
+
+176
+00:11:39,260 --> 00:11:41,900
+ So I think there's-- I mean, they're related.
+
+177
+00:11:41,900 --> 00:11:43,100
+ But there's two big sources.
+
+178
+00:11:43,100 --> 00:11:51,740
+ I think one of them is from the kinematic constraints.
+
+179
+00:11:51,740 --> 00:12:05,420
+ If you tell me that I'd like my q to satisfy some-- my hand
+
+180
+00:12:05,420 --> 00:12:07,820
+ to be in some position, we know that, for instance, there
+
+181
+00:12:07,820 --> 00:12:10,700
+ might be multiple solutions that achieve the same-- again,
+
+182
+00:12:10,700 --> 00:12:13,220
+ my shoulder isn't mobile enough-- but there
+
+183
+00:12:13,220 --> 00:12:14,940
+ might be multiple solutions.
+
+184
+00:12:14,940 --> 00:12:18,020
+ And unfortunately, if you take a straight line between those two
+
+185
+00:12:18,020 --> 00:12:19,820
+ solutions, it's unlikely that they're both
+
+186
+00:12:19,820 --> 00:12:23,460
+ going to be good-- that the set of optimal solutions
+
+187
+00:12:23,460 --> 00:12:25,780
+ is convex when you have complicated nonlinear
+
+188
+00:12:25,780 --> 00:12:27,900
+ kinematics.
+
+189
+00:12:27,900 --> 00:12:34,500
+ So just by the fact that this is a nonlinear function
+
+190
+00:12:34,500 --> 00:12:37,660
+ is the first source.
+
+191
+00:12:37,660 --> 00:12:40,060
+ But there's a second source, which is-- I
+
+192
+00:12:40,060 --> 00:12:45,140
+ think obstacles are sort of a fundamentally different type
+
+193
+00:12:45,140 --> 00:12:50,780
+ of nonconvexity, where you really-- it's
+
+194
+00:12:50,780 --> 00:12:53,260
+ like there's multiple things you might have to try to do.
+
+195
+00:12:53,260 --> 00:12:55,380
+ I might have to be above the table.
+
+196
+00:12:55,380 --> 00:12:57,300
+ I might have to be below the table.
+
+197
+00:12:57,300 --> 00:12:59,540
+ And you have somehow a discrete choice
+
+198
+00:12:59,540 --> 00:13:04,820
+ to make about what are you going to do around that obstacle.
+
+199
+00:13:04,820 --> 00:13:10,100
+ Let me just make that super clear with my little example
+
+200
+00:13:10,100 --> 00:13:10,600
+ here.
+
+201
+00:13:10,600 --> 00:13:33,580
+ So here's my nonlinear trajectory optimization.
+
+202
+00:13:33,580 --> 00:13:36,140
+ I actually-- in this example, I left it going through--
+
+203
+00:13:36,140 --> 00:13:39,020
+ I said all the points are out of collision.
+
+204
+00:13:39,020 --> 00:13:41,700
+ But I was trying to make a point about that the segment--
+
+205
+00:13:41,700 --> 00:13:45,420
+ you have to check the segment, too, to keep it out of collision.
+
+206
+00:13:45,420 --> 00:13:48,860
+ But let me focus on the nonconvexity here.
+
+207
+00:13:48,860 --> 00:13:53,860
+ So this is now a picture in configuration space.
+
+208
+00:13:53,860 --> 00:13:58,220
+ So I just have a point-- call this my start-- another point
+
+209
+00:13:58,220 --> 00:14:02,820
+ that's my goal that I'm trying to find in configuration space.
+
+210
+00:14:02,820 --> 00:14:04,980
+ And there's a configuration space obstacle.
+
+211
+00:14:04,980 --> 00:14:07,820
+ This is way simpler than what a real configuration space
+
+212
+00:14:07,820 --> 00:14:08,860
+ obstacle would look like.
+
+213
+00:14:08,860 --> 00:14:12,300
+ But let me just make the point.
+
+214
+00:14:12,300 --> 00:14:16,260
+ And the solver is doing a good job of finding a path.
+
+215
+00:14:16,260 --> 00:14:18,580
+ The goal here-- the objective is to find the shortest path
+
+216
+00:14:18,580 --> 00:14:19,420
+ from the start to the goal.
+
+217
+00:14:19,420 --> 00:14:20,780
+ And it's doing a pretty good job,
+
+218
+00:14:20,780 --> 00:14:23,500
+ apart from cutting the corner.
+
+219
+00:14:23,500 --> 00:14:25,000
+ And you can solve these in real time.
+
+220
+00:14:25,000 --> 00:14:27,380
+ That's no big deal.
+
+221
+00:14:27,380 --> 00:14:30,500
+ But because it's a local trajectory optimization
+
+222
+00:14:30,500 --> 00:14:33,940
+ approach, it stuck in local minima.
+
+223
+00:14:33,940 --> 00:14:39,260
+ Even if I were to pull the start and the goal over here,
+
+224
+00:14:39,260 --> 00:14:41,580
+ once it starts thinking about going right
+
+225
+00:14:41,580 --> 00:14:44,980
+ around the obstacle, it's not going to change its mind.
+
+226
+00:14:44,980 --> 00:14:46,500
+ Because why is that?
+
+227
+00:14:46,500 --> 00:14:48,900
+ So if I were to make an incremental change
+
+228
+00:14:48,900 --> 00:14:53,180
+ to those points that went into this direction,
+
+229
+00:14:53,180 --> 00:14:56,460
+ then it's going to get worse before it gets better.
+
+230
+00:14:56,460 --> 00:14:58,380
+ Because it's going to get a big penalty for going
+
+231
+00:14:58,380 --> 00:14:59,840
+ into the obstacle.
+
+232
+00:14:59,840 --> 00:15:01,860
+ There's a better place over here.
+
+233
+00:15:01,860 --> 00:15:03,780
+ But it has to get worse before it gets better.
+
+234
+00:15:03,780 --> 00:15:05,060
+ And so the gradient-based methods
+
+235
+00:15:05,060 --> 00:15:06,060
+ aren't going to find it.
+
+236
+00:15:06,060 --> 00:15:09,060
+ OK.
+
+237
+00:15:09,060 --> 00:15:11,940
+ So I can't do that.
+
+238
+00:15:11,940 --> 00:15:15,340
+ So our goal today is to try to get around-- first,
+
+239
+00:15:15,340 --> 00:15:18,080
+ I'm going to emphasize that type of non-convexity.
+
+240
+00:15:18,080 --> 00:15:20,420
+ And we'll think about how we get around this kind
+
+241
+00:15:20,420 --> 00:15:21,660
+ of non-convexity, too.
+
+242
+00:15:21,660 --> 00:15:26,820
+ And the two big approaches we'll talk about--
+
+243
+00:15:26,820 --> 00:15:43,240
+ we'll talk about sampling-based methods and ways
+
+244
+00:15:43,240 --> 00:15:49,040
+ to try to do global optimization,
+
+245
+00:15:49,040 --> 00:15:51,120
+ to try to do more than just look at the gradients.
+
+246
+00:15:55,960 --> 00:15:56,720
+ That's my setup.
+
+247
+00:15:56,720 --> 00:15:57,220
+ Is it clear?
+
+248
+00:15:57,220 --> 00:16:04,960
+ OK, so people have incredibly good solutions to this.
+
+249
+00:16:04,960 --> 00:16:06,560
+ Let me stop that.
+
+250
+00:16:06,560 --> 00:16:11,800
+ And you might have seen some of them.
+
+251
+00:16:11,800 --> 00:16:14,840
+ You've seen robots doing amazing things.
+
+252
+00:16:14,840 --> 00:16:19,520
+ One of my favorites still is my start to the goal, written
+
+253
+00:16:19,520 --> 00:16:21,200
+ as a simple optimization.
+
+254
+00:16:21,200 --> 00:16:24,080
+ And that's what I was solving.
+
+255
+00:16:24,080 --> 00:16:25,600
+ Forgot to use my slides.
+
+256
+00:16:25,600 --> 00:16:29,360
+ But OK, this is a humanoid.
+
+257
+00:16:29,360 --> 00:16:32,840
+ This is a video from James Kupner back in the early 2000s
+
+258
+00:16:32,840 --> 00:16:34,600
+ of a humanoid reaching under-- that's
+
+259
+00:16:34,600 --> 00:16:36,680
+ a lot of degrees of freedom, reaching under
+
+260
+00:16:36,680 --> 00:16:37,840
+ to get a flashlight.
+
+261
+00:16:37,840 --> 00:16:42,560
+ He's solving a big, complicated motion planning problem.
+
+262
+00:16:42,560 --> 00:16:45,160
+ And there's another example here from the same time,
+
+263
+00:16:45,160 --> 00:16:49,780
+ same guy, James Kupner, where he's actually
+
+264
+00:16:49,780 --> 00:16:52,080
+ solving a geometry puzzle, like one of those things
+
+265
+00:16:52,080 --> 00:16:53,720
+ that you find at parties.
+
+266
+00:16:53,720 --> 00:16:55,720
+ And they're challenged to try to figure out
+
+267
+00:16:55,720 --> 00:16:59,360
+ how to separate the two rings, right?
+
+268
+00:16:59,360 --> 00:17:00,800
+ That's the canonical-- well, it's
+
+269
+00:17:00,800 --> 00:17:04,240
+ one of the canonical geometry puzzles for motion planning.
+
+270
+00:17:04,240 --> 00:17:06,200
+ Another one is the piano movers problem.
+
+271
+00:17:06,200 --> 00:17:10,080
+ We're trying to-- if you have an apartment in Back Bay,
+
+272
+00:17:10,080 --> 00:17:12,280
+ and you live on the third floor, and you have a piano,
+
+273
+00:17:12,280 --> 00:17:13,920
+ how do you get it up there?
+
+274
+00:17:13,920 --> 00:17:15,200
+ I think there's no solution.
+
+275
+00:17:15,200 --> 00:17:18,080
+ But-- or it involves taking out windows or something.
+
+276
+00:17:18,080 --> 00:17:20,780
+ But if there was a solution, these
+
+277
+00:17:20,780 --> 00:17:24,760
+ would be the methods you would try to use to find it.
+
+278
+00:17:24,760 --> 00:17:26,380
+ I'm going to put it back to there, just
+
+279
+00:17:26,380 --> 00:17:28,600
+ so the animation stops.
+
+280
+00:17:28,600 --> 00:17:32,880
+ OK, so how are we actually going to do that?
+
+281
+00:17:32,880 --> 00:17:35,080
+ How do we solve these geometry puzzles
+
+282
+00:17:35,080 --> 00:17:38,240
+ when this picture of local minima, I think, is real?
+
+283
+00:17:38,240 --> 00:17:41,600
+ And it's sort of mysterious, maybe,
+
+284
+00:17:41,600 --> 00:17:45,920
+ on the face of it, of how do you actually solve highly
+
+285
+00:17:45,920 --> 00:17:48,400
+ non-convex geometry problems like that?
+
+286
+00:17:49,020 --> 00:17:55,940
+ If I'm talking all about local minima, right?
+
+287
+00:17:55,940 --> 00:17:57,540
+ And the two most famous algorithms,
+
+288
+00:17:57,540 --> 00:18:09,020
+ the variations of this-- many things are-- there's
+
+289
+00:18:09,020 --> 00:18:10,900
+ many, many, many algorithms in this family,
+
+290
+00:18:10,900 --> 00:18:14,060
+ but they're maybe derived from these sources here.
+
+291
+00:18:14,060 --> 00:18:16,060
+ One would be called the probabilistic roadmaps.
+
+292
+00:18:16,060 --> 00:18:16,560
+ PRMs.
+
+293
+00:18:16,560 --> 00:18:32,000
+ And the other is the rapidly exploring random trees.
+
+294
+00:18:33,000 --> 00:18:35,980
+ [WRITING ON BOARD]
+
+295
+00:18:35,980 --> 00:18:50,580
+ How many people know PRM and RRT?
+
+296
+00:18:50,580 --> 00:18:52,820
+ OK.
+
+297
+00:18:52,820 --> 00:18:53,860
+ That's helpful, thank you.
+
+298
+00:18:53,860 --> 00:18:58,980
+ OK, so the big idea here-- I'm going
+
+299
+00:18:58,980 --> 00:19:00,900
+ to actually start with this one.
+
+300
+00:19:00,900 --> 00:19:05,080
+ It's a little bit-- I mean, I know chronologically this
+
+301
+00:19:05,080 --> 00:19:07,640
+ is came first, but I think it's a little simpler
+
+302
+00:19:07,640 --> 00:19:09,040
+ to talk about the RRT.
+
+303
+00:19:09,040 --> 00:19:10,080
+ That's just my preference.
+
+304
+00:19:10,080 --> 00:19:12,720
+ Different people have different preference, OK?
+
+305
+00:19:12,720 --> 00:19:15,440
+ So the idea is simple.
+
+306
+00:19:15,440 --> 00:19:20,600
+ We're going to get around this non-convexity by sampling, OK?
+
+307
+00:19:20,600 --> 00:19:24,480
+ So if I have my configuration space obstacle,
+
+308
+00:19:24,480 --> 00:19:29,560
+ my start and my goal, the basic idea of an RRT
+
+309
+00:19:29,560 --> 00:19:31,520
+ is I'm going to-- don't worry about getting to the goal.
+
+310
+00:19:31,520 --> 00:19:33,020
+ Maybe with some probability I'll try
+
+311
+00:19:33,020 --> 00:19:36,120
+ to get straight to that goal, but I'd fail.
+
+312
+00:19:36,120 --> 00:19:37,280
+ I'm going to pick a point.
+
+313
+00:19:37,280 --> 00:19:39,920
+ I'm going to just define some region safely
+
+314
+00:19:39,920 --> 00:19:42,360
+ around my workspace, OK?
+
+315
+00:19:42,360 --> 00:19:44,440
+ And I'm going to start sampling.
+
+316
+00:19:44,440 --> 00:19:46,360
+ I'll pick a point at random.
+
+317
+00:19:46,360 --> 00:19:48,120
+ I'll take my start, and I'll see if I
+
+318
+00:19:48,120 --> 00:19:50,920
+ can grow my goal to the start, OK?
+
+319
+00:19:50,920 --> 00:19:54,840
+ So in practice, I draw a straight line to that goal.
+
+320
+00:19:54,840 --> 00:19:58,800
+ And since I don't want to sort of teleport all the way
+
+321
+00:19:58,800 --> 00:20:03,120
+ to some distant goal, I'm going to just take a motion
+
+322
+00:20:03,120 --> 00:20:06,120
+ in the direction of that goal.
+
+323
+00:20:06,120 --> 00:20:08,720
+ Now when I sample in configuration space again,
+
+324
+00:20:08,720 --> 00:20:17,000
+ right, this is Q1, Q2, right, configuration space.
+
+325
+00:20:17,000 --> 00:20:21,840
+ If when I sample, I land up in the obstacle, which
+
+326
+00:20:21,840 --> 00:20:26,260
+ I can check quickly by putting my manipulator in those joint
+
+327
+00:20:26,260 --> 00:20:28,800
+ angles, calling my collision detection engine,
+
+328
+00:20:28,800 --> 00:20:30,520
+ and deciding if I'm in collision.
+
+329
+00:20:30,520 --> 00:20:32,600
+ That's an easy check to do, relatively,
+
+330
+00:20:32,600 --> 00:20:34,800
+ given the geometry engines.
+
+331
+00:20:34,800 --> 00:20:37,120
+ But I'll just discard that right off the bat.
+
+332
+00:20:37,120 --> 00:20:39,080
+ I'll say, I sampled there.
+
+333
+00:20:39,080 --> 00:20:41,200
+ That was a bad choice.
+
+334
+00:20:41,200 --> 00:20:41,960
+ Ignore it.
+
+335
+00:20:41,960 --> 00:20:43,440
+ Let's keep going.
+
+336
+00:20:43,440 --> 00:20:45,480
+ And then at some point, I'll sample over here.
+
+337
+00:20:45,480 --> 00:20:47,360
+ I'll grow a little bit over here.
+
+338
+00:20:47,360 --> 00:20:51,480
+ And as the name suggests, I'm going to grow a tree.
+
+339
+00:20:51,480 --> 00:20:53,560
+ The exact version of the algorithm,
+
+340
+00:20:53,560 --> 00:20:55,240
+ every time I pick a sample, I'm going
+
+341
+00:20:55,240 --> 00:20:58,820
+ to look for the closest point in my existing tree
+
+342
+00:20:58,820 --> 00:21:01,040
+ and try to extend from that closest
+
+343
+00:21:01,040 --> 00:21:04,040
+ point in the existing tree towards my sample.
+
+344
+00:21:04,040 --> 00:21:06,160
+ The details I'll put on the slide in a second here.
+
+345
+00:21:06,160 --> 00:21:11,760
+ But the intuition is that I'm solving a non-convex problem
+
+346
+00:21:11,760 --> 00:21:13,280
+ by choosing points at random.
+
+347
+00:21:13,280 --> 00:21:19,200
+ In this case, right, I might grow here.
+
+348
+00:21:19,200 --> 00:21:21,080
+ At some point, I might pick a point that would
+
+349
+00:21:21,080 --> 00:21:22,920
+ cause me to grow into collision.
+
+350
+00:21:22,920 --> 00:21:24,440
+ There's various choices you could do.
+
+351
+00:21:24,440 --> 00:21:27,560
+ You could try to just grow up to the collision,
+
+352
+00:21:27,560 --> 00:21:31,840
+ or you could just discard that sample and keep going.
+
+353
+00:21:31,840 --> 00:21:33,800
+ And at some point, the hope is that I
+
+354
+00:21:33,800 --> 00:21:36,560
+ will have picked enough of these random sub-goals
+
+355
+00:21:36,560 --> 00:21:38,160
+ that my tree will come out, and I'll
+
+356
+00:21:38,160 --> 00:21:42,600
+ have found my way all the way to the goal.
+
+357
+00:21:42,600 --> 00:21:45,680
+ In low dimensions, it seems completely reasonable
+
+358
+00:21:45,680 --> 00:21:48,900
+ that that would solve this problem.
+
+359
+00:21:48,900 --> 00:21:52,320
+ What's surprising is that you can do it with a humanoid,
+
+360
+00:21:52,320 --> 00:21:55,560
+ that it works surprisingly well in high dimensions.
+
+361
+00:21:55,560 --> 00:21:59,480
+ Four problems that have a reasonably large configuration
+
+362
+00:21:59,480 --> 00:22:04,480
+ space region and relatively large tunnels that will get you
+
+363
+00:22:04,480 --> 00:22:07,120
+ from one place to the other.
+
+364
+00:22:07,120 --> 00:22:11,600
+ If you have to thread a needle to try to find it,
+
+365
+00:22:11,600 --> 00:22:14,800
+ then sampling is not a great strategy for that.
+
+366
+00:22:14,800 --> 00:22:20,920
+ OK, so this is the picture from the original RRT paper
+
+367
+00:22:20,920 --> 00:22:22,880
+ where they started there with their initial.
+
+368
+00:22:22,880 --> 00:22:24,640
+ They've grown a tree.
+
+369
+00:22:24,640 --> 00:22:26,360
+ You pick a random sample.
+
+370
+00:22:26,360 --> 00:22:30,360
+ You extend towards that sample, and you add a point.
+
+371
+00:22:30,360 --> 00:22:31,860
+ For those of you that are familiar,
+
+372
+00:22:31,860 --> 00:22:33,780
+ I'm not going to spend that much time on this.
+
+373
+00:22:33,780 --> 00:22:37,280
+ I'm just saying the basics because I
+
+374
+00:22:37,280 --> 00:22:39,000
+ think the intuition is important,
+
+375
+00:22:39,000 --> 00:22:43,000
+ and the details are easy to get.
+
+376
+00:22:43,000 --> 00:22:45,240
+ OK, so I grow towards this tree.
+
+377
+00:22:45,240 --> 00:22:50,040
+ Now, what's important is that that very simple strategy
+
+378
+00:22:50,040 --> 00:22:51,600
+ can solve pretty hard problems.
+
+379
+00:22:51,600 --> 00:22:54,200
+ This is actually a narrow passage kind of problem.
+
+380
+00:22:54,200 --> 00:22:56,120
+ It will solve it eventually.
+
+381
+00:22:56,120 --> 00:22:58,200
+ It just will take potentially a lot of samples.
+
+382
+00:22:58,200 --> 00:23:00,080
+ So I had an initial guess that was in here
+
+383
+00:23:00,080 --> 00:23:01,920
+ and a goal that was out here.
+
+384
+00:23:01,920 --> 00:23:03,880
+ And eventually, if I draw enough samples
+
+385
+00:23:03,880 --> 00:23:07,200
+ and grow a dense enough tree, then this algorithm
+
+386
+00:23:07,200 --> 00:23:12,760
+ will grow these sort of characteristic RRT trees
+
+387
+00:23:12,760 --> 00:23:16,080
+ and find paths if they exist.
+
+388
+00:23:16,080 --> 00:23:19,800
+ This is a good example of a path where if I started here
+
+389
+00:23:19,800 --> 00:23:22,340
+ and I was trying to go here, and my initial guess was trying
+
+390
+00:23:22,340 --> 00:23:24,440
+ to take a straight line there, it
+
+391
+00:23:24,440 --> 00:23:27,160
+ would be very, very hard for a trajectory optimization
+
+392
+00:23:27,160 --> 00:23:28,560
+ approach to get this.
+
+393
+00:23:28,560 --> 00:23:30,720
+ And this, by brute force, will eventually
+
+394
+00:23:30,720 --> 00:23:32,680
+ find its way around it.
+
+395
+00:23:32,680 --> 00:23:33,520
+ That's pretty cool.
+
+396
+00:23:33,520 --> 00:23:42,560
+ OK, so it sounds like an extremely-- so it's actually,
+
+397
+00:23:42,560 --> 00:23:44,240
+ it is an extremely simple algorithm.
+
+398
+00:23:44,240 --> 00:23:46,760
+ But it is not, I would say, a naive algorithm.
+
+399
+00:23:46,760 --> 00:23:48,640
+ There are some very clever things
+
+400
+00:23:48,640 --> 00:23:51,680
+ that make it work, even though it
+
+401
+00:23:51,680 --> 00:23:54,480
+ can be written in three lines and anybody can type it in
+
+402
+00:23:54,480 --> 00:23:56,520
+ and make it work.
+
+403
+00:23:56,520 --> 00:23:59,440
+ For instance, if I take this problem again
+
+404
+00:23:59,440 --> 00:24:03,480
+ and I do a more naive thing, where I just say,
+
+405
+00:24:03,480 --> 00:24:08,680
+ I'm going to take my current tree,
+
+406
+00:24:08,680 --> 00:24:10,800
+ I'll pick a point on the current tree,
+
+407
+00:24:10,800 --> 00:24:13,400
+ and I'll grow it in a random direction.
+
+408
+00:24:13,400 --> 00:24:15,160
+ So just pick a point on the random tree,
+
+409
+00:24:15,160 --> 00:24:18,000
+ grow it in a random direction, add a little edge.
+
+410
+00:24:18,000 --> 00:24:20,440
+ That sounds like a very reasonable search type
+
+411
+00:24:20,440 --> 00:24:21,120
+ strategy.
+
+412
+00:24:21,120 --> 00:24:24,880
+ I'll just pick a random direction, grow.
+
+413
+00:24:24,880 --> 00:24:26,520
+ That doesn't work at all.
+
+414
+00:24:26,520 --> 00:24:32,240
+ That gives you these sort of hairball kind of pictures,
+
+415
+00:24:32,240 --> 00:24:33,840
+ where with high probability, that
+
+416
+00:24:33,840 --> 00:24:35,480
+ would be taking a random walk.
+
+417
+00:24:35,480 --> 00:24:38,040
+ And random walks have this characteristic sort
+
+418
+00:24:38,040 --> 00:24:40,120
+ of Brownian motion kind of picture,
+
+419
+00:24:40,120 --> 00:24:41,580
+ that it would be a random walk that
+
+420
+00:24:41,580 --> 00:24:43,360
+ would stay near the origin.
+
+421
+00:24:43,360 --> 00:24:47,080
+ So there's something very clever about this sub-goal idea,
+
+422
+00:24:47,080 --> 00:24:51,240
+ where I'm going to pick a point randomly in the space
+
+423
+00:24:51,240 --> 00:24:54,360
+ and try to grow towards this distant goal.
+
+424
+00:24:54,360 --> 00:24:58,200
+ That causes it to have this exploration behavior, which
+
+425
+00:24:58,200 --> 00:25:01,200
+ avoids this naive sampling.
+
+426
+00:25:01,200 --> 00:25:04,360
+ In particular, it has something called the Voronoi bias, which
+
+427
+00:25:04,360 --> 00:25:06,320
+ is the best property of this thing.
+
+428
+00:25:06,820 --> 00:25:09,760
+ [WRITING ON BOARD]
+
+429
+00:25:09,760 --> 00:25:16,480
+ You know what the Voronoi regions of a graph
+
+430
+00:25:16,480 --> 00:25:19,240
+ are, or a set of points are?
+
+431
+00:25:19,240 --> 00:25:24,400
+ If I have a set of points in the plane,
+
+432
+00:25:24,400 --> 00:25:27,560
+ then the Voronoi regions are the regions
+
+433
+00:25:27,560 --> 00:25:31,080
+ associated with a point, which are-- if I have all these
+
+434
+00:25:31,080 --> 00:25:35,800
+ points and I make them a little bigger so people in the back
+
+435
+00:25:35,800 --> 00:25:37,280
+ can see.
+
+436
+00:25:37,280 --> 00:25:40,680
+ So I've got some points in my plane.
+
+437
+00:25:40,680 --> 00:25:45,320
+ If I were to draw the regions of all the places in the space
+
+438
+00:25:45,320 --> 00:25:48,280
+ that are closest to this point, then
+
+439
+00:25:48,280 --> 00:25:51,440
+ it's going to be-- there's going to be a line that separates it
+
+440
+00:25:51,440 --> 00:25:52,120
+ from that point.
+
+441
+00:25:52,120 --> 00:25:55,280
+ There's a line that separates it from this point and this point.
+
+442
+00:25:55,280 --> 00:25:57,600
+ And I don't know.
+
+443
+00:25:57,600 --> 00:26:00,040
+ Should have worked out better than it did, but there you go.
+
+444
+00:26:00,040 --> 00:26:02,460
+ Something like this would be like the Voronoi region
+
+445
+00:26:02,460 --> 00:26:04,720
+ associated with this, which is all
+
+446
+00:26:04,720 --> 00:26:07,680
+ of the points in the plane that are closest to this point.
+
+447
+00:26:07,680 --> 00:26:10,600
+ And there's a Voronoi region for this point,
+
+448
+00:26:10,600 --> 00:26:13,320
+ something like that, and a Voronoi region for this one.
+
+449
+00:26:13,320 --> 00:26:19,960
+ So that would be a Voronoi partition of the space,
+
+450
+00:26:19,960 --> 00:26:23,040
+ is this notion of what are the sets that
+
+451
+00:26:23,040 --> 00:26:26,880
+ are associated with the closest distance to each point.
+
+452
+00:26:26,880 --> 00:26:29,760
+ Computing the Voronoi regions explicitly
+
+453
+00:26:29,760 --> 00:26:33,080
+ is a little bit computationally intensive.
+
+454
+00:26:33,080 --> 00:26:35,120
+ The RRT doesn't do that.
+
+455
+00:26:35,120 --> 00:26:36,700
+ The RRT is just the algorithm I said,
+
+456
+00:26:36,700 --> 00:26:39,480
+ just pick a random point, grow towards it.
+
+457
+00:26:39,480 --> 00:26:42,320
+ But it turns out implicitly, because it
+
+458
+00:26:42,320 --> 00:26:43,960
+ does-- when you pick a point, you
+
+459
+00:26:43,960 --> 00:26:46,760
+ try to find the closest point on the tree,
+
+460
+00:26:46,760 --> 00:26:53,200
+ it's acting as if it's trying to take a local evaluation
+
+461
+00:26:53,200 --> 00:26:55,360
+ of the Voronoi region.
+
+462
+00:26:55,360 --> 00:26:57,220
+ And that has this remarkable property
+
+463
+00:26:57,220 --> 00:27:02,040
+ of causing it to explore, not just exploring like-- well,
+
+464
+00:27:02,040 --> 00:27:02,720
+ let me show you.
+
+465
+00:27:02,720 --> 00:27:05,520
+ So if you start growing the tree,
+
+466
+00:27:05,520 --> 00:27:08,560
+ and I draw the Voronoi regions, which is relatively expensive,
+
+467
+00:27:08,560 --> 00:27:12,640
+ the animation is harder than the algorithm,
+
+468
+00:27:12,640 --> 00:27:15,920
+ then it starts at the initial condition.
+
+469
+00:27:15,920 --> 00:27:19,760
+ And because the Voronoi regions of the cells on the outside
+
+470
+00:27:19,760 --> 00:27:23,840
+ are large, with very high probability as it starts--
+
+471
+00:27:23,840 --> 00:27:25,840
+ let me sort of reset a little bit here.
+
+472
+00:27:25,840 --> 00:27:31,920
+ OK, that was a fail.
+
+473
+00:27:31,920 --> 00:27:34,920
+ Let me-- all right, so as it starts,
+
+474
+00:27:34,920 --> 00:27:37,920
+ the Voronoi regions on the outside are big.
+
+475
+00:27:37,920 --> 00:27:39,840
+ So the specific thing that says is
+
+476
+00:27:39,840 --> 00:27:44,720
+ that the chance, the probability of expanding some node
+
+477
+00:27:44,720 --> 00:27:47,320
+ is proportional to the volume, or the size,
+
+478
+00:27:47,320 --> 00:27:50,480
+ of the Voronoi region.
+
+479
+00:27:50,480 --> 00:27:52,800
+ At the beginning of the search, the regions
+
+480
+00:27:52,800 --> 00:27:56,320
+ that are unexplored have the largest Voronoi regions.
+
+481
+00:27:56,320 --> 00:27:58,480
+ So with high probability at the beginning,
+
+482
+00:27:58,480 --> 00:28:01,680
+ it's going to grow out into the free space.
+
+483
+00:28:01,680 --> 00:28:05,480
+ As it continues, the free space gets filled up,
+
+484
+00:28:05,480 --> 00:28:10,360
+ and there's some still large regions in the interior,
+
+485
+00:28:10,360 --> 00:28:13,760
+ and it will start filling those in with probability.
+
+486
+00:28:13,760 --> 00:28:15,680
+ And that sounds incredibly clever,
+
+487
+00:28:15,680 --> 00:28:18,320
+ but it's just because it does this nearest neighbor query.
+
+488
+00:28:18,320 --> 00:28:21,160
+ It's like when you're reading a book in literature,
+
+489
+00:28:21,160 --> 00:28:23,200
+ and they tell you all the things the author meant,
+
+490
+00:28:23,200 --> 00:28:25,840
+ and I'm not sure if the author really meant it.
+
+491
+00:28:25,840 --> 00:28:30,520
+ But it's like endowing it with these incredible properties
+
+492
+00:28:30,520 --> 00:28:31,020
+ post hoc.
+
+493
+00:28:31,020 --> 00:28:36,000
+ But it's beautiful.
+
+494
+00:28:36,000 --> 00:28:38,680
+ So in practice, these things will expand out
+
+495
+00:28:38,680 --> 00:28:42,000
+ into the unexplored regions, and then it
+
+496
+00:28:42,000 --> 00:28:43,800
+ will fill in all the nooks and crannies.
+
+497
+00:28:43,800 --> 00:28:47,040
+ And if there is a region, like this little tunnel in my bug
+
+498
+00:28:47,040 --> 00:28:50,080
+ trap example, then it will eventually sample there,
+
+499
+00:28:50,080 --> 00:28:52,680
+ and it will eventually grow.
+
+500
+00:28:52,680 --> 00:28:57,520
+ So this idea of the Voronoi bias is one important idea.
+
+501
+00:28:57,520 --> 00:28:59,480
+ And the other super important idea
+
+502
+00:28:59,480 --> 00:29:12,200
+ is that it's probabilistically complete,
+
+503
+00:29:12,200 --> 00:29:14,800
+ which means that if there's a path from the start
+
+504
+00:29:14,800 --> 00:29:21,640
+ to the goal, then it will be found with probability 1
+
+505
+00:29:21,640 --> 00:29:24,480
+ as the number of samples goes to infinity.
+
+506
+00:29:24,480 --> 00:29:28,120
+ That last part's a bit of a bummer.
+
+507
+00:29:28,120 --> 00:29:30,540
+ And it's actually not that hard to make an algorithm that
+
+508
+00:29:30,540 --> 00:29:34,160
+ has the probabilistic completeness property.
+
+509
+00:29:34,160 --> 00:29:36,300
+ In fact, even the naive one is technically
+
+510
+00:29:36,300 --> 00:29:37,400
+ probabilistically complete.
+
+511
+00:29:37,400 --> 00:29:39,320
+ It's just going to take a long time
+
+512
+00:29:39,320 --> 00:29:41,540
+ to find this path to the goal.
+
+513
+00:29:41,540 --> 00:29:43,440
+ But that's an interesting class of algorithms,
+
+514
+00:29:43,440 --> 00:29:45,880
+ to say I want to guarantee that eventually I
+
+515
+00:29:45,880 --> 00:29:47,880
+ will find a path if it exists.
+
+516
+00:29:47,880 --> 00:29:55,660
+ There's tons of variations and extensions
+
+517
+00:29:55,660 --> 00:29:58,080
+ that I'm not going to list.
+
+518
+00:29:58,080 --> 00:30:00,000
+ But you can imagine, for instance,
+
+519
+00:30:00,000 --> 00:30:04,400
+ that you might do better by growing a tree from the start
+
+520
+00:30:04,400 --> 00:30:06,880
+ and backwards from the goal at the same time
+
+521
+00:30:06,880 --> 00:30:08,120
+ and just let them connect.
+
+522
+00:30:08,120 --> 00:30:11,160
+ That's extremely effective, used often in practice.
+
+523
+00:30:11,160 --> 00:30:14,160
+ And there's a whole pile of heuristics
+
+524
+00:30:14,160 --> 00:30:15,820
+ that make these things work really well.
+
+525
+00:30:15,820 --> 00:30:25,320
+ Any questions about RRT at the high level here?
+
+526
+00:30:25,320 --> 00:30:25,820
+ Yeah.
+
+527
+00:30:25,820 --> 00:30:35,660
+ OK, so the RRT-- like I said, people plan humanoids.
+
+528
+00:30:35,660 --> 00:30:37,660
+ They will plan on the fly.
+
+529
+00:30:37,660 --> 00:30:39,100
+ You can have a mobile manipulator
+
+530
+00:30:39,100 --> 00:30:40,820
+ that goes into a new environment and will
+
+531
+00:30:40,820 --> 00:30:43,860
+ start planning with RRTs.
+
+532
+00:30:43,860 --> 00:30:46,100
+ But they do spend some amount of-- especially
+
+533
+00:30:46,100 --> 00:30:48,380
+ for hard search problems, they can potentially
+
+534
+00:30:48,380 --> 00:30:51,540
+ do a lot of computation to find a path.
+
+535
+00:30:51,540 --> 00:30:54,160
+ If you're going to do the same-- like in our clutter clearing
+
+536
+00:30:54,160 --> 00:30:55,280
+ example, if you're going to be moving
+
+537
+00:30:55,280 --> 00:30:57,860
+ in the same environment over and over and over again,
+
+538
+00:30:57,860 --> 00:31:00,280
+ it makes sense that you'd want to reuse some of the graph
+
+539
+00:31:00,280 --> 00:31:03,100
+ search, some of this tree that you've built,
+
+540
+00:31:03,100 --> 00:31:05,060
+ to do a multi-query version of this.
+
+541
+00:31:05,060 --> 00:31:08,540
+ [WRITING ON BOARD]
+
+542
+00:31:08,540 --> 00:31:11,980
+ [WRITING ON BOARD]
+
+543
+00:31:37,180 --> 00:31:47,020
+ This would often be called multi-query planning.
+
+544
+00:31:47,020 --> 00:31:53,100
+ Then that's where the PRM comes in, the probabilistic roadmap.
+
+545
+00:31:53,100 --> 00:31:56,020
+ The probabilistic roadmap basically
+
+546
+00:31:56,020 --> 00:31:59,540
+ says I'm going to build a graph in the first place.
+
+547
+00:31:59,540 --> 00:32:02,460
+ I'm going to separate my computation into first
+
+548
+00:32:02,460 --> 00:32:05,460
+ the roadmap construction, where I'll go ahead and build
+
+549
+00:32:05,460 --> 00:32:07,460
+ some complicated graph.
+
+550
+00:32:07,460 --> 00:32:11,220
+ I'll show you a couple pictures of it in the first step.
+
+551
+00:32:11,220 --> 00:32:13,560
+ And then when it's time to plan, I'm
+
+552
+00:32:13,560 --> 00:32:17,340
+ just going to try to find the shortest path on the graph.
+
+553
+00:32:17,340 --> 00:32:20,580
+ So imagine building one big network roadmap once
+
+554
+00:32:20,580 --> 00:32:22,540
+ and then planning on it separately.
+
+555
+00:32:22,540 --> 00:32:27,860
+ And this was actually published a few years before the RRT.
+
+556
+00:32:27,860 --> 00:32:32,260
+ In my mind, I like talking about it in this order.
+
+557
+00:32:32,260 --> 00:32:35,780
+ So now I've got my simple configuration space obstacles.
+
+558
+00:32:35,780 --> 00:32:38,540
+ And I'll pick a point at random.
+
+559
+00:32:38,540 --> 00:32:40,220
+ And I'll just look around and try
+
+560
+00:32:40,220 --> 00:32:42,340
+ to connect it to all of its nearest neighbors.
+
+561
+00:32:42,340 --> 00:32:44,980
+ I'll draw an edge to all of its nearest neighbors.
+
+562
+00:32:44,980 --> 00:32:48,380
+ And I'll make this graph.
+
+563
+00:32:48,380 --> 00:32:52,260
+ And the offline phase is just to build up this roadmap
+
+564
+00:32:52,260 --> 00:32:53,700
+ by picking points at random.
+
+565
+00:32:53,700 --> 00:32:54,260
+ There's no start.
+
+566
+00:32:54,260 --> 00:32:54,940
+ There's no goal.
+
+567
+00:32:54,940 --> 00:32:55,620
+ Pick points at random.
+
+568
+00:32:55,620 --> 00:32:57,300
+ Just try to connect it to the neighbors,
+
+569
+00:32:57,300 --> 00:32:59,220
+ make a nice, dense network.
+
+570
+00:32:59,220 --> 00:33:02,860
+ And then at query time, I have an initial--
+
+571
+00:33:02,860 --> 00:33:04,620
+ the robot's in some initial condition.
+
+572
+00:33:04,620 --> 00:33:06,500
+ It's got some true goal.
+
+573
+00:33:06,500 --> 00:33:08,100
+ All I do is try to connect that up
+
+574
+00:33:08,100 --> 00:33:10,380
+ to the closest point on the graph
+
+575
+00:33:10,380 --> 00:33:15,220
+ and do graph search in my graph to try to find the path.
+
+576
+00:33:15,220 --> 00:33:17,380
+ It's very similar to the RRT.
+
+577
+00:33:17,380 --> 00:33:20,100
+ But it makes sense if you're going to do repeated plans.
+
+578
+00:33:20,100 --> 00:33:22,600
+ And you might as well add that node
+
+579
+00:33:22,600 --> 00:33:24,000
+ and add that edge to the graph.
+
+580
+00:33:24,000 --> 00:33:25,860
+ And this thing can have kind of a--
+
+581
+00:33:25,860 --> 00:33:27,540
+ I call it lifelong learning, if you want.
+
+582
+00:33:27,780 --> 00:33:29,660
+ This little thing will continually
+
+583
+00:33:29,660 --> 00:33:31,620
+ sort of fill out the regions of space
+
+584
+00:33:31,620 --> 00:33:33,020
+ that you're actually experiencing.
+
+585
+00:33:33,020 --> 00:33:37,100
+ And it can be very, very efficient.
+
+586
+00:33:37,100 --> 00:33:47,380
+ So for instance, there's a company now
+
+587
+00:33:47,380 --> 00:33:51,460
+ called Real-Time Robotics that does these PRMs on the fly
+
+588
+00:33:51,460 --> 00:33:55,020
+ from in perception by putting all this stuff into the GPU.
+
+589
+00:33:55,020 --> 00:33:56,900
+ PRMs and RRTs are both--
+
+590
+00:33:56,900 --> 00:33:59,100
+ and the collision queries that go along with it
+
+591
+00:33:59,100 --> 00:34:02,300
+ have been highly optimized with GPU implementations
+
+592
+00:34:02,300 --> 00:34:02,940
+ and the like.
+
+593
+00:34:02,940 --> 00:34:05,580
+ This is actually specialized hardware.
+
+594
+00:34:05,580 --> 00:34:06,460
+ I think it's FPGA.
+
+595
+00:34:06,460 --> 00:34:09,040
+ I actually forgot now if it's FPGA or even ASIC or something.
+
+596
+00:34:09,040 --> 00:34:12,980
+ But they're talking and saying that planning doesn't
+
+597
+00:34:12,980 --> 00:34:15,220
+ start until I hit the red button.
+
+598
+00:34:15,220 --> 00:34:18,420
+ And it plans with no pause, no delay.
+
+599
+00:34:18,420 --> 00:34:22,940
+ And this can be made to be very performant to the point
+
+600
+00:34:22,940 --> 00:34:26,520
+ where he's going to come in and shuffle the environment.
+
+601
+00:34:26,520 --> 00:34:28,180
+ People can walk through the environment.
+
+602
+00:34:28,180 --> 00:34:33,460
+ It's doing planning on the fly with highly optimized PRM RRT.
+
+603
+00:34:33,460 --> 00:34:34,580
+ Yes?
+
+604
+00:34:34,580 --> 00:34:37,820
+ So from there on, it's kind of hard
+
+605
+00:34:37,820 --> 00:34:41,300
+ to get the exact pattern because it's temporary.
+
+606
+00:34:41,300 --> 00:34:44,180
+ What kind of process is it for you?
+
+607
+00:34:44,180 --> 00:34:45,540
+ Good.
+
+608
+00:34:45,540 --> 00:34:46,040
+ [INAUDIBLE]
+
+609
+00:34:46,040 --> 00:34:52,740
+ So I have a slide to show--
+
+610
+00:34:52,740 --> 00:34:56,540
+ yeah, so there's something that I think a lot of people--
+
+611
+00:34:56,540 --> 00:34:59,900
+ I tend to call the RRT dance, which
+
+612
+00:34:59,900 --> 00:35:02,780
+ is that if you're trying to find a path from the start
+
+613
+00:35:02,780 --> 00:35:06,460
+ to the goal to pick this up, this strategy,
+
+614
+00:35:06,460 --> 00:35:07,940
+ you might do something like this.
+
+615
+00:35:07,940 --> 00:35:10,300
+ You know?
+
+616
+00:35:10,300 --> 00:35:11,220
+ And that's real.
+
+617
+00:35:11,220 --> 00:35:14,300
+ That happens all the time.
+
+618
+00:35:14,300 --> 00:35:17,620
+ I put a video in the slide somewhere that will show that.
+
+619
+00:35:17,620 --> 00:35:24,420
+ So sample-based planning gives random paths.
+
+620
+00:35:24,420 --> 00:35:28,140
+ There are post-processing algorithms
+
+621
+00:35:28,140 --> 00:35:29,260
+ like you just alluded to.
+
+622
+00:35:29,260 --> 00:35:34,700
+ You could, for instance, take any plan you get out of there
+
+623
+00:35:34,700 --> 00:35:36,500
+ and call a trajectory optimization.
+
+624
+00:35:36,500 --> 00:35:38,620
+ You could call eukinematic trajectory optimization.
+
+625
+00:35:38,620 --> 00:35:40,060
+ That's a great way to do it.
+
+626
+00:35:40,060 --> 00:35:44,220
+ The sample-based community tends to do things like short-cutting.
+
+627
+00:35:44,860 --> 00:35:45,820
+ [WRITING]
+
+628
+00:35:45,820 --> 00:35:53,860
+ So if you found your big, complicated plan that
+
+629
+00:35:53,860 --> 00:35:59,900
+ was visiting more places than it should to get to the goal,
+
+630
+00:35:59,900 --> 00:36:02,100
+ and maybe there was just one obstacle over here,
+
+631
+00:36:02,100 --> 00:36:04,660
+ but it decided to do a little dance,
+
+632
+00:36:04,660 --> 00:36:09,020
+ then the short-cutting type algorithms will, for instance--
+
+633
+00:36:09,020 --> 00:36:10,920
+ they tend to be very probabilistic.
+
+634
+00:36:10,920 --> 00:36:13,660
+ It's kind of the theme here.
+
+635
+00:36:13,660 --> 00:36:15,140
+ And very approximate.
+
+636
+00:36:15,140 --> 00:36:17,500
+ But they'll just say, I'll take my path.
+
+637
+00:36:17,500 --> 00:36:22,060
+ I'll pick a couple points on my path.
+
+638
+00:36:22,060 --> 00:36:24,740
+ If I could draw a straight line to them,
+
+639
+00:36:24,740 --> 00:36:28,340
+ then I'll just remove all the ones that were there.
+
+640
+00:36:28,340 --> 00:36:30,420
+ And now I've added the straight line.
+
+641
+00:36:30,420 --> 00:36:32,020
+ I'll pick two more random points.
+
+642
+00:36:32,020 --> 00:36:34,820
+ If I can do this, then I'll just erase this.
+
+643
+00:36:34,820 --> 00:36:36,300
+ These are kind of a heuristic thing
+
+644
+00:36:36,300 --> 00:36:39,660
+ that's very fast to implement and gives you
+
+645
+00:36:39,660 --> 00:36:42,060
+ pretty good results.
+
+646
+00:36:42,060 --> 00:36:45,180
+ If you have an edge that goes through this--
+
+647
+00:36:45,180 --> 00:36:48,020
+ so people typically-- and this is
+
+648
+00:36:48,020 --> 00:36:50,380
+ one of the things we'll talk a little bit about today--
+
+649
+00:36:50,380 --> 00:36:52,100
+ people typically try to verify this just
+
+650
+00:36:52,100 --> 00:36:57,100
+ by running the collision engine on many samples
+
+651
+00:36:57,100 --> 00:36:58,980
+ along the segment.
+
+652
+00:36:58,980 --> 00:37:00,740
+ But there are more advanced approaches
+
+653
+00:37:00,740 --> 00:37:02,900
+ that can try to guarantee that you don't have any collisions
+
+654
+00:37:02,900 --> 00:37:03,820
+ on the line segment.
+
+655
+00:37:03,820 --> 00:37:04,320
+ [INAUDIBLE]
+
+656
+00:37:10,140 --> 00:37:16,780
+ I think at some point you switch to an optimization
+
+657
+00:37:16,780 --> 00:37:18,700
+ to smooth it out.
+
+658
+00:37:18,700 --> 00:37:21,020
+ But I think you'd be surprised how often people
+
+659
+00:37:21,020 --> 00:37:26,980
+ send piecewise constant curves to their robot.
+
+660
+00:37:26,980 --> 00:37:29,260
+ Almost certainly the controller is
+
+661
+00:37:29,260 --> 00:37:30,500
+ smoothing it out a little bit.
+
+662
+00:37:30,500 --> 00:37:31,000
+ But--
+
+663
+00:37:39,220 --> 00:37:41,020
+ OK, so that's a cool set of ideas.
+
+664
+00:37:41,020 --> 00:37:42,620
+ I mean, a super powerful set of ideas
+
+665
+00:37:42,620 --> 00:37:45,340
+ to use sampling to sort of get around
+
+666
+00:37:45,340 --> 00:37:47,420
+ these hard non-convexities.
+
+667
+00:37:47,420 --> 00:37:51,220
+ They also get around the kinematic non-convexities.
+
+668
+00:37:51,220 --> 00:37:54,000
+ Because when I sample points, I just
+
+669
+00:37:54,000 --> 00:37:55,380
+ have to call the function.
+
+670
+00:37:55,380 --> 00:37:59,660
+ So if I have a sample point in joint space,
+
+671
+00:37:59,660 --> 00:38:01,580
+ I can just call my kinematics on that function
+
+672
+00:38:01,580 --> 00:38:05,140
+ and put my robot into its pose and check constraints
+
+673
+00:38:05,140 --> 00:38:06,660
+ in task space.
+
+674
+00:38:06,660 --> 00:38:08,340
+ I could check whether the real hardware
+
+675
+00:38:08,340 --> 00:38:12,820
+ is running into the obstacle in the original task space.
+
+676
+00:38:12,820 --> 00:38:16,300
+ So by virtue of going to points instead of trajectories
+
+677
+00:38:16,300 --> 00:38:19,060
+ and doing sampling, they're sort of solving
+
+678
+00:38:19,060 --> 00:38:21,180
+ both of those problems.
+
+679
+00:38:21,180 --> 00:38:29,060
+ If you do want to play with more and more of these tools,
+
+680
+00:38:29,060 --> 00:38:32,540
+ the OMPL, the Open Motion Planning Library,
+
+681
+00:38:32,540 --> 00:38:37,580
+ is a fantastic resource that has just
+
+682
+00:38:37,580 --> 00:38:42,260
+ a long library of all the different RRT PRM variants.
+
+683
+00:38:42,260 --> 00:38:44,060
+ It's in ROS that you can connect it
+
+684
+00:38:44,060 --> 00:38:46,460
+ to Drake and collision queries.
+
+685
+00:38:46,460 --> 00:38:51,220
+ It's a great resource for just even seeing
+
+686
+00:38:51,220 --> 00:38:53,620
+ the list of planners, even getting your head
+
+687
+00:38:53,620 --> 00:38:56,580
+ around the sense of different types of planners people
+
+688
+00:38:56,580 --> 00:38:57,100
+ are using.
+
+689
+00:38:57,100 --> 00:38:58,300
+ There's the PRM.
+
+690
+00:38:58,300 --> 00:39:04,140
+ There's different single query planners, the RRT,
+
+691
+00:39:04,140 --> 00:39:06,660
+ expansive space trees.
+
+692
+00:39:06,660 --> 00:39:09,260
+ A lot of the different algorithms that are out there
+
+693
+00:39:09,260 --> 00:39:11,700
+ are available there.
+
+694
+00:39:11,700 --> 00:39:12,660
+ So highly recommend it.
+
+695
+00:39:12,660 --> 00:39:13,940
+ Even if you just look at the website,
+
+696
+00:39:13,940 --> 00:39:15,100
+ it's already super valuable.
+
+697
+00:39:15,100 --> 00:39:26,140
+ We have a bunch of sample-based planners
+
+698
+00:39:26,140 --> 00:39:29,740
+ that have been written at TRI that we're pushing to Drake now,
+
+699
+00:39:29,740 --> 00:39:34,300
+ hopefully, but not quite in time for this lecture, I ask.
+
+700
+00:39:34,300 --> 00:39:39,500
+ So when it's there--
+
+701
+00:39:39,500 --> 00:39:41,260
+ I mean, if anybody needs it, I have
+
+702
+00:39:41,260 --> 00:39:43,680
+ versions that I could share that are just not as polished.
+
+703
+00:39:43,680 --> 00:39:46,820
+ But it has the RRT.
+
+704
+00:39:46,820 --> 00:39:51,700
+ The bi-RRT is going in both directions, bi-directional RRT.
+
+705
+00:39:51,700 --> 00:39:53,900
+ PRMs, we have all the basics in there.
+
+706
+00:39:54,420 --> 00:39:57,620
+ Here's the RRT dance.
+
+707
+00:39:57,620 --> 00:40:02,700
+ And the point was made nicely in a paper by Sertash and others.
+
+708
+00:40:02,700 --> 00:40:08,340
+ This is the RRT applied to the PRM.
+
+709
+00:40:08,340 --> 00:40:20,940
+ I mean, you will really see robots do that sometimes.
+
+710
+00:40:20,940 --> 00:40:21,740
+ It's like, oh.
+
+711
+00:40:21,740 --> 00:40:23,820
+ It's kind of embarrassing.
+
+712
+00:40:23,820 --> 00:40:25,780
+ The other one that's really embarrassing
+
+713
+00:40:25,780 --> 00:40:29,340
+ is when you have a beautiful manipulation robot system,
+
+714
+00:40:29,340 --> 00:40:32,260
+ and it goes, and it acts like it's picked something up,
+
+715
+00:40:32,260 --> 00:40:33,540
+ but it has nothing in its hand.
+
+716
+00:40:33,540 --> 00:40:35,540
+ And it continues through the rest of the motion
+
+717
+00:40:35,540 --> 00:40:37,900
+ as if it's like, oh.
+
+718
+00:40:37,900 --> 00:40:40,220
+ We should never see these things again.
+
+719
+00:40:40,220 --> 00:40:41,140
+ But that's real.
+
+720
+00:40:41,140 --> 00:40:46,140
+ OK.
+
+721
+00:40:46,140 --> 00:40:48,140
+ So I mean, that's just a very quick version of it.
+
+722
+00:40:48,140 --> 00:40:50,340
+ But I think this idea of the RRT,
+
+723
+00:40:50,340 --> 00:40:52,900
+ but I think this idea of sampling
+
+724
+00:40:52,900 --> 00:40:55,820
+ is, I think, easy to communicate and very powerful.
+
+725
+00:40:55,820 --> 00:40:58,060
+ And it opens up a whole class of algorithms
+
+726
+00:40:58,060 --> 00:40:59,020
+ that you can play with.
+
+727
+00:40:59,020 --> 00:41:01,340
+ And people use them in industry all the time.
+
+728
+00:41:01,340 --> 00:41:02,780
+ It's real.
+
+729
+00:41:02,780 --> 00:41:06,060
+ Let me tell you a bit about the optimization
+
+730
+00:41:06,060 --> 00:41:08,180
+ view of being more global.
+
+731
+00:41:08,180 --> 00:41:09,260
+ OK?
+
+732
+00:41:09,260 --> 00:41:10,220
+ I want to tell you--
+
+733
+00:41:10,220 --> 00:41:11,720
+ spend the second half of the lecture
+
+734
+00:41:11,720 --> 00:41:15,140
+ on global optimization-based planning.
+
+735
+00:41:15,140 --> 00:41:17,300
+ This is one that I'm super excited about right now.
+
+736
+00:41:17,300 --> 00:41:20,460
+ We've been working hard on it in my group.
+
+737
+00:41:20,460 --> 00:41:22,940
+ So I'll give you a slightly biased version of this.
+
+738
+00:41:22,940 --> 00:41:27,180
+ But I do think we've made some nice improvements
+
+739
+00:41:27,180 --> 00:41:29,300
+ and to what you can do with motion planning here.
+
+740
+00:41:29,300 --> 00:41:33,980
+ So I want to tell you that story.
+
+741
+00:41:33,980 --> 00:41:35,980
+ Maybe I'll tell it first with code.
+
+742
+00:41:35,980 --> 00:41:44,780
+ So if I go back to this simple example, my red box,
+
+743
+00:41:44,780 --> 00:41:47,780
+ I'll run my--
+
+744
+00:41:47,780 --> 00:41:48,500
+ I'm going to run--
+
+745
+00:41:48,500 --> 00:41:50,740
+ so this is-- the work I'm going to tell you about
+
+746
+00:41:50,740 --> 00:41:53,320
+ is motion planning around obstacles
+
+747
+00:41:53,320 --> 00:41:55,060
+ with convex optimization.
+
+748
+00:41:55,060 --> 00:41:58,300
+ So I just talked about how the problem was clearly non-convex.
+
+749
+00:41:58,300 --> 00:42:01,460
+ I'm going to try to do it with convex optimization.
+
+750
+00:42:01,460 --> 00:42:04,820
+ And that is supposed to be surprising.
+
+751
+00:42:04,820 --> 00:42:07,700
+ So here's the same old example.
+
+752
+00:42:07,700 --> 00:42:09,980
+ And I'm just solving a convex optimization problem.
+
+753
+00:42:09,980 --> 00:42:15,700
+ But now it solves beautifully to global optimality.
+
+754
+00:42:15,700 --> 00:42:17,860
+ So I'll tell you the basics of how that works.
+
+755
+00:42:17,860 --> 00:42:19,420
+ And it's not magic.
+
+756
+00:42:19,420 --> 00:42:24,100
+ It's just putting together some good ideas.
+
+757
+00:42:24,100 --> 00:42:26,820
+ But I think it opens up what we can do with some of our motion
+
+758
+00:42:26,820 --> 00:42:27,900
+ planning approaches.
+
+759
+00:42:27,900 --> 00:42:32,020
+ In particular, the advantage of these optimizing-based planners
+
+760
+00:42:32,020 --> 00:42:35,220
+ is that you avoid RRT dance kind of things.
+
+761
+00:42:35,220 --> 00:42:38,660
+ And if you care about-- like I told you with the DexEye
+
+762
+00:42:38,660 --> 00:42:40,980
+ example the other day, if time is money,
+
+763
+00:42:40,980 --> 00:42:44,300
+ then having the benefits of kinematic trajectory
+
+764
+00:42:44,300 --> 00:42:47,060
+ optimization combined with the globalness of planning
+
+765
+00:42:47,060 --> 00:42:47,580
+ is the dream.
+
+766
+00:42:47,580 --> 00:42:59,540
+ OK, so how did I do that simple example?
+
+767
+00:42:59,540 --> 00:43:00,740
+ And where did I put my chalk?
+
+768
+00:43:00,740 --> 00:43:02,180
+ Jeez, oh, Pete's.
+
+769
+00:43:02,180 --> 00:43:04,520
+ OK.
+
+770
+00:43:04,520 --> 00:43:08,220
+ I said that that was a non-convex problem
+
+771
+00:43:08,220 --> 00:43:12,020
+ and that there's non-convexity everywhere in the motion
+
+772
+00:43:12,020 --> 00:43:12,820
+ planning problem.
+
+773
+00:43:12,820 --> 00:43:15,940
+ So how can we possibly do around obstacles
+
+774
+00:43:15,940 --> 00:43:18,260
+ with convex optimization?
+
+775
+00:43:18,260 --> 00:43:23,820
+ So saying it's non-convex is a little disingenuous.
+
+776
+00:43:23,820 --> 00:43:28,140
+ Any problem can be made convex if you just lift it
+
+777
+00:43:28,140 --> 00:43:30,380
+ to a high enough dimension.
+
+778
+00:43:30,380 --> 00:43:50,380
+ So typically, it's not practical to do so,
+
+779
+00:43:50,380 --> 00:43:52,180
+ but it's theoretically interesting to know
+
+780
+00:43:52,180 --> 00:43:54,300
+ that you could.
+
+781
+00:43:54,300 --> 00:43:57,460
+ So really, I want to dial that in a little bit more.
+
+782
+00:43:57,460 --> 00:43:59,260
+ What I think is important is that we
+
+783
+00:43:59,260 --> 00:44:03,820
+ found a convex formulation that is compact and efficient.
+
+784
+00:44:03,820 --> 00:44:08,140
+ So we didn't have to raise it to some ridiculous dimensionality
+
+785
+00:44:08,140 --> 00:44:09,980
+ that would be impossible to solve,
+
+786
+00:44:09,980 --> 00:44:14,620
+ but we have an efficient convex formulation.
+
+787
+00:44:14,620 --> 00:44:17,740
+ And the way that we did it in that particular way,
+
+788
+00:44:17,740 --> 00:44:20,780
+ that I coded it up in that particular example,
+
+789
+00:44:20,780 --> 00:44:24,860
+ is I have my configuration space obstacle.
+
+790
+00:44:28,780 --> 00:44:32,100
+ And I'm going to first decompose the space.
+
+791
+00:44:32,100 --> 00:44:34,980
+ We'll talk about how to do that in a bit.
+
+792
+00:44:34,980 --> 00:44:37,380
+ I'm going to manually decompose the space
+
+793
+00:44:37,380 --> 00:44:39,220
+ into a couple different regions.
+
+794
+00:44:39,220 --> 00:44:44,520
+ I said that the RRT did this automatically
+
+795
+00:44:44,520 --> 00:44:48,540
+ without doing any explicit decomposition.
+
+796
+00:44:48,540 --> 00:44:52,000
+ I'm going to do the explicit decomposition, but it's OK.
+
+797
+00:44:52,000 --> 00:44:53,700
+ You can do that.
+
+798
+00:44:53,700 --> 00:44:55,940
+ It's not the fastest part of the algorithm,
+
+799
+00:44:55,940 --> 00:45:00,020
+ but it's approachable.
+
+800
+00:45:00,020 --> 00:45:04,780
+ And then for each possible segment,
+
+801
+00:45:04,780 --> 00:45:10,420
+ or region in the optimization problem,
+
+802
+00:45:10,420 --> 00:45:12,420
+ in the configuration space, I'm going
+
+803
+00:45:12,420 --> 00:45:15,460
+ to put a small kinematic trajectory optimization
+
+804
+00:45:15,460 --> 00:45:16,220
+ problem inside it.
+
+805
+00:45:16,220 --> 00:45:24,740
+ So I'm actually going to solve lots
+
+806
+00:45:24,740 --> 00:45:26,700
+ of different kinematic trajectory optimization
+
+807
+00:45:26,700 --> 00:45:30,340
+ problems all at the same time, which sounds bad.
+
+808
+00:45:30,340 --> 00:45:33,180
+ But it can be made very efficient, in particular
+
+809
+00:45:33,180 --> 00:45:36,020
+ because this is the best type of kinematic trajectory
+
+810
+00:45:36,020 --> 00:45:38,180
+ optimization problem, because it only
+
+811
+00:45:38,180 --> 00:45:40,620
+ has to stay-- all of its constraints
+
+812
+00:45:40,620 --> 00:45:43,220
+ are convex, once I've made a convex decomposition
+
+813
+00:45:43,220 --> 00:45:44,820
+ of the space.
+
+814
+00:45:44,820 --> 00:45:47,260
+ Saying that this curve stays inside a convex region
+
+815
+00:45:47,260 --> 00:45:49,420
+ is an easy thing to do.
+
+816
+00:45:49,420 --> 00:45:55,540
+ Staying inside a non-convex region is a hard thing to do.
+
+817
+00:45:55,540 --> 00:46:00,060
+ And then I'm going to build a little graph out
+
+818
+00:46:00,060 --> 00:46:01,260
+ of these regions.
+
+819
+00:46:01,260 --> 00:46:04,980
+ So if I call this region 1 here, I'll make a little graph.
+
+820
+00:46:04,980 --> 00:46:12,460
+ If I call this region 2, region 3, and 4.
+
+821
+00:46:12,460 --> 00:46:15,540
+ Maybe I have 3 and 4.
+
+822
+00:46:15,540 --> 00:46:18,740
+ If those regions touch in the configuration space,
+
+823
+00:46:18,740 --> 00:46:21,660
+ then I'll draw an edge between the two.
+
+824
+00:46:21,660 --> 00:46:24,860
+ It's actually a bidirectional graph in this case.
+
+825
+00:46:24,860 --> 00:46:26,780
+ 2 and 3 touch.
+
+826
+00:46:26,780 --> 00:46:28,820
+ 3 and 4 touch.
+
+827
+00:46:28,820 --> 00:46:30,100
+ 1 and 4 touch.
+
+828
+00:46:30,100 --> 00:46:31,780
+ I could have probably put 4 there.
+
+829
+00:46:31,780 --> 00:46:35,460
+ That would have been a little prettier.
+
+830
+00:46:35,460 --> 00:46:39,460
+ And then I'm going to do the same sort of thing as the PRM.
+
+831
+00:46:39,460 --> 00:46:40,740
+ I'll take my start.
+
+832
+00:46:40,740 --> 00:46:42,300
+ I'll take my goal.
+
+833
+00:46:42,300 --> 00:46:44,620
+ I'll add my start and my goal here.
+
+834
+00:46:48,180 --> 00:46:50,580
+ Add whatever things it's touching.
+
+835
+00:46:50,580 --> 00:46:53,340
+ I'll put an edge to it there.
+
+836
+00:46:53,340 --> 00:46:56,420
+ This was in 4 and 3, I guess.
+
+837
+00:46:56,420 --> 00:47:00,580
+ And I'm going to solve a graph search problem.
+
+838
+00:47:00,580 --> 00:47:04,580
+ But unlike the way that the PRM solves a graph search problem,
+
+839
+00:47:04,580 --> 00:47:07,540
+ I'm going to solve a particular type of graph search that
+
+840
+00:47:07,540 --> 00:47:09,660
+ is actually solving the kinematic trajectory
+
+841
+00:47:09,660 --> 00:47:11,540
+ optimization at the same time as it's finding
+
+842
+00:47:11,540 --> 00:47:12,820
+ the shortest path on the graph.
+
+843
+00:47:12,820 --> 00:47:17,340
+ So let's just understand it at that level.
+
+844
+00:47:17,340 --> 00:47:20,340
+ I'll tell you how that works just a little bit in a second.
+
+845
+00:47:20,340 --> 00:47:23,140
+ But this is like a sampling-based approach.
+
+846
+00:47:23,140 --> 00:47:25,380
+ I'll show you the direct connections
+
+847
+00:47:25,380 --> 00:47:27,060
+ to the sampling-based approach.
+
+848
+00:47:27,060 --> 00:47:29,460
+ But it's more explicitly saying there
+
+849
+00:47:29,460 --> 00:47:32,300
+ is a combinatorial problem in motion planning.
+
+850
+00:47:32,300 --> 00:47:35,820
+ You have to decide, am I going left or right?
+
+851
+00:47:35,820 --> 00:47:39,180
+ And if I write down that combinatorial problem,
+
+852
+00:47:39,180 --> 00:47:42,660
+ then I should use graph search type tools to accommodate it.
+
+853
+00:47:42,660 --> 00:47:45,300
+ And what's nice is that there's actually--
+
+854
+00:47:45,300 --> 00:47:46,780
+ when you think about graph search,
+
+855
+00:47:46,780 --> 00:47:49,500
+ you probably think about A* and Dijkstra's
+
+856
+00:47:49,500 --> 00:47:51,260
+ and these kind of methods.
+
+857
+00:47:51,260 --> 00:47:53,660
+ But you can solve graph search with a linear program
+
+858
+00:47:53,660 --> 00:47:56,680
+ and optimization-based approaches, too.
+
+859
+00:47:56,680 --> 00:47:58,980
+ And so there are ways to jointly solve
+
+860
+00:47:58,980 --> 00:48:01,940
+ the graph search and the kinematic trajectory
+
+861
+00:48:01,940 --> 00:48:05,720
+ optimization at the same time and make that very efficient.
+
+862
+00:48:05,720 --> 00:48:06,700
+ It's not magic.
+
+863
+00:48:06,700 --> 00:48:10,980
+ It's just explicitly writing the combinatorial problem
+
+864
+00:48:10,980 --> 00:48:14,260
+ and the continuous problem down in one formulation
+
+865
+00:48:14,260 --> 00:48:16,180
+ and then doing a lot of work to make
+
+866
+00:48:16,180 --> 00:48:17,780
+ that formulation very efficient.
+
+867
+00:48:17,780 --> 00:48:23,940
+ So I won't go into the math of the optimization.
+
+868
+00:48:23,940 --> 00:48:26,900
+ But if you want to read more, but the basic intuition
+
+869
+00:48:26,900 --> 00:48:31,820
+ is we take the optimization view of the shortest path
+
+870
+00:48:31,820 --> 00:48:33,660
+ on a graph.
+
+871
+00:48:33,660 --> 00:48:37,260
+ I could find just from the start to goal on any ordinary graph.
+
+872
+00:48:37,260 --> 00:48:39,520
+ I can write that down as an optimization problem
+
+873
+00:48:39,520 --> 00:48:42,580
+ in addition to a standard graph search,
+
+874
+00:48:42,580 --> 00:48:47,380
+ kind of the way you think about a standard A* kind of algorithm.
+
+875
+00:48:47,380 --> 00:48:50,300
+ And the mathematical background of this,
+
+876
+00:48:50,300 --> 00:48:52,500
+ we call it the graph of convex sets.
+
+877
+00:48:52,500 --> 00:48:55,460
+ Because there's PRM, there's RRT.
+
+878
+00:48:55,460 --> 00:48:57,660
+ We needed a three-letter acronym.
+
+879
+00:48:57,660 --> 00:48:59,700
+ So ours is GCS.
+
+880
+00:48:59,700 --> 00:49:01,620
+ That's the brand.
+
+881
+00:49:01,620 --> 00:49:03,900
+ And the way to think about how do you
+
+882
+00:49:03,900 --> 00:49:05,900
+ do a continuous optimization at the same time
+
+883
+00:49:05,900 --> 00:49:08,500
+ as a discrete optimization is you basically--
+
+884
+00:49:08,500 --> 00:49:10,740
+ the abstraction we have is that every time you
+
+885
+00:49:10,740 --> 00:49:15,580
+ visit a node on the graph, you pick one element out
+
+886
+00:49:15,580 --> 00:49:16,580
+ of a convex set.
+
+887
+00:49:16,580 --> 00:49:21,380
+ Don't think about this as obstacles or anything
+
+888
+00:49:21,380 --> 00:49:21,960
+ for a minute.
+
+889
+00:49:21,960 --> 00:49:25,140
+ This is just an abstract mathematical framework
+
+890
+00:49:25,140 --> 00:49:27,100
+ where you say, I'm going to do graph search,
+
+891
+00:49:27,100 --> 00:49:30,460
+ but I get to pick one element out of a convex set
+
+892
+00:49:30,460 --> 00:49:31,820
+ every time I visit.
+
+893
+00:49:31,820 --> 00:49:34,300
+ And I'm allowed to put edge costs.
+
+894
+00:49:34,300 --> 00:49:38,780
+ The standard shortest path could have an edge cost on each edge.
+
+895
+00:49:38,780 --> 00:49:40,380
+ Now I'm allowing the edge cost to be
+
+896
+00:49:40,380 --> 00:49:42,300
+ a function of the continuous variables.
+
+897
+00:49:42,300 --> 00:49:46,100
+ And we can put constraints and other things like that too.
+
+898
+00:49:46,100 --> 00:49:50,940
+ We've made a lot of progress on having strong optimization
+
+899
+00:49:50,940 --> 00:49:54,060
+ formulations for that abstract problem.
+
+900
+00:49:54,060 --> 00:49:57,540
+ And that abstract problem is exactly-- this thing
+
+901
+00:49:57,540 --> 00:50:00,300
+ I drew on the board, we just transcribe it.
+
+902
+00:50:00,300 --> 00:50:02,380
+ This is now the motion planning problem,
+
+903
+00:50:02,380 --> 00:50:05,940
+ where our regions are-- the blue regions in the last
+
+904
+00:50:05,940 --> 00:50:07,740
+ are the blue regions here.
+
+905
+00:50:07,740 --> 00:50:13,900
+ But we put and we make a graph based on what is just touching.
+
+906
+00:50:13,900 --> 00:50:17,740
+ And embed in each of those a B-spline,
+
+907
+00:50:17,740 --> 00:50:21,740
+ a kinematic trajectory optimization problem.
+
+908
+00:50:21,740 --> 00:50:23,280
+ You remember I mentioned the B-spline
+
+909
+00:50:23,280 --> 00:50:24,940
+ has that convex hull property?
+
+910
+00:50:24,940 --> 00:50:26,700
+ We leverage that convex hull property.
+
+911
+00:50:26,700 --> 00:50:32,580
+ So it's the parameters of the B-spline
+
+912
+00:50:32,580 --> 00:50:34,260
+ that form the convex set.
+
+913
+00:50:34,260 --> 00:50:40,460
+ You know, the intuition I want to make sure you definitely
+
+914
+00:50:40,460 --> 00:50:42,940
+ get is that we can combine this continuous search
+
+915
+00:50:42,940 --> 00:50:46,180
+ with the graph search.
+
+916
+00:50:46,180 --> 00:50:50,940
+ And when you pick an edge on the shortest path on the graph,
+
+917
+00:50:50,940 --> 00:50:52,740
+ then it implies that some constraints
+
+918
+00:50:52,740 --> 00:50:56,060
+ must be true, which make those curves connect.
+
+919
+00:50:56,060 --> 00:50:58,380
+ And you can make them continuous up to arbitrary degree.
+
+920
+00:51:00,780 --> 00:51:05,780
+ And you can scale time similarly all in the framework.
+
+921
+00:51:05,780 --> 00:51:06,280
+ Yeah?
+
+922
+00:51:06,280 --> 00:51:09,740
+ So the parameters of the spline are the convex set?
+
+923
+00:51:09,740 --> 00:51:14,420
+ It's not the boundaries of the regions?
+
+924
+00:51:14,420 --> 00:51:16,180
+ So that's an awesome question.
+
+925
+00:51:16,180 --> 00:51:17,820
+ So what is the convex set?
+
+926
+00:51:17,820 --> 00:51:20,900
+ So in this picture over here, I have this abstract notion
+
+927
+00:51:20,900 --> 00:51:21,660
+ of the set.
+
+928
+00:51:21,660 --> 00:51:24,700
+ So it lives in some space called big X.
+
+929
+00:51:24,700 --> 00:51:28,020
+ What is big X in this picture?
+
+930
+00:51:28,020 --> 00:51:33,220
+ It is not this region.
+
+931
+00:51:33,220 --> 00:51:37,740
+ So it's the Cartesian product of that region times
+
+932
+00:51:37,740 --> 00:51:40,540
+ the number of control points.
+
+933
+00:51:40,540 --> 00:51:42,460
+ I want to say that one element in that set
+
+934
+00:51:42,460 --> 00:51:45,060
+ means a choice of all of the control points,
+
+935
+00:51:45,060 --> 00:51:47,620
+ and they all must live in that set.
+
+936
+00:51:47,620 --> 00:51:49,300
+ So it's only a little bit different
+
+937
+00:51:49,300 --> 00:51:53,060
+ than the original picture, but it's an important difference.
+
+938
+00:51:53,060 --> 00:51:56,700
+ Thank you for asking.
+
+939
+00:51:56,700 --> 00:51:57,940
+ Is that clear?
+
+940
+00:51:57,940 --> 00:51:59,700
+ Yeah?
+
+941
+00:51:59,700 --> 00:52:00,500
+ OK.
+
+942
+00:52:00,500 --> 00:52:05,660
+ What's cool is that that solves really hard problems
+
+943
+00:52:05,660 --> 00:52:07,380
+ with convex optimization.
+
+944
+00:52:07,380 --> 00:52:13,740
+ So this is like two Iwas playing Twister, where
+
+945
+00:52:13,740 --> 00:52:15,240
+ you have to put a mug on the shelf,
+
+946
+00:52:15,240 --> 00:52:18,460
+ and you've got to reach under the other Iwa.
+
+947
+00:52:18,460 --> 00:52:21,860
+ And that is being solved by jointly solving
+
+948
+00:52:21,860 --> 00:52:24,460
+ the convex optimization on the graph
+
+949
+00:52:24,460 --> 00:52:26,200
+ and the kinematic trajectory optimization.
+
+950
+00:52:27,040 --> 00:52:33,640
+ And this is on the robots upstairs.
+
+951
+00:52:33,640 --> 00:52:38,360
+ And this is actually solving even a richer version
+
+952
+00:52:38,360 --> 00:52:40,480
+ of the problem than I already suggested.
+
+953
+00:52:40,480 --> 00:52:44,120
+ It is choosing what order to pick up the mugs.
+
+954
+00:52:44,120 --> 00:52:48,120
+ And the combinatorial decisions of the task
+
+955
+00:52:48,120 --> 00:52:51,680
+ are also being embedded in this graph, in this big graph.
+
+956
+00:52:51,680 --> 00:52:54,360
+ And it's getting smooth, beautiful motions out.
+
+957
+00:52:54,360 --> 00:52:57,680
+ We have a handful that we put together for the paper
+
+958
+00:52:57,680 --> 00:52:59,480
+ we're writing.
+
+959
+00:52:59,480 --> 00:53:05,600
+ But we want to have smooth, beautiful, time optimal,
+
+960
+00:53:05,600 --> 00:53:09,440
+ if you want, motions coming out of the robot.
+
+961
+00:53:09,440 --> 00:53:14,640
+ That's the opposite of the RRT dance.
+
+962
+00:53:14,640 --> 00:53:16,520
+ That's a little-- that would mean--
+
+963
+00:53:16,520 --> 00:53:18,760
+ my decomposition probably wasn't very good on that one.
+
+964
+00:53:18,760 --> 00:53:26,200
+ But-- yeah?
+
+965
+00:53:26,200 --> 00:53:28,600
+ So is the number of control points
+
+966
+00:53:28,600 --> 00:53:31,400
+ in each convex set fixed?
+
+967
+00:53:31,400 --> 00:53:33,280
+ We choose the number of control points, yeah.
+
+968
+00:53:33,280 --> 00:53:36,920
+ But we allow it to stretch in time.
+
+969
+00:53:36,920 --> 00:53:41,040
+ But it's like how there's a representational power
+
+970
+00:53:41,040 --> 00:53:43,640
+ of the curve in that set.
+
+971
+00:53:43,640 --> 00:53:46,800
+ So how do we choose how many control points
+
+972
+00:53:46,800 --> 00:53:47,760
+ we should get in?
+
+973
+00:53:47,760 --> 00:53:49,520
+ Yeah, so the question was, how do we
+
+974
+00:53:49,520 --> 00:53:51,960
+ choose how many control points?
+
+975
+00:53:51,960 --> 00:53:57,280
+ The more you give it, the more curvy it can be inside the set.
+
+976
+00:53:57,280 --> 00:53:59,720
+ But the more expensive the optimization will be.
+
+977
+00:53:59,720 --> 00:54:02,680
+ So it's a trade-off.
+
+978
+00:54:02,680 --> 00:54:04,200
+ I'll talk about the different gaps.
+
+979
+00:54:04,200 --> 00:54:09,080
+ So what I would like to say is that if an optimal path exists--
+
+980
+00:54:09,080 --> 00:54:12,220
+ if a path exists, we find the optimal path.
+
+981
+00:54:12,220 --> 00:54:13,320
+ We can almost say that.
+
+982
+00:54:13,320 --> 00:54:15,600
+ We can say, if the path exists, we
+
+983
+00:54:15,600 --> 00:54:18,240
+ find the optimal path as parameterized
+
+984
+00:54:18,240 --> 00:54:22,560
+ by the Bézier curves in the decomposition.
+
+985
+00:54:22,560 --> 00:54:24,520
+ So there are a few gaps.
+
+986
+00:54:24,520 --> 00:54:26,920
+ And that is one of them.
+
+987
+00:54:26,920 --> 00:54:29,160
+ In theory, I would need an infinite number of control
+
+988
+00:54:29,160 --> 00:54:32,840
+ points to say any possible curve could live inside the set.
+
+989
+00:54:32,840 --> 00:54:39,640
+ The problem is-- or the interesting part
+
+990
+00:54:39,640 --> 00:54:43,240
+ of the problem is that I talked all about how-- maybe it's--
+
+991
+00:54:43,240 --> 00:54:44,000
+ it's long gone.
+
+992
+00:54:44,000 --> 00:54:50,320
+ But I talked about how convex obstacles in task space
+
+993
+00:54:50,320 --> 00:54:53,200
+ turn into non-convex obstacles in configuration space.
+
+994
+00:54:53,200 --> 00:54:56,820
+ So how did we get those convex regions?
+
+995
+00:54:56,820 --> 00:54:59,280
+ There's an algorithm that we're going to have you explore.
+
+996
+00:54:59,280 --> 00:55:04,080
+ It was released moments ago for your p-set,
+
+997
+00:55:04,080 --> 00:55:08,560
+ which is this approximate convex decomposition algorithm.
+
+998
+00:55:08,560 --> 00:55:11,360
+ And it's related closely to the sampling-based ideas
+
+999
+00:55:11,360 --> 00:55:14,280
+ that we used in PRM and RRT.
+
+1000
+00:55:14,280 --> 00:55:16,720
+ But the idea is that when I pick a point at random
+
+1001
+00:55:16,720 --> 00:55:19,880
+ in my configuration space, I'm going
+
+1002
+00:55:19,880 --> 00:55:22,000
+ to go ahead and do a little extra work, which
+
+1003
+00:55:22,000 --> 00:55:24,840
+ is to try to find a big convex region that
+
+1004
+00:55:24,840 --> 00:55:29,640
+ is collision-free around that point.
+
+1005
+00:55:29,640 --> 00:55:32,080
+ And you'll understand, I think, by the end of the p-set
+
+1006
+00:55:32,080 --> 00:55:39,480
+ that it does this by an alternation of finding
+
+1007
+00:55:39,480 --> 00:55:44,600
+ half spaces, which separate the sample point
+
+1008
+00:55:44,600 --> 00:55:46,080
+ from the obstacles.
+
+1009
+00:55:46,080 --> 00:55:47,960
+ And then once you have the half space regions,
+
+1010
+00:55:47,960 --> 00:55:50,320
+ you do a maximum inscribed ellipse,
+
+1011
+00:55:50,320 --> 00:55:52,040
+ and then you alternate.
+
+1012
+00:55:52,040 --> 00:55:55,480
+ The details you'll see closely on the p-set.
+
+1013
+00:55:55,480 --> 00:55:56,900
+ We'll work through half of it.
+
+1014
+00:55:56,900 --> 00:55:58,280
+ We won't make you do the inscribed ellipse,
+
+1015
+00:55:58,280 --> 00:55:59,860
+ but we'll make you do the other part.
+
+1016
+00:55:59,860 --> 00:56:05,160
+ So this is an efficient optimization.
+
+1017
+00:56:05,160 --> 00:56:07,280
+ It's a large-scale quadratic program
+
+1018
+00:56:07,280 --> 00:56:10,920
+ and a really small convex optimization.
+
+1019
+00:56:10,920 --> 00:56:13,520
+ And when we did this initially a few years ago,
+
+1020
+00:56:13,520 --> 00:56:17,840
+ Robin Dietz was the inventor of this algorithm.
+
+1021
+00:56:17,840 --> 00:56:20,480
+ He was trying to do it for Atlas walking around.
+
+1022
+00:56:20,480 --> 00:56:24,160
+ And he cared very much about finding big places for Atlas
+
+1023
+00:56:24,160 --> 00:56:28,320
+ to step from raw perception.
+
+1024
+00:56:28,320 --> 00:56:31,360
+ So he wanted an algorithm, a convex decomposition algorithm
+
+1025
+00:56:31,360 --> 00:56:34,640
+ that could scale to raw pixels.
+
+1026
+00:56:34,640 --> 00:56:38,360
+ And he accomplished it, enough to work on raw sensor data.
+
+1027
+00:56:38,360 --> 00:56:40,200
+ This is a version of that.
+
+1028
+00:56:40,200 --> 00:56:44,560
+ But as the robot was walking around,
+
+1029
+00:56:44,560 --> 00:56:48,320
+ he was trying to decompose the space into regions
+
+1030
+00:56:48,320 --> 00:56:50,440
+ that it could step on or touch.
+
+1031
+00:56:50,440 --> 00:56:52,680
+ And we had these convex decomposition type algorithms.
+
+1032
+00:56:52,680 --> 00:57:03,480
+ So that was a tool that we had done for walking.
+
+1033
+00:57:03,480 --> 00:57:07,360
+ And it turns out then that if you
+
+1034
+00:57:07,360 --> 00:57:13,520
+ have convex obstacles in your configuration space,
+
+1035
+00:57:13,520 --> 00:57:16,040
+ then the picture is going to look a bit like this.
+
+1036
+00:57:16,040 --> 00:57:18,320
+ These are the gaps here, the gaps
+
+1037
+00:57:18,320 --> 00:57:21,000
+ that prevent us from saying it's globally optimal.
+
+1038
+00:57:21,000 --> 00:57:23,160
+ Because we're going to just do an approximate convex
+
+1039
+00:57:23,160 --> 00:57:24,840
+ decomposition.
+
+1040
+00:57:24,840 --> 00:57:27,360
+ And if you think about the roadmap generation
+
+1041
+00:57:27,360 --> 00:57:30,400
+ phase of the PRM, we're going to do something like that here.
+
+1042
+00:57:30,400 --> 00:57:31,960
+ But every time we pick a point, we're
+
+1043
+00:57:31,960 --> 00:57:35,040
+ going to grow an iris region.
+
+1044
+00:57:35,040 --> 00:57:37,440
+ And we'll end up with an approximate decomposition
+
+1045
+00:57:37,440 --> 00:57:38,880
+ of the space.
+
+1046
+00:57:38,880 --> 00:57:41,560
+ But then we get to solve a continuous set of curves.
+
+1047
+00:57:41,560 --> 00:57:43,740
+ Whereas the PRM was only walking along
+
+1048
+00:57:43,740 --> 00:57:46,360
+ the discrete edges in the graph, and therefore
+
+1049
+00:57:46,360 --> 00:57:49,200
+ was restricted to the motions of that graph,
+
+1050
+00:57:49,200 --> 00:57:52,560
+ here we have enough room for the kinematic trajectory
+
+1051
+00:57:52,560 --> 00:57:55,000
+ optimization to do its optimization.
+
+1052
+00:57:55,000 --> 00:57:57,960
+ And we get beautiful curves.
+
+1053
+00:57:57,960 --> 00:58:01,040
+ Importantly, when you get to things with dynamics,
+
+1054
+00:58:01,040 --> 00:58:02,720
+ which we haven't talked about in here,
+
+1055
+00:58:02,720 --> 00:58:04,640
+ the kinematic trajectory optimization typically
+
+1056
+00:58:04,640 --> 00:58:06,480
+ doesn't include the dynamics of the robot.
+
+1057
+00:58:06,480 --> 00:58:07,940
+ But if you have dynamic constraints
+
+1058
+00:58:07,940 --> 00:58:10,480
+ and other constraints, optimization-based frameworks
+
+1059
+00:58:10,480 --> 00:58:12,760
+ handle that naturally, where sampling-based frameworks
+
+1060
+00:58:12,760 --> 00:58:16,280
+ can struggle with those kind of constraints.
+
+1061
+00:58:16,280 --> 00:58:19,560
+ OK, so we can't quite say what I want to say.
+
+1062
+00:58:19,560 --> 00:58:24,320
+ We say that we're guaranteed to be collision-free because
+
+1063
+00:58:24,320 --> 00:58:25,320
+ of this iris algorithm.
+
+1064
+00:58:25,320 --> 00:58:27,860
+ We can guarantee that once I'm in the curve in that region,
+
+1065
+00:58:27,860 --> 00:58:29,320
+ I won't have a collision.
+
+1066
+00:58:29,320 --> 00:58:30,980
+ I don't have to check the line segment
+
+1067
+00:58:30,980 --> 00:58:32,320
+ at a bunch of different samples.
+
+1068
+00:58:32,320 --> 00:58:34,480
+ I have this nice property.
+
+1069
+00:58:34,480 --> 00:58:37,880
+ And then within the convex decomposition
+
+1070
+00:58:37,880 --> 00:58:40,840
+ and within the class of curves, we
+
+1071
+00:58:40,840 --> 00:58:42,640
+ can be complete and globally optimal.
+
+1072
+00:58:42,640 --> 00:58:52,520
+ So this is the-- back when we were doing it
+
+1073
+00:58:52,520 --> 00:58:55,040
+ with the big mixed integer problem,
+
+1074
+00:58:55,040 --> 00:58:56,840
+ this is Robin's version of it.
+
+1075
+00:58:56,840 --> 00:59:01,480
+ So you have your original obstacle-based environment.
+
+1076
+00:59:01,480 --> 00:59:02,900
+ And the first step is you compute
+
+1077
+00:59:02,900 --> 00:59:04,880
+ these approximate convex decompositions.
+
+1078
+00:59:04,880 --> 00:59:14,200
+ This is the iris algorithm that you'll implement.
+
+1079
+00:59:14,200 --> 00:59:16,040
+ And then once you have those decompositions,
+
+1080
+00:59:16,040 --> 00:59:20,040
+ you can plan optimal motions.
+
+1081
+00:59:20,040 --> 00:59:23,440
+ [AUDIO OUT]
+
+1082
+00:59:23,440 --> 00:59:33,480
+ That particular environment used to run
+
+1083
+00:59:33,480 --> 00:59:36,000
+ as one of our unit tests on an early version of Drake
+
+1084
+00:59:36,000 --> 00:59:38,160
+ that was running on the build servers in my office.
+
+1085
+00:59:38,160 --> 00:59:42,200
+ And there was a bug for a while that it
+
+1086
+00:59:42,200 --> 00:59:45,000
+ would publish its visualization to the LCM channel
+
+1087
+00:59:45,000 --> 00:59:46,620
+ across the subnet.
+
+1088
+00:59:46,620 --> 00:59:48,320
+ So everybody on the third floor used
+
+1089
+00:59:48,320 --> 00:59:51,040
+ to see trees appear randomly and quadrotors flying around.
+
+1090
+00:59:51,040 --> 00:59:53,520
+ And they're like, where is this coming from?
+
+1091
+00:59:53,520 --> 00:59:55,680
+ And there was a long time where I would just randomly
+
+1092
+00:59:55,680 --> 00:59:56,880
+ see that pop up on my screen.
+
+1093
+00:59:56,880 --> 00:59:59,000
+ So that brings up fond memories to me.
+
+1094
+00:59:59,000 --> 01:00:06,080
+ So that was the case where the obstacles are in task space--
+
+1095
+01:00:06,080 --> 01:00:07,480
+ or the obstacles are convex.
+
+1096
+01:00:07,480 --> 01:00:09,060
+ And that's the case we'll have you do.
+
+1097
+01:00:09,060 --> 01:00:10,840
+ But there's a more sophisticated version
+
+1098
+01:00:10,840 --> 01:00:13,260
+ of that, thinking about how do you do it for configuration
+
+1099
+01:00:13,260 --> 01:00:14,600
+ space obstacles.
+
+1100
+01:00:14,600 --> 01:00:18,200
+ The original algorithm assumed convex.
+
+1101
+01:00:18,200 --> 01:00:22,120
+ Now there's new extensions for C space.
+
+1102
+01:00:22,120 --> 01:00:26,880
+ And one of them is just using nonlinear optimization.
+
+1103
+01:00:26,880 --> 01:00:27,560
+ And it's fast.
+
+1104
+01:00:27,560 --> 01:00:28,840
+ And I'll run it right here.
+
+1105
+01:00:28,840 --> 01:00:31,840
+ There's another one that gives actual certifications
+
+1106
+01:00:31,840 --> 01:00:33,600
+ using sums of squares optimization.
+
+1107
+01:00:33,600 --> 01:00:37,560
+ And that's guaranteed to be collision free.
+
+1108
+01:00:37,560 --> 01:00:38,280
+ But it's slower.
+
+1109
+01:00:38,280 --> 01:00:39,320
+ And I won't run it here.
+
+1110
+01:00:39,320 --> 01:00:55,840
+,
+
+1111
+01:00:55,840 --> 01:00:58,120
+ So I was like, how do I visualize
+
+1112
+01:00:58,120 --> 01:01:03,320
+ collision free obstacles in a way that you can understand?
+
+1113
+01:01:03,320 --> 01:01:05,880
+ So this is a pretty good visualization.
+
+1114
+01:01:05,880 --> 01:01:07,840
+ So you've got some weird q1, q2.
+
+1115
+01:01:07,840 --> 01:01:12,480
+ There's a weird collision free collision region,
+
+1116
+01:01:12,480 --> 01:01:14,520
+ which is these two EOs smacking into each other.
+
+1117
+01:01:14,520 --> 01:01:17,640
+ And it makes this very non-convex shape.
+
+1118
+01:01:17,640 --> 01:01:18,860
+ And this is a visualization.
+
+1119
+01:01:18,860 --> 01:01:22,280
+ As you move around through the C-free,
+
+1120
+01:01:22,280 --> 01:01:25,800
+ you can see them not in collision.
+
+1121
+01:01:25,800 --> 01:01:29,080
+ Here's the version I put up last night here--
+
+1122
+01:01:29,080 --> 01:01:31,200
+ this morning.
+
+1123
+01:01:31,200 --> 01:01:32,760
+ Blurs together.
+
+1124
+01:01:32,760 --> 01:01:38,040
+ Instead, I made an iris region, which
+
+1125
+01:01:38,040 --> 01:01:42,080
+ was seeded with a point inside the shelf.
+
+1126
+01:01:42,080 --> 01:01:46,640
+ And I get a convex polytope in the joint space.
+
+1127
+01:01:46,640 --> 01:01:49,040
+ And I'm thinking, how do I make you guys understand
+
+1128
+01:01:49,040 --> 01:01:50,760
+ what that region looks like?
+
+1129
+01:01:50,760 --> 01:01:52,920
+ And I was going to plot it in 3D.
+
+1130
+01:01:52,920 --> 01:01:55,600
+ And it's completely uninterpretable in joint space.
+
+1131
+01:01:55,600 --> 01:01:57,840
+ My brain does not understand what's happening there.
+
+1132
+01:01:57,840 --> 01:01:59,320
+ So this is what I did instead.
+
+1133
+01:01:59,320 --> 01:02:02,920
+ Is I just basically-- I wrote a little program that
+
+1134
+01:02:02,920 --> 01:02:07,160
+ would basically visit random boundaries of the joint space.
+
+1135
+01:02:07,160 --> 01:02:08,600
+ And I just plotted it here.
+
+1136
+01:02:08,600 --> 01:02:13,520
+ So basically, this robot is just walking around
+
+1137
+01:02:13,520 --> 01:02:16,080
+ inside one of the regions, one of the iris regions.
+
+1138
+01:02:16,080 --> 01:02:17,800
+ And you can kind of see that it carves out
+
+1139
+01:02:17,800 --> 01:02:20,680
+ a nice large part of the state space.
+
+1140
+01:02:20,680 --> 01:02:23,240
+ And it's not in collision.
+
+1141
+01:02:23,240 --> 01:02:25,920
+ It'd be nice if it walked a different dimension.
+
+1142
+01:02:25,920 --> 01:02:28,200
+ I guess randomness-- oh, yeah, there it goes.
+
+1143
+01:02:28,200 --> 01:02:28,960
+ Up and down, right?
+
+1144
+01:02:28,960 --> 01:02:33,120
+ So it's got this nice sort of joint space region.
+
+1145
+01:02:33,120 --> 01:02:36,880
+ You might wonder, what if a convex decomposition of this--
+
+1146
+01:02:36,880 --> 01:02:40,000
+ this is a pretty narrow part of this joint space,
+
+1147
+01:02:40,000 --> 01:02:42,460
+ of the configuration space, too, because of the collision
+
+1148
+01:02:42,460 --> 01:02:43,760
+ geometry.
+
+1149
+01:02:43,760 --> 01:02:46,640
+ But it fills out a nice big region.
+
+1150
+01:02:46,640 --> 01:02:49,320
+ And in practice, we found in all those motion planning examples
+
+1151
+01:02:49,320 --> 01:02:51,120
+ we did, we only needed a handful of regions.
+
+1152
+01:02:51,120 --> 01:02:54,440
+ It's a pretty surprisingly small number of regions.
+
+1153
+01:02:54,440 --> 01:02:56,480
+ It's also working with the original collision
+
+1154
+01:02:56,480 --> 01:02:58,000
+ geometry of the robot.
+
+1155
+01:02:58,000 --> 01:03:00,760
+ So for the kinematic trajectory optimization before,
+
+1156
+01:03:00,760 --> 01:03:02,480
+ I had to turn it into a sphere to make
+
+1157
+01:03:02,480 --> 01:03:04,040
+ sure it got out of local minima.
+
+1158
+01:03:04,040 --> 01:03:05,960
+ None of that here.
+
+1159
+01:03:05,960 --> 01:03:08,480
+ It's still the simplified geometry, but it's good.
+
+1160
+01:03:08,480 --> 01:03:09,480
+ Yeah?
+
+1161
+01:03:09,480 --> 01:03:09,980
+ [INAUDIBLE]
+
+1162
+01:03:09,980 --> 01:03:19,940
+ Good.
+
+1163
+01:03:19,940 --> 01:03:21,440
+ So that's exactly the right question.
+
+1164
+01:03:21,440 --> 01:03:24,720
+ He says, so the non-convexity that's
+
+1165
+01:03:24,720 --> 01:03:27,120
+ coming from the kinematics-- so the way
+
+1166
+01:03:27,120 --> 01:03:31,280
+ we're doing this here is we are building
+
+1167
+01:03:31,280 --> 01:03:34,920
+ the graph in joint space, not in end-effector space.
+
+1168
+01:03:34,920 --> 01:03:38,000
+ But we're certifying that every point in that region
+
+1169
+01:03:38,000 --> 01:03:39,920
+ is valid in task space.
+
+1170
+01:03:39,920 --> 01:03:42,920
+ So we are addressing your concern.
+
+1171
+01:03:42,920 --> 01:03:47,080
+ But we're using Iris to go across that non-linear boundary
+
+1172
+01:03:47,080 --> 01:03:49,080
+ of kinematics.
+
+1173
+01:03:49,080 --> 01:03:51,320
+ The graph of convex sets cannot go through--
+
+1174
+01:03:51,320 --> 01:03:53,040
+ the convex optimization cannot go
+
+1175
+01:03:53,040 --> 01:03:54,640
+ through the non-linear transformation,
+
+1176
+01:03:54,680 --> 01:03:57,160
+ but the Iris can.
+
+1177
+01:03:57,160 --> 01:04:00,040
+ So we have to pre-compute any of the non-linearities away.
+
+1178
+01:04:00,040 --> 01:04:00,540
+ [INAUDIBLE]
+
+1179
+01:04:00,540 --> 01:04:07,840
+ That's what I tried to do.
+
+1180
+01:04:07,840 --> 01:04:10,000
+ Actually, I tried to even walk along the vertices.
+
+1181
+01:04:10,000 --> 01:04:15,840
+ But so the way that I've implemented Iris today,
+
+1182
+01:04:15,840 --> 01:04:18,880
+ it kicks out a stupid number of vertices, basically.
+
+1183
+01:04:18,880 --> 01:04:21,360
+ So it would have been a great video that went--
+
+1184
+01:04:21,360 --> 01:04:24,800
+ [LAUGHTER]
+
+1185
+01:04:24,800 --> 01:04:26,040
+ So I was like, you know what?
+
+1186
+01:04:26,040 --> 01:04:30,200
+ I'm going to just make it go in random directions instead.
+
+1187
+01:04:30,200 --> 01:04:30,960
+ You caught me.
+
+1188
+01:04:30,960 --> 01:04:34,120
+ That was the first idea.
+
+1189
+01:04:34,120 --> 01:04:40,600
+ If the robot is [INAUDIBLE] or it loses a joint,
+
+1190
+01:04:40,600 --> 01:04:44,480
+ does the configuration space change in a predictable way?
+
+1191
+01:04:44,480 --> 01:04:46,280
+ Or would you have to pre-compute it?
+
+1192
+01:04:46,280 --> 01:04:47,440
+ That's an awesome question.
+
+1193
+01:04:47,440 --> 01:04:49,440
+ So the question is, what happens--
+
+1194
+01:04:49,440 --> 01:04:51,480
+ so your question was removing the gripper,
+
+1195
+01:04:51,480 --> 01:04:54,120
+ but even more relevant maybe is picking up an object.
+
+1196
+01:04:54,120 --> 01:04:55,640
+ And you suddenly want to not collide
+
+1197
+01:04:55,640 --> 01:04:58,760
+ with the object in the sink.
+
+1198
+01:04:58,760 --> 01:05:02,160
+ So I think that does change the configuration space.
+
+1199
+01:05:02,160 --> 01:05:03,920
+ And we haven't addressed that yet.
+
+1200
+01:05:03,920 --> 01:05:07,040
+ This is a hot off the press algorithm.
+
+1201
+01:05:07,040 --> 01:05:08,960
+ I think for the case of the clutter clearing,
+
+1202
+01:05:08,960 --> 01:05:12,960
+ or the DexEye workflow, or any of the million robots
+
+1203
+01:05:12,960 --> 01:05:15,520
+ out there that are moving in a relatively similar environment
+
+1204
+01:05:15,520 --> 01:05:16,440
+ all day long--
+
+1205
+01:05:16,440 --> 01:05:18,080
+ the multi-query case.
+
+1206
+01:05:18,080 --> 01:05:21,400
+ Any case where you can afford to do some pre-computation
+
+1207
+01:05:21,400 --> 01:05:26,880
+ and then optimize very quickly, we've dialed that in well.
+
+1208
+01:05:26,880 --> 01:05:30,120
+ And I think the next round, which
+
+1209
+01:05:30,120 --> 01:05:35,120
+ I'm happy to have you guys think about,
+
+1210
+01:05:35,120 --> 01:05:38,200
+ is to think about how to dynamically change
+
+1211
+01:05:38,200 --> 01:05:39,360
+ those regions, for instance.
+
+1212
+01:05:39,360 --> 01:05:40,640
+ Maybe straight from perception.
+
+1213
+01:05:40,640 --> 01:05:43,200
+ Maybe from-- maybe you can crop regions.
+
+1214
+01:05:43,200 --> 01:05:44,900
+ There's all kinds of clever things to do.
+
+1215
+01:05:44,900 --> 01:05:45,900
+ [INAUDIBLE]
+
+1216
+01:05:45,900 --> 01:05:58,940
+ We seed them-- yeah, you can see them in either place.
+
+1217
+01:05:58,940 --> 01:06:02,220
+ But they have to be seeds in Q, in the joint space.
+
+1218
+01:06:02,220 --> 01:06:04,680
+ But we typically seed them by solving an inverse kinematics
+
+1219
+01:06:04,680 --> 01:06:07,660
+ problem, just because that's easier for the human.
+
+1220
+01:06:07,660 --> 01:06:08,140
+ [INAUDIBLE]
+
+1221
+01:06:09,060 --> 01:06:12,540
+ So that's one to many [INAUDIBLE]
+
+1222
+01:06:12,540 --> 01:06:13,820
+ If you seed it in--
+
+1223
+01:06:13,820 --> 01:06:15,940
+ like, if doing this kinematics, then
+
+1224
+01:06:15,940 --> 01:06:21,420
+ we cover it in [INAUDIBLE]
+
+1225
+01:06:21,420 --> 01:06:22,620
+ So you're worried about--
+
+1226
+01:06:22,620 --> 01:06:27,100
+ so I think there are sampling-based approaches
+
+1227
+01:06:27,100 --> 01:06:28,600
+ that could try to fill out the space
+
+1228
+01:06:28,600 --> 01:06:31,500
+ and have a probabilistic completeness kind of guarantee.
+
+1229
+01:06:31,500 --> 01:06:34,060
+ But we found, actually, that--
+
+1230
+01:06:34,060 --> 01:06:35,860
+ I mean, there's a lot of regions you probably
+
+1231
+01:06:35,860 --> 01:06:37,740
+ don't want to visit.
+
+1232
+01:06:37,740 --> 01:06:41,260
+ So we found it's more useful to pick the ones
+
+1233
+01:06:41,260 --> 01:06:44,740
+ and use IK to sort of filter out some of those crazy regions.
+
+1234
+01:06:44,740 --> 01:06:45,240
+ [INAUDIBLE]
+
+1235
+01:06:45,240 --> 01:06:53,340
+ OK, yeah, so you can--
+
+1236
+01:06:53,340 --> 01:06:55,820
+ right, you can sample directly in Q to grow the regions
+
+1237
+01:06:55,820 --> 01:06:56,380
+ if you need to.
+
+1238
+01:06:56,380 --> 01:07:01,820
+ That's true.
+
+1239
+01:07:01,820 --> 01:07:02,820
+ Yes?
+
+1240
+01:07:02,820 --> 01:07:03,300
+ [INAUDIBLE]
+
+1241
+01:07:03,300 --> 01:07:10,860
+ That's a great question.
+
+1242
+01:07:10,860 --> 01:07:17,140
+ Do humans do graph of convex sets, or RRT, or PRM?
+
+1243
+01:07:17,140 --> 01:07:21,140
+ You'll get a different answer from everybody you ask,
+
+1244
+01:07:21,140 --> 01:07:22,740
+ I think.
+
+1245
+01:07:22,740 --> 01:07:27,140
+ I would guess that they are not doing this.
+
+1246
+01:07:27,140 --> 01:07:30,860
+ I would have said that the sample-based things,
+
+1247
+01:07:30,860 --> 01:07:34,620
+ like PRMs and RRTs, would be a very weird thing
+
+1248
+01:07:34,620 --> 01:07:36,780
+ to think about a human doing.
+
+1249
+01:07:36,780 --> 01:07:39,900
+ But I've had conversations with people like Josh Tenenbaum
+
+1250
+01:07:39,900 --> 01:07:42,140
+ who say that the cognitive scientists are actually
+
+1251
+01:07:42,140 --> 01:07:44,940
+ pretty excited about the RRT kind of view of the world
+
+1252
+01:07:44,940 --> 01:07:48,260
+ as a cognitive model.
+
+1253
+01:07:48,260 --> 01:07:49,460
+ Still feels weird to me.
+
+1254
+01:07:49,460 --> 01:07:51,740
+ I don't know.
+
+1255
+01:07:51,740 --> 01:07:55,420
+ I think we are certainly a parallel processing machine.
+
+1256
+01:07:55,420 --> 01:07:59,740
+ And maybe we can do a lot of things like that.
+
+1257
+01:07:59,740 --> 01:08:04,900
+ If you ask me, I would think that-- and this is speculation.
+
+1258
+01:08:04,900 --> 01:08:08,780
+ I think we're probably not solving the geometric puzzles
+
+1259
+01:08:08,780 --> 01:08:10,740
+ that we're asking our motion planning to solve.
+
+1260
+01:08:10,740 --> 01:08:13,140
+ I'm going to make that point at the very end.
+
+1261
+01:08:13,140 --> 01:08:15,940
+ This is a harder problem than humans are probably solving.
+
+1262
+01:08:15,940 --> 01:08:18,660
+ This is when you're asked to separate the puzzles out
+
+1263
+01:08:18,660 --> 01:08:19,460
+ and stuff like this.
+
+1264
+01:08:19,460 --> 01:08:23,300
+ And humans do that rarely and not particularly well.
+
+1265
+01:08:23,300 --> 01:08:25,460
+ I think we are much more approximate,
+
+1266
+01:08:25,460 --> 01:08:27,340
+ and we're not afraid of bumping into things.
+
+1267
+01:08:27,340 --> 01:08:29,980
+ And I think much more simple strategies
+
+1268
+01:08:29,980 --> 01:08:31,420
+ can solve a lot of problems.
+
+1269
+01:08:31,420 --> 01:08:38,780
+ But apparently some cognitive psychologists like RRT.
+
+1270
+01:08:38,780 --> 01:08:41,260
+ It's all good.
+
+1271
+01:08:41,260 --> 01:08:43,500
+ I would love to know more about that.
+
+1272
+01:08:43,500 --> 01:08:45,040
+ I don't know as much as I would like.
+
+1273
+01:08:45,040 --> 01:08:56,940
+ So just to give you-- since I kind of advertised that,
+
+1274
+01:08:56,940 --> 01:08:59,280
+ let me just tell you what it can do and what it can't do.
+
+1275
+01:08:59,280 --> 01:09:04,420
+ So not every kinematic trajectory optimization
+
+1276
+01:09:04,420 --> 01:09:05,900
+ fits in that framework.
+
+1277
+01:09:05,900 --> 01:09:09,020
+ I have to restrict ourselves to things that are convex,
+
+1278
+01:09:09,020 --> 01:09:10,260
+ costs and objectives.
+
+1279
+01:09:10,260 --> 01:09:11,940
+ But it's a pretty large library.
+
+1280
+01:09:11,940 --> 01:09:14,700
+ If you use Bézier polynomials and Bézier splines
+
+1281
+01:09:14,700 --> 01:09:18,380
+ and all the right tricks and tools,
+
+1282
+01:09:18,380 --> 01:09:20,660
+ then you can minimize time.
+
+1283
+01:09:20,660 --> 01:09:22,180
+ You can minimize path length.
+
+1284
+01:09:22,180 --> 01:09:26,140
+ You can minimize some sense of energy in it.
+
+1285
+01:09:26,140 --> 01:09:28,940
+ You can make trajectories smooth up
+
+1286
+01:09:28,940 --> 01:09:32,580
+ to arbitrary derivative degree.
+
+1287
+01:09:32,580 --> 01:09:34,980
+ You can avoid collisions by being inside the iris
+
+1288
+01:09:34,980 --> 01:09:36,060
+ regions of this picture.
+
+1289
+01:09:36,060 --> 01:09:41,340
+ And those are guaranteed for all time.
+
+1290
+01:09:41,340 --> 01:09:44,100
+ There's no sampling-based concerns, right,
+
+1291
+01:09:44,100 --> 01:09:45,940
+ of clipping a corner or something like that,
+
+1292
+01:09:45,940 --> 01:09:46,780
+ which is a big deal.
+
+1293
+01:09:46,780 --> 01:09:50,820
+ I think lots of people suffer those clipped corners
+
+1294
+01:09:50,820 --> 01:09:52,220
+ in practice.
+
+1295
+01:09:52,220 --> 01:09:55,860
+ You can put velocity constraints.
+
+1296
+01:09:55,860 --> 01:09:58,580
+ I really want the next thing to say acceleration constraints,
+
+1297
+01:09:58,580 --> 01:10:01,260
+ but we don't know how to put acceleration constraints on.
+
+1298
+01:10:01,260 --> 01:10:03,500
+ That's non-convex so far.
+
+1299
+01:10:03,500 --> 01:10:06,820
+ Maybe there's a problem we can crack.
+
+1300
+01:10:06,820 --> 01:10:09,420
+ But you can put bounds on the time.
+
+1301
+01:10:09,420 --> 01:10:10,860
+ You can give it initial conditions,
+
+1302
+01:10:10,860 --> 01:10:12,180
+ final-- those kind of things.
+
+1303
+01:10:12,180 --> 01:10:13,760
+ That's a little bit bigger than that,
+
+1304
+01:10:13,760 --> 01:10:16,700
+ but that's the main library of costs and constraints
+
+1305
+01:10:16,700 --> 01:10:18,260
+ that we can put on here.
+
+1306
+01:10:18,260 --> 01:10:23,780
+ But in that regime, we're solving to global optimality
+
+1307
+01:10:23,780 --> 01:10:25,340
+ mostly with convex optimization.
+
+1308
+01:10:25,340 --> 01:10:27,500
+ And even that, I want to be super clear
+
+1309
+01:10:27,500 --> 01:10:31,220
+ that it's actually a mixed integer program where
+
+1310
+01:10:31,220 --> 01:10:34,260
+ the convex relaxation is almost always tight.
+
+1311
+01:10:34,260 --> 01:10:37,100
+ So it's not guaranteed to solve to optimality
+
+1312
+01:10:37,100 --> 01:10:38,900
+ with convex optimization, but in practice, we
+
+1313
+01:10:38,900 --> 01:10:41,940
+ find it almost always does.
+
+1314
+01:10:41,940 --> 01:10:44,860
+ And we've done a lot of work to try to compare it to PRM.
+
+1315
+01:10:44,860 --> 01:10:46,860
+ And this is the shortcutting that [INAUDIBLE]
+
+1316
+01:10:46,860 --> 01:10:48,340
+ about.
+
+1317
+01:10:48,340 --> 01:10:52,700
+ Take my crazy PRM and try to find the shortcutting.
+
+1318
+01:10:52,700 --> 01:10:56,700
+ And how does it compare in terms of time and the message?
+
+1319
+01:10:56,700 --> 01:10:59,300
+ This is an unoptimized PRM.
+
+1320
+01:10:59,300 --> 01:11:02,660
+ I think people have more optimized PRMs out there.
+
+1321
+01:11:02,660 --> 01:11:07,020
+ But it's a good PRM.
+
+1322
+01:11:07,020 --> 01:11:10,800
+ It's just not super GPU-enabled and stuff.
+
+1323
+01:11:10,800 --> 01:11:13,380
+ We tend to find better paths.
+
+1324
+01:11:13,380 --> 01:11:14,620
+ That's what you would expect.
+
+1325
+01:11:14,620 --> 01:11:17,260
+ We're using optimization instead of just sampling.
+
+1326
+01:11:17,260 --> 01:11:21,500
+ Even then, the shortcutting PRM, we're doing better than that.
+
+1327
+01:11:21,500 --> 01:11:26,080
+ And we can often find them in less time than the PRM.
+
+1328
+01:11:26,080 --> 01:11:27,620
+ In particular, the one I really like
+
+1329
+01:11:27,620 --> 01:11:30,940
+ is that there's some things you can do on the graph.
+
+1330
+01:11:30,940 --> 01:11:32,340
+ There's some observations you can
+
+1331
+01:11:32,340 --> 01:11:33,660
+ make by just looking at the graph
+
+1332
+01:11:33,660 --> 01:11:36,020
+ without even thinking about the continuous variables that
+
+1333
+01:11:36,020 --> 01:11:39,100
+ allow you to rule out lots of possibilities very quickly
+
+1334
+01:11:39,100 --> 01:11:41,640
+ and kind of pre-process yourself into a very simple problem.
+
+1335
+01:11:41,640 --> 01:11:45,100
+ And some problems, if there's not big branching,
+
+1336
+01:11:45,100 --> 01:11:46,620
+ can just go solve almost instantly.
+
+1337
+01:11:50,020 --> 01:11:51,460
+ So we get all these little examples
+
+1338
+01:11:51,460 --> 01:11:56,060
+ of complicated bimanual--
+
+1339
+01:11:56,060 --> 01:11:59,460
+ I like the bimanual case because most PRM RRT algorithms
+
+1340
+01:11:59,460 --> 01:12:01,060
+ don't scale well.
+
+1341
+01:12:01,060 --> 01:12:04,340
+ Sampling scales surprisingly well.
+
+1342
+01:12:04,340 --> 01:12:07,500
+ I wouldn't have expected it to work in 10, 12 dimensions.
+
+1343
+01:12:07,500 --> 01:12:10,220
+ But when you start getting to 14 dimensions,
+
+1344
+01:12:10,220 --> 01:12:11,620
+ or if you put it on a mobile base,
+
+1345
+01:12:11,620 --> 01:12:13,920
+ and you've got 17 dimensions, maybe you've got a torso,
+
+1346
+01:12:13,920 --> 01:12:16,580
+ you're up to 20, most people don't--
+
+1347
+01:12:16,580 --> 01:12:18,640
+ you'll see, actually, most robots,
+
+1348
+01:12:18,640 --> 01:12:24,900
+ if you see a bimanual robot, almost always you look for this.
+
+1349
+01:12:24,900 --> 01:12:25,980
+ One arm will be fixed.
+
+1350
+01:12:25,980 --> 01:12:27,220
+ It'll move the other arm.
+
+1351
+01:12:27,220 --> 01:12:28,060
+ And then it'll stop.
+
+1352
+01:12:28,060 --> 01:12:30,300
+ And it'll move this arm.
+
+1353
+01:12:30,300 --> 01:12:31,340
+ Almost always.
+
+1354
+01:12:31,340 --> 01:12:32,220
+ Almost always.
+
+1355
+01:12:32,220 --> 01:12:34,980
+ Or they'll be not moving close to each other.
+
+1356
+01:12:34,980 --> 01:12:40,860
+ So yeah, just to wrap that up and say it's super clear.
+
+1357
+01:12:40,860 --> 01:12:44,540
+ So what I'm advocating here is a change from the PRM,
+
+1358
+01:12:44,540 --> 01:12:46,300
+ where you sample and make the roadmap,
+
+1359
+01:12:46,300 --> 01:12:48,140
+ to every time you make one of those samples,
+
+1360
+01:12:48,140 --> 01:12:51,280
+ you grow a region.
+
+1361
+01:12:51,280 --> 01:12:54,440
+ But to some extent, everything you can do with the PRM,
+
+1362
+01:12:54,440 --> 01:12:55,840
+ you could do this way.
+
+1363
+01:12:55,840 --> 01:12:58,640
+ It's just trying to make those samples into big regions
+
+1364
+01:12:58,640 --> 01:13:00,920
+ so that you have room for the continuous optimization
+
+1365
+01:13:00,920 --> 01:13:03,840
+ to do its work.
+
+1366
+01:13:03,840 --> 01:13:04,520
+ You pay a price.
+
+1367
+01:13:04,520 --> 01:13:07,440
+ That's an expensive step at the offline.
+
+1368
+01:13:07,440 --> 01:13:09,880
+ Although it's even comparable to building a denser roadmap.
+
+1369
+01:13:09,880 --> 01:13:14,960
+ Because we can make 10 iris regions in the time
+
+1370
+01:13:14,960 --> 01:13:18,340
+ you'd make 10,000 regions over here.
+
+1371
+01:13:18,340 --> 01:13:22,660
+ And that's what people tend to do is make super dense PRMs.
+
+1372
+01:13:22,660 --> 01:13:25,020
+ And we get better motions.
+
+1373
+01:13:25,020 --> 01:13:28,580
+ All right, sorry for the advertisement.
+
+1374
+01:13:28,580 --> 01:13:33,660
+ Having said all that, I actually don't
+
+1375
+01:13:33,660 --> 01:13:35,540
+ like collision-free motion planning
+
+1376
+01:13:35,540 --> 01:13:36,580
+ as a problem formulation.
+
+1377
+01:13:36,580 --> 01:13:38,060
+ This is the point.
+
+1378
+01:13:38,060 --> 01:13:42,500
+ So I want to just make sure that I land at the end
+
+1379
+01:13:42,500 --> 01:13:44,420
+ that this is kind of a weird problem.
+
+1380
+01:13:44,420 --> 01:13:46,560
+ It's probably not the problem humans are solving.
+
+1381
+01:13:46,560 --> 01:13:48,400
+ Anybody know this one?
+
+1382
+01:13:48,400 --> 01:13:50,000
+ This is from my childhood.
+
+1383
+01:13:50,000 --> 01:13:53,160
+ It was a little after people played with sticks and stones.
+
+1384
+01:13:53,160 --> 01:13:55,960
+ About a little bit before iPads.
+
+1385
+01:13:55,960 --> 01:13:59,760
+ So it's a little game called Operation.
+
+1386
+01:13:59,760 --> 01:14:01,840
+ Yeah, thank you.
+
+1387
+01:14:01,840 --> 01:14:03,240
+ It's annoying.
+
+1388
+01:14:03,240 --> 01:14:05,440
+ It's annoying to have in the house.
+
+1389
+01:14:05,440 --> 01:14:08,960
+ But basically, you have to pick out the bones out
+
+1390
+01:14:08,960 --> 01:14:11,040
+ of this poor patient.
+
+1391
+01:14:11,040 --> 01:14:15,360
+ And if your leads touch the side of the cell,
+
+1392
+01:14:15,360 --> 01:14:16,780
+ you kill the patient or something.
+
+1393
+01:14:16,780 --> 01:14:17,760
+ It goes, eh.
+
+1394
+01:14:17,760 --> 01:14:20,240
+ And mom and dad go, eh.
+
+1395
+01:14:20,240 --> 01:14:23,120
+ OK, that's a weird game.
+
+1396
+01:14:23,120 --> 01:14:26,420
+ And it's probably not how we move through the world.
+
+1397
+01:14:26,420 --> 01:14:30,440
+ So I think a better formulation.
+
+1398
+01:14:30,440 --> 01:14:33,160
+ So as we get past the core material of the class,
+
+1399
+01:14:33,160 --> 01:14:36,080
+ we're going to enter this boutique lectures.
+
+1400
+01:14:36,080 --> 01:14:37,840
+ And I'll ask you guys for feedback.
+
+1401
+01:14:37,840 --> 01:14:39,260
+ And we can choose which ones we're
+
+1402
+01:14:39,260 --> 01:14:41,180
+ going to cover of the more advanced topics.
+
+1403
+01:14:41,180 --> 01:14:43,000
+ But task and motion planning I've mentioned.
+
+1404
+01:14:43,000 --> 01:14:45,720
+ Belief space planning was a possibility.
+
+1405
+01:14:45,720 --> 01:14:48,560
+ Planning through contact is another possibility
+
+1406
+01:14:48,560 --> 01:14:51,000
+ as a more advanced topic.
+
+1407
+01:14:51,000 --> 01:14:53,360
+ And it's something that I care a lot about.
+
+1408
+01:14:53,360 --> 01:14:55,080
+ But it's, I think, a richer formulation
+
+1409
+01:14:55,080 --> 01:14:56,120
+ for these kind of things.
+
+1410
+01:14:56,120 --> 01:14:58,280
+ You shouldn't be afraid of bumping into the world
+
+1411
+01:14:58,280 --> 01:14:59,640
+ all the time.
+
+1412
+01:14:59,640 --> 01:15:01,200
+ There's a bunch of projects.
+
+1413
+01:15:01,200 --> 01:15:04,000
+ This is one at TRI.
+
+1414
+01:15:04,000 --> 01:15:06,120
+ We're trying to build something kind of like Baymax.
+
+1415
+01:15:06,120 --> 01:15:08,840
+ We call it Puno, which is soft and cuddly
+
+1416
+01:15:08,840 --> 01:15:10,200
+ in Japanese, I guess.
+
+1417
+01:15:10,200 --> 01:15:13,240
+ And we have all kinds of prototypes.
+
+1418
+01:15:13,240 --> 01:15:14,800
+ If you were to come over to TRI, you
+
+1419
+01:15:14,800 --> 01:15:17,680
+ see all kinds of prototypes of different soft sensors
+
+1420
+01:15:17,680 --> 01:15:20,960
+ and soft structures that are instrumented
+
+1421
+01:15:20,960 --> 01:15:22,800
+ that try to make it so the robots don't
+
+1422
+01:15:22,800 --> 01:15:25,260
+ break when you do rich planning through contact.
+
+1423
+01:15:25,260 --> 01:15:26,960
+ And they're safe to interact with humans.
+
+1424
+01:15:26,960 --> 01:15:31,240
+ Good.
+
+1425
+01:15:31,240 --> 01:15:35,760
+ So that is the second half of the motion planning.
+
+1426
+01:15:35,760 --> 01:15:37,460
+ Allows us to think about how to address
+
+1427
+01:15:37,460 --> 01:15:39,720
+ the non-convexity of the motion planning problem.
+
+1428
+01:15:39,720 --> 01:15:40,920
+ PRM's-- oh, yeah, go ahead.
+
+1429
+01:15:40,920 --> 01:15:42,400
+ Yeah, just a general question.
+
+1430
+01:15:42,400 --> 01:15:42,900
+ Sorry.
+
+1431
+01:15:42,900 --> 01:15:47,120
+ Like, you say, could a free motion planning
+
+1432
+01:15:47,120 --> 01:15:47,620
+ be non-convex?
+
+1433
+01:15:47,620 --> 01:15:49,080
+ And then you could think about it
+
+1434
+01:15:49,080 --> 01:15:50,520
+ from a trajectory organization.
+
+1435
+01:15:50,520 --> 01:15:55,000
+ I feel like you can solve the trajectory organization
+
+1436
+01:15:55,000 --> 01:15:57,480
+ in the computing space.
+
+1437
+01:15:57,480 --> 01:16:00,440
+ But I feel like if you were to think about humans,
+
+1438
+01:16:00,440 --> 01:16:03,360
+ that maybe you solve the trajectory organization
+
+1439
+01:16:03,360 --> 01:16:04,360
+ problem in the workspace.
+
+1440
+01:16:04,360 --> 01:16:06,360
+ But then once you have the gradient,
+
+1441
+01:16:06,360 --> 01:16:09,800
+ you just use Jacobian to get back to the Jacobian.
+
+1442
+01:16:09,800 --> 01:16:12,760
+ So you go back to the configuration.
+
+1443
+01:16:12,760 --> 01:16:16,040
+ Do you feel like that is [INAUDIBLE]??
+
+1444
+01:16:16,040 --> 01:16:16,680
+ Good.
+
+1445
+01:16:16,680 --> 01:16:19,520
+ So the question is, if the configuration space
+
+1446
+01:16:19,520 --> 01:16:24,720
+ is so messy and the task space is so much cleaner,
+
+1447
+01:16:24,720 --> 01:16:27,280
+ in general-- we've done the big, boxy objects, right,
+
+1448
+01:16:27,280 --> 01:16:30,400
+ where engineers-- until AI designs everything,
+
+1449
+01:16:30,400 --> 01:16:32,520
+ we've got nice rectilinear structures.
+
+1450
+01:16:32,520 --> 01:16:36,120
+ Why not plan in the task space and then map it back
+
+1451
+01:16:36,120 --> 01:16:37,080
+ to the joint space?
+
+1452
+01:16:37,080 --> 01:16:38,800
+ I think that is viable.
+
+1453
+01:16:38,800 --> 01:16:43,640
+ I think there's, of course-- then the reason it's often
+
+1454
+01:16:43,640 --> 01:16:46,040
+ preferred to plan in the joint space
+
+1455
+01:16:46,040 --> 01:16:49,000
+ is because the mapping from joint space to workspace
+
+1456
+01:16:49,000 --> 01:16:51,680
+ is the good one, is the forward kinematics.
+
+1457
+01:16:51,680 --> 01:16:54,040
+ And going backwards is inverse kinematics.
+
+1458
+01:16:54,040 --> 01:16:54,760
+ But you're right.
+
+1459
+01:16:54,760 --> 01:16:57,440
+ We can do differential, inverse kinematics, and the like.
+
+1460
+01:16:57,440 --> 01:17:00,000
+ I do think it would be more-- if I think about how a human
+
+1461
+01:17:00,000 --> 01:17:02,680
+ plans-- and I have no reason to have
+
+1462
+01:17:02,680 --> 01:17:03,920
+ a strong feeling about this.
+
+1463
+01:17:03,920 --> 01:17:05,800
+ But it feels very natural to think
+
+1464
+01:17:05,800 --> 01:17:08,800
+ I plan a fairly simple motion of my end effector
+
+1465
+01:17:08,800 --> 01:17:11,440
+ and then execute it.
+
+1466
+01:17:11,440 --> 01:17:12,920
+ I do think that can be very natural.
+
+1467
+01:17:12,920 --> 01:17:13,420
+ [INAUDIBLE]
+
+1468
+01:17:13,420 --> 01:17:25,720
+ So the statement was that maybe the gradients in the task space
+
+1469
+01:17:25,720 --> 01:17:26,760
+ could be reasonable.
+
+1470
+01:17:26,760 --> 01:17:28,840
+ But then the question is, what if I
+
+1471
+01:17:28,840 --> 01:17:31,480
+ have to worry about where my elbow is
+
+1472
+01:17:31,480 --> 01:17:32,600
+ while I'm reaching through?
+
+1473
+01:17:32,600 --> 01:17:33,100
+ Right?
+
+1474
+01:17:33,100 --> 01:17:33,600
+ [INAUDIBLE]
+
+1475
+01:17:33,600 --> 01:17:38,620
+ Yeah.
+
+1476
+01:17:38,620 --> 01:17:39,120
+ [INAUDIBLE]
+
+1477
+01:17:39,120 --> 01:17:44,840
+ I think if you were to not think about the arm
+
+1478
+01:17:44,840 --> 01:17:46,360
+ and only plan in end effector space,
+
+1479
+01:17:46,360 --> 01:17:48,320
+ that's kind of some of the problems
+
+1480
+01:17:48,320 --> 01:17:53,440
+ we had with my simple example, where eventually the elbow
+
+1481
+01:17:53,440 --> 01:17:55,360
+ would fold in on itself and the like.
+
+1482
+01:17:55,360 --> 01:17:59,000
+ So I think you need to think about both jointly in order
+
+1483
+01:17:59,000 --> 01:18:02,920
+ to solve the full problem.
+
+1484
+01:18:02,920 --> 01:18:04,920
+ If you need-- and I think maybe humans
+
+1485
+01:18:04,920 --> 01:18:06,040
+ don't do that very often.
+
+1486
+01:18:06,040 --> 01:18:08,160
+ I think most of the time we probably don't do that.
+
+1487
+01:18:08,160 --> 01:18:09,960
+ But to solve the full problem as specified,
+
+1488
+01:18:09,960 --> 01:18:12,000
+ you would have to solve both of them jointly.
+
+1489
+01:18:12,000 --> 01:18:15,600
+ And you can choose to do it with the forward kinematics,
+
+1490
+01:18:15,600 --> 01:18:17,880
+ or you could choose to do it with the inverse kinematics.
+
+1491
+01:18:17,880 --> 01:18:20,460
+ And I think most people choose the forward kinematics.
+
+1492
+01:18:20,460 --> 01:18:23,160
+ But I agree, for more approximate methods that
+
+1493
+01:18:23,160 --> 01:18:26,120
+ maybe don't worry about making some collisions,
+
+1494
+01:18:26,120 --> 01:18:28,840
+ then it might be very natural to live in the task space.
+
+1495
+01:18:29,840 --> 01:18:33,000
+ [INAUDIBLE]
+
+1496
+01:18:33,000 --> 01:18:33,500
+ Good?
+
+1497
+01:18:33,500 --> 01:18:34,200
+ OK.
+
+1498
+01:18:34,200 --> 01:18:36,080
+ See you next time.
+

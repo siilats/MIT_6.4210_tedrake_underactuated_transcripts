@@ -1,0 +1,1461 @@
+ [SIDE CONVERSATION]
+ OK.
+ Welcome back, everybody.
+ Today we're going to do our third and kind of wrap up
+ lecture on the first exposure we have to geometric perception.
+ We'll come back again when we talk about the connections
+ from deep perception and geometric perception.
+ But just to make sure the roadmap is clear, I hope,
+ we started talking about the idea of you've got two point
+ clouds.
+ You just want to find the pose that
+ allows those point clouds to come into registration.
+ And mostly came up with the iterative closest point
+ algorithm as our mainstay.
+ In particular, that beautiful fact
+ that you can call the singular value decomposition to just
+ solve for the pose.
+ That's like the magical step.
+ And then you use that in an iterative algorithm.
+ Day two, we started embracing some
+ of the messiness of point clouds from outliers and partial
+ views.
+ And the key idea was that even if you go from scene to model
+ or model to scene, at some point not all your points
+ are going to match.
+ And you have to deal with that.
+ So you have to somehow have some non-matches.
+ And we talked about a couple of different ways to do that,
+ including sort of generalizing the notion of correspondence
+ with some of the soft correspondence ideas.
+ We're going to build on that a bit more today.
+ But today I really want to talk about, I guess,
+ the limitations in that basic problem formulation.
+ It doesn't solve all the problems
+ that we wanted to solve.
+ It doesn't give us the ability to say everything
+ we know about the problem.
+ And therefore, the algorithm, even the best possible point
+ registration algorithm, I hope to convince you,
+ can't give you the answer you want all the time.
+ It's like you're not telling the algorithm everything
+ you know about the world.
+ So we're going to try to tell it a few more things.
+ But because of that, we're going to lose our beautiful SVD
+ magic in the middle and have to resort
+ to less powerful but more general solvers.
+ So how can it be less powerful?
+ So it'll eat up a larger class of problems.
+ You can put in more types of costs and constraints,
+ but you will be able to solve them with less reliability.
+ And then we'll see how that plays out
+ into some pose estimation algorithms that
+ can consume more of what we know about the world
+ and do a nice job.
+ And we'll try to wrap up the pose estimation pass.
+ So here, let me set that up and try to just convince you
+ that we haven't told the algorithm everything.
+ And this is basically what happens.
+ The first time you go to implement your beautiful point
+ correspondence algorithm in a manipulation problem,
+ I showed you the lumpy point clouds.
+ That's real.
+ You've got something you're going to pick up off the table.
+ And inevitably, you've got, I don't know,
+ some coffee mug sitting on the table.
+ And you've got your camera here.
+ And you're getting some nice returns off the camera.
+ And your algorithm comes back and says, I found the pose.
+ And it's like inside the table.
+ And you think, come on.
+ I know the pose.
+ I know the mug's not inside the table.
+ But you didn't tell the algorithm.
+ It might actually be that the optimal fit to the points that
+ match the CAD model, given the data that you've got,
+ could be this pose.
+ That if the point registration algorithm was perfect,
+ but your data was a little noisy or other things,
+ it could actually be that the best fit here dramatically
+ violates some other constraint, just
+ because you haven't told the algorithm about the fact
+ that mugs don't typically reside inside tables.
+ And more generally, things should not be in penetration.
+ Similarly, you'll run the algorithm another time.
+ And you'll get some mug floating in space.
+ And you think, OK, I know that the mug's not
+ floating in space.
+ But how do I tell the algorithm that mugs
+ don't float in space?
+ So this one, I would say, is we have
+ to figure out a way to talk about non-penetration.
+ Constraints is typically how we formulate it.
+ [SIGHS]
+ This one, how would you--
+ I mean, what makes that a bad solution?
+ It's more than just geometry.
+ It's got something about physics.
+ And there's probably some assumption required there
+ that the world is static before I started touching it.
+ So something like a static stability,
+ or static equilibrium, let me just say--
+ it doesn't have to be stable, but--
+ would be another type of constraint
+ that I might want to tell my algorithm about,
+ which we haven't done yet.
+ And there's even, I'd say, one more big one
+ that I want to make sure we capture today,
+ which the point set registration formulation just
+ doesn't have room for yet.
+ And we have to extend it.
+ Maybe I won't use a mug for this.
+ I'll use a different shape.
+ But let's say I have a box here, and a camera here.
+ And I get beautiful returns here.
+ And the posed estimation says, yeah, I've got your box.
+ Fit my error-- you know, zero error.
+ There it is right there.
+ And the thing that you know that you didn't tell the algorithm
+ about is that if I have a camera here and a point here,
+ that means that there can't be any geometry there.
+ So this would be the free space constraints.
+ There's just extra information that
+ wasn't contained if your only problem formulation is
+ match the point clouds that you didn't
+ tell where the camera was.
+ So it couldn't possibly have known
+ that you wanted this solution instead of this solution.
+ OK?
+ So those are three examples, but you can come up with more too.
+ And in general, I actually very much
+ enjoy the game of trying to figure out
+ how much of these kind of problems
+ you can fit into a strong optimization,
+ you know, a convex optimization framework.
+ And I would say that's one of the advanced topics
+ I'll mention at the end.
+ But let's step back and not worry
+ about that from the beginning.
+ And we'll just accept that we're going to write messier
+ optimization problems and use more general solvers.
+ OK?
+ But we'll be able to write these constraints
+ and think about how they work.
+ And then we'll revisit at the end
+ of whether there's any question of whether we
+ can fit this into a more beautiful optimization
+ framework or whether we even need to.
+ There's one more example which I guess I want to say,
+ just because I'm a little on the fence about whether I should
+ say it now or later.
+ Because this one could be shoved into SVD framework,
+ but let me just-- it bugs me about the standard point set
+ registration, right?
+ So imagine I have, I don't know, a door.
+ OK?
+ I've got a room and the door's open or something.
+ OK?
+ And I'm getting returns on the door.
+ OK?
+ That's a terrible drawing of a door.
+ OK?
+ And let's say there's a handle here on the door.
+ If I have a camera looking at the door,
+ just some partial view of the door, for instance, right?
+ I'm going to get a bunch of returns all over the door.
+ OK?
+ But if I get a few returns on that handle,
+ that feature is so important that it tells me
+ so much more than the rest of the things on the door.
+ Right?
+ If I got a small snapshot of just like this part of the door,
+ I wouldn't have any idea where the rest of the door was.
+ But if I got a small snapshot that
+ contained part of the handle, I'd
+ know pretty darn well where the whole door is.
+ Right?
+ And that happens in other ways, too.
+ So imagine I have like a table with my lumpy point
+ cloud coming off.
+ And I've got a book sitting on the table.
+ Right?
+ So I've got some thin book, OK?
+ Let's say.
+ And I've got points coming all over the place.
+ OK?
+ And I've got like a few points just on the edge of the book.
+ Just a few, right?
+ But you can get a very good score in ICP
+ if you move that book all around.
+ Right?
+ You're still matching most of the points.
+ Those few points on the edge give you
+ so much more information about the pose than the rest of it.
+ Right?
+ So somehow, you know something about that
+ that you haven't told the algorithm about.
+ Now, the reason I was hesitant--
+ there is a version.
+ You can certainly put weights on the points.
+ You can say some points in my point cloud
+ are more important than others and stick that
+ into the ICP framework.
+ But the point is that you don't even know a priori.
+ There's something else you know, which
+ is that the points on the edge of the object
+ are somehow more important.
+ If you encode that in for that object, you can be OK.
+ But there's something sort of like more than just
+ like pure geometry that's required.
+ There's some understanding of features and other things
+ that happens here.
+ So we need a more general set of tools.
+ So as beautiful as SVD is as a solution, and as fast as it is,
+ I think it maybe has constrained our thinking a little bit.
+ We just try to find ways to stick everything into it.
+ So let's just think about what's the more general view
+ of optimization, which is typically
+ called nonlinear optimization, especially
+ if the functions are smooth.
+ But just for clarity here, try to say nonconvex optimization.
+ So let me spend a few minutes telling you what that class is
+ and what are the implications of leaving convex
+ and going to nonconvex.
+ OK?
+ So far, we've been thinking about problems that mostly
+ have been convex, at least the optimization sub parts.
+ So in the ICP, the pose estimation
+ was SVD or convex optimization.
+ And the finding the points, you could say, was not a convex,
+ but that was just a brute force optimization.
+ But all that pose part has been using
+ convex-type formulations.
+ And similarly, even in the quadratic programming,
+ we did for the kinematics, right?
+ And we did that in the kinematics section.
+ It's been hiding around here.
+ But there are other linear programs.
+ A lot of these problems that we've been thinking about
+ have nice optimization formulations.
+ Now, the picture for a quadratic program, but is more general,
+ is that I've got some, I'd say, even a convex quadratic,
+ positive definite quadratic, is I've
+ got some decision variables.
+ If I'm going to min over x, f of x, if f of x is quadratic,
+ then I want it to be a positive quadratic
+ and have some nice, full, safe objective,
+ with the key observation being that there's a unique--
+ I don't even care if it's unique.
+ I just want to have that, let's say, all minima are
+ global minima.
+ So I can write strong algorithms that
+ will find the optimal solution to the problem
+ when f is somehow a convex function.
+ And similarly, if I start writing constraints,
+ if f is a convex function, and if this is a convex set,
+ then I have these nice algorithms
+ that will find me global solutions to my problems.
+ So now I have to decide how far to go into that rabbit hole,
+ but I'm going to try staying here.
+ Tell me if you have questions or anything.
+ There's certainly plenty of things to know about that.
+ So we've restricted ourselves so far
+ to formulations of the point set registration that could
+ fit in this sort of a framework.
+ The more general, if f of x is more arbitrary,
+ but let's say a smooth but non-linear, non-convex
+ function, then the picture can look more arbitrary.
+ And you'd like to be able to find
+ the minimum of that objective, but in practice,
+ oftentimes algorithms are going to get stuck in local minima.
+ OK.
+ So what I want you to have is have
+ sort of a practical understanding
+ of the implications of going from--
+ when I'm talking about convex optimizations,
+ I should expect to find global solutions.
+ When I start talking about non-linear,
+ non-convex optimizations, I have to worry
+ about a couple of things.
+ First of all, I have to worry that the solution I get
+ may or may not be optimal.
+ It could be worse.
+ It could be that a solution exists,
+ and my solver doesn't even find it because it's stuck here.
+ If I have a constraint saying, I must be inside this set,
+ and I start my search over here, and I get stuck here,
+ it might be that there is a solution to the problem that
+ would satisfy my constraints, and I didn't find it.
+ And in general, where the notion of sort of an initial guess
+ wasn't even part of our language here, for these problems,
+ it does become part of the language.
+ So all that sounds pretty lousy, but the--
+ but the good news is I get to express richer problems
+ because I have a much larger vocabulary of functions
+ I can put in f and g and do reasonable optimization on.
+ Oftentimes, you'd like them to be smooth or continuous.
+ You'd like them to be differentiable,
+ but even that can be relaxed in some case.
+ So I saw some feedback on--
+ I really enjoy reading the feedback, by the way.
+ So every time when you guys are filling out the surveys,
+ know that those are being read and appreciated.
+ Some people said you want to see more examples even in code
+ about translating some of the ideas on the board to code.
+ So I can just connect this with the types of things
+ that you write in code.
+ So Drake has this mathematical program stuff
+ you've started to use.
+ And I want you to appreciate that there's
+ a handful of different ways that you can add costs
+ and constraints to the system.
+ So if I have a mathematical program
+ and I make a decision variable x,
+ write a new continuous variable x,
+ that's roughly what I've done here, just declared
+ a decision variable.
+ What it might help you to know, and you might already
+ appreciate, might not have realized,
+ is that this thing that it returns, x,
+ is actually a pretty powerful symbolic variable.
+ We have a big symbolic engine sitting behind Drake.
+ So you can treat that as just a placeholder for the decision
+ variables, kind of a name for the decision variables,
+ but you can also do symbolic things with it.
+ So even if your cost function was quadratic,
+ in the simple case, in the convex case,
+ we give you a handful of different ways
+ that you can add the costs and the constraints
+ into the problem.
+ You could use this sort of specific add quadratic cost
+ method and tell it the coefficients of the matrices.
+ And that's the most structured thing you can hand Drake.
+ It then does fast numerical operations,
+ but it knows that the problem is convex.
+ And it can check that it's a convex quadratic.
+ When you type in something like add cost or add quadratic cost
+ and you pass in just math on that variable x,
+ this is turning it into a symbolic expression.
+ You might see that in your error messages, symbolic expression,
+ which then when mathematical program eats that up,
+ it actually will check.
+ If it's a symbolic expression you pass in,
+ it will actually check, is that a quadratic?
+ Is it a linear?
+ Is it convex?
+ And if it was convex, it will shuffle it
+ into the right bin of costs and constraints
+ so that it knows you've got a convex problem.
+ OK.
+ If you get to the end and you call solve
+ and you have only added costs and constraints
+ that mathematical program knows are convex,
+ then it will dispatch you to a specialized convex optimization
+ solver, right?
+ Garobi or Mosec if you've got the licenses installed
+ or even one of the open source ones if you're just--
+ I guess on deep note, most of you
+ are using the open source ones, which are not as good,
+ but they're free.
+ That's just the way it is, right?
+ And the difference is substantial in the cost.
+ But know that it's doing a lot of work behind the scenes
+ to try to figure out if these problems are convex or not.
+ And there's a handful of tools out here
+ that try to do this kind of thing.
+ Stephen Boyd likes to call it disciplined convex
+ optimization.
+ We'll see the whole group that works with him
+ calls this disciplined convex optimization, where
+ they try to ask you to write costs and constraints
+ in a disciplined way.
+ And the software does its best to hold the high standards
+ and formulate problems the right way.
+ And Drake's trying to do that too.
+ OK.
+ You can also add arbitrary costs.
+ So you can say make a function, which just takes my x in
+ and does some math and returns it.
+ And in this function, you could potentially
+ be calling multi-body plant everything.
+ Oh, yeah.
+ Alex.
+ [INAUDIBLE]
+ Not all of them.
+ Right.
+ We have our own set, and I would say it's not as disciplined.
+ But it's on that path.
+ The question was, do we actually use the disciplined convex
+ optimization rules?
+ Not all of them.
+ OK, so I could make an arbitrary function here.
+ And this doesn't have to be quadratic.
+ I could have put anything-- actually,
+ the add cost doesn't have to be quadratic,
+ but it has to be something that I can do sort
+ of symbolically in this case.
+ Here I could write actually arbitrary code,
+ because x doesn't come in as a symbolic variable.
+ It comes in as a autodiff variable.
+ And so anything that I can autodiff through--
+ autodiff means automatic differentiation.
+ We have an automatic differentiation library already
+ behind there, too.
+ So functions that might not have a symbolic form
+ will often have a differentiable form that it'll crawl through.
+ I'm afraid that if you know autodiff, that made sense.
+ And if you don't know autodiff, that didn't make sense.
+ But hopefully-- I mean, the basic idea
+ that if I have a variable here that contains, let's say,
+ a double value for x, but also the gradients of x,
+ and I pass that through, and on each line
+ I do the chain rule in software, I can actually
+ crawl through even complicated functions
+ here, as long as I've got automatic differentiation
+ for those functions.
+ If you add cost this way into the mathematical program,
+ it doesn't have the ability to know
+ whether it's quadratic or not.
+ So if you add this cost, even though you've
+ added a quadratic, since it's no longer--
+ it only has a local understanding of the function.
+ It's only able to evaluate at x and its derivatives.
+ You can write more expressive functions here,
+ but you've lost the structure.
+ When you get to the end of this, even
+ though the function is a quadratic cost,
+ it will actually, when you call solve,
+ have to call a less performance solver.
+ It'll call our nonlinear optimizer,
+ which is typically SNOPT, in the examples you use.
+ The big thing, though, that's going to happen
+ is that today we're going to start adding
+ more and more of these costs, which don't have a convex form.
+ You can't call them the better solvers, if you will.
+ SNOPT's a good solver, but it's solving a bigger
+ class of problems, so it can't be as strong.
+ But we're going to fill out more of these general forms.
+ Yeah?
+ Can you add quadratic costs for my cost?
+ Like, if you need to guess when you already have a position,
+ and what do you know is quadratic or not?
+ So you can call-- so you wouldn't do it inside my cost?
+ Yeah, outside.
+ Yeah, yeah.
+ You can definitely add--
+ there are different ways.
+ I mean, you would tend to go through this.
+ So I will often write, like, multi-body plant code,
+ which takes the quadratic, whether it's
+ a Jacobian or something like that,
+ and then calls add quadratic cost directly.
+ And you'll actually see that we have a library of the types
+ of constraints that we're doing here.
+ We actually have a library of constraints
+ that will add, for instance, non-penetration constraints.
+ And it will do all the right things behind the scenes
+ to add them the best possible way
+ to the mathematical program.
+ One of the big things that's important to realize
+ is that when you're solving a nonlinear optimization,
+ I think it's mostly good that Drake just does
+ the thing behind the scenes, and you don't have to worry about
+ whether you're solving it.
+ But if you realize that you're solving it,
+ there is another step you could do
+ in the nonlinear optimization, which I forgot
+ to put on the slide here.
+ But you could do prog.setInitialGuess x,
+ like 32 or something.
+ So when you're in this problem, it
+ doesn't matter where your initial guess is.
+ You'll find the right solution.
+ And the solvers actually don't--
+ many of the solvers don't even take advantage.
+ They don't even have an interface
+ where you would specify the initial guess.
+ Some do, but all the interior point methods
+ don't, classically.
+ But in this one, it can obviously matter a great deal
+ whether you have a good initial guess.
+ So there is an interface where you can call setInitialGuess,
+ and it will set up everything to go from there.
+ Yes?
+ Could you describe maybe at a high level
+ some of the strategies in the nonlinear optimization
+ application?
+ Yeah, totally.
+ The question was, what strategies
+ do the nonlinear optimization use?
+ There's really, I think, two really big ones to know.
+ The first one would be gradient descent.
+ You could think of stochastic gradient descent
+ if you've heard of that from the learning world.
+ But in general, if you take a gradient of this
+ and you move in the direction of the gradient,
+ the picture in 1D isn't quite rich enough
+ to fully show the value of the gradient,
+ but basically you go downhill.
+ When you have constraints, too, gradient descent
+ needs to be adjusted.
+ You either do a projected gradient descent
+ or something else.
+ And that depends on how easily you
+ can project on your constraints.
+ So in practice, oftentimes for constrained
+ nonlinear optimization, a preferred approach
+ is to do a second order method, which
+ uses the gradient and a local approximation of the Hessian.
+ And they basically will take a local quadratic approximation.
+ They turn it into a QP.
+ And they'll solve it as if it's a QP.
+ And then they'll update.
+ So this would make, let's say, a local approximation like this.
+ It'll come here.
+ It'll get a new initial guess.
+ It'll make a new local approximation.
+ It can still get stuck in that same local minima.
+ But the reason to do that is because you can also
+ linearize these constraints and do a nice update that
+ takes into account both the objective and the constraints.
+ So that would be called sequential quadratic programming.
+ And the one SQP.
+ And that is what the main solver that you'll
+ use without even appreciating in class,
+ but SNOPT is the solver that gets called
+ in the Drake binaries for that.
+ There's a bunch of other ideas.
+ And people tend to--
+ there's actually, I'd say, a movement
+ to do a little bit less of the constrained optimization
+ and to instead take those constraints
+ and turn them into a penalty method.
+ And so you do unconstrained optimization.
+ Some people think that's faster or more robust.
+ There's ways to do that more rigorously.
+ But this is, I think, the simplest answer
+ to your question.
+ Sure.
+ Any other questions at that level?
+ Sure.
+ So how often do problems with real-world robotics
+ come down to not being able to do the full optimization
+ that you would expect?
+ So the question is, in general real-world robotics,
+ how much do you end up doing nonlinear optimization
+ versus convex optimization, roughly?
+ I think a lot of problems are being solved
+ with nonlinear optimization.
+ Trajectory optimization is one I know you've seen
+ and we'll see later in this class.
+ A lot of the motion planning type problems
+ are going to be these kind of problems.
+ I think the problems that we're going to talk about today
+ are going to be these types of problems.
+ It's a special thing when you can
+ find a formulation for a really complex problem that
+ fits into this.
+ Part of my career has been trying to do that,
+ with some success.
+ So I think life gets--
+ I mean, it's almost tantamount-- it
+ used to be that you wouldn't consider
+ a problem to be solved until you had a closed form solution.
+ But I think even the most rigorous mathematicians are now
+ like, if you can find a convex parameterization,
+ then you've gotten pretty close to solving the problem.
+ So we try to move things from here to here,
+ but I think a lot, in reality, we're down here a lot.
+ Pose graph optimization and SLAM, that's all down here.
+ A lot of the canonical robotics problems
+ are kind of stuck down here.
+ [INAUDIBLE]
+ Oh, I'm sorry.
+ OK.
+ That was a long answer to the wrong question.
+ But OK.
+ So yeah, so the question is, how much
+ does local minima affect my--
+ do I get stuck because of--
+ OK, I'll tell you a firsthand experience.
+ Atlas is our 400-pound humanoid.
+ We're in the DARPA Robotics Challenge, right?
+ We had beautiful optimization that
+ could make the robot run all these things,
+ trajectory optimization.
+ But it was a nonlinear optimization,
+ and I couldn't be sure that it was going to run in real time.
+ We didn't run a single one of those at the DARPA Challenge,
+ except for inverse kinematics to reach into some places.
+ But basically, in the lab, we knew how to make the robot run.
+ At the day of the competition, when everybody's watching,
+ I could not take the chance that it's running along.
+ And in midair, it says, oops, can't find a solution.
+ You know, pfft, right?
+ So that's my experience.
+ Now, autonomous cars often are doing this,
+ and they don't always have guarantees.
+ I mean, there's ways that you have local guarantees,
+ and there's wrappers around it.
+ But there's a surprising number of practical applications
+ where people are solving approximations
+ of nonlinear model predictive control.
+ In that case, they have a chance of getting stuck,
+ but they put Band-Aids around it to make it OK.
+ Good.
+ OK, so we're leaving our beautiful land of global minima
+ and going into this messier land.
+ But we're going to be able to write these constraints
+ that we need, I think.
+ So let's do pose estimation with nonlinear optimization.
+ And rather than just start from scratch
+ with a new formulation that's nonlinear,
+ let me just try to walk us and say,
+ how could we take the ICP kind of formulation
+ and start taking advantage of this?
+ And then we'll throw in some new constraints.
+ OK, so before, we wrote problems like minimize p, r,
+ in the real numbers 3 by 3, p plus r.
+ Someone asked about the squared.
+ It's always least squares.
+ OK, and then we had to add the extra constraints, right?
+ So let's consider-- that was the known correspondence.
+ One of the reasons we chose to use the rotation matrix
+ representation of that was because we
+ could make this quadratic objective
+ and then use that SVD solution.
+ Let's see what happens if we now change our parameterization
+ and we end up with a nonlinear problem.
+ I'll do the 2D version first.
+ So what is that going to look like?
+ If I did min-- I'm just going to focus on the-- we can always
+ take that into account, too.
+ But let me just focus on the rotations.
+ So if I, instead of doing r here,
+ if I put in the rotation matrix and I parameterized it
+ by theta-- so remember, in 2D, the rotation matrix
+ has this favorite form.
+ So I did that matrix times this.
+ What constraints do I need?
+ I don't need any constraints, right?
+ The only reason I needed constraints here
+ is because I used too many parameters
+ to specify my rotation matrix.
+ Here it's a scalar.
+ And I will only get valid rotations
+ given any theta I put in.
+ I don't need any constraints.
+ So now I've traded my constraints,
+ gotten away with my constraints, but I
+ have a nonlinear objective.
+ [WRITING ON BOARD]
+ So it's kind of interesting to ask, how much worse is this?
+ What does that do to the problem?
+ I think in these simple problems,
+ we can kind of understand it.
+ So let's do that.
+ [WRITING ON BOARD]
+ In particular, I'd like to ask the question,
+ does that problem have local minimum?
+ Yes?
+ [INAUDIBLE]
+ I write this two different ways.
+ Actually, when I wrote this, I was like,
+ I'd normally write it the other way.
+ These are two different spellings
+ of the same constraint.
+ So if I just multiply by r on the other side--
+ I need a transpose here.
+ That's what I need.
+ Good.
+ r transpose equals r inverse.
+ Otherwise, that would only be the identity.
+ That would have been insufficient.
+ Yes.
+ So the question is, do I have any local minima here?
+ I know I've walked back and forth.
+ I'm sorry.
+ OK.
+ Let me work it out on a simple example.
+ Imagine my object of interest is actually just a circle.
+ It's not very circular.
+ I could do better, at least with the center.
+ OK.
+ So I've got a lot of points here.
+ But let me-- I won't make every different color.
+ But let me just do a couple--
+ just make it clear that there's sort of known correspondences.
+ OK.
+ I need a lot more colors of chalk if I wanted to do that.
+ OK, and so now I've got a new sighting of this object
+ where I have-- well, I have it in a different pose.
+ OK.
+ Let's go all the way around, of course.
+ But I have known correspondences from here to here,
+ here to here.
+ If I were to do--
+ write this objective, then what happens?
+ So I can even take the simpler case
+ of putting them, assuming that there's only
+ a change in rotation.
+ The translations, always you can take out--
+ sorry.
+ Anytime you have an unconstrained optimization,
+ you can solve away the Ps.
+ That was hidden in the derivation of the SVD.
+ If you studied it in the notes, they went through that.
+ But if you have an unconstrained optimization,
+ you can actually solve-- given any r,
+ you can solve for Ps, so you can get rid of the Ps.
+ Sorry, Celia.
+ Is that what--
+ CELIA: No.
+ That was your question?
+ OK, good.
+ OK.
+ So we can actually, in this case,
+ if this is right on top-- so my blue, my other blue--
+ how do I draw this without it being too confusing?
+ One more color will help, I'm sure.
+ So I had this blue here.
+ My correspondence was right there.
+ The inside of this expression is the square distance
+ between those two points.
+ That's what I'm summing up.
+ And as I go around the circle, my objective over there
+ is just the sum of the square distance.
+ So this one I can actually just figure out.
+ So the geometry is not too hard.
+ This is the radius of my circle, r.
+ This is also r.
+ So that distance, I can just use the law of cosines.
+ So in general, you guys remember the law of cosines, right?
+ So let's make sure I remember the law of cosines.
+ c squared minus 2ab cos theta.
+ So this is theta.
+ So that's for an arbitrary abc theta, right?
+ That's the relationship of c to--
+ so in this case, what is the distance going to be?
+ It's going to be distance squared, which
+ is the inside of my objective.
+ It's going to be r squared plus r squared minus 2rr.
+ So r squared cosine theta.
+ And it's going to be that same distance for all those points.
+ OK?
+ So this one I can even just write in as 2r squared 1
+ minus cos theta.
+ So I can-- I'm going to get n of them
+ by total ICP objective given theta.
+ So if you plot that as a function of theta,
+ let me even plot it as a function of-- I'll
+ write theta minus theta estimated minus theta actual.
+ How about that?
+ I used one of them as kind of 0 in this case,
+ but it would be a little bit more accurate to say
+ the error in my theta.
+ That's just going to look like 1 minus cos, right?
+ Scaled by my number of points and r,
+ but this looks like 1 minus cos.
+ So that is a nonlinear objective.
+ It has many minima at 2 pi, though.
+ So in this case, in 2D, parameterizing by theta,
+ it's fine, right?
+ So it happens that all minima are global minima, right?
+ That's a trendy thing to say.
+ All minima are global minima.
+ So now, that gets a little worse in 3D.
+ That's not true in 3D, I don't think.
+ I know it certainly-- yeah, I think it can't be true.
+ But the real thing that's going to make it more complicated
+ is if we have unknown correspondences.
+ Unknown correspondences are going to cause all kinds of--
+ the same way they did in the ICP problems,
+ it's the correspondences that will cause these local minima.
+ So I don't mean to say that Poe's estimation always
+ has local minima, but I simply mean
+ to say it's not crazy to parameterize things with theta.
+ You can do pretty good things.
+ You can kind of expect that if I were to optimize directly
+ on theta, do some gradients, certainly
+ in these simple problems, it's going to work.
+ This problem, I think, is actually not--
+ this formulation is not as limited as maybe I
+ made it sound, right?
+ So if I took any object, really, any set of points,
+ there's going to be some points on this thing.
+ They all have some-- if I rotate that,
+ I could have done exactly the same computation.
+ It's just that I'd have a different radius
+ r for all of the points.
+ So I'd have a slightly different thing.
+ But actually, in 2D, it doesn't have
+ to be a circle for that math to work.
+ Yeah?
+ Is this conclusion that all of the minima
+ are just like the-- all of them get, like,
+ some theta around the points?
+ Or some noise to the--
+ [INAUDIBLE]
+ I mean, certainly not arbitrary noise, right?
+ I think the question would be, what
+ could we say about the robustness of that estimator?
+ The question was, does this hold in a case
+ where you have real messy points?
+ Right.
+ I think it'd be an interesting question to ask.
+ I mean, this is a pretty robust objective, right?
+ So it probably would be fairly tolerant to noise.
+ But certainly, you could pick a noise threshold
+ that would be too big for it to handle.
+ And that's going to depend on probably
+ the distance between the--
+ what would it depend on?
+ I mean, it's really--
+ if I were to just add noise to that objective,
+ I mean, it's going to be fairly tolerant, I think.
+ It'd be fun to do the proper analysis.
+ OK, so everything's better in 2D.
+ If I haven't said that before, it's like everything works.
+ Physics engines are slightly fast in 2D.
+ Like, friction's easy in 2D.
+ Pose estimation's easy in 2D.
+ If the world was flat, we'd be done.
+ Unfortunately, everything gets messy in 3D.
+ All this Euler angles aren't great.
+ It comes up and makes this problem less good.
+ But in 2D, I think we can already
+ see that it's the correspondences that
+ are the biggest source of challenge
+ that cause these nonlinear optimizations to get stuck.
+ The fundamental idea that we've changed
+ to a nonlinear optimization, I think, is not a problem.
+ So let's think about how do we do the correspondences,
+ given we have a nonlinear optimization toolbox.
+ We did it before in alternations.
+ Even our generalized correspondence,
+ the coherent point drift algorithm,
+ was setting the soft correspondences
+ with the Gaussian in one step and then
+ doing an optimization, solving the--
+ everything we did before was kind of alternations.
+ Almost everything we did before.
+ So given this richer vocabulary--
+ [WRITING ON BOARD]
+ Last time, we did the generalized correspondences.
+ [WRITING ON BOARD]
+ Remember, we said, OK, I'm going to search over my pose.
+ But I'm going to do a sum over i and j
+ over every possible correspondence.
+ But I'll weight them.
+ [WRITING ON BOARD]
+ And CPD, the coherent point drift,
+ chose to set those in the alternating step
+ as a Gaussian function.
+ But if we want to actually solve them jointly now,
+ I can write something basically like that.
+ But I can use any nonlinear function.
+ So what if I do instead minimize over x sum over ij,
+ just sum any function l.
+ This would be my nonlinear objective.
+ OK.
+ Could even just be a function of the distances, typically.
+ And people do this.
+ And they choose all kinds of different functions.
+ So you might have seen l--
+ I mean, l could be a Gaussian kernel.
+ And then you get something that's very similar to this.
+ I said, given the distance between my points,
+ look up, given that distance, how much
+ do I want to penalize them?
+ So if I took the Gaussian kernel, which is here,
+ that's roughly what CPD was doing.
+ It's doing it with a pre-multiplication, which
+ is slightly different.
+ But the intent is the same, is that you
+ want to have a roughly quadratic form for points that
+ are nearby.
+ And you want it to taper off when you go far away,
+ so that outliers don't get too high of a coefficient on them.
+ Basically, once it gets a certain distance away,
+ it doesn't matter if it's 2 or 6.
+ It's all the same.
+ Huber loss doesn't taper off as sharply as the others.
+ But it still tapers more than a quadratic.
+ The truncated least squares is what Teaser--
+ actually, Teaser's name is some truncated least squares
+ are some of the letters in the Teaser acronym.
+ There's a bunch of different functions that you might use.
+ Once we're in the land of nonlinear optimization,
+ you can just pick.
+ And if you can compute those distances,
+ and you can compute, for instance, the gradients
+ or whatever you need for the solver
+ to do that optimization, then you
+ can get some of these benefits of actually doing
+ a generalized correspondence and having some resistance
+ to outliers, because the distance--
+ the effect of points at a different distance
+ is neutralized.
+ Let me make sure I make that point.
+ So let's look at the truncated least squares.
+ That's the most straightforward here.
+ It goes up to 1.
+ And then any other points at the same distance are exactly 1.
+ So what does that do in an optimization?
+ That means if I have points that are outside my distance of 1,
+ they have no impact on my optimization solution.
+ Does that make sense?
+ If the point was at 2 or 2.1, it doesn't change the cost.
+ So because the cost is flat in the place where that point is,
+ that means it adds cost, but it adds a constant cost
+ no matter where it is out there.
+ So it has no effect on the optimal solution
+ when it's completely flat.
+ And these have decaying effects.
+ So they're marginal effect as you go up.
+ OK, so this is great.
+ So we can do--
+ this can now have more significant local minima,
+ but we can jointly estimate the correspondences,
+ do this more robust correspondence.
+ And we can somehow reject outliers
+ with choosing a loss function that tapers.
+ So why would you do one versus the other?
+ I mean, SVD, you would think, is a particularly fast, scalable,
+ numerically stable algorithm.
+ So you'd want to-- my bias had been to lean on that.
+ But more recently, people are arguing
+ that the nonlinear solvers for pose estimation
+ can be as efficient or as fast as the original SVD solvers.
+ And the reason is that I think we can--
+ I'm going to show you some tricks for precomputing
+ some quantities that make this function evaluation very fast.
+ Yes?
+ [INAUDIBLE]
+ It's embedded here in L. So by virtue of L being the Gaussian,
+ you're saying, does this term need to still be there?
+ But you're trying to solve [INAUDIBLE]
+ Ah.
+ I'm not explicitly solving--
+ I should say, I don't ever have C as a decision variable.
+ I should say, how about we say correspondence free?
+ I think that would be a better--
+ you're right.
+ That would be a better way to say it.
+ I don't make any explicit--
+ I'm doing all to all correspondences, basically.
+ For every possible correspondence,
+ I'm going to compute this function.
+ Yeah?
+ [INAUDIBLE]
+ That depends on how we parameterize x.
+ So when x is the spatial notation, whatever,
+ I could still parameterize that only with theta.
+ [INAUDIBLE]
+ So the question was, if I'm using one of these quasi
+ convex functions, what can I say?
+ So can I get rid of p?
+ Is that one of your questions?
+ Or you're thinking about all the implications through there?
+ Which part of the implications are you thinking about?
+ I'm saying, would you still have at least a quasi convex
+ problem if you did a chain of the law
+ and did all the all correspond?
+ Oh, I see.
+ So you want to keep x as a rotation matrix in this case.
+ And so I think you would have--
+ and the question is--
+ I just threw my microphone that way.
+ I put my microphone back.
+ That was pretty good.
+ OK, so the question is, if I did use x
+ and I had the rotation matrix constraints,
+ this looks like a quasi convex objective.
+ Can I do anything good with that?
+ In general, as soon as you deviate from the SVD,
+ you have to do something more.
+ So in order to embrace those rotation matrix constraints,
+ you're going to have to do an SDP relaxation or something.
+ So it really is like this narrow ledge
+ that as soon as you walk away from, things get worse.
+ Not to say we couldn't do something clever there,
+ but I don't know it as a known result for me.
+ Let me tell you the clever trick.
+ It's really a nice trick.
+ And it goes back to this--
+ there are different ways to represent geometry, meshes,
+ or point clouds, or different methods.
+ And some of them make some of these queries very, very fast.
+ In particular, the one that makes this one very, very fast
+ is a sine distance function.
+ If you use a sine distance function or even just
+ a distance field computation, then you
+ can make these--
+ put them on the GPU, do things in real time,
+ and get to the point where you don't
+ care if your solver is a little bit slower than SVD.
+ I can do big point clouds fast.
+ Roughly, I want the distance--
+ if I have my model already specified,
+ and I'm going to be doing lots and lots of lookups of what
+ are my scene points relative to my model,
+ what's the distance from my scene points to my model,
+ why not compute an efficient data structure around my model
+ that makes it very fast to look up?
+ You don't have to do a search over all the model points
+ or anything like this.
+ Just pre-compute the heck out of it.
+ Make a grid in 3D where you've already
+ computed all the distances once.
+ And then it just becomes a lookup.
+ That's exactly what a sine distance function is.
+ So if I have a bunch of points here in my model,
+ I'm going to do queries.
+ I'm going to do lots of queries of the same--
+ what's the closest minimum distance from this
+ to the model points?
+ But I can just pre-compute level sense of all the distances
+ of-- this would be all the distances of distance 1,
+ let's say.
+ And then I'll go out like this, and up like this.
+ I can just pre-compute an entire distance field
+ in the more general sense.
+ So it turns a search between model and scene points
+ into a lookup.
+ Because everything's in 3D, you can just pre-compute it all.
+ It's just 3D geometry.
+ Now, the cool thing is this is even--
+ I mean, it's kind of ugly field that you
+ end up computing if you're doing point-to-point matching.
+ But if you're doing point-to-mesh or point-to-object,
+ then these things start looking more beautiful.
+ So point-to, let's say, mesh--
+ the same way we talked about point-to-face before.
+ But if I had just a box, then I can pre-compute these distance
+ fields.
+ Do the right thing.
+ It'll be a circle around the corner here.
+ That's the points of minimal distance, or distance 1.
+ And then I can just pre-compute these things, all my level
+ sets.
+ And in practice, the way people represent this
+ is they will make a grid in 3D and compute
+ the value of the grid.
+ And then a lookup is just an interpolation
+ between the neighboring points.
+ And you can get a beautiful sine distance function out.
+ Now, I say distance field here.
+ I said sine distance here.
+ So the big question is, what do you do on the inside?
+ The question is, is this distance 1?
+ Or is it distance negative 1?
+ Sine distance functions would have negative 1 here and 1
+ out here.
+ And you can pre-compute either of them.
+ It depends what your objective is.
+ When we get to non-penetration, then it
+ makes sense to distinguish between being inside the object
+ or being outside the object.
+ If you're really just doing point correspondences,
+ then maybe the distance is enough.
+ I think that idea of pre-computing-- yeah, please.
+ Is the function continuous?
+ I mean, there are points here.
+ So the question is, are you talking about continuous
+ in what direction or whatever?
+ I think there are points here where the distance is
+ going to be continuous.
+ The point it references can be discontinuous.
+ But the actual distance is continuous.
+ Right?
+ [INAUDIBLE]
+ OK.
+ So the question is, what about the representation
+ on disk, if you will, of-- if I actually
+ sample this on a finite grid and then interpolate it at runtime,
+ then typically you'll have piecewise--
+ it'll typically be continuous but piecewise.
+ So it'll be continuous but discontinuous first derivatives.
+ Yeah.
+ I think the thing-- the first time you see this functions,
+ I think the idea that you could pre-compute that
+ is pretty straightforward.
+ The thing that surprises me is how rich
+ that representation can be.
+ Like some of these incredibly-- I mean,
+ I guess if you've seen NERF these days, right?
+ That you're already convinced.
+ But how compelling-- that's neural radiance fields,
+ which we'll talk about later.
+ But how incredibly rich that specification can be.
+ Even with a fairly coarse grid, if you do the right algorithms,
+ typically something called fast marching cubes,
+ you can find the level set.
+ In particular, you can find the zero level set of the object.
+ And you just represent an object actually
+ by the values on a voxel grid.
+ And you can get beautiful reconstruction.
+ So I think I have the bunny.
+ Right?
+ Like a fairly coarse sine distance function
+ can be interpolated into a really beautiful rich geometry
+ just by doing the right algorithm
+ to find the zero level set through this function.
+ OK.
+ So this idea of pre-computing sine distance functions
+ really makes these lookups super fast.
+ But we need one or two more steps
+ here to make that fully work.
+ The sine distance function tells me for any one model point,
+ for any one scene point, what is the distance to the model?
+ OK.
+ I wrote up here all to all correspondences.
+ The way to think about the SDF version,
+ which looks like a scarier optimization,
+ but we're in nonlinear optimization land.
+ We write scary things down sometimes.
+ So it would be min over j.
+ OK.
+ So the first thing we do is we just
+ take for each scene point the closest point on my model.
+ And only the closest point on my model
+ is what contributes to my total cost.
+ And that is the moral analogy to having a sine distance
+ function, where for each scene point,
+ you compute the value in the sine distance function.
+ And you contribute that to your cost.
+ And you can take gradients of sine distance functions
+ and things like that.
+ Right?
+ Maybe the root of your question before.
+ So you can use these in the solver,
+ in a nonlinear solver.
+ Sine distance functions are sort of inherently non-convex.
+ So I guess unless it's a sphere or something.
+ But I mean, I guess, yeah.
+ This could be a warped thing.
+ But I think they tend to be used for objects
+ that are complicated.
+ I guess they're not inherently non-convex.
+ That was maybe an overstatement.
+ So this thing here is really just the distance.
+ And you can make very efficient GPU implementations, too.
+ Where you just take a point cloud and dump it down
+ into the GPU computer of all and come back.
+ All right.
+ So what have we done so far?
+ We said nonlinear optimization lets us write
+ some richer objectives.
+ We talked about parameterizing with theta instead of with r.
+ That's one advantage.
+ And we talked about doing this sort of correspondence-free,
+ if you will, version by using these more messy functions.
+ But we can maybe make them fast.
+ We haven't gotten back yet.
+ But now we will to the non-penetration, free space,
+ and other constraints.
+ So think about the non-penetration constraints.
+ So if I have two bodies that I'm
+ trying to find the pose of at the same time,
+ or I'm trying to find the joint angles of my robot,
+ for instance, or if I just have even just one I'm
+ trying to find the pose, and I just
+ don't want it to be in contact with the table,
+ then in general, that is a piece of computational geometry.
+ So you can compute the sign distance between two bodies,
+ or let's say closest distance.
+ And if you think about that, that's
+ an ugly computational geometry problem.
+ So it's maybe this distance here.
+ But you can imagine all the different cases
+ where if I move those around, that thing
+ can jump around continuously.
+ So you need a geometry engine and your computational geometry
+ friend to make that sort of a query available.
+ So we have them in there.
+ So you say, in Drake, you can just say, give me geometry A,
+ geometry B, compute the distance or the sign distance
+ pair of the closest points between bodies.
+ It doesn't support all the bodies you'd want.
+ Sometimes it'll say, we haven't done that one yet.
+ But all the ones we've needed for our robotics applications
+ have been filled in.
+ Some of them have-- all the ones we
+ needed for our optimization have analytical gradients.
+ And that's an increasing list, but a lot of work.
+ Now, it's a little bit misleading here.
+ So the way that that function works--
+ so you have a scene graph object.
+ You need a context, basically, to get a query
+ object in the code here.
+ And then you can ask for collision distance.
+ That's just to say, even though that method takes only
+ geometry A and geometry B, in order
+ to even ask the questions, you instantiated
+ a class which you had to tell it to pose, the current pose.
+ So it's really a function-- think of it
+ as a function of the context and body A and body B.
+ And then it'll return the distance.
+ Now, you can write my nonlinear constraint.
+ So I can say def nonpenetration, given my parameters Q.
+ And you can set up my-- do all that setup
+ that I sort of suggested, and then call collision distance.
+ Give me a d and return d.
+ And that's close to what we want to do.
+ And you basically say, I want the penetration
+ to be greater than some value.
+ It would be a constraint.
+ So if I said--
+ maybe I'll call this my penetration.
+ And then the constraint I'll add is, minimize some objective
+ subject to penetration or assigned distance.
+ I should call it SDF.
+ How about that?
+ SDF of Q is greater than some minimum distance.
+ There's a lot of work that goes into those constraints.
+ But it all fits in the mathematical framework
+ we're talking about here.
+ So once you land in the land of nonlinear optimization,
+ you can just say, I'd like to search
+ over the possible solutions where
+ the distance between those two objects is--
+ you could say greater than or equal to 0.
+ You could say greater than or equal to some threshold.
+ And it will only--
+ the solver will do its best to only find solutions
+ that satisfy that constraint.
+ You will find, and we will explore,
+ and when we get to the more simulation part,
+ if your initial guess has these things completely overlapping
+ and deep penetration, then the gradients are no good.
+ And the solver is just going to say, I didn't find a solution.
+ Sorry, I'm stuck.
+ Robot falls down.
+ But for reasonable initial guesses,
+ this can work very well.
+ You don't have to do all this work.
+ For most of these queries, we have
+ the thing you use in your dynamics engine.
+ But then we also have a version of it
+ that is ready to use in a mathematical program.
+ So you can just say, add the constraint
+ that the distance between all the bodies
+ is greater than some number.
+ And it's just one line in your mathematical program.
+ So it's just like prog.addConstraint,
+ minimumDistance.
+ And it does a boatload of work behind the scenes.
+ But it provides those non-penetration constraints.
+ So that's how you get the mug out of the table
+ if you have a guess that starts with the mug not deeply
+ in the table.
+ And the reason for that is just that this nonlinear optimization
+ is not guaranteed to succeed.
+ Static stability, we'll talk about more
+ when we talk about the simulation engines next time.
+ But you can imagine computing basic physical quantities
+ and asking for--
+ I think if you look down here, you'll
+ see there's static equilibrium constraints that are also
+ available for you to add.
+ We'll make sure we understand what that has to do
+ with some of the physics.
+ But you can imagine just adding a constraint saying
+ that there are a set of forces that satisfy Newton's laws
+ and establish force balance on all the bodies.
+ And that would get me from having my mugs floating back
+ down to the table.
+ Every one of those makes the optimization harder.
+ But every one of them adds some information
+ that you didn't give the point set registration algorithm.
+ OK.
+ The last one, though, that we don't
+ have in any of the library here is this free space constraint.
+ So how do you tell the algorithm that you have a free space?
+ How would you write that in an optimization?
+ What are you computing?
+ I've got my box here.
+ Got a bunch of points here.
+ And I don't want it to match anything up here.
+ What do you do?
+ [WRITING]
+ I mean, it's actually-- there's a simple solution.
+ It took a while for me to get my head around it.
+ But once you have it, it's like, oh, that's
+ really elegant and simple.
+ But it's already interesting just
+ to think that the information here is partly
+ about free space.
+ But it's also-- I think this is a good example that you
+ can lose information when you go back and forth
+ between different geometry representations.
+ So in our pipeline, we went from a depth image plus the camera
+ position--
+ let's say camera pose--
+ to a point cloud, which felt like a good thing to do.
+ We've been doing a lot of work with point clouds.
+ But we lost something in that transformation.
+ We lost this camera pose.
+ So we're getting it back now.
+ How do you write it in the optimization?
+ I've got a vector here.
+ I've got a vector here.
+ I want them to be--
+ I don't know.
+ Maybe I find a separating hyperplane.
+ What do you do?
+ Yeah?
+ [INAUDIBLE]
+ OK, so you're saying take the shortest
+ distance between the object.
+ And then what do you want to say about that?
+ [INAUDIBLE]
+ [INAUDIBLE]
+ So you're saying-- OK, I think I see what you're saying.
+ You're saying that a query point-- basically,
+ if I had the whole body, then the shortest distance
+ between there and the camera had better
+ be the one I matched on.
+ It shouldn't be some other part of my body.
+ [INAUDIBLE]
+ Right, right.
+ OK, that's good.
+ Yeah?
+ Alex?
+ [INAUDIBLE]
+ So let me say that back to you here.
+ So a lot of times in convex optimization,
+ we can separate two things by finding
+ a line that separates them, something like this.
+ In fact, there might be many separating hyperplanes
+ that separate this from here.
+ So what are you going to do?
+ So that's an idea of a separating hyperplane.
+ What are you going to do with it?
+ [INAUDIBLE]
+ I mean, so you're going to push it this way.
+ But how does that mean that my other body shouldn't be--
+ you're, again, going to say that you
+ want the separating hyperplane to go through that point.
+ [INAUDIBLE]
+ The other points.
+ [INAUDIBLE]
+ Yeah, right.
+ I mean, I think that-- right, so if all of your-- for every point
+ I see.
+ So there's a separating hyperplane between this.
+ It goes through this point that separates you
+ from every other point.
+ I think something like that might work.
+ Let me tell you the one that Tanner Schmidt did in his dark
+ paper.
+ There's a great paper called "Dynamic Articulated Real Time
+ Tracking."
+ He took the convex hull of the return points and the camera--
+ not the convex hull.
+ I'm sorry, he did the image here,
+ but then he completed it with the camera.
+ So he-- it's not the convex hull.
+ This object here.
+ And he treated that like another body.
+ And he said, I want to have one more non-penetration
+ constraint, saying that my free space, which
+ is this thing here, doesn't penetrate that thing.
+ I wouldn't be surprised if you could do better
+ with a separating hyperplane something.
+ But that fits right into the--
+ I mean, we've already got a bunch of non-penetration
+ constraints flying around.
+ So adding one more and putting it
+ into this fast GPU implementation
+ was a pretty reasonable thing to do.
+ OK, so these are weaker optimizations
+ that we're writing down here.
+ But they can take-- they solve-- they are allowed--
+ they take more information than we have about the problem.
+ So if you were to ask me today, which of these algorithms
+ should I use, I actually hope if you ask me again in a year
+ or two that we'll have convex optimizations that
+ do all these nice extra information.
+ But we don't today.
+ And I think the value of that information
+ is so high, so important, that I think I would today
+ trade-- take the weaker algorithm
+ and take advantage of that stronger information.
+ Or possibly interleave.
+ Maybe at least get an initial guess out of one
+ to start the other or something like that.
+ OK, and then let me just sort of back up
+ a little bit from the whole geometric perception
+ outline here.
+ So we've talked a lot about the geometry and the point
+ correspondences and even adding these constraints.
+ But unfortunately-- I mean, I wish
+ this was the whole perception problem.
+ But unfortunately, there's a lot more to perception
+ than geometry.
+ Like, in fact, I mean, depth sensors are so good.
+ It was interesting.
+ I mean, we went through this phase
+ where basically we were not even using the color
+ values in our camera.
+ We were just doing all this depth,
+ all this geometric perception.
+ Deep learning started happening.
+ It got a lot better.
+ And I remember asking-- there was a couple years
+ after that started.
+ I remember asking some of my students working on perception.
+ I said, if you had to give up either depth or RGB,
+ which would you give up?
+ And I remember when that switched.
+ It was like, you can take my depth.
+ I want the RGB.
+ There's just so much value in the colors
+ and the statistics of the scene that
+ isn't available just in the x, y, z positions of the points.
+ So that's one thing that we're going
+ to see the value of the more statistical approach.
+ Basically, the deep learning version of this
+ is that the reason the mug is on the table
+ is because I saw a lot of mugs that were on the table.
+ Like, oftentimes in my images, there
+ was a mug right around there.
+ And there wasn't really that many up there.
+ And just from the statistics of having seen a lot of images,
+ you get some of these priors.
+ And at some point, that works really well.
+ The geometric stuff works extremely well
+ when you're close to a good solution, where
+ the local approximations can be good or can be nearly convex.
+ And the global point correspondence problem
+ is still hard in my mind.
+ So I think a very nice marriage of these two
+ is to use your statistics, use your deep learning
+ to get an initial guess.
+ But I think you'll--
+ I mean, people argue about this.
+ But I just don't see how you could possibly
+ get the accuracy that you can get out of a depth
+ sensor that gets sub-millimeter accuracy snapping
+ into the point clouds.
+ The geometry is just so accurate that I
+ think most roboticists are still using the geometric perception
+ for that end game.
+ Now, you could argue that one shouldn't be accurate,
+ need to be accurate in order to be
+ successful in manipulation.
+ And I'm actually sympathetic to that.
+ But robots aren't working very well yet.
+ I'm not going to tie my hand behind my back.
+ Let me just-- if I can be accurate for my sensor,
+ I'm going to do that until I can get that to work.
+ Maybe there's a future where our controllers and our planners
+ are good enough that we don't have to be accurate.
+ But, jeez, depth sensors are really nice.
+ And this is really, I think, a nice way to see the world.
+ OK, so we'll go back.
+ We'll go to-- so the transition to the next lecture
+ is that we've been thinking about mostly
+ like one object in the scene, we get
+ to graduate to cluttered scenes on Thursday.

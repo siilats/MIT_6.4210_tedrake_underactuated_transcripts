@@ -1,0 +1,1240 @@
+ [ Background Sounds ]
+ >> Okay. Welcome back.
+ We're going to do our second round of the deep version
+ of perception today.
+ So last time I gave, you know, I'm sorry,
+ I could have given a whirlwind overview of deep learning.
+ It's actually, I really want your feedback on that
+ because my thinking was that I would try to give a version
+ that people who didn't know much would understand and a version
+ that called out to some other more advanced topics.
+ I hope I didn't land in the middle and everybody hated it.
+ But please, give me, we're going to put a specific question
+ on that, on the survey about that and help me figure out how
+ to dial in the first lecture on deep learning.
+ It's a big ask for me.
+ Good. Okay.
+ But today we're going to slow down and we're going to talk
+ through a couple more specific algorithms, ideas that connect
+ that pipeline with the things we need from manipulation
+ that maybe we don't need in a standard computer vision world.
+ So let me put it in context by thinking about the system
+ that we sort of built last time.
+ If I have my block diagram with my manipulation station here
+ with all my output ports and everything like this, right,
+ some of those output ports that are most relevant
+ for today are the RGBD sensors.
+ And we've got some perception system which is now, let's say,
+ a deep neural network.
+ And we're eventually going to get over to our planner,
+ like we wrote for the clutter clearing example,
+ and then our controller.
+ And we ultimately want to send commands back
+ into the low level of the station.
+ There's actually even additional layers of control inside here,
+ right, that are doing joint impedance control.
+ But we had differential IK, for instance, in this block here.
+ And the connection between the planner and control,
+ I guess the example we've talked about the most
+ so far is sort of well understood.
+ We said we're going to send gripper trajectories.
+ We're going to spool them out over time and ask our controller
+ if this is the DIP IK version to turn those into joint commands
+ that the manipulation station knows how to execute.
+ The question really is if we have this immense pipeline
+ from deep learning and they can work more natively
+ with RGBD inputs, then how should we go
+ from here over to the planner, right?
+ What is the information that we most need for manipulation?
+ Now, we can be ambitious with our ideas here because,
+ as we talked quickly about last time,
+ one of the most amazing things
+ about these deep learning architectures is
+ that I can potentially, even if I have a task that's pretty narrow
+ and specific to my robotics application,
+ there's a chance I could pre-train
+ on image classification in ImageNet and then
+ with a small amount of data,
+ train a more relevant downstream task, okay?
+ So the big question is what's the right task?
+ And let me distinguish this.
+ Later in the class, there is a version of this that goes
+ from RGBD through a neural network straight to control
+ or straight to the manipulation station.
+ Let me just make it the extreme version,
+ which would be pixels to torques.
+ Okay. This is-- we'll do this later.
+ That's a good idea.
+ I think there's lots of good things to learn about that idea.
+ But that's not what I want to do today.
+ What I want to do today is embrace the fact
+ that we have a beginning of a pretty powerful tool chain
+ for these layers, you know, and we're going to have more develop
+ in that space and there's just this huge power of tools
+ that we already have in the community.
+ And we just need to figure out the best way to talk to it,
+ to get from our rich camera input, our rich environment,
+ into something that is sufficient
+ to describe the task and consumable by our planning
+ and control algorithms.
+ Okay. So the big question is what are those useful
+ representations?
+ And there's not one answer.
+ There's not a right answer.
+ There's-- this field is changing every day.
+ But there's some good ideas that have emerged
+ and I think even just picking one or two of them and going
+ through them a little bit carefully, hopefully that will,
+ you know, encourage you to read more and think more
+ about even more of them.
+ So the answer I gave yesterday or from Tuesday was we're going
+ to take our RGB in, come out with our instance segmentation
+ and then go through one more step, for instance, maybe ICP,
+ for instance, and turn that into the estimated object poses,
+ which I can then send to my planner.
+ That was sort of version one we talked about,
+ leaning heavily on instance segmentation.
+ You know, we also said you could take the same thing
+ and enable a different planner that maybe in the middle here
+ if we just do our antipodal grasps.
+ Right? So maybe if this is still the instance segmentation
+ here, we could still do this and come
+ up with some desired grasps and send that to my planner.
+ OK? So those are two things that we--
+ if we just use the out of the box computer vision tools,
+ mask our CNN for this,
+ then we already have some potential pipelines.
+ And of course, there's-- for both of these, there are versions
+ of this where people would recommend
+ that you just go, you know, all the way here as a neural network,
+ just try to hop over that, you know,
+ and-- or maybe go all the way here as a neural network.
+ Those are certainly possible.
+ And I'm actually-- I'm going to try to write up a fairly,
+ you know, succinct but, you know, kind of a summary
+ of what are people doing in deep pose estimation.
+ This would be if I did this, that would be the world
+ of deep pose estimation.
+ And there's a lot of good ideas in there.
+ And this would be maybe, let's say, deep grasp selection.
+ That's my name.
+ That's not-- there's not really--
+ there's a bunch of known algorithms for that.
+ I'm not sure there's one really good overall name but--
+ OK. Both of those are possible and are good ideas.
+ But I want to stop and think is this even the right interface?
+ Is this notion of putting the pose being the summary
+ of everything that my perception system sees being the right
+ interface to the planner?
+ OK. So, remember we get to be aggressive here.
+ We can train our network on almost anything, right?
+ Is sending sort of estimated object poses the best signal,
+ you know, is that the best connection?
+ And there's a couple of reasons why it seems maybe we can
+ do better, right?
+ The first one is I would say this assumes a lot
+ about a known-- about having known models.
+ Right? If I have a model then--
+ and the world is not moving, you know, then telling me the pose
+ of the object or maybe all the objects
+ in the scene is everything I should need
+ to know, right, in some sense.
+ It is-- well, it's a complete description
+ of the current state of the world.
+ That's a slightly different thing.
+ Maybe in the full glory I would also want, you know,
+ assuming the world is nicely second order,
+ maybe I'd also want the spatial velocity of that object.
+ OK. But if I have known models,
+ then this is actually a reasonable thing to do.
+ There are still limitations even in that case.
+ But we're going to try to overcome
+ that assumption today a bit.
+ For the first time, we're going to try
+ to start doing manipulation of these categories of objects.
+ OK. The second thing that I don't like about using pose
+ anymore in this case is that it's actually asking for more
+ than we can potentially get, right?
+ It might be asking too much.
+ [ Writing on Board ]
+ OK. So for instance, if I have partial views of an object,
+ maybe it's actually very hard to estimate the perfect pose,
+ right, especially if there's symmetries for it.
+ Those would be a classic case
+ where maybe the pose isn't naturally right description.
+ And it might be more than I need for manipulation.
+ [ Writing on Board ]
+ OK. So I'm going to try to make this case in a story
+ in just a second, but just to set it
+ up at the high level here.
+ And I would say the third thing about it that it seems
+ like a major limitation of just using pose as our language
+ from the perception system is that by itself,
+ just saying that I have a nominal estimate
+ of what the object's pose is, isn't maybe sufficiently rich
+ in the sense that it doesn't tell me anything
+ about the uncertainty from the perception system.
+ [ Writing on Board ]
+ OK. And we should try to describe uncertainty, right?
+ The, you know, I'm going to try to use this as a theme
+ as we go through, but this pipeline actually,
+ the MaskRCNN pipeline did talk about uncertainty.
+ It was a little hidden, right?
+ But the fact that every classification,
+ every potential bounding box had a score function that was
+ between zero and one, right?
+ And the ones it was confident in was close to one,
+ and there was one that was ridiculous
+ and it was close to zero, right?
+ So it told me something more.
+ It told me there's, I have some segmentations,
+ but I've got a limited confidence
+ about at least one of them.
+ Right? So maybe we need a language to talk about that
+ in the language of pose, or maybe we need to just think
+ about other representations completely.
+ OK. So let's, let me tell you about this
+ in the case of an example, right?
+ So this is, this is the category level manipulation version
+ of the story, right?
+ So we want to do some sort of manipulation, but we want
+ to do it not on known objects, but objects that are all
+ from the same category.
+ OK. Is that clear, right?
+ So it's an interesting question immediately to say, you know,
+ I know something about mugs.
+ I could total, I could imagine writing a program
+ that would work for all mugs,
+ but if the perception system only told me to pose,
+ then I don't even know what the pose means for those.
+ Right? And it's also a good example that I don't need
+ to know the pose perfectly to accomplish a lot
+ of interesting tasks with mugs.
+ OK. OK. This is the category level manipulation problem,
+ right?
+ Imagine mugs, it turns out that the field that's working
+ on category level manipulation have all roughly converged
+ on mugs or shoes.
+ Sometimes you get a plate or, you had bowls, right?
+ I mean, there's a, there's like a really small set of categories
+ that everybody really likes to talk about.
+ So you'll see mugs and shoes throughout
+ from different papers, OK?
+ And it's an interesting problem because it is a rich class of,
+ it's like, I think it's like the Goldilocks place between,
+ I don't want to assume I have known objects, but I don't want
+ to have to deal with arbitrary objects, right?
+ So like, tell me it's a mug, the mugs have a handful of,
+ we can generate arbitrary mugs that are interesting.
+ You can also find mugs at the Disney store that have, you know,
+ ears and, or cow udders or something like this.
+ So you can go as far as you want away from the nominal mug.
+ But there's a really nice problem
+ to just say how would I write a manipulation system
+ that could deal with that level of variation,
+ not the whole shebang, anything, OK?
+ I think it's a really nice sort of intermediate.
+ It's actually pretty cool
+ that you can have these simulation pipelines
+ that will just take a few, you know, a few parameters,
+ kick out a CAD file, there's procedural CAD
+ as a thing now, right?
+ You can take a texture map, slap it on your mug, right,
+ and generate like all kinds of mugs, right, in simulation.
+ Harder to do with shoes, but mugs are pretty good.
+ We have done vegetables, procedural potatoes, really.
+ OK. So how do you do, how do you think about this sort
+ of pose estimation problem at the category level?
+ There's a couple, like the first thing that people would think
+ about in computer vision about how to do this would be maybe,
+ there's a famous project, a work called NOX, right?
+ It's this normalized object coordinate space, NOX, all right,
+ where you take a whole category of objects and you try to come
+ up with some canonicalization, something that would make it
+ so that if you tell me the pose of this canonical object,
+ then I can infer, I can relate
+ that to the thing I'm seeing right now.
+ So that pose is still a meaningful quantity.
+ Because if you don't have some, you know, some notion of how
+ to go from an arbitrary thing, like what is the center,
+ what point am I talking about the pose, even though
+ that point might be in different places on different cameras,
+ you know, then you don't have a full representation.
+ So this is an extremely good, you know, way to do it
+ that has been successful in computer vision.
+ And there are ways to think about category level.
+ Pose estimation.
+ But I want to also talk about this uncertainty, okay?
+ And I just say like, the challenge, there's still,
+ there's more challenges that come up if you really want
+ to use pose and carry it through your entire pipeline, okay?
+ In particular, like what is the right way
+ to represent uncertainty in pose?
+ And I'm sorry that it's become a theme, but once again,
+ the thing that screws everything
+ up is the representation of rotations, right?
+ How do you write uncertainty around rotations?
+ For positions, you can imagine just using Gaussians,
+ and that's sort of fine.
+ You can hire more if you want to, right?
+ I could say I have a Gaussian uncertainty
+ around the position of my object.
+ But for the rotations, you need something more clever.
+ There is something more clever.
+ There's a language for this.
+ It's called the Bingham distribution.
+ And I just, you know, I want you to know that it is possible,
+ and it has, there's a sort of, there's a natural Gaussian
+ in the space of rotations.
+ And it's done by taking a Gaussian
+ in the higher dimensional space and then projecting it,
+ and then intersecting it, I'm sorry, onto the unit disk.
+ So this is the 2D version where it's easy to visualize.
+ I've got just a Gaussian there, and I have the intersection
+ with the S1 here.
+ But the place where we want to use for 3D orientations is
+ to think about how do I put a distribution
+ over possible unit quaternions on a four dimensional sphere?
+ OK. And it looks like this.
+ This is an, I just want to just open your mind to the fact
+ that these kind of things can't exist.
+ That actually a Gaussian on a quaternion sort of makes sense.
+ It's just called the Bingham distribution.
+ OK. You can write the intersection of a Gaussian
+ with the four dimensional sphere,
+ and you get beautiful representations.
+ This is kind of the right way to do Gaussian like things
+ on the quaternion space.
+ OK. Where small distributions would be,
+ you just have the antipodal pairs show up, right?
+ And then as you widen it,
+ you remember the quaternions are always antipodal,
+ so it's going to be symmetric along that antipodal axis there,
+ and you can get full rings of uncertainty and the like.
+ And I think you need to do this.
+ If you want to use pose everywhere in your system,
+ and you want your perception system to be able
+ to say it's uncertain about things, you need to do that.
+ I mean, mugs are actually a great motivator for that.
+ If I see a mug in the kitchen sink, right,
+ and if I can see its handle, I might be able
+ to give you the pose with a very small uncertainty estimate.
+ But what if the handle's on the backside?
+ It would be just wrong to give me any, to choose any one
+ of the possible orientations without, you know,
+ without somehow saying it could be any of these, right?
+ So having distributions over pose is a thing you can do,
+ but it gets hard fast.
+ It gets very hard fast to carry that all the way through.
+ And the types of distributions you get with partial views
+ and conclusions are probably non-bingham pretty quickly.
+ There's a pipeline you can exercise,
+ but I don't think it's the best one.
+ It's not the one that I would fully advertise.
+ Okay. So here's a different,
+ just to give you a version that's a different answer
+ to this, what if instead of using pose, we just talk
+ about a handful of points attached to the body
+ or in the coordinate frame relative to the body?
+ This is our first, you know, proposal
+ for an alternative representation at that level.
+ [ Background Sounds ]
+ Let's think about key points.
+ Okay. And the key points I'm going to talk about now,
+ if you're familiar with the key point literature, this would be,
+ I'm talking about the semantic version of key points first.
+ Okay. So roughly speaking, what if my RGB or RGBDIN goes
+ through some sort of perception module and output
+ at a list of X, Y, Z positions for key point one.
+ [ Background Sounds ]
+ My claim is that that, I'm going to try to argue
+ over the next few examples here,
+ that that actually is a pretty natural way to talk about a lot
+ of the category level problems we have.
+ It assumes less about the known models, right?
+ It does surprisingly well thinking about partial views
+ and symmetries, we'll talk about that.
+ And it has a nice connection to uncertainty.
+ Even more, it turns out it's actually really pretty useful
+ when you hand that to the planning.
+ It's a pretty natural representation to think
+ about writing a planner around.
+ Okay. So this is just the first example
+ of a different representation we could use as the output
+ of our perception system.
+ Okay. Right.
+ So it comes from, key points are a thing in computer vision.
+ They started off with these open pose kind of, you know,
+ people dancing, you want to track the dancing people, right?
+ And so the way they do it is they put key points on the hands
+ and the elbows and the shoulders and make a skeleton out of that
+ and track it, it's incredibly impressive.
+ Okay. It works really well like on novel videos
+ and things like this now.
+ So the proposal here is let's take our mugs and instead
+ of trying to represent a canonical pose
+ for all possible mugs, let's pick a few canonical points,
+ just a few of them maybe, right?
+ Maybe the bottom of the mug where it's on the table,
+ maybe something that says what's the top of the mug,
+ just so I have a sense of maybe the bottom should be
+ below the top, you know, that's useful.
+ And then depending on what you want to do,
+ maybe you can put a key point in the handle if you want to pick
+ up the mug and in this case hang it on the rack.
+ That's another favorite, yeah?
+ Hang the mug on the rack, okay?
+ Then in order to do that, you know, we'll work through it,
+ but you can actually write that task pretty nicely
+ as a planning problem where you just know what the location
+ of the yellow dot is, right?
+ You don't actually have to know the absolute pose of the object
+ and we'll argue, like I said, it fits more naturally
+ into this framework.
+ Okay, so here's the basic idea of how it's going to fit
+ into that planar framework, okay?
+ So imagine that the output of this,
+ I should even use my multibody notation.
+ So what I'm going to imagine is that this outputs the position
+ of key point one in the world frame here and key point I,
+ you know, for all I.
+ There's a pretty simple assumption we could try
+ to make, the first assumption just saying I'm going
+ to reach over, I'm going to grab it.
+ Once I've grabbed it, I'm going to assume that those key points,
+ because if I've sufficiently grabbed the object,
+ are going to move with my hand, rigidly with my hand.
+ And then when I release, they'll stay in the world, right?
+ And we should pick manipulation actions for which that's true
+ if I tried to grab over here, that's not going to be true.
+ But with a little bit of a few assumptions about,
+ you know, pretty reasonable assumptions,
+ you can imagine that the dynamics
+ of these key points could be such that when my hand is open,
+ then those key points aren't moving.
+ And when my gripper is closed, then I'll
+ just assume that the position of the key point
+ relative to the gripper frame is constant.
+ That's the only difference, right?
+ And if I do that, then I can imagine coming up
+ with a sequence of these plus the open and close
+ that could schedule me to move my key points around
+ in the world.
+ I'll plan to go over and pick it up, close,
+ and then I'll start the key points moving along with my hand,
+ and I'll drop it off, off we go.
+ So it turns out, actually, it's a pretty rich specification
+ language.
+ It's even more rich, especially--
+ so the versions we've talked about so far
+ have been I had a desired pose exactly of my hand at the end
+ or my key points at the end.
+ You won't be surprised that when we get to motion planning,
+ we're going to loosen that up and be
+ able to write objectives and constraints
+ on the potential key point locations.
+ OK.
+ OK, so to execute that, the key points
+ are almost of what you need, but they're not quite enough.
+ The key points will let me write my planner for the most part,
+ but I do need to have some notion of where to grasp.
+ So different people address this in different ways.
+ So Anthony's got a version where he's
+ got key points for the grasping, too,
+ and dense enough key points that he
+ can find a grasp that will-- in the language of the key points,
+ roughly, in his neural descriptor fields.
+ But you could also, in a simpler case,
+ maybe just use the raw point cloud
+ and do your antipodal grasping in the vicinity
+ of the key points.
+ So just if I have the top center,
+ maybe I have the ability to segment,
+ because I've got my Mascar-CNN, then you
+ can imagine, choose your grasp on that object,
+ but then plan the motion once I'm
+ in that grasp in order to move the key points around.
+ And that works incredibly well.
+ There's a few things that I think it's worth saying about
+ how you make these tools work.
+ People have questions at that level?
+ Yes?
+ How many people know key point type algorithms?
+ Yes?
+ Used them?
+ OK, good.
+ I can see both.
+ And in the middle.
+ That's good.
+ There's a few important things to know about them.
+ And knowing them will help us understand, for instance,
+ how you think about uncertainty in the language of key points.
+ There's a few famous architectures,
+ neural architectures.
+ I won't dwell on them.
+ There's a convolutional pose machines is one of the first.
+ I'll link to them in the text.
+ The one we've tended to use is the integral pose machines,
+ or the integral version of that.
+ Just a small change on the original architecture.
+ But there's a key feature that both of these
+ have that you should understand, which is that I take my RGB in,
+ and I don't actually directly regress the key points.
+ What I put out here first from the neural network
+ is a heat map.
+ For instance, in the simple case,
+ let's just take RGB and have a 2D heat map come up.
+ And I've got a figure for this in a second.
+ And then afterwards, I'll find most often the highest value,
+ the peaks in my heat map in order to put out my--
+ it's an interesting idea.
+ It's one of these things that makes
+ things more differentiable.
+ And it tends to be a more robust metric for neural networks.
+ So the key points are probably impossibly small to see,
+ but there's little red dots here.
+ I didn't think about the screen resolution
+ when I took this particular image.
+ There's little red dots on the faces that are picking
+ nominal key points on a face.
+ People do this for face tracking, by the way.
+ They'd actually have pretty dense--
+ they have a key point for every part of your face,
+ for your lips, for your eyes.
+ And it's kind of spooky to see the points being plotted
+ around.
+ This one's just plotting five of them.
+ One for the left ear, I think, is this one
+ in each of those pictures.
+ And the heat map is the ground truth heat map
+ that people would use, would say that if I
+ know the key point is in a particular location,
+ here for the left ear, then I'm going
+ to draw just a Gaussian bump centered at the known heat
+ point location.
+ That's the standard thing.
+ And have it basically effectively
+ zero for most of the image, but just
+ have this narrow Gaussian bump.
+ And your goal is actually for every point
+ you're trying to estimate to predict
+ an entire image which has the peak at that value.
+ So this is the heat map representation.
+ Now, you can see quickly how that could encode uncertainty
+ in a nice way.
+ So if I was confused about which was the left or the right ear,
+ maybe I'd have a second small hill over there
+ in my output of my network.
+ And that allows you to then, if you
+ wanted to do more robust things down the line,
+ reasoning about the uncertainty, you
+ could leverage that richer representation.
+ The fact that it's a Gaussian of known kernel,
+ that bugs the snot out of me.
+ It's total hack.
+ People just, I think, do kernel hacking on that.
+ It doesn't seem particularly principled to me,
+ but it works well in practice.
+ So just admit that.
+ But this is a nice representation.
+ How do you train that?
+ Well, you can, of course, click on key points,
+ have humans label key points in a lot of different images.
+ And then for every click, you make
+ a little Gaussian desired image, and you train your network.
+ Yeah?
+ There are, of course, better ways in the manipulation
+ workflow.
+ We can play the same kind of trick we played
+ to label our segmentations.
+ You could take an object that you don't even
+ have a model of, you could spin your camera around it,
+ make your nerve for somehow your dense reconstruction of it,
+ and then click once for each key point
+ on the reconstructed model, and back project
+ to have labels for all of the possible images that came in.
+ That's a really fast way to generate a lot of label data
+ for key points.
+ And that works pretty well.
+ So this is the way that we then-- this
+ is the shoes example, right?
+ But if you want to sort of manipulate any possible shoe--
+ this was a great demo.
+ I remember we had this running one day during visit day
+ when the new grad students came to the lab,
+ and then they were coming into our lab space to eat lunch.
+ And so we basically asked everybody
+ to take their shoe off, which was maybe not the best hosting
+ I could have done.
+ But we got a huge variety of shoes to test that day.
+ And it picked up almost everyone.
+ It was incredibly good.
+ It was just, boom, put the shoe on the rack,
+ put the shoe on the rack.
+ And then Daniela, our lab director, Daniela Rus,
+ came in, and she had these ridiculously shiny black
+ Italian shoes, and we couldn't do it.
+ And I was terrified of hurting her shoes, by the way.
+ So that was the one we failed on.
+ Gretchen actually also had some high heels
+ that we had never seen before.
+ But it's all good.
+ We added them to the training set, and now we can do it.
+ Now we can do those high heels.
+ So it's a surprisingly powerful and simple sort of pipeline.
+ You can, of course, also generate key points
+ synthetically.
+ If you have a distribution of objects,
+ if you have your parametric mugs,
+ and you want to just generate a bunch of different labeled key
+ points, then you can generate synthetic images.
+ And that's a super powerful pipeline.
+ So we did a quick example of it on boxes,
+ because this was when Greg was during the pandemic,
+ and he was walking past the lobby of one of the dorms
+ and seeing piles of boxes.
+ He's like, that's a pretty good data set.
+ So he just started collecting images
+ of the front lobby of the dorm and generated a whole category
+ level of boxes.
+ But he also did this amazing job of using blender rendering
+ to set up the procedural models.
+ So it's not too hard to generate boxes of different size,
+ but it's a little hard to see.
+ But it's incredibly close to photorealistic.
+ He took a handful of texture maps of different boxes
+ that he saw in the front lobby and generated just
+ these huge data sets of perfectly labeled boxes
+ that looked pretty realistic.
+ You can get the ground truth instance level
+ pixel-wise segmentations, but you also
+ get to see the ground truth key points.
+ It's super relevant and interesting
+ to know that you could train your key point
+ detector to predict--
+ you don't have to pick only visible key points.
+ You could choose to predict key points that are occluded.
+ If I look at that image on a brighter screen,
+ I could hallucinate for myself and give you
+ an estimate of what the back corner looks like,
+ even though I can't see it.
+ And if I can generate training data that
+ puts a mark in the back corner, which both of those two
+ pipelines I suggested couldn't do,
+ then you can still ask the perception system
+ to predict even occluded key points.
+ So that's pretty powerful.
+ Almost always, this was a little too simple.
+ Almost always, people will run it
+ through a segmentation pipeline first
+ so that the key point network has to only work
+ on the segmented point clouds, maybe the bounding box that
+ comes out of Mascar-CNN.
+ I assume you could do it on the big image, and it would be OK.
+ But it tends to work better if you give it
+ the scaled and cropped version, zoomed-in version.
+ And then this is the detections on his raw data in the lobby,
+ his predicted key points, where you
+ can see the heat maps and various levels of uncertainty.
+ The fact that those are spread out and not as peaky
+ is important information.
+ It's sort of frustrating that, although it's obviously
+ important and good, the back half of our tools--
+ a lot of the algorithms we'll talk about in class
+ don't actually know how to reason about that uncertainty.
+ It's an advanced topic to reason about uncertainty
+ in your planner and your controller and the like.
+ We'll mention it-- I think we'll have at least one lecture on it
+ towards the end.
+ But there's no question we should
+ be asking our perception system for it.
+ I think there's work to do in how to consume it.
+ So that's pretty good, and those are the ground truth key points
+ that were labeled.
+ Questions about the key point pipeline?
+ [INAUDIBLE]
+ Did I make the point of how it works for a whole category
+ sufficiently well?
+ It's easy to label the toe of any shoe, the heel of any shoe,
+ the top of any shoe.
+ But it's harder to talk about a canonical pose of every shoe.
+ There are people that really don't like key points
+ as a representation.
+ I'm not trying to say this is the end all be all,
+ but it's surprisingly simple to think about and good.
+ And we did demonstrations back then
+ of understanding how many trained objects
+ and finding every mug we could buy on Amazon,
+ and it's pretty darn robust.
+ There's also nice additions to it.
+ So if you think about what that pipeline couldn't
+ do right out of the box--
+ so if I just used the initial point cloud
+ to decide where I'm going to grasp,
+ and then I just think about where those key points are
+ going to move in space, the fact that the key points are not
+ a complete representation of the geometry,
+ we had to be fairly conservative so that we didn't, like,
+ crack mugs on the table as we went around.
+ We had to pick fairly conservative trajectories
+ for our key points.
+ But you can put this together with other deep learning tools.
+ For instance, if you just imagine
+ the missing part of the point cloud
+ and have a completed shape of your object,
+ then you could put the entire geometry moving through
+ as a constraint in your planning system.
+ And that added some richness to what we could do.
+ We could do more realistic collision avoidance constraints.
+ Now, this one's pretty cool.
+ People also talk about learning-oriented key points,
+ where you have not just the x, y, z location,
+ but maybe the axes, the three-dimensional coordinate
+ system.
+ If you do that and you just know,
+ what is the key point and axis on the object I'm manipulating,
+ that turns out to be enough to do interesting control with.
+ So if you wanted to regulate the force at the end effector
+ of a screw or an eraser or whatever,
+ then you can write a controller making the same assumption
+ that the object becomes rigidly attached to my hand
+ when my hand's closed on it.
+ I can start regulating my forces of my hand
+ at the point defined by the key point
+ and with the orientation defined by the key point.
+ And that's enough with that pretty simple pipeline
+ to do some pretty cool stuff.
+ So Wei was able to pick up various LEGO blocks,
+ insert various USB keys, do mating.
+ All of those are sort of force-sensitive type tasks,
+ putting LEGO blocks together or putting USB in.
+ And you could do that with very little knowledge of the object
+ by just assuming, just understanding its geometry
+ in the level of a key point and applying these tools.
+ Seems only-- there we go.
+ So you get any possible eraser.
+ You want to be able to apply a wiping motion on the screen.
+ And the controllers that we'll talk about more soon
+ are enough to regulate the forces pretty well.
+ Yes, please.
+ [INAUDIBLE]
+ Awesome.
+ So what are we assuming here?
+ So we are assuming that key point 1 versus key point 2
+ is fixed given the initial observation,
+ but it's not fixed to some canonical model.
+ So my model does not assume that I know this a priori.
+ But we assume that they are rigidly attached.
+ They rigidly move through space.
+ [INAUDIBLE]
+ That's right.
+ Exactly right.
+ Yeah.
+ Yeah.
+ Perfect.
+ There's versions of this that people have done.
+ I mean, that David Held's lab, for instance,
+ has done that use key points or other particle level
+ representations that do this for deformable objects,
+ for instance.
+ There are definitely extensions like that.
+ But the simplest version is just assume
+ they're going to move rigidly.
+ Good.
+ Other questions?
+ Yeah.
+ It's a surprisingly powerful pipeline, I'd say.
+ One thing that people don't like about the key points--
+ I remember when we did those demos, for instance,
+ the thing that every single person asked,
+ they're like, OK, but you hand labeled the key points, right?
+ You're going to learn them next, right?
+ Learn the key points, right?
+ And I took offense because I actually think at some point,
+ the human has to say something about the task.
+ And I think this is-- in my mind,
+ the key point is like a minimal amount of information
+ to ask the human that defines the task.
+ And I think that's true.
+ I think there's a role where you have to have semantic key
+ points, where the human applied some amount
+ of semantic information to the-- this is the handle.
+ I want you to pick it up here, right?
+ But there are also ways that you can use key points where
+ the semantics aren't important, and they're really just
+ a summary of the geometry.
+ And in that case, I think people have done beautiful work
+ on learning key points.
+ And so you can, for instance, self-supervise and try
+ to find ways to label key points.
+ One of the best examples, I think, of that
+ is this Keto work of learning the key points that
+ were relevant for some forceful manipulation type tasks.
+ So learning key points is absolutely a thing.
+ But I think if you do learn them,
+ you don't get to call them a label.
+ You don't have the human-informed knowledge
+ attached to them.
+ You don't have the semantics attached.
+ But it's absolutely a thing.
+ So you can actually take that idea even farther
+ and think, why am I just doing-- this
+ is sort of like the sparse key point story.
+ There's really no reason to make them sparse.
+ You can go ahead and try to learn dense key points that
+ cover all over the entire geometry.
+ And if they're consistent, then they
+ take on a different sort of notion here.
+ So there's another representation
+ that's called dense object nets.
+ I'll tell you some of the details of this one too.
+ This was very enabling for us.
+ So when I show you these pictures,
+ this is what I hope you see.
+ So in the left, we have a canonical image of the object.
+ And the task, the object in this case being a MIT hat.
+ We have someone holding their mouse
+ over the object at a particular point
+ and maybe moving it around to make
+ the demonstration interesting.
+ And now we're seeing a different playback.
+ And the goal here is to find the associated key point,
+ if you will, in the hat in the other frames.
+ So this is also called dense correspondences.
+ Why is-- I mean, it's exactly the same
+ as we meant by correspondences in the ICP pipeline.
+ And it makes total sense to try to learn correspondences.
+ Remember in the ICP loop, once we knew the correspondences,
+ extracting the pose was easy, if that's our choice,
+ or maybe we don't want to do it.
+ So it makes total sense that if you
+ try to solve the hard combinatorial part
+ of the problem by learning from trial and error
+ and then allow additional tools to work from there.
+ So asking now as a different representation
+ now, not just sparse key points, but dense key points,
+ is I think really powerful.
+ Is that image clear?
+ I'm going to show a bunch of them so I hope it's clear.
+ So you can see the uncertainty there.
+ But the big thing that changed is this is not
+ n sparse key points here.
+ We could put this over anywhere on the hat.
+ And for any possible place on the hat,
+ we'll show you a distribution of possible correspondences.
+ So let me tell you a little bit about how
+ a standard correspondence network would work.
+ [SIDE CONVERSATION]
+ Now, when we're going from every pixel in the original image
+ to every pixel on the final image,
+ we're not going to use for every possible key point
+ its own heat map.
+ That would be the logical extension of this.
+ But it gets pretty expensive.
+ So we're going to do a slightly different representation here
+ based on some of the ideas from self-supervised learning.
+ So we're going to take RGB in, put it
+ through our neural network.
+ And the thing that we want out is a dense descriptor image.
+ Whereas if this thing was a RGB, it
+ has some width by height by three channels.
+ So I've got-- see what I'm saying?
+ It's width by height by three.
+ It's a tensor, but each color channel
+ is an image of width and height.
+ And then there's three of them, RGB.
+ And then this one I'm going to put out
+ a different image that is colorized, roughly,
+ in this arbitrary extra dimension of descriptors.
+ So I'm going to map every pixel in my original image
+ to some descriptor space.
+ I don't know what that space is going to look like exactly,
+ but I'm going to ask it to have certain properties.
+ In particular, that it gives correspondences.
+ If I have two images where I know
+ I have the same point on the object,
+ then they should arrive at the same place
+ in dense descriptor space.
+ So D, when I draw those pictures like that,
+ we chose D to be three so that we could render it
+ as an RGB image.
+ But you can choose D to be higher, for instance.
+ It doesn't have to be just three.
+ And then this is trained Siamese style
+ with self-supervised learning.
+ So we take two images that we know
+ have the same points in them.
+ I'll show you the pipeline in a second,
+ but we're going to do that same dense reconstruction trick
+ and know from two different images
+ that there's a point on the geometry
+ that if I back project, it should be the same point in both
+ of those images.
+ And then there's a bunch of points on the object that
+ should be different points.
+ So I'm going to put two images through my neural networks.
+ My dense descriptor net.
+ Get my other image.
+ And I basically give positive reward for matches
+ in descriptor space.
+ And I also have some negative examples.
+ I do some hard negative mining to say this is a non-match.
+ So start off by making the robot move around.
+ You come up with a dense reconstruction.
+ And then for each point on this image,
+ for each point on the caterpillar in this case,
+ this is a plush toy that we got.
+ It has lots of interesting buckles.
+ And so we thought it'd be good for learning manipulation.
+ But we ended up just using it for perception.
+ Everybody wonders why we have this strange caterpillar
+ in the lab.
+ But we take all those images.
+ And this time it's deformable.
+ There's no rigidity assumption here.
+ And then we say this point here, which
+ I know to be in a different frame, the same point,
+ that should arrive in the same place in descriptor space.
+ So we get right loss functions like this for matches.
+ We say that we want some average of the neural network
+ output from image A at a known location A minus the neural
+ network in image B at the known correspondence B,
+ where UA is known to correspond match with UB.
+ I minimize that loss.
+ I normalize it over the total number of matches.
+ And then I take a bunch of non-matches too
+ and just play a little trick.
+ It looks like the opposite of this roughly.
+ It says I want points that should not
+ be the same to have a large distance in this space,
+ up to some threshold.
+ And you sum those two together.
+ And you get your pixel-wise contrastive loss.
+ [TAPPING]
+ There's a bunch of tricks that people do to make this work
+ better.
+ For instance, normalizing so your descriptors
+ are on the unit sphere, that seems to be a good idea.
+ Data augmentation is absolutely a good idea.
+ People do background domain randomization
+ as a particular form of data augmentation.
+ All those tricks that people do in similar pipelines
+ are applied here also.
+ And then what you get out here is you take your caterpillar.
+ Even though it was stationary when we scanned it,
+ there's nothing in the network that requires it to be rigid.
+ And what you want to see here is that the colors, which
+ is our 3D-- when we choose D to be 3,
+ and we draw them as an image, that as you move the caterpillar
+ around, you want the same points in the caterpillar
+ to roughly come up with the same colors in all the frames.
+ And it's surprisingly good.
+ We have a Baymax doll in lab.
+ And it's surprisingly good.
+ We had various-- this is now the same demo again,
+ where the mouse is over this.
+ And this is the old version.
+ This was the new version, where we got much tighter predictions
+ by playing some of those extra games
+ about normalizing the descriptors and things
+ like that.
+ And it's surprisingly good.
+ You can go down left leg, right leg,
+ and it gives you a distribution of possible key points.
+ If you wanted to extract a particular key point out,
+ you can, of course, say there's a descriptor here.
+ What is the peak value of my uncertainty
+ map in the other image?
+ That's an operation that's natural to do,
+ and can be done differentiably, for instance.
+ But it turns out that this is something
+ that we didn't actually have any reason to expect.
+ But if you train it on a bunch of different hats,
+ then somehow we also found that the dense descriptors--
+ I mean, I would say this is a limitation.
+ It worked, and we exploited it, but we
+ don't understand it well enough for it to be a reliable thing
+ at the time.
+ But it turns out that it somehow learned a category level
+ descriptor.
+ We trained on a bunch of different hats independently,
+ and then we could put it on one hat.
+ And it tells us the correspondences on all the hats.
+ Something about the fact that the way
+ it fits things in d-dimensional space somehow made this happen.
+ If you want to learn different hats independently, you can.
+ That's what this other side was doing.
+ You just have to train with all the hats in the image
+ at the same time.
+ And if you're specifically saying,
+ don't match the point on this hat with this hat,
+ then it will learn not to.
+ But without that pressure, it somehow
+ seems to pick points that are somehow geometrically related
+ across different objects in a category.
+ So think of that as a dense, self-supervised key point.
+ There was no human labels anywhere in that pipeline.
+ We scanned the object, and it did its thing from there.
+ And that alone, depending on what your pipeline needs
+ to be after the fact, that's actually
+ a loan to do some interesting things.
+ So if you just say, I want to pick up the object,
+ I want to pick up the caterpillar from its ear,
+ from its tail in this case, and we put it down
+ in all kinds of different places,
+ it'll pick up the caterpillar by its tail.
+ You can deform it.
+ You can change it.
+ It'll pick it up by its tail just
+ by having a correspondence function.
+ Pick up from its ear.
+ [SIDE CONVERSATION]
+ OK.
+ Pretty good.
+ Let's take a quick stretch.
+ Seventh inning stretch.
+ That's what it should be called, right?
+ The seventh inning.
+ [SIDE CONVERSATION]
+,
+ All right.
+ So you should ask high level questions
+ or low level questions.
+ But is that landing?
+ These are different representations.
+ They're fundamentally not just summarizing
+ the state of the world as its pose.
+ And they're sufficient for control,
+ but they required us to think about control
+ a little differently down the pipeline.
+ Yes?
+ So it seemed like those correspondences
+ were on the surface of the object.
+ Yes?
+ Has there been work done where it's like volumetric?
+ So I know this point is the volume,
+ and then if it's like clay and I reshape it,
+ I know where that particle is in this new, kneaded shape.
+ That's a neat question.
+ So I'll repeat it for the people watching at home.
+ But yes, so the question is, if these are always--
+ all of the points we're registering
+ are on the surface.
+ In fact, when we make the 3D image,
+ we're actually using the depth image
+ to project our colorized--
+ this is-- the output of the network
+ is an image in this case.
+ And we are actually projecting it on the point cloud
+ and spinning our camera around to make that image.
+ And you say, could we do a volumetric version of this,
+ where you actually correspond into the body?
+ I don't see why you-- as long as you can--
+ you trust your reconstruction enough
+ to talk about a penetrated point being the same in both cases,
+ I don't see why you couldn't do that.
+ I haven't seen it done.
+ Have you guys seen it done?
+ Did you do it?
+ [INAUDIBLE]
+ Is that what the-- do you consider
+ that to be in the neural descriptor?
+ [INAUDIBLE]
+ OK.
+ [INAUDIBLE]
+ All right.
+ Good, good.
+ Yes.
+ Are dense correspondences the way?
+ Or what are the pros and cons versus the key points
+ that you were doing with the categorical mode?
+ Yeah, awesome question.
+ So are dense descriptors the way?
+ I actually have seen people use them over and over again
+ in lots of different applications.
+ So there's a particular-- I mean, the correspondence,
+ they do pretty well.
+ And I have seen that be successful.
+ They don't have any semantic information.
+ I was going to talk at the very end about just some
+ of the things that are not here.
+ So there's still-- the notion of object
+ is sort of still missing here.
+ The notion of dynamics is missing here.
+ So you could potentially train one per object, for instance,
+ and have correspondences have a type of object.
+ We did call it an object representation.
+ But certainly, the dynamics of the object are missing.
+ We don't know-- and it doesn't tell you anything about the mass.
+ It's not going to help you crack an egg.
+ It doesn't tell you how things are going to evolve.
+ That's missing from the key points also.
+ Absolutely.
+ Yeah.
+ Both-- I think-- I mean, for both of these examples,
+ it's absolutely missing from those.
+ But for moving nearly rigid or possibly deformable,
+ slightly deformable things around,
+ it's a pretty powerful pipeline.
+ I don't know that we've finished thinking
+ about how to plan and control with it either.
+ So there's work to do even just thinking
+ about the right way to consume that information, uncertainty
+ in that information.
+ [INAUDIBLE]
+ I think it would--
+ let's see.
+ I've seen enough people use it, both of them.
+ I mean, in various forms, people have implemented it
+ in various capacities that I would trust that it would work.
+ I wouldn't be afraid of saying you could grab the repository,
+ grab some of your own data, and expect it to work.
+ That's not the case of every tool we've played with,
+ but this one seems pretty robust.
+ OK.
+ Yeah, so this is a class of--
+ just two examples of a big class that I think is super powerful.
+ I mean, I guess I forgot to show.
+ This is the dense descriptors on that box pipeline
+ I talked about before.
+ It's interesting that it need not be--
+ I mean, if there's symmetries, it
+ could learn correspondence functions that
+ are good up to the symmetries.
+ You wouldn't expect it to be able to do better than that.
+ But that's a super valuable representation of the object
+ to go ahead and manipulate things.
+ That's Greg, and that's our messy lab.
+ This is Anthony's extension of it,
+ which I hadn't thought about as a volumetric thing,
+ but there you go.
+ So neural descriptor fields, you should check it out.
+ The emphasis in the title is about the SE3 equivariance,
+ right, to be able to do relative coordinates, for instance.
+ The video actually very nicely describes the pipeline.
+ Still mugs on racks.
+ It's the thing.
+ It's pervasive in the field.
+, OK, so here's the-- let me pause that before I run it
+ here, but-- yeah, here's the thing.
+ So let's compare it.
+ Remember I said that at the beginning
+ that we're not yet going to talk about--
+ we're trying to do representations
+ for the rest of our existing pipeline.
+ And that is putting some sort of a constraint
+ on our representation space, right?
+ So what I'm basically saying is that we're
+ taking RGB or RGBD or some combination
+ in to our neural network.
+ We've asked this question, and we
+ said we're going to do it like a human-designed pipeline here.
+ [TAPPING]
+ And humans are pretty creative, but somehow I
+ think that it's putting pressure on this to be interpretable
+ in some ways.
+ And the big thing that is, of course, happening
+ is people are asking bigger questions now about,
+ what if I remove that assumption and use a learning back end,
+ right?
+ And you could ask-- you could just say,
+ I'm going to train end-to-end from my neural network
+ right through my learning control.
+ And the thing that's exciting about that
+ is that really does remove this requirement, right?
+ That if it needs to represent uncertainty,
+ then it will represent uncertainty
+ in order to get the job done.
+ If it doesn't need to-- if it has-- if it needs to represent
+ something specific, only specific to a task,
+ maybe it'll do that, only capture
+ some relevant parts of the scene in order to capture the task.
+ But the design strategies we have for these components
+ are much, much weaker, right?
+ So you end up using reinforcement learning
+ or imitation learning.
+ We'll talk about both of them.
+ And they're not as generalizable,
+ and they consume massive amounts of compute,
+ as these kind of planners.
+ So I think there's a--
+ I think to some extent, this is a slightly artificial
+ distinction.
+ But what the field has done in the last few years
+ is more and more people are just saying,
+ I don't like this constraint.
+ I don't know what the representation should be.
+ It should be whatever the learning does.
+ And therefore, I must use learning control.
+ And I think there's a lot more to do
+ where you can have rich, possibly
+ uninterpretable representations here,
+ and still do really good control over here.
+ So that's a personal agenda for me,
+ is to embrace learning control when it makes sense,
+ but also remind people maybe that it's not the only way.
+ So we'll talk a lot more about some of the general approaches
+ to control up here that could consume richer, possibly
+ not just kinematic models of the state.
+ And there's a big topic of learning state representations.
+ So I would think, in answer to your question, David,
+ I think these examples are some impoverished state
+ representation that are sufficient for some kinematic
+ tasks.
+ But they're an impoverished notion
+ of what the state of the world really is.
+ Like I said, cracking an egg is just an extreme example,
+ but-- or boiling-- I don't know.
+ You can imagine a bunch of things
+ which have a lot more state than just its current positions
+ as specified through the correspondences.
+ So thinking about how to find those richer representations
+ and learning or writing controllers around them
+ is a big agenda.
+ [LAUGHTER]
+ OK, so when we do do imitation learning,
+ we found in our lab that using these dense descriptors
+ as a pre-processing step in order
+ to then train a neural network policy
+ does work incredibly well.
+ So this is just taking those same examples
+ where we're using the dense correspondences.
+ For instance, on the hat--
+ I'll tell you more about this when
+ we talk about imitation learning.
+ But it turns out that if you just sort of give
+ to your learned policy a handful of key points on the hat trained
+ through dense descriptors and ask it to then put hats
+ on the rack or learn controllers that can move plates around
+ and do more dynamic tasks, it's been surprisingly good.
+ So we'll talk about that in the imitation learning section.
+ And I really think this is just two examples
+ of a big class of approaches that
+ are thinking about novel representations
+ for the geometry.
+ One that I like from Andy Zhang and company
+ is they do this transporter nets where roughly they're saying--
+ I mean, there's a lot of interesting things
+ happening in the paper.
+ But maybe at the high level, what they're saying
+ is that my assumption about the dynamics
+ is when I grab these pixels, those pixels
+ are all going to move together.
+ And that allows them, with a rich pipeline,
+ to sort of do incredibly general and useful tasks
+ for picking random unknown objects
+ and putting them into bins and things like that.
+ Just from looking at the raw perception,
+ having a model that if I pick here,
+ those things are going to transform
+ through a standard rigid transform into the new place
+ allows me to do a lot of rich tasks.
+ So the deep perception world is alive and well.
+ It's moving super fast.
+ And I think you will find many things
+ that will change the way we should program our robots.
+ Good.
+ I'll end a few minutes early, I guess.
+ And I'm happy to stick around and answer
+ questions for projects.
+ [BLANK_AUDIO]

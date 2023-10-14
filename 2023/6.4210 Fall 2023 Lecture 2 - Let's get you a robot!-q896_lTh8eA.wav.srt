@@ -1,0 +1,6712 @@
+1
+00:00:00,000 --> 00:00:05,280
+ OK, welcome back, everybody.
+
+2
+00:00:05,280 --> 00:00:08,000
+ So today, I want to talk a bit about hardware.
+
+3
+00:00:08,000 --> 00:00:11,520
+ Most of the class is going to be about software and autonomy
+
+4
+00:00:11,520 --> 00:00:13,560
+ and the higher level stack.
+
+5
+00:00:13,560 --> 00:00:15,560
+ But just to make sure we lay the groundwork
+
+6
+00:00:15,560 --> 00:00:17,720
+ and understand what we're going to be using,
+
+7
+00:00:17,720 --> 00:00:19,200
+ I thought I'd spend a day talking
+
+8
+00:00:19,200 --> 00:00:22,560
+ a little bit about some of the details of the hardware.
+
+9
+00:00:22,560 --> 00:00:24,680
+ Now, someone asked last time, what's an EWA,
+
+10
+00:00:24,680 --> 00:00:26,740
+ which is a reasonable question.
+
+11
+00:00:26,740 --> 00:00:30,000
+ I'm sorry I keep using EWA as a thing people know.
+
+12
+00:00:30,000 --> 00:00:32,080
+ I figured the best way would just be to bring one.
+
+13
+00:00:32,080 --> 00:00:32,560
+ So here you go.
+
+14
+00:00:32,560 --> 00:00:34,600
+ I also heard that it's hard to see from the back.
+
+15
+00:00:34,600 --> 00:00:39,920
+ So this will give you a sense of how frickin' heavy the EWA is.
+
+16
+00:00:39,920 --> 00:00:42,480
+ This is an EWA here.
+
+17
+00:00:42,480 --> 00:00:46,720
+ It's a beautiful piece of machinery.
+
+18
+00:00:46,720 --> 00:00:48,880
+ You'll notice it doesn't come with a hand by default.
+
+19
+00:00:48,880 --> 00:00:49,920
+ It's bring your own hand.
+
+20
+00:00:49,920 --> 00:00:51,880
+ And we'll talk about hands a little bit later.
+
+21
+00:00:51,880 --> 00:00:54,040
+ And I brought a bunch of hardware examples
+
+22
+00:00:54,040 --> 00:00:56,480
+ of some of the cool hands out there.
+
+23
+00:00:56,480 --> 00:00:57,960
+ This is what an EWA is.
+
+24
+00:00:57,960 --> 00:01:00,400
+ This is one of the many robot arms that you can buy.
+
+25
+00:01:00,400 --> 00:01:02,320
+ And you'll see in research labs these days,
+
+26
+00:01:02,320 --> 00:01:05,080
+ research groups working on manipulation.
+
+27
+00:01:05,080 --> 00:01:08,560
+ And there's a couple of reasons why this is a good choice,
+
+28
+00:01:08,560 --> 00:01:11,480
+ I think, for many research projects and manipulation.
+
+29
+00:01:11,480 --> 00:01:14,960
+ So maybe a bit on the high end, expensive version,
+
+30
+00:01:14,960 --> 00:01:18,040
+ but solid hardware that will continue to work for you,
+
+31
+00:01:18,040 --> 00:01:20,520
+ even if you have a bug in your research code
+
+32
+00:01:20,520 --> 00:01:23,480
+ and slam it into a table or something like that.
+
+33
+00:01:23,480 --> 00:01:25,400
+ OK, so we'll talk a little bit about what makes
+
+34
+00:01:25,400 --> 00:01:27,480
+ this EWA tick.
+
+35
+00:01:27,480 --> 00:01:29,180
+ And then towards the end, we'll talk more
+
+36
+00:01:29,180 --> 00:01:30,320
+ about all the dexterous hands.
+
+37
+00:01:30,320 --> 00:01:32,100
+ And I'll make sure that I'll wheel this up
+
+38
+00:01:32,100 --> 00:01:34,000
+ to the back or something when we're done.
+
+39
+00:01:34,000 --> 00:01:35,480
+ And people can check them out.
+
+40
+00:01:35,480 --> 00:01:39,040
+ And you have to be a little careful with it.
+
+41
+00:01:39,040 --> 00:01:41,400
+ The bumps on the way over loosened a couple screws,
+
+42
+00:01:41,400 --> 00:01:43,160
+ and your fingers might fall off.
+
+43
+00:01:43,160 --> 00:01:47,480
+ But if you're gentle, then you can check them out.
+
+44
+00:01:47,480 --> 00:01:49,740
+ All right, so let's get you a robot.
+
+45
+00:01:49,740 --> 00:01:52,240
+ That's the goal for today.
+
+46
+00:01:52,240 --> 00:01:55,920
+ We'll talk mostly about robot arms.
+
+47
+00:01:55,920 --> 00:01:58,160
+ The hardware does matter.
+
+48
+00:01:58,160 --> 00:02:01,680
+ Your choice of what arm to sit next to and program or purchase
+
+49
+00:02:01,680 --> 00:02:04,360
+ or whatever will matter.
+
+50
+00:02:04,360 --> 00:02:07,600
+ Your ability to do certain tasks will depend
+
+51
+00:02:07,600 --> 00:02:10,040
+ on the hardware capabilities.
+
+52
+00:02:10,040 --> 00:02:14,640
+ We're going to often use the EWA, but I'm trying to expand.
+
+53
+00:02:14,640 --> 00:02:17,240
+ I'd like to be at the point where--
+
+54
+00:02:17,240 --> 00:02:19,040
+ I don't know, when I was young, we
+
+55
+00:02:19,040 --> 00:02:20,720
+ used to play these games like MechWarrior,
+
+56
+00:02:20,720 --> 00:02:23,120
+ where you start off and there's a robot,
+
+57
+00:02:23,120 --> 00:02:25,680
+ and you get to pick which bit you want here.
+
+58
+00:02:25,680 --> 00:02:27,800
+ And here, and you get the little display.
+
+59
+00:02:27,800 --> 00:02:30,440
+ I want the class to start off where there's like a--
+
+60
+00:02:30,440 --> 00:02:33,000
+ pick your robot, and you pick your robot.
+
+61
+00:02:33,000 --> 00:02:36,460
+ And then you go through, and you make all the decisions
+
+62
+00:02:36,460 --> 00:02:38,920
+ and use that for the entire class.
+
+63
+00:02:38,920 --> 00:02:40,680
+ Most of my code uses EWA right now.
+
+64
+00:02:40,680 --> 00:02:41,800
+ It's not very baked in.
+
+65
+00:02:41,800 --> 00:02:43,840
+ If you just change it for a panda or something like this,
+
+66
+00:02:43,840 --> 00:02:45,180
+ almost all the demos would work.
+
+67
+00:02:45,180 --> 00:02:49,000
+ But you'd find a few corner cases where it doesn't work.
+
+68
+00:02:49,000 --> 00:02:50,200
+ OK, so we'll talk about that.
+
+69
+00:02:50,200 --> 00:02:54,520
+ And I'll tell you why that's the arm of choice for now.
+
+70
+00:02:54,520 --> 00:02:57,040
+ Then we'll talk about how to simulate the EWA, just
+
+71
+00:02:57,040 --> 00:02:59,320
+ at the first level of detail.
+
+72
+00:02:59,320 --> 00:03:01,800
+ And I guess the biggest takeaway there
+
+73
+00:03:01,800 --> 00:03:05,000
+ is that the physics of the EWA is not
+
+74
+00:03:05,000 --> 00:03:08,080
+ enough to simulate the EWA.
+
+75
+00:03:08,080 --> 00:03:09,980
+ The fact that there's joints here,
+
+76
+00:03:09,980 --> 00:03:12,760
+ and it's actually not falling down passively
+
+77
+00:03:12,760 --> 00:03:15,040
+ already tells you that there's something else going on.
+
+78
+00:03:15,040 --> 00:03:17,040
+ And I didn't carry the control cabinet,
+
+79
+00:03:17,040 --> 00:03:19,080
+ but there's a whole control cabinet
+
+80
+00:03:19,080 --> 00:03:21,920
+ that comes with the EWA that you kind of have to simulate
+
+81
+00:03:21,920 --> 00:03:23,640
+ if you want to know what your commands are
+
+82
+00:03:23,640 --> 00:03:27,560
+ going to do between the place where you program your autonomy
+
+83
+00:03:27,560 --> 00:03:28,600
+ and send it to the robot.
+
+84
+00:03:28,600 --> 00:03:30,320
+ Just give me a second.
+
+85
+00:03:30,320 --> 00:03:31,900
+ And then when we get towards the end,
+
+86
+00:03:31,900 --> 00:03:33,680
+ we'll talk about, like I said, robot hands.
+
+87
+00:03:33,680 --> 00:03:35,520
+ There's a particular hand we'll use the most.
+
+88
+00:03:35,520 --> 00:03:37,220
+ But again, it's not exclusive, and I brought
+
+89
+00:03:37,220 --> 00:03:38,240
+ a bunch of different varieties.
+
+90
+00:03:38,240 --> 00:03:38,760
+ Yes?
+
+91
+00:03:38,760 --> 00:03:42,120
+ [INAUDIBLE]
+
+92
+00:03:42,120 --> 00:03:42,680
+ Yeah, yeah.
+
+93
+00:03:42,680 --> 00:03:46,520
+ So you're going to see that in great deal.
+
+94
+00:03:46,520 --> 00:03:47,760
+ Yep.
+
+95
+00:03:47,760 --> 00:03:48,320
+ Not directly.
+
+96
+00:03:48,320 --> 00:03:50,680
+ We don't run their code in the middle of the simulation.
+
+97
+00:03:50,680 --> 00:03:52,560
+ We don't do the hardware in the loop version.
+
+98
+00:03:52,560 --> 00:03:53,080
+ You could.
+
+99
+00:03:53,080 --> 00:03:57,560
+ We haven't done that as an intermediate step.
+
+100
+00:03:57,560 --> 00:03:59,120
+ OK.
+
+101
+00:03:59,120 --> 00:04:04,160
+ So again, when you see things in class,
+
+102
+00:04:04,160 --> 00:04:07,080
+ I almost always try to push them, the demos,
+
+103
+00:04:07,080 --> 00:04:07,680
+ to DeepNote.
+
+104
+00:04:07,680 --> 00:04:09,720
+ So if you have been looking at the notes,
+
+105
+00:04:09,720 --> 00:04:11,440
+ you might have seen it already.
+
+106
+00:04:11,440 --> 00:04:13,080
+ Some of the demos I'll do today, you
+
+107
+00:04:13,080 --> 00:04:14,680
+ could just get them yourself.
+
+108
+00:04:14,680 --> 00:04:17,440
+ If you're on the corresponding chapter,
+
+109
+00:04:17,440 --> 00:04:18,560
+ you click Launch in DeepNote, and you
+
+110
+00:04:18,560 --> 00:04:21,080
+ should be able to run it, just like your problem
+
+111
+00:04:21,080 --> 00:04:23,760
+ sets that you're starting on.
+
+112
+00:04:23,760 --> 00:04:27,800
+ Oh, I had a big note here to say,
+
+113
+00:04:27,800 --> 00:04:30,240
+ make sure you've signed up for Piazza.
+
+114
+00:04:30,240 --> 00:04:32,920
+ If you're an undergrad doing the CIM,
+
+115
+00:04:32,920 --> 00:04:34,660
+ make sure you've signed up for Canvas.
+
+116
+00:04:34,660 --> 00:04:37,400
+ And in particular, you should be signing up
+
+117
+00:04:37,400 --> 00:04:39,320
+ for the sections for the CIM.
+
+118
+00:04:39,320 --> 00:04:41,080
+ We need to lock that in so that people
+
+119
+00:04:41,080 --> 00:04:44,200
+ know which sections to go to on Friday
+
+120
+00:04:44,200 --> 00:04:47,400
+ if you're the undergrad in CIM.
+
+121
+00:04:47,400 --> 00:04:50,880
+ And one thought-- it was mentioned in the posts,
+
+122
+00:04:50,880 --> 00:04:52,240
+ but one thing to think about--
+
+123
+00:04:52,240 --> 00:04:54,720
+ I know it's impossible to ask you to pick your project groups
+
+124
+00:04:54,720 --> 00:04:55,760
+ now.
+
+125
+00:04:55,760 --> 00:04:58,040
+ But if you happen to know who you're
+
+126
+00:04:58,040 --> 00:05:00,200
+ going to work with or something, that
+
+127
+00:05:00,200 --> 00:05:02,160
+ would be ideal if you were in the same section.
+
+128
+00:05:02,160 --> 00:05:04,400
+ We can maybe try to shuffle things around a little bit
+
+129
+00:05:04,400 --> 00:05:08,160
+ later, but ideally, it's easier if everybody's
+
+130
+00:05:08,160 --> 00:05:11,280
+ in the same section.
+
+131
+00:05:11,280 --> 00:05:13,400
+ But we're understanding because you can't possibly
+
+132
+00:05:13,400 --> 00:05:14,480
+ know that completely yet.
+
+133
+00:05:14,480 --> 00:05:17,360
+ OK.
+
+134
+00:05:17,360 --> 00:05:19,880
+ And then one last starting point.
+
+135
+00:05:19,880 --> 00:05:22,560
+ I do think that understanding the hardware
+
+136
+00:05:22,560 --> 00:05:26,680
+ is valuable in just not only, like I said, what you buy
+
+137
+00:05:26,680 --> 00:05:30,280
+ and what you can do, but I think having
+
+138
+00:05:30,280 --> 00:05:32,440
+ a detailed understanding of the algorithms that
+
+139
+00:05:32,440 --> 00:05:34,760
+ are running this hardware and the hardware underneath it
+
+140
+00:05:34,760 --> 00:05:37,640
+ will change the way you write your code.
+
+141
+00:05:37,640 --> 00:05:40,320
+ There's kind of a dream, which I share the dream,
+
+142
+00:05:40,320 --> 00:05:43,560
+ that when our machine learning tools are good enough,
+
+143
+00:05:43,560 --> 00:05:48,880
+ then you can just get crappy hardware,
+
+144
+00:05:48,880 --> 00:05:51,120
+ and the machine learning will paper over all the details
+
+145
+00:05:51,120 --> 00:05:54,280
+ for you, and everything will work beautifully.
+
+146
+00:05:54,280 --> 00:05:57,360
+ Maybe we're approaching that, but we're not there yet.
+
+147
+00:05:57,360 --> 00:06:00,000
+ And I think the labs that are doing
+
+148
+00:06:00,000 --> 00:06:02,440
+ the most impressive things on real robots
+
+149
+00:06:02,440 --> 00:06:05,800
+ with AI and autonomy have often spent a lot of time
+
+150
+00:06:05,800 --> 00:06:09,280
+ mastering what's happening at the low-level control stack.
+
+151
+00:06:09,280 --> 00:06:11,800
+ And they're not sending current commands to the motor.
+
+152
+00:06:11,800 --> 00:06:13,840
+ They actually have a deep understanding
+
+153
+00:06:13,840 --> 00:06:16,760
+ of the low-level control that's running at high frequencies
+
+154
+00:06:16,760 --> 00:06:17,960
+ and stuff like that.
+
+155
+00:06:17,960 --> 00:06:20,120
+ So this is good stuff to know, even if you only
+
+156
+00:06:20,120 --> 00:06:23,160
+ care about higher-level ideas.
+
+157
+00:06:23,160 --> 00:06:32,480
+ OK, we've had robot arms for a very long time.
+
+158
+00:06:32,480 --> 00:06:34,360
+ They used to look a little bit more like this.
+
+159
+00:06:34,360 --> 00:06:35,880
+ They used to be--
+
+160
+00:06:35,880 --> 00:06:36,760
+ and they still do.
+
+161
+00:06:36,760 --> 00:06:37,840
+ I mean, there's still lots of places
+
+162
+00:06:37,840 --> 00:06:39,960
+ where you'll see robot arms like this, and factories
+
+163
+00:06:39,960 --> 00:06:42,160
+ or the like, and they're often behind cages
+
+164
+00:06:42,160 --> 00:06:44,080
+ or in rooms by themselves doing lots
+
+165
+00:06:44,080 --> 00:06:47,040
+ of incredibly useful work.
+
+166
+00:06:47,040 --> 00:06:49,360
+ But the robots have been changing over the last few
+
+167
+00:06:49,360 --> 00:06:51,920
+ years, a decade maybe.
+
+168
+00:06:51,920 --> 00:06:56,400
+ And we're working towards this vision of co-bots,
+
+169
+00:06:56,400 --> 00:06:58,240
+ where robots that are working much closer
+
+170
+00:06:58,240 --> 00:07:00,160
+ to people, alongside people.
+
+171
+00:07:00,160 --> 00:07:03,480
+ This was kind of a carefully chosen glamour
+
+172
+00:07:03,480 --> 00:07:05,200
+ shot for Rod Brooks back at the time
+
+173
+00:07:05,200 --> 00:07:07,160
+ when they were doing rethink robotics.
+
+174
+00:07:07,160 --> 00:07:09,280
+ And the point was that you shouldn't
+
+175
+00:07:09,280 --> 00:07:13,000
+ have to be afraid of having the robot drape its arms over you,
+
+176
+00:07:13,000 --> 00:07:16,560
+ which was quite a statement at the time.
+
+177
+00:07:16,560 --> 00:07:18,880
+ And there's some important differences
+
+178
+00:07:18,880 --> 00:07:22,880
+ on the applications on the left and the hardware that
+
+179
+00:07:22,880 --> 00:07:24,560
+ was generated by those applications,
+
+180
+00:07:24,560 --> 00:07:27,760
+ and the applications on the right, which Rod, by the way,
+
+181
+00:07:27,760 --> 00:07:32,080
+ started that company saying, mom and pop own a bakery,
+
+182
+00:07:32,080 --> 00:07:34,080
+ and they want to be able to just unpack a robot
+
+183
+00:07:34,080 --> 00:07:35,800
+ and do some very simple things.
+
+184
+00:07:35,800 --> 00:07:38,280
+ And anybody can program a robot very simply,
+
+185
+00:07:38,280 --> 00:07:40,520
+ and it's going to be working alongside people.
+
+186
+00:07:40,520 --> 00:07:42,400
+ That was the vision for these kind of robots.
+
+187
+00:07:42,400 --> 00:07:45,040
+ And increasingly, the field has visions
+
+188
+00:07:45,040 --> 00:07:47,360
+ of getting robots in every home.
+
+189
+00:07:47,360 --> 00:07:50,640
+ And that, whereas the applications on the left,
+
+190
+00:07:50,640 --> 00:07:53,440
+ you want robots that are strong enough to lift a car
+
+191
+00:07:53,440 --> 00:07:57,040
+ and move extremely fast and are extremely precise.
+
+192
+00:07:57,040 --> 00:08:00,760
+ And that's different than robots that you're going to let hug
+
+193
+00:08:00,760 --> 00:08:02,240
+ you.
+
+194
+00:08:02,240 --> 00:08:05,200
+ And so the actual hardware underneath these things
+
+195
+00:08:05,200 --> 00:08:06,920
+ have changed.
+
+196
+00:08:06,920 --> 00:08:10,400
+ Maybe we're working towards this sort of vision of Baymax,
+
+197
+00:08:10,400 --> 00:08:14,000
+ where you really want to cuddle with the robot.
+
+198
+00:08:14,000 --> 00:08:14,500
+ We'll see.
+
+199
+00:08:14,500 --> 00:08:21,000
+ But if you go into a research lab today in industry
+
+200
+00:08:21,000 --> 00:08:24,760
+ or in academia that's working on manipulation,
+
+201
+00:08:24,760 --> 00:08:27,480
+ then there's kind of a standard cast of characters
+
+202
+00:08:27,480 --> 00:08:29,760
+ that you'll see in terms of robots.
+
+203
+00:08:29,760 --> 00:08:31,280
+ You'll see universal robots.
+
+204
+00:08:31,280 --> 00:08:33,600
+ There's little ones, and there's big ones,
+
+205
+00:08:33,600 --> 00:08:36,280
+ and they have different payloads and the like.
+
+206
+00:08:36,280 --> 00:08:38,720
+ You can see rods rethink.
+
+207
+00:08:38,720 --> 00:08:40,840
+ The company isn't making the robot anymore,
+
+208
+00:08:40,840 --> 00:08:43,360
+ but they're still around.
+
+209
+00:08:43,360 --> 00:08:46,600
+ You'll see this Konova Jayco is a great arm that
+
+210
+00:08:46,600 --> 00:08:49,160
+ was originally marketed for being
+
+211
+00:08:49,160 --> 00:08:51,000
+ on the end of a wheelchair.
+
+212
+00:08:51,000 --> 00:08:54,200
+ So it's actually-- one of its incredible selling points
+
+213
+00:08:54,200 --> 00:08:56,000
+ is that it doesn't have a control cabinet
+
+214
+00:08:56,000 --> 00:08:56,800
+ you have to carry around.
+
+215
+00:08:56,800 --> 00:08:58,300
+ It's actually got all its electronics
+
+216
+00:08:58,300 --> 00:09:00,040
+ embedded in the bottom of the arm.
+
+217
+00:09:00,040 --> 00:09:02,680
+ So it's more mobile than most of them.
+
+218
+00:09:02,680 --> 00:09:04,920
+ And then the Ewa you see.
+
+219
+00:09:04,920 --> 00:09:08,280
+ Panda is a newer version of the Ewa in some sense.
+
+220
+00:09:08,280 --> 00:09:10,680
+ The people that worked on the Ewa
+
+221
+00:09:10,680 --> 00:09:13,760
+ were involved in starting the company Frank Amica that
+
+222
+00:09:13,760 --> 00:09:16,720
+ made Panda and makes Panda.
+
+223
+00:09:16,720 --> 00:09:20,480
+ ABB is a more traditional robotic arm manufacturer.
+
+224
+00:09:20,480 --> 00:09:21,840
+ They build some of the big robots
+
+225
+00:09:21,840 --> 00:09:23,820
+ that you see in the factories, but they've also
+
+226
+00:09:23,820 --> 00:09:26,640
+ started making Cobots, these robots that
+
+227
+00:09:26,640 --> 00:09:28,560
+ are a little bit more huggable.
+
+228
+00:09:28,560 --> 00:09:30,240
+ That's too much.
+
+229
+00:09:30,240 --> 00:09:38,760
+ But OK, so before I go there, so there's
+
+230
+00:09:38,760 --> 00:09:41,160
+ a couple of things that distinguish these newer
+
+231
+00:09:41,160 --> 00:09:43,480
+ robots from the big ones, like I said.
+
+232
+00:09:43,480 --> 00:09:47,160
+ So precision versus huggability.
+
+233
+00:09:47,160 --> 00:09:49,360
+ But what makes something more huggable?
+
+234
+00:09:49,360 --> 00:09:52,480
+ So if you take one of the big traditional robots
+
+235
+00:09:52,480 --> 00:09:56,600
+ and if it bumps into something it didn't expect,
+
+236
+00:09:56,600 --> 00:09:59,060
+ it actually won't even have sensors typically
+
+237
+00:09:59,060 --> 00:10:02,560
+ that would detect these kind of failures.
+
+238
+00:10:02,560 --> 00:10:05,000
+ So a lot of times the only sensors
+
+239
+00:10:05,000 --> 00:10:07,100
+ that an industrial robotic arm will have
+
+240
+00:10:07,100 --> 00:10:09,800
+ will be just joint position sensors.
+
+241
+00:10:09,800 --> 00:10:12,520
+ So you're sending joint commands to the robot or trajectories
+
+242
+00:10:12,520 --> 00:10:13,120
+ to the robot.
+
+243
+00:10:13,120 --> 00:10:15,720
+ It's trying to execute them with very high precision.
+
+244
+00:10:15,720 --> 00:10:19,160
+ And if it deviates at all from that desired trajectory,
+
+245
+00:10:19,160 --> 00:10:21,960
+ it will fault. It'll say something went horribly wrong.
+
+246
+00:10:21,960 --> 00:10:23,200
+ I don't want to hurt anybody.
+
+247
+00:10:23,200 --> 00:10:24,320
+ I'm going to turn off.
+
+248
+00:10:24,320 --> 00:10:25,240
+ System error.
+
+249
+00:10:25,240 --> 00:10:27,400
+ And you have to reboot.
+
+250
+00:10:27,400 --> 00:10:29,960
+ And that makes them completely impractical for use
+
+251
+00:10:29,960 --> 00:10:31,600
+ in the home, because you're going
+
+252
+00:10:31,600 --> 00:10:34,920
+ to bump into stuff in the home.
+
+253
+00:10:34,920 --> 00:10:36,920
+ Even if you have--
+
+254
+00:10:36,920 --> 00:10:39,000
+ the reason I put this dishwasher example in again.
+
+255
+00:10:39,000 --> 00:10:41,840
+ So just take the example of the robot opening the dishwasher,
+
+256
+00:10:41,840 --> 00:10:44,200
+ which I showed you before.
+
+257
+00:10:44,200 --> 00:10:47,000
+ In the home, you probably don't know exactly
+
+258
+00:10:47,000 --> 00:10:48,280
+ where the dishwasher is.
+
+259
+00:10:48,280 --> 00:10:49,880
+ You probably don't know exactly where the robot is
+
+260
+00:10:49,880 --> 00:10:51,120
+ relative to the dishwasher.
+
+261
+00:10:51,120 --> 00:10:53,500
+ You probably don't know exactly where the hinge joint is.
+
+262
+00:10:53,500 --> 00:10:55,880
+ So if you want to do this sort of opening, which
+
+263
+00:10:55,880 --> 00:10:58,280
+ is moving along a constrained motion defined
+
+264
+00:10:58,280 --> 00:11:01,320
+ by the hinge of the dishwasher door,
+
+265
+00:11:01,320 --> 00:11:04,920
+ if you have any calibration error, uncertainty error
+
+266
+00:11:04,920 --> 00:11:08,320
+ in that, and you're trying to find a very rigid trajectory,
+
+267
+00:11:08,320 --> 00:11:10,560
+ the robot will simply fault. You probably
+
+268
+00:11:10,560 --> 00:11:13,500
+ can't do this task in a robust sense
+
+269
+00:11:13,500 --> 00:11:16,600
+ with a robot that's trying to do exquisite position control.
+
+270
+00:11:16,600 --> 00:11:18,160
+ It's just the wrong robot for the job.
+
+271
+00:11:18,160 --> 00:11:21,200
+ It was built for different requirements.
+
+272
+00:11:21,200 --> 00:11:23,880
+ OK, so what's happened is we've seen
+
+273
+00:11:23,880 --> 00:11:26,680
+ a progression of those original robots
+
+274
+00:11:26,680 --> 00:11:29,440
+ towards things that can sense a little bit more of the world.
+
+275
+00:11:29,440 --> 00:11:31,280
+ So one of the first things you'll see
+
+276
+00:11:31,280 --> 00:11:34,760
+ is in one of the universal robots, for instance,
+
+277
+00:11:34,760 --> 00:11:37,600
+ you'll see force torque sensors at the wrist.
+
+278
+00:11:37,600 --> 00:11:38,560
+ That's a standard thing.
+
+279
+00:11:38,560 --> 00:11:41,120
+ You can take a traditional robot arm,
+
+280
+00:11:41,120 --> 00:11:45,120
+ put an extra sensor between the arm and the hand
+
+281
+00:11:45,120 --> 00:11:49,400
+ that'll measure contact force at that joint or torques.
+
+282
+00:11:49,400 --> 00:11:51,920
+ And then you can write your controllers
+
+283
+00:11:51,920 --> 00:11:54,200
+ to be a little bit more informed about,
+
+284
+00:11:54,200 --> 00:11:57,320
+ I made a contact with the world somewhere in a way
+
+285
+00:11:57,320 --> 00:12:00,800
+ I didn't expect, and react to that.
+
+286
+00:12:00,800 --> 00:12:04,200
+ But that's a pretty common setup.
+
+287
+00:12:04,200 --> 00:12:07,480
+ There's a few arms out there that say that's not enough,
+
+288
+00:12:07,480 --> 00:12:09,840
+ that I actually need to be able to sense contact anywhere
+
+289
+00:12:09,840 --> 00:12:12,320
+ I'm along my arm in some sense.
+
+290
+00:12:12,320 --> 00:12:14,920
+ And the way to do that is to add more instrumentation
+
+291
+00:12:14,920 --> 00:12:17,360
+ to the joints so that you could potentially
+
+292
+00:12:17,360 --> 00:12:21,320
+ measure a contact force or torque, an unexpected torque,
+
+293
+00:12:21,320 --> 00:12:22,960
+ even at the joints all the way up.
+
+294
+00:12:22,960 --> 00:12:24,200
+ Because the wrist is only going to get it
+
+295
+00:12:24,200 --> 00:12:25,640
+ if you make a contact at the hand.
+
+296
+00:12:25,640 --> 00:12:27,280
+ If you bump your elbow into something,
+
+297
+00:12:27,280 --> 00:12:29,740
+ that's not going to be detected by the wrist force torque
+
+298
+00:12:29,740 --> 00:12:31,160
+ sensor.
+
+299
+00:12:31,160 --> 00:12:33,760
+ So the original arms--
+
+300
+00:12:33,760 --> 00:12:39,520
+ I'll start writing down some few words, key words here.
+
+301
+00:12:39,520 --> 00:12:44,840
+ So original arms had joint position and/or velocity
+
+302
+00:12:44,840 --> 00:12:45,480
+ sensors.
+
+303
+00:12:49,760 --> 00:12:59,240
+ And then you could start adding on force torque sensors, often
+
+304
+00:12:59,240 --> 00:12:59,840
+ at the wrist.
+
+305
+00:12:59,840 --> 00:13:08,360
+ Quick check.
+
+306
+00:13:08,360 --> 00:13:10,120
+ Someone in the back, is that large enough?
+
+307
+00:13:10,120 --> 00:13:11,640
+ Or should I write bigger?
+
+308
+00:13:11,640 --> 00:13:12,760
+ OK, I get a few thumbs up.
+
+309
+00:13:12,760 --> 00:13:14,140
+ That's good.
+
+310
+00:13:14,140 --> 00:13:16,520
+ I'll still try to write bigger because I got some feedback
+
+311
+00:13:16,520 --> 00:13:17,480
+ saying I should write bigger.
+
+312
+00:13:17,480 --> 00:13:18,940
+ But thank you for the confirmation.
+
+313
+00:13:18,940 --> 00:13:19,720
+ Good.
+
+314
+00:13:19,720 --> 00:13:25,400
+ And then if you want even more than that,
+
+315
+00:13:25,400 --> 00:13:29,680
+ then you could try to do joint torque sensors.
+
+316
+00:13:29,680 --> 00:13:35,240
+ And conceptually, what that's going to allow you to do
+
+317
+00:13:35,240 --> 00:13:37,880
+ is if I bump into something with my upper arm,
+
+318
+00:13:37,880 --> 00:13:39,360
+ then I have a chance of detecting
+
+319
+00:13:39,360 --> 00:13:42,200
+ that there was an unexpected torque or wrench
+
+320
+00:13:42,200 --> 00:13:43,680
+ at the joints.
+
+321
+00:13:47,440 --> 00:13:51,320
+ Even more than that, you'll see the Baymax view
+
+322
+00:13:51,320 --> 00:13:53,120
+ is maybe to have--
+
+323
+00:13:53,120 --> 00:13:55,760
+ that's the big Disney inflatable robot.
+
+324
+00:13:55,760 --> 00:13:58,720
+ Maybe we'll eventually have tactile skin.
+
+325
+00:13:58,720 --> 00:14:03,000
+ And there's a lot of groups working hard on that.
+
+326
+00:14:03,000 --> 00:14:05,280
+ And there are fundamental limits to what you can do
+
+327
+00:14:05,280 --> 00:14:07,480
+ with joint torque sensing only.
+
+328
+00:14:07,480 --> 00:14:09,720
+ And at some point, if you want to be
+
+329
+00:14:09,720 --> 00:14:12,000
+ able to understand more about the contact you're making,
+
+330
+00:14:12,000 --> 00:14:15,120
+ you actually do need to have something more like a skin.
+
+331
+00:14:15,120 --> 00:14:15,620
+ Yes?
+
+332
+00:14:15,620 --> 00:14:18,060
+ [INAUDIBLE]
+
+333
+00:14:18,060 --> 00:14:19,860
+ So there's lots of different ways people--
+
+334
+00:14:19,860 --> 00:14:21,740
+ the question is, what does a tactile skin consist of?
+
+335
+00:14:21,740 --> 00:14:23,580
+ There's lots of different ways people do it.
+
+336
+00:14:23,580 --> 00:14:25,460
+ Sometimes people will just have arrays
+
+337
+00:14:25,460 --> 00:14:30,860
+ of loads of single-axis force sensors, for instance,
+
+338
+00:14:30,860 --> 00:14:32,740
+ or even binary sensors.
+
+339
+00:14:32,740 --> 00:14:35,620
+ Sometimes they'll have an entire camera under the skin.
+
+340
+00:14:35,620 --> 00:14:37,900
+ And you'll try to actually measure
+
+341
+00:14:37,900 --> 00:14:39,420
+ deflection of a soft membrane.
+
+342
+00:14:39,420 --> 00:14:40,760
+ That would be the other extreme.
+
+343
+00:14:40,760 --> 00:14:43,260
+ People call them visual tactile sensors.
+
+344
+00:14:43,260 --> 00:14:44,900
+ If we get to it and towards the end,
+
+345
+00:14:44,900 --> 00:14:47,220
+ we could have a boutique lecture on tactile sensing
+
+346
+00:14:47,220 --> 00:14:49,420
+ and get into some of the details of that.
+
+347
+00:14:49,420 --> 00:14:50,580
+ Let me go behind you first.
+
+348
+00:14:50,580 --> 00:14:51,080
+ Yeah?
+
+349
+00:14:51,080 --> 00:14:54,540
+ [INAUDIBLE]
+
+350
+00:14:54,540 --> 00:15:01,440
+ Good.
+
+351
+00:15:01,440 --> 00:15:03,180
+ So the question is, what would you use?
+
+352
+00:15:03,180 --> 00:15:05,180
+ I used as an example that the torque sensor would
+
+353
+00:15:05,180 --> 00:15:06,780
+ be if you bumped into something.
+
+354
+00:15:06,780 --> 00:15:09,020
+ But if I wanted to pick something up and estimate
+
+355
+00:15:09,020 --> 00:15:11,620
+ its weight, for instance, that would be another application.
+
+356
+00:15:11,620 --> 00:15:14,300
+ Or if I was already in contact, maybe you
+
+357
+00:15:14,300 --> 00:15:17,180
+ could imagine an example of Tommy
+
+358
+00:15:17,180 --> 00:15:19,460
+ carrying one side of a table and the robot carrying
+
+359
+00:15:19,460 --> 00:15:21,780
+ the other side of the table, and we're working together,
+
+360
+00:15:21,780 --> 00:15:23,780
+ then the contact forces that we're exchanging
+
+361
+00:15:23,780 --> 00:15:25,780
+ that I would want to measure through some interface
+
+362
+00:15:25,780 --> 00:15:27,500
+ like that could be very important.
+
+363
+00:15:27,500 --> 00:15:28,000
+ Yes?
+
+364
+00:15:28,000 --> 00:15:31,420
+ [INAUDIBLE]
+
+365
+00:15:31,420 --> 00:15:36,820
+ Yeah, so he asked about texture sensing.
+
+366
+00:15:36,820 --> 00:15:38,780
+ So certainly in the hand, people are
+
+367
+00:15:38,780 --> 00:15:40,660
+ investing in these visual tactile sensors.
+
+368
+00:15:40,660 --> 00:15:43,100
+ And some of them are amazing, that you can actually
+
+369
+00:15:43,100 --> 00:15:44,940
+ see the prints.
+
+370
+00:15:44,940 --> 00:15:47,340
+ People, when they measure things with their sensors,
+
+371
+00:15:47,340 --> 00:15:48,300
+ they don't have cameras.
+
+372
+00:15:48,300 --> 00:15:49,960
+ And I don't have a camera in my finger,
+
+373
+00:15:49,960 --> 00:15:52,100
+ but I do have a different set of sensors
+
+374
+00:15:52,100 --> 00:15:53,420
+ that measure vibrations.
+
+375
+00:15:53,420 --> 00:15:55,100
+ And we can talk about those when we
+
+376
+00:15:55,100 --> 00:15:57,540
+ get to different mechanovibratory sensors
+
+377
+00:15:57,540 --> 00:15:58,220
+ with the finger.
+
+378
+00:15:58,220 --> 00:16:10,060
+ OK, so I would say most robots that you-- just by quantity,
+
+379
+00:16:10,060 --> 00:16:13,340
+ like the number of robots that have been built
+
+380
+00:16:13,340 --> 00:16:16,780
+ are more like this joint position sensor only,
+
+381
+00:16:16,780 --> 00:16:18,060
+ primarily.
+
+382
+00:16:18,060 --> 00:16:21,460
+ And then we see a lot of joint force-torque sensors.
+
+383
+00:16:21,460 --> 00:16:22,540
+ And we're getting now--
+
+384
+00:16:22,540 --> 00:16:25,380
+ EWA is one of the examples of a system that
+
+385
+00:16:25,380 --> 00:16:28,140
+ went a little extra way to provide
+
+386
+00:16:28,140 --> 00:16:29,820
+ torque sensing at the joint.
+
+387
+00:16:29,820 --> 00:16:31,780
+ And we'll talk about how to do that.
+
+388
+00:16:31,780 --> 00:16:32,280
+ Yes?
+
+389
+00:16:32,280 --> 00:16:35,260
+ [INAUDIBLE]
+
+390
+00:16:35,260 --> 00:16:37,700
+ [INAUDIBLE]
+
+391
+00:16:37,700 --> 00:16:38,620
+ [INAUDIBLE]
+
+392
+00:16:38,620 --> 00:16:42,940
+ [INAUDIBLE]
+
+393
+00:16:42,940 --> 00:16:44,940
+ That's an extremely good question.
+
+394
+00:16:44,940 --> 00:16:47,940
+ So if I measure a force or torque, especially
+
+395
+00:16:47,940 --> 00:16:51,020
+ a point force or torque, then that's not enough to decide if
+
+396
+00:16:51,020 --> 00:16:51,540
+ I'm--
+
+397
+00:16:51,540 --> 00:16:53,620
+ it could be a person that's trying to command me.
+
+398
+00:16:53,620 --> 00:16:54,580
+ I should push this way.
+
+399
+00:16:54,580 --> 00:16:56,700
+ Or it could be a wall that is immobile.
+
+400
+00:16:56,700 --> 00:16:58,820
+ And I don't have enough information just from that.
+
+401
+00:16:58,820 --> 00:17:01,220
+ So you need some greater situational awareness
+
+402
+00:17:01,220 --> 00:17:04,060
+ of the world in order to decide what to do with it.
+
+403
+00:17:04,060 --> 00:17:06,780
+ I think a very standard thing to do with it is if you hit--
+
+404
+00:17:06,780 --> 00:17:08,340
+ if you sense torque you didn't expect,
+
+405
+00:17:08,340 --> 00:17:11,620
+ you stop just so you have a safety case.
+
+406
+00:17:11,620 --> 00:17:12,900
+ You don't hurt somebody.
+
+407
+00:17:12,900 --> 00:17:16,380
+ But doing something better once you've made unexpected contact
+
+408
+00:17:16,380 --> 00:17:17,580
+ is a dream.
+
+409
+00:17:17,580 --> 00:17:19,940
+ And there's also, I think, another point to your question
+
+410
+00:17:19,940 --> 00:17:24,180
+ is having just a point sensor is often not enough to know--
+
+411
+00:17:24,180 --> 00:17:26,540
+ if you just have a few joint-torque sensors,
+
+412
+00:17:26,540 --> 00:17:29,300
+ there's a limited-- there's information limits
+
+413
+00:17:29,300 --> 00:17:30,420
+ of what you can tell.
+
+414
+00:17:30,420 --> 00:17:31,900
+ If someone was pushing you in two places,
+
+415
+00:17:31,900 --> 00:17:33,020
+ you might not be able to distinguish that
+
+416
+00:17:33,020 --> 00:17:34,380
+ between being pushed in one place
+
+417
+00:17:34,380 --> 00:17:36,940
+ or being pushed by a surface versus a point.
+
+418
+00:17:36,940 --> 00:17:39,060
+ There's kind of an information bottleneck there.
+
+419
+00:17:39,060 --> 00:17:40,540
+ Yeah?
+
+420
+00:17:40,540 --> 00:17:44,740
+ [INAUDIBLE]
+
+421
+00:17:44,740 --> 00:17:45,420
+ For sure.
+
+422
+00:17:45,420 --> 00:17:47,900
+ Yeah, that'll affect the way joint-torque sensors are also
+
+423
+00:17:47,900 --> 00:17:48,620
+ used in control.
+
+424
+00:17:48,620 --> 00:17:50,060
+ Repeat the question.
+
+425
+00:17:50,060 --> 00:17:52,180
+ Good.
+
+426
+00:17:52,180 --> 00:17:55,100
+ OK, so because these are so common,
+
+427
+00:17:55,100 --> 00:17:57,980
+ and this is less common as we talk about control,
+
+428
+00:17:57,980 --> 00:18:03,820
+ you'll see that most robots today--
+
+429
+00:18:03,820 --> 00:18:05,060
+ most robot arms, let's say--
+
+430
+00:18:05,060 --> 00:18:27,220
+ are position-controlled, as opposed to torque-controlled.
+
+431
+00:18:27,820 --> 00:18:35,020
+ And that's a big difference in the way
+
+432
+00:18:35,020 --> 00:18:36,460
+ that we interact with the robot.
+
+433
+00:18:36,460 --> 00:18:43,260
+ It's actually fairly subtle why that is.
+
+434
+00:18:43,260 --> 00:18:47,140
+ And I think it's worth just saying it once for you.
+
+435
+00:18:47,140 --> 00:18:49,780
+ This is like if you want to impress your friends
+
+436
+00:18:49,780 --> 00:18:53,820
+ at a party, and you're talking about joint-controlled robots,
+
+437
+00:18:53,820 --> 00:18:56,420
+ this would be good for that moment.
+
+438
+00:18:56,420 --> 00:19:00,460
+ Why are most robots position-controlled?
+
+439
+00:19:00,460 --> 00:19:01,660
+ It's a subtle thing.
+
+440
+00:19:01,660 --> 00:19:04,200
+ A lot of people know that they're mostly position-controlled,
+
+441
+00:19:04,200 --> 00:19:06,340
+ but not many people know why.
+
+442
+00:19:06,340 --> 00:19:07,900
+ And here's why it's a little subtle,
+
+443
+00:19:07,900 --> 00:19:10,460
+ is because most robots use electric motors.
+
+444
+00:19:10,460 --> 00:19:21,540
+ Electric motors, we know that the current we put in
+
+445
+00:19:21,540 --> 00:19:24,740
+ to an electric motor is approximately proportional
+
+446
+00:19:24,740 --> 00:19:27,100
+ to the torque that comes out.
+
+447
+00:19:27,100 --> 00:19:29,740
+ And the voltage we put in is proportional to the speed
+
+448
+00:19:29,740 --> 00:19:31,060
+ we get out.
+
+449
+00:19:31,060 --> 00:19:36,220
+ So current in is related to--
+
+450
+00:19:36,220 --> 00:19:38,180
+ I'll say proportional to--
+
+451
+00:19:38,180 --> 00:19:41,260
+ it's obviously more complicated than this in general,
+
+452
+00:19:41,260 --> 00:19:44,180
+ but is related to torque.
+
+453
+00:19:44,180 --> 00:19:51,660
+ And voltage is related to speed.
+
+454
+00:19:51,660 --> 00:19:53,340
+ So if I know how to do torque--
+
+455
+00:19:53,340 --> 00:19:56,980
+ or current control, I know a little bit about electronics.
+
+456
+00:19:56,980 --> 00:19:58,060
+ We can do current control.
+
+457
+00:19:58,060 --> 00:19:59,580
+ That's not so hard.
+
+458
+00:19:59,580 --> 00:20:00,980
+ Why can't I do torque control?
+
+459
+00:20:00,980 --> 00:20:06,180
+ Yeah, this is like--
+
+460
+00:20:06,180 --> 00:20:08,180
+ yeah?
+
+461
+00:20:08,180 --> 00:20:08,680
+ Yes?
+
+462
+00:20:08,680 --> 00:20:17,500
+ OK, so even the electronics could be a bottleneck there.
+
+463
+00:20:17,500 --> 00:20:18,000
+ It's true.
+
+464
+00:20:18,000 --> 00:20:22,260
+ And in fact, people actually send PWM commands down
+
+465
+00:20:22,260 --> 00:20:27,060
+ to the motor for efficiency type reasons and robustness reasons.
+
+466
+00:20:27,060 --> 00:20:27,560
+ That's true.
+
+467
+00:20:27,560 --> 00:20:29,660
+ But even at the-- there's a mechanics reason, too.
+
+468
+00:20:29,660 --> 00:20:30,160
+ Yeah?
+
+469
+00:20:30,160 --> 00:20:43,940
+ No, I think I could send current commands.
+
+470
+00:20:43,940 --> 00:20:45,180
+ I think that's not my reason.
+
+471
+00:20:45,180 --> 00:20:45,680
+ Yeah?
+
+472
+00:20:45,680 --> 00:20:54,720
+ [INAUDIBLE]
+
+473
+00:20:54,720 --> 00:20:55,760
+ OK, that's a great point.
+
+474
+00:20:55,760 --> 00:20:59,440
+ So torque talks-- it's talking about accelerations and motion.
+
+475
+00:20:59,440 --> 00:21:01,600
+ So in both cases, whether we choose
+
+476
+00:21:01,600 --> 00:21:04,680
+ to send command speed or torque or position,
+
+477
+00:21:04,680 --> 00:21:07,280
+ we're going to need some sort of feedback loop on the outside
+
+478
+00:21:07,280 --> 00:21:08,820
+ in order to accomplish, like you say,
+
+479
+00:21:08,820 --> 00:21:12,680
+ both motions, rapid motions and sort of standing still.
+
+480
+00:21:12,680 --> 00:21:15,320
+ So in either case, we will need a feedback loop.
+
+481
+00:21:15,320 --> 00:21:16,040
+ And you're right.
+
+482
+00:21:16,040 --> 00:21:19,120
+ I haven't addressed that part of it yet.
+
+483
+00:21:19,120 --> 00:21:20,760
+ Let me tell you my reason.
+
+484
+00:21:20,760 --> 00:21:21,880
+ These are all good reasons.
+
+485
+00:21:21,880 --> 00:21:28,800
+ So the problem is that electric motors like to move fast.
+
+486
+00:21:28,800 --> 00:21:30,760
+ Robots-- I mean, I like fast robots.
+
+487
+00:21:30,760 --> 00:21:34,240
+ But this is like thousands of RPMs, potentially.
+
+488
+00:21:34,240 --> 00:21:37,560
+ I don't want EWA to move at thousands of RPMs.
+
+489
+00:21:37,560 --> 00:21:41,520
+ Electric motors tend to produce small torque.
+
+490
+00:21:41,520 --> 00:21:45,480
+ They're most efficient in the high speed, low torque regime.
+
+491
+00:21:45,480 --> 00:21:47,240
+ And that's not what we want here.
+
+492
+00:21:47,240 --> 00:21:49,440
+ We want high torque, low speed.
+
+493
+00:21:49,440 --> 00:21:57,840
+ So these things are high speed, low torque.
+
+494
+00:22:01,480 --> 00:22:09,600
+ And I want my robot to be lower speed, higher torque.
+
+495
+00:22:09,600 --> 00:22:16,840
+ So almost always, there's a big transmission
+
+496
+00:22:16,840 --> 00:22:20,680
+ between the electric motor and the world.
+
+497
+00:22:20,680 --> 00:22:26,720
+ And those transmissions are complicated and lossy and messy.
+
+498
+00:22:26,720 --> 00:22:28,960
+ And they break.
+
+499
+00:22:28,960 --> 00:22:30,640
+ So you can do that with pulleys.
+
+500
+00:22:30,640 --> 00:22:32,520
+ You can do that with more complicated things.
+
+501
+00:22:32,520 --> 00:22:34,520
+ But if you were to look inside here--
+
+502
+00:22:34,520 --> 00:22:36,320
+ and we will look inside here in a minute--
+
+503
+00:22:36,320 --> 00:22:39,480
+ you're going to see complicated transmissions
+
+504
+00:22:39,480 --> 00:22:44,640
+ with harmonic drives or planetary drives that
+
+505
+00:22:44,640 --> 00:22:47,640
+ have gears meshing and lots of messy stuff
+
+506
+00:22:47,640 --> 00:22:49,480
+ happening in the middle.
+
+507
+00:22:49,480 --> 00:22:51,240
+ And the conventional wisdom is because
+
+508
+00:22:51,240 --> 00:22:55,040
+ of the friction and compliance--
+
+509
+00:22:55,040 --> 00:22:57,800
+ so gears do things.
+
+510
+00:22:57,800 --> 00:22:59,640
+ Like when you put them under load--
+
+511
+00:22:59,640 --> 00:23:01,400
+ so the best case is you just have two gears
+
+512
+00:23:01,400 --> 00:23:03,880
+ and they're moving along and everybody's happy.
+
+513
+00:23:03,880 --> 00:23:06,800
+ But already, if you just change your mind
+
+514
+00:23:06,800 --> 00:23:10,920
+ and move the other direction, there's always a little gap.
+
+515
+00:23:10,920 --> 00:23:12,800
+ That's called backlash.
+
+516
+00:23:12,800 --> 00:23:15,400
+ So you get a little bit of a backlash when you go.
+
+517
+00:23:15,400 --> 00:23:16,600
+ That's the first thing.
+
+518
+00:23:16,600 --> 00:23:19,320
+ When you put them under load, the teeth of your gears
+
+519
+00:23:19,320 --> 00:23:22,320
+ are actually going to flex and bend.
+
+520
+00:23:22,320 --> 00:23:26,040
+ And then there's all kinds of friction happening inside here.
+
+521
+00:23:26,040 --> 00:23:28,200
+ So the conventional wisdom is that even though you
+
+522
+00:23:28,200 --> 00:23:30,520
+ can control the torque on the motor,
+
+523
+00:23:30,520 --> 00:23:32,680
+ that does not map nicely to the torque
+
+524
+00:23:32,680 --> 00:23:34,920
+ on the other side of the transmission.
+
+525
+00:23:34,920 --> 00:23:37,040
+ So if you want to control the torque at the joints,
+
+526
+00:23:37,040 --> 00:23:40,520
+ you can't just do that from the current.
+
+527
+00:23:40,520 --> 00:23:43,360
+ So how do you get around that messy transmission?
+
+528
+00:23:43,360 --> 00:23:48,200
+ You put a sensor on the other side,
+
+529
+00:23:48,200 --> 00:23:51,480
+ on the robot side, the output shaft.
+
+530
+00:23:51,480 --> 00:23:53,680
+ And you try to close a feedback loop.
+
+531
+00:23:53,680 --> 00:23:58,080
+ So instead of commanding the motor side current or velocity,
+
+532
+00:23:58,080 --> 00:24:03,880
+ you'll try to command the robot side velocity or torque.
+
+533
+00:24:03,880 --> 00:24:06,280
+ And it's just much easier to put a position sensor
+
+534
+00:24:06,280 --> 00:24:09,320
+ on the output shaft of the robot.
+
+535
+00:24:09,320 --> 00:24:17,400
+ So you get big transmissions.
+
+536
+00:24:23,560 --> 00:24:29,280
+ Current is no longer proportional to torque,
+
+537
+00:24:29,280 --> 00:24:30,240
+ robot torque.
+
+538
+00:24:30,240 --> 00:24:52,580
+ So the solution to that is robot joint side sensing, typically
+
+539
+00:24:52,580 --> 00:24:54,960
+ position sensors.
+
+540
+00:24:54,960 --> 00:24:59,120
+ And then we start at our first level of feedback control.
+
+541
+00:24:59,120 --> 00:25:04,000
+ We'll close a loop that sends currents to the motor
+
+542
+00:25:04,000 --> 00:25:08,880
+ in order to drive the output shaft to the desired position,
+
+543
+00:25:08,880 --> 00:25:12,080
+ velocity, whatever.
+
+544
+00:25:12,080 --> 00:25:15,920
+ And the most common form of that is a position controller.
+
+545
+00:25:20,200 --> 00:25:25,140
+ That you'll see on a lot of robots
+
+546
+00:25:25,140 --> 00:25:28,580
+ would be a PID control, proportional integral
+
+547
+00:25:28,580 --> 00:25:30,940
+ derivative control.
+
+548
+00:25:30,940 --> 00:25:32,940
+ How many people have seen PID control?
+
+549
+00:25:32,940 --> 00:25:33,700
+ You don't have to.
+
+550
+00:25:33,700 --> 00:25:35,700
+ Yeah.
+
+551
+00:25:35,700 --> 00:25:36,200
+ Good.
+
+552
+00:25:36,200 --> 00:25:36,700
+ Yeah.
+
+553
+00:25:36,700 --> 00:25:42,660
+ So it's a good chance for me to just introduce my notation
+
+554
+00:25:42,660 --> 00:25:43,300
+ real quick here.
+
+555
+00:25:43,300 --> 00:25:46,380
+ So we're going to use Q for the joint angles.
+
+556
+00:25:46,380 --> 00:25:49,760
+ [WRITING ON BOARD]
+
+557
+00:25:49,760 --> 00:25:55,280
+ In general, Q will be a vector of all the joint angles.
+
+558
+00:25:55,280 --> 00:25:56,840
+ But in a single motor case, we'll
+
+559
+00:25:56,840 --> 00:26:00,960
+ just have Q be a scalar for one joint angle.
+
+560
+00:26:00,960 --> 00:26:05,240
+ I'll say Q desired is my desired joint angle.
+
+561
+00:26:15,240 --> 00:26:19,200
+ And then I'll use dot notation for derivatives.
+
+562
+00:26:19,200 --> 00:26:21,160
+ This would be the joint velocity.
+
+563
+00:26:21,160 --> 00:26:36,520
+ It's the time derivative of Q. Yes?
+
+564
+00:26:36,520 --> 00:26:41,000
+ [INAUDIBLE]
+
+565
+00:26:41,000 --> 00:26:41,960
+ That's your choice.
+
+566
+00:26:41,960 --> 00:26:44,080
+ But typically, it's internal coordinates,
+
+567
+00:26:44,080 --> 00:26:45,240
+ like a relative coordinate.
+
+568
+00:26:45,240 --> 00:26:45,740
+ Yeah?
+
+569
+00:26:45,740 --> 00:26:59,920
+ So a solution here would be to command the torque of the motor
+
+570
+00:26:59,920 --> 00:27:02,600
+ even if you don't know the details of the transmission,
+
+571
+00:27:02,600 --> 00:27:06,200
+ a pretty simple feedback control loop that does something
+
+572
+00:27:06,200 --> 00:27:09,560
+ like-- this would be a gain.
+
+573
+00:27:09,560 --> 00:27:13,800
+ Q desired minus Q. This would be a proportional gain.
+
+574
+00:27:13,800 --> 00:27:17,160
+ [WRITING ON BOARD]
+
+575
+00:27:17,160 --> 00:27:25,520
+ Which says if the desired is higher than the--
+
+576
+00:27:25,520 --> 00:27:27,240
+ this is typically a positive number.
+
+577
+00:27:27,240 --> 00:27:29,520
+ It's always a positive number, I guess.
+
+578
+00:27:29,520 --> 00:27:32,040
+ When this is higher than this, then I
+
+579
+00:27:32,040 --> 00:27:35,960
+ want to just add more current, more torque at my motor,
+
+580
+00:27:35,960 --> 00:27:36,640
+ on the motor side.
+
+581
+00:27:36,640 --> 00:27:39,680
+ I can control that.
+
+582
+00:27:39,680 --> 00:27:40,760
+ That's the simplest one.
+
+583
+00:27:40,760 --> 00:27:43,160
+ So if I'm trying to be here, I'm actually here.
+
+584
+00:27:43,160 --> 00:27:46,440
+ I have to push harder.
+
+585
+00:27:46,440 --> 00:27:49,560
+ You would typically augment this with the integral
+
+586
+00:27:49,560 --> 00:27:51,240
+ and the derivative terms.
+
+587
+00:27:51,240 --> 00:27:56,600
+ So you put an integral in here from 0 to t,
+
+588
+00:27:56,600 --> 00:28:03,040
+ dt of Q desired minus Q. That's saying that--
+
+589
+00:28:03,040 --> 00:28:05,120
+ so the reason you'd need to do that, for instance,
+
+590
+00:28:05,120 --> 00:28:11,080
+ is let's say I'm trying to get here, and I'm actually here.
+
+591
+00:28:11,080 --> 00:28:14,840
+ Gravity is applying a torque against me.
+
+592
+00:28:14,840 --> 00:28:18,360
+ So even if I just had a proportional control,
+
+593
+00:28:18,360 --> 00:28:20,320
+ then it will come to a steady state
+
+594
+00:28:20,320 --> 00:28:23,160
+ wherever the command I'm sending exactly balances gravity.
+
+595
+00:28:23,160 --> 00:28:26,520
+ But it's not actually going to have zero error.
+
+596
+00:28:26,520 --> 00:28:31,960
+ So to compensate for the DC term, the constant terms
+
+597
+00:28:31,960 --> 00:28:34,360
+ that you weren't modeling, you put in an integral term
+
+598
+00:28:34,360 --> 00:28:37,760
+ that will zero that out.
+
+599
+00:28:37,760 --> 00:28:38,960
+ And then you can do a little--
+
+600
+00:28:38,960 --> 00:28:41,240
+ I've got my Ki.
+
+601
+00:28:41,240 --> 00:28:43,120
+ That's the integral gain.
+
+602
+00:28:43,120 --> 00:28:52,960
+ And then you would typically put a derivative term on here,
+
+603
+00:28:52,960 --> 00:28:53,460
+ too.
+
+604
+00:28:53,460 --> 00:28:58,000
+ That allows you to track things at higher speeds a little
+
+605
+00:28:58,000 --> 00:28:58,500
+ better.
+
+606
+00:28:58,500 --> 00:29:06,860
+ Yes?
+
+607
+00:29:06,860 --> 00:29:10,300
+ [INAUDIBLE]
+
+608
+00:29:10,300 --> 00:29:18,180
+ So the question is, do you change these gains
+
+609
+00:29:18,180 --> 00:29:19,860
+ while the robot's moving?
+
+610
+00:29:19,860 --> 00:29:24,140
+ And the surprising answer is no, almost never.
+
+611
+00:29:24,140 --> 00:29:26,740
+ But there's actually a very subtle reason for that.
+
+612
+00:29:26,740 --> 00:29:28,580
+ And I was going to say that.
+
+613
+00:29:28,580 --> 00:29:33,580
+ So it turns out that PID control works shockingly well
+
+614
+00:29:33,580 --> 00:29:35,300
+ for robots.
+
+615
+00:29:35,300 --> 00:29:37,500
+ And it's deployed often.
+
+616
+00:29:37,500 --> 00:29:41,020
+ And you typically just pick KP, Ki, and KD once in the factory,
+
+617
+00:29:41,020 --> 00:29:42,780
+ and you let it go.
+
+618
+00:29:42,780 --> 00:29:45,300
+ And that's surprising to me.
+
+619
+00:29:45,300 --> 00:29:47,220
+ When I really stopped and thought about that,
+
+620
+00:29:47,220 --> 00:29:48,900
+ I was like, wait a second.
+
+621
+00:29:48,900 --> 00:29:50,660
+ How does that even work?
+
+622
+00:29:50,660 --> 00:29:54,460
+ Because you would think if I'm holding a jug of milk
+
+623
+00:29:54,460 --> 00:29:57,940
+ at full extension, then I'd be at a very different dynamic
+
+624
+00:29:57,940 --> 00:30:01,180
+ regime than if I'm having my arm down.
+
+625
+00:30:01,180 --> 00:30:02,820
+ The loads that the robot experiences
+
+626
+00:30:02,820 --> 00:30:04,220
+ are very configuration dependent.
+
+627
+00:30:04,220 --> 00:30:06,020
+ Even if I'm just holding my arm out with-- forget
+
+628
+00:30:06,020 --> 00:30:06,940
+ about the jug of milk.
+
+629
+00:30:06,940 --> 00:30:10,340
+ Just holding my arm out is requiring very different torques
+
+630
+00:30:10,340 --> 00:30:12,940
+ than what I'm doing here.
+
+631
+00:30:12,940 --> 00:30:16,220
+ Actually, some robots will overheat.
+
+632
+00:30:16,220 --> 00:30:19,100
+ If you take too long with your planning algorithm
+
+633
+00:30:19,100 --> 00:30:22,940
+ with your robot like this, you might see smoke coming out.
+
+634
+00:30:22,940 --> 00:30:25,420
+ This robot and a lot of the more expensive robots
+
+635
+00:30:25,420 --> 00:30:28,180
+ actually put brakes in every joint.
+
+636
+00:30:28,180 --> 00:30:30,300
+ So when you're not moving, it'll actually
+
+637
+00:30:30,300 --> 00:30:34,460
+ turn the brakes on just so it doesn't heat up its motors.
+
+638
+00:30:34,460 --> 00:30:37,420
+ But what's surprising is even though the dynamic effects are
+
+639
+00:30:37,420 --> 00:30:40,300
+ very different, you can often get away
+
+640
+00:30:40,300 --> 00:30:44,860
+ with KP and KI and KD being fixed.
+
+641
+00:30:44,860 --> 00:30:46,460
+ So what's the alternative?
+
+642
+00:30:46,460 --> 00:30:48,580
+ So a lot of times people-- in other fields,
+
+643
+00:30:48,580 --> 00:30:51,020
+ you'll see things like gain scheduled control,
+
+644
+00:30:51,020 --> 00:30:53,520
+ where you'd have a different-- in different operating modes,
+
+645
+00:30:53,520 --> 00:30:54,900
+ you might use different gains.
+
+646
+00:30:54,900 --> 00:30:59,220
+ Like in an aircraft doing interesting things,
+
+647
+00:30:59,220 --> 00:31:02,460
+ you'd expect to see a gain scheduled controller.
+
+648
+00:31:02,460 --> 00:31:07,580
+ So it's actually pretty subtle why that works.
+
+649
+00:31:07,580 --> 00:31:10,740
+ And the answer may be a problem for some of you
+
+650
+00:31:10,740 --> 00:31:16,020
+ on your homework, but I'll give you a quick view of it here.
+
+651
+00:31:16,020 --> 00:31:19,340
+ Is this sort of important thing called reflected inertia.
+
+652
+00:31:19,340 --> 00:31:30,300
+ [VIDEO PLAYBACK]
+
+653
+00:31:30,300 --> 00:31:33,060
+ So if you think about--
+
+654
+00:31:33,060 --> 00:31:35,300
+ I mean, I guess you've all played with pulleys
+
+655
+00:31:35,300 --> 00:31:38,340
+ over your life, right?
+
+656
+00:31:38,340 --> 00:31:40,260
+ The Museum of Science, you have the little kid
+
+657
+00:31:40,260 --> 00:31:43,020
+ pulled down the enormous weight because of a pulley, right?
+
+658
+00:31:43,020 --> 00:31:45,420
+ And I guess we've got a type of pulley
+
+659
+00:31:45,420 --> 00:31:48,100
+ even in this animation there.
+
+660
+00:31:48,100 --> 00:31:50,140
+ Pulleys are trading speed for torque.
+
+661
+00:31:50,140 --> 00:31:56,140
+ So what's happening-- and we're doing the same thing
+
+662
+00:31:56,140 --> 00:31:59,780
+ in this joint, right?
+
+663
+00:31:59,780 --> 00:32:02,060
+ So we have a motor moving at high speeds
+
+664
+00:32:02,060 --> 00:32:04,580
+ now in order for the output to be moving small.
+
+665
+00:32:04,580 --> 00:32:07,140
+ And a little bit of torque here acts like a lot
+
+666
+00:32:07,140 --> 00:32:08,780
+ of torque on the other side.
+
+667
+00:32:08,780 --> 00:32:12,140
+ But that goes both ways.
+
+668
+00:32:12,140 --> 00:32:13,620
+ That goes both ways.
+
+669
+00:32:13,620 --> 00:32:16,060
+ And it turns out that the relationship,
+
+670
+00:32:16,060 --> 00:32:17,940
+ if you think about it, you work it through,
+
+671
+00:32:17,940 --> 00:32:20,060
+ which it's worked through in the notes,
+
+672
+00:32:20,060 --> 00:32:25,980
+ is actually that the reflected inertia of the motor--
+
+673
+00:32:25,980 --> 00:32:30,460
+ so the motor has a little bit of magnets in it.
+
+674
+00:32:30,460 --> 00:32:32,940
+ Typically, electric motors will be made with magnets
+
+675
+00:32:32,940 --> 00:32:33,860
+ like this.
+
+676
+00:32:33,860 --> 00:32:35,900
+ And those magnets are moving around.
+
+677
+00:32:35,900 --> 00:32:36,980
+ So there's some inertia.
+
+678
+00:32:36,980 --> 00:32:39,220
+ This is reminding you all of your physics backgrounds,
+
+679
+00:32:39,220 --> 00:32:39,740
+ right?
+
+680
+00:32:39,740 --> 00:32:41,540
+ There's some inertia inside the motor.
+
+681
+00:32:41,540 --> 00:32:42,700
+ And it's moving around.
+
+682
+00:32:42,700 --> 00:32:45,660
+ But it's moving around wicked fast.
+
+683
+00:32:45,660 --> 00:32:49,820
+ And it's being scaled by the transmission.
+
+684
+00:32:49,820 --> 00:32:53,260
+ So actually, the inertia of the motor
+
+685
+00:32:53,260 --> 00:32:56,300
+ that is felt on the robot side is actually
+
+686
+00:32:56,300 --> 00:32:59,540
+ multiplied-- the rotor inertia times the squared of the gear
+
+687
+00:32:59,540 --> 00:33:00,040
+ ratio.
+
+688
+00:33:00,040 --> 00:33:07,140
+ And similarly, if you're looking from the view of the motor
+
+689
+00:33:07,140 --> 00:33:08,980
+ on the other side of the transmission,
+
+690
+00:33:08,980 --> 00:33:12,180
+ the robot has inertia.
+
+691
+00:33:12,180 --> 00:33:14,900
+ But that inertia is actually shrunk
+
+692
+00:33:14,900 --> 00:33:18,340
+ by the squared of the gear ratio in the other direction
+
+693
+00:33:18,340 --> 00:33:20,500
+ when you get to the motor.
+
+694
+00:33:20,500 --> 00:33:23,500
+ So the motor, shockingly, even though these are typically
+
+695
+00:33:23,500 --> 00:33:26,780
+ tiny motors and big, heavy robots moving things around,
+
+696
+00:33:26,780 --> 00:33:30,660
+ the motor has to do as much work or more work sometimes
+
+697
+00:33:30,660 --> 00:33:32,740
+ just to move itself around at high speeds
+
+698
+00:33:32,740 --> 00:33:35,900
+ than it has to move the robot around at high speeds
+
+699
+00:33:35,900 --> 00:33:37,500
+ or low speeds.
+
+700
+00:33:37,500 --> 00:33:39,380
+ That effect, when you multiply--
+
+701
+00:33:39,380 --> 00:33:43,220
+ so the gear ratios in these transmissions on this robot,
+
+702
+00:33:43,220 --> 00:33:46,580
+ for instance, is 160 to 1.
+
+703
+00:33:46,580 --> 00:33:50,420
+ 160 squared is a big number.
+
+704
+00:33:50,420 --> 00:33:52,620
+ And you take your inertia of your motor,
+
+705
+00:33:52,620 --> 00:33:54,580
+ even though that's a small number to start with,
+
+706
+00:33:54,580 --> 00:33:59,740
+ it is comparable to the inertias of the robot.
+
+707
+00:33:59,740 --> 00:34:02,240
+ In fact, I think we worked it out at one point for the EWA.
+
+708
+00:34:02,240 --> 00:34:04,820
+ It's like, I don't know, 85% of the inertia of a link
+
+709
+00:34:04,820 --> 00:34:05,940
+ comes from--
+
+710
+00:34:05,940 --> 00:34:07,220
+ don't quote me on that number.
+
+711
+00:34:07,220 --> 00:34:09,380
+ But it's a surprisingly big number
+
+712
+00:34:09,380 --> 00:34:12,340
+ that comes from moving the motor around instead
+
+713
+00:34:12,340 --> 00:34:14,460
+ of moving the robot around.
+
+714
+00:34:14,460 --> 00:34:17,500
+ That's a counterintuitive maybe effect
+
+715
+00:34:17,500 --> 00:34:19,580
+ of having a big transmission.
+
+716
+00:34:19,580 --> 00:34:24,060
+ And what that means is when the motor is doing all its work,
+
+717
+00:34:24,060 --> 00:34:26,380
+ it's sort of irrelevant where the arm is, right?
+
+718
+00:34:26,380 --> 00:34:28,620
+ Or if it's holding something or not holding something.
+
+719
+00:34:28,620 --> 00:34:29,820
+ You'll feel it a bit.
+
+720
+00:34:29,820 --> 00:34:33,020
+ But you feel it just as much just moving those motors around.
+
+721
+00:34:33,020 --> 00:34:36,180
+ And it has an effect of making it so that you can--
+
+722
+00:34:36,180 --> 00:34:38,260
+ when you're designing, you're tuning in your controllers,
+
+723
+00:34:38,260 --> 00:34:40,640
+ you don't have to worry too much about the configuration
+
+724
+00:34:40,640 --> 00:34:42,340
+ of the robot.
+
+725
+00:34:42,340 --> 00:34:43,740
+ Did I say that clearly enough?
+
+726
+00:34:43,740 --> 00:34:44,900
+ I could say it in equations.
+
+727
+00:34:44,900 --> 00:34:46,540
+ But I think that's the main point.
+
+728
+00:34:46,540 --> 00:34:49,900
+ Question about that?
+
+729
+00:34:49,900 --> 00:34:50,380
+ Yeah.
+
+730
+00:34:50,380 --> 00:34:59,900
+ Yeah, so independent is a little too strong.
+
+731
+00:34:59,900 --> 00:35:01,320
+ You can still heat up your motors.
+
+732
+00:35:01,320 --> 00:35:03,100
+ I did say that.
+
+733
+00:35:03,100 --> 00:35:06,020
+ But the motor inertia is unaffected by the weight.
+
+734
+00:35:06,020 --> 00:35:08,940
+ The rotor inertia is unaffected by the weight.
+
+735
+00:35:08,940 --> 00:35:10,860
+ And the weight that you're carrying
+
+736
+00:35:10,860 --> 00:35:16,260
+ gets scaled by the transmission squared on the motor side.
+
+737
+00:35:16,260 --> 00:35:17,380
+ Thank you for asking that.
+
+738
+00:35:17,380 --> 00:35:24,980
+ OK, so there's actually been a movement, an effort
+
+739
+00:35:24,980 --> 00:35:27,300
+ over the years to try to not do that.
+
+740
+00:35:27,300 --> 00:35:27,780
+ Yeah, please.
+
+741
+00:35:27,780 --> 00:35:43,700
+ [INAUDIBLE]
+
+742
+00:35:43,700 --> 00:35:46,100
+ Yeah, so that's a great question.
+
+743
+00:35:46,100 --> 00:35:49,940
+ So would you want to implement the control gains
+
+744
+00:35:49,940 --> 00:35:52,900
+ in electronics, for instance, or in mechanics?
+
+745
+00:35:52,900 --> 00:35:54,700
+ But analog electronics would often
+
+746
+00:35:54,700 --> 00:35:56,080
+ be a great way to implement this.
+
+747
+00:35:56,080 --> 00:35:58,420
+ Although computers are so fast these days,
+
+748
+00:35:58,420 --> 00:36:01,020
+ the sample frequency of a digital implementation
+
+749
+00:36:01,020 --> 00:36:03,180
+ of that, which can be a little bit more configurable,
+
+750
+00:36:03,180 --> 00:36:06,780
+ they're running at 10 kilohertz on a robot, and it's fine.
+
+751
+00:36:06,780 --> 00:36:09,460
+ The inertial time constants are low
+
+752
+00:36:09,460 --> 00:36:10,740
+ relative to the 10 kilohertz.
+
+753
+00:36:10,740 --> 00:36:13,300
+ That's well over your mechanical frequency.
+
+754
+00:36:13,300 --> 00:36:15,300
+ So I'd say most people have switched to digital
+
+755
+00:36:15,300 --> 00:36:16,460
+ and said that's good.
+
+756
+00:36:16,460 --> 00:36:18,060
+ But definitely, when we were slower,
+
+757
+00:36:18,060 --> 00:36:21,020
+ it was like, let's think about doing analog versions of it.
+
+758
+00:36:21,020 --> 00:36:22,060
+ That's a great question.
+
+759
+00:36:25,020 --> 00:36:27,920
+ So there was a movement that was popularized at MIT
+
+760
+00:36:27,920 --> 00:36:30,480
+ many years ago, actually.
+
+761
+00:36:30,480 --> 00:36:34,020
+ This was recognizing the equations of motion of my arm,
+
+762
+00:36:34,020 --> 00:36:36,780
+ where the arm actually gets affected by the gear ratio
+
+763
+00:36:36,780 --> 00:36:37,900
+ squared.
+
+764
+00:36:37,900 --> 00:36:39,320
+ So those are roughly the equations
+
+765
+00:36:39,320 --> 00:36:43,020
+ I would have written if I had written it all out.
+
+766
+00:36:43,020 --> 00:36:46,300
+ And they said, well, what about not using--
+
+767
+00:36:46,300 --> 00:36:48,260
+ what would it look like if we built robots that
+
+768
+00:36:48,260 --> 00:36:50,280
+ didn't have big transmissions?
+
+769
+00:36:50,280 --> 00:36:52,920
+ Let's say-- we'll call a direct drive robot one that's
+
+770
+00:36:52,920 --> 00:36:55,500
+ like gear ratio 10 or less.
+
+771
+00:36:55,500 --> 00:36:56,980
+ Let's say maybe 20 or something.
+
+772
+00:36:56,980 --> 00:36:59,780
+ OK, then who's selling?
+
+773
+00:36:59,780 --> 00:37:01,740
+ We'll call those direct drive robots.
+
+774
+00:37:01,740 --> 00:37:02,740
+ And it was interesting.
+
+775
+00:37:02,740 --> 00:37:05,380
+ Back in the day, the direct drive robots
+
+776
+00:37:05,380 --> 00:37:07,420
+ had these ginormous motors.
+
+777
+00:37:07,420 --> 00:37:10,340
+ It was like a little arm with a big motor attached.
+
+778
+00:37:10,340 --> 00:37:11,580
+ And that was good.
+
+779
+00:37:11,580 --> 00:37:13,460
+ But now you'll see them-- they're more common.
+
+780
+00:37:13,460 --> 00:37:14,460
+ We've gotten better with our motors.
+
+781
+00:37:14,460 --> 00:37:16,620
+ We've got outrunner motors are kind of a cool thing.
+
+782
+00:37:16,620 --> 00:37:19,340
+ It started with quadrotors and airplanes and stuff.
+
+783
+00:37:19,340 --> 00:37:21,980
+ Now they're more popular in robots.
+
+784
+00:37:21,980 --> 00:37:23,980
+ So like Songbei's Cheetah Lab, for instance,
+
+785
+00:37:23,980 --> 00:37:26,640
+ does things close to direct drive
+
+786
+00:37:26,640 --> 00:37:29,920
+ now on a lot of his Cheetah robots.
+
+787
+00:37:29,920 --> 00:37:33,520
+ And that's a more viable alternative than it used to be.
+
+788
+00:37:33,520 --> 00:37:35,080
+ If you can get rid of the transmission,
+
+789
+00:37:35,080 --> 00:37:38,940
+ then you can think about doing torque sensing or torque
+
+790
+00:37:38,940 --> 00:37:42,760
+ control by looking at the current on the motor side,
+
+791
+00:37:42,760 --> 00:37:44,600
+ which is powerful.
+
+792
+00:37:44,600 --> 00:37:46,680
+ But there's a reason we use gears.
+
+793
+00:37:46,680 --> 00:37:48,440
+ I mean, motors are happy at high speeds.
+
+794
+00:37:48,440 --> 00:37:54,920
+ So-- OK.
+
+795
+00:37:54,920 --> 00:37:55,420
+ Yes?
+
+796
+00:37:55,420 --> 00:37:59,840
+ [INAUDIBLE]
+
+797
+00:37:59,840 --> 00:38:00,600
+ For sure.
+
+798
+00:38:00,600 --> 00:38:04,800
+ The torque sensing robots also have position sensing.
+
+799
+00:38:04,800 --> 00:38:06,000
+ Yes.
+
+800
+00:38:06,000 --> 00:38:07,920
+ Position sensors are like commodities.
+
+801
+00:38:07,920 --> 00:38:10,760
+ So almost every robot has it.
+
+802
+00:38:10,760 --> 00:38:11,240
+ OK.
+
+803
+00:38:11,240 --> 00:38:14,360
+ So let's just take a second to look at our family of robot
+
+804
+00:38:14,360 --> 00:38:14,860
+ arms.
+
+805
+00:38:14,860 --> 00:38:17,200
+ So this notebook is there for you.
+
+806
+00:38:17,200 --> 00:38:18,240
+ This is our EWA.
+
+807
+00:38:18,240 --> 00:38:21,920
+ And you can play with it, all the joint angles,
+
+808
+00:38:21,920 --> 00:38:24,120
+ slide them around and see what happens.
+
+809
+00:38:24,120 --> 00:38:30,520
+ Whoops, I could print it, but I don't want to do that.
+
+810
+00:38:30,520 --> 00:38:35,920
+ OK, but like I said, you can also
+
+811
+00:38:35,920 --> 00:38:38,760
+ do things like look at the inertial properties
+
+812
+00:38:38,760 --> 00:38:39,280
+ of the robot.
+
+813
+00:38:39,280 --> 00:38:43,620
+ So here's the inertia ellipses of that robot.
+
+814
+00:38:43,620 --> 00:38:46,600
+ This is just of the actual links of the robot.
+
+815
+00:38:46,600 --> 00:38:49,560
+ So what is an inertial visualization of the robot?
+
+816
+00:38:49,560 --> 00:38:53,080
+ Like, what does that mean?
+
+817
+00:38:53,080 --> 00:38:55,280
+ So robots are-- this robot in particular
+
+818
+00:38:55,280 --> 00:38:56,920
+ is very curvy and complicated.
+
+819
+00:38:56,920 --> 00:39:02,080
+ It's hard to do inertial computations in your head.
+
+820
+00:39:02,080 --> 00:39:02,800
+ OK.
+
+821
+00:39:02,800 --> 00:39:04,200
+ So a standard thing to do would be
+
+822
+00:39:04,200 --> 00:39:08,040
+ to take each link of your robot and replace it
+
+823
+00:39:08,040 --> 00:39:13,560
+ with a canonical ellipse that is the same size as if you
+
+824
+00:39:13,560 --> 00:39:16,480
+ had the density of water.
+
+825
+00:39:16,480 --> 00:39:18,960
+ And it's the same position and orientation.
+
+826
+00:39:18,960 --> 00:39:21,080
+ So if you were to replace and just say the robot is
+
+827
+00:39:21,080 --> 00:39:22,660
+ the density of water, and it's made up
+
+828
+00:39:22,660 --> 00:39:25,440
+ of these equivalent geometries, from a dynamics perspective,
+
+829
+00:39:25,440 --> 00:39:27,120
+ that's an equivalent representation
+
+830
+00:39:27,120 --> 00:39:29,000
+ of the dynamics of this robot.
+
+831
+00:39:29,000 --> 00:39:31,880
+ But it's easier to think about and visualize.
+
+832
+00:39:31,880 --> 00:39:34,560
+ And sometimes-- actually, I know for a fact I could do this.
+
+833
+00:39:34,560 --> 00:39:41,160
+ If you get different robot descriptions
+
+834
+00:39:41,160 --> 00:39:43,760
+ from the manufacturer or whatever,
+
+835
+00:39:43,760 --> 00:39:46,120
+ this is just a different version of the EWA.
+
+836
+00:39:46,120 --> 00:39:46,760
+ I'm pretty sure.
+
+837
+00:39:46,760 --> 00:39:48,000
+ I didn't actually check this.
+
+838
+00:39:48,000 --> 00:39:51,400
+ But yeah.
+
+839
+00:39:51,400 --> 00:39:53,960
+ So it's actually also a really good debugging tool.
+
+840
+00:39:53,960 --> 00:39:55,680
+ So let me see if I can do this.
+
+841
+00:39:55,680 --> 00:39:56,640
+ OK.
+
+842
+00:39:56,640 --> 00:39:58,080
+ So we noticed this the other day.
+
+843
+00:39:58,080 --> 00:40:02,120
+ So the description format you get of the robot
+
+844
+00:40:02,120 --> 00:40:05,520
+ from the manufacturer actually just has bugs in it.
+
+845
+00:40:05,520 --> 00:40:11,240
+ And the inertial ellipses of even links
+
+846
+00:40:11,240 --> 00:40:13,440
+ are rotated by 90 degrees.
+
+847
+00:40:13,440 --> 00:40:14,080
+ OK, great.
+
+848
+00:40:14,080 --> 00:40:15,320
+ So everybody's been working really hard
+
+849
+00:40:15,320 --> 00:40:20,400
+ on their controllers, and your inertia estimate was just wrong.
+
+850
+00:40:20,400 --> 00:40:22,480
+ But that's why you visualize things, right?
+
+851
+00:40:22,480 --> 00:40:25,080
+ So I am embarrassed that we didn't visualize-- notice that.
+
+852
+00:40:25,080 --> 00:40:27,520
+ Actually, we knew about it probably two years ago.
+
+853
+00:40:27,520 --> 00:40:29,060
+ I thought we had fixed it everywhere,
+
+854
+00:40:29,060 --> 00:40:31,400
+ but we found this one model of the robot that's still not
+
+855
+00:40:31,400 --> 00:40:32,400
+ fixed.
+
+856
+00:40:32,400 --> 00:40:33,920
+ It'll be fixed soon.
+
+857
+00:40:33,920 --> 00:40:35,960
+ OK, that's super valuable.
+
+858
+00:40:35,960 --> 00:40:38,480
+ But just to say that reflected inertia one more time,
+
+859
+00:40:38,480 --> 00:40:40,160
+ I wish I had made the visualization now.
+
+860
+00:40:40,160 --> 00:40:44,200
+ But if I were to look through the lens of the motor
+
+861
+00:40:44,200 --> 00:40:47,000
+ and try to make sort of an equivalent visualization,
+
+862
+00:40:47,000 --> 00:40:50,960
+ it's like there's a little circle
+
+863
+00:40:50,960 --> 00:40:53,240
+ at every joint of the robot that's
+
+864
+00:40:53,240 --> 00:40:56,120
+ getting blown up by the square to the gear ratio
+
+865
+00:40:56,120 --> 00:40:58,320
+ to the point where the picture would look something--
+
+866
+00:40:58,320 --> 00:41:03,040
+ if I had just like a one-link robot,
+
+867
+00:41:03,040 --> 00:41:07,920
+ and I had an inertial ellipse of the link that
+
+868
+00:41:07,920 --> 00:41:11,920
+ sort of looks like this, there's a little motor here
+
+869
+00:41:11,920 --> 00:41:14,120
+ which accounts for relatively little
+
+870
+00:41:14,120 --> 00:41:16,200
+ of the mass of the robot.
+
+871
+00:41:16,200 --> 00:41:18,000
+ But its effect on the dynamics looks
+
+872
+00:41:18,000 --> 00:41:21,280
+ like a big inertial ellipse that's
+
+873
+00:41:21,280 --> 00:41:24,320
+ centered exactly at the joint.
+
+874
+00:41:24,320 --> 00:41:27,560
+ So when you're moving this joint around,
+
+875
+00:41:27,560 --> 00:41:30,120
+ the effect of the link is actually small--
+
+876
+00:41:30,120 --> 00:41:33,960
+ can be small if the gear ratio is large compared to that.
+
+877
+00:41:33,960 --> 00:41:34,460
+ Yeah?
+
+878
+00:41:34,460 --> 00:41:34,960
+ [INAUDIBLE]
+
+879
+00:41:34,960 --> 00:41:39,800
+ No, it's not included in the visualization.
+
+880
+00:41:39,800 --> 00:41:40,880
+ I wish I had.
+
+881
+00:41:40,880 --> 00:41:43,400
+ It would be-- that's homework for me.
+
+882
+00:41:43,400 --> 00:41:50,080
+ And then you can see--
+
+883
+00:41:50,080 --> 00:41:53,840
+ you download the manufacturer specs for all the-- whoops.
+
+884
+00:41:53,840 --> 00:41:56,760
+ That's just a space.
+
+885
+00:41:56,760 --> 00:41:58,560
+ You can play with all the different robots.
+
+886
+00:41:58,560 --> 00:42:02,440
+ And that one's zero position is in collision,
+
+887
+00:42:02,440 --> 00:42:04,880
+ which is awesome.
+
+888
+00:42:04,880 --> 00:42:07,040
+ That's why you have green arrows of contact forces,
+
+889
+00:42:07,040 --> 00:42:09,920
+ because it's hitting itself.
+
+890
+00:42:09,920 --> 00:42:11,240
+ But I do think you can basically,
+
+891
+00:42:11,240 --> 00:42:12,740
+ for your projects, for instance, you
+
+892
+00:42:12,740 --> 00:42:15,360
+ can just pick your favorite robot.
+
+893
+00:42:15,360 --> 00:42:19,000
+ And for the most part, it'll work.
+
+894
+00:42:19,000 --> 00:42:22,720
+ This one is also in collision at zero.
+
+895
+00:42:22,720 --> 00:42:23,220
+ Awesome.
+
+896
+00:42:23,220 --> 00:42:32,720
+ Here's the UR3.
+
+897
+00:42:32,720 --> 00:42:34,200
+ But they're all there.
+
+898
+00:42:34,200 --> 00:42:38,680
+ And we have-- the robotics world has an ecosystem now
+
+899
+00:42:38,680 --> 00:42:41,280
+ where the manufacturer will publish their specs,
+
+900
+00:42:41,280 --> 00:42:43,320
+ and then we fix them a little bit, I guess.
+
+901
+00:42:43,320 --> 00:42:46,160
+ But then, yeah, you can work with any robot.
+
+902
+00:42:46,160 --> 00:42:46,660
+ [INAUDIBLE]
+
+903
+00:42:46,660 --> 00:42:58,000
+ Yeah, so I think there's different types of motors.
+
+904
+00:42:58,000 --> 00:42:59,880
+ Some of the-- yeah, I think some--
+
+905
+00:42:59,880 --> 00:43:01,300
+ you see frameless motors and stuff
+
+906
+00:43:01,300 --> 00:43:04,980
+ like this that can be very big and flat.
+
+907
+00:43:04,980 --> 00:43:07,740
+ It would depend on exactly which technology you're looking at.
+
+908
+00:43:07,740 --> 00:43:09,860
+ [INAUDIBLE]
+
+909
+00:43:09,860 --> 00:43:12,260
+ Yeah, so Songbase got a particular way
+
+910
+00:43:12,260 --> 00:43:15,420
+ of winding the coils to get closer to direct drive.
+
+911
+00:43:15,420 --> 00:43:18,980
+ And they tend to be much wider.
+
+912
+00:43:18,980 --> 00:43:23,100
+ I'm not an expert in his latest designs, though.
+
+913
+00:43:23,100 --> 00:43:23,780
+ Yes?
+
+914
+00:43:23,780 --> 00:43:24,280
+ [INAUDIBLE]
+
+915
+00:43:24,280 --> 00:43:24,780
+ Yeah?
+
+916
+00:43:24,780 --> 00:43:25,280
+ [INAUDIBLE]
+
+917
+00:43:25,280 --> 00:43:42,920
+ So I'm biased, but I think Drake's awesome.
+
+918
+00:43:42,920 --> 00:43:45,280
+ And the mechanics engine is awesome.
+
+919
+00:43:45,280 --> 00:43:46,880
+ And one of the best tests we had--
+
+920
+00:43:46,880 --> 00:43:50,160
+ my daughter was doing FTC, FIRST Robotics,
+
+921
+00:43:50,160 --> 00:43:51,800
+ and she had a mechanim wheel.
+
+922
+00:43:51,800 --> 00:43:55,000
+ And we just put in the geometries of the mechanim
+
+923
+00:43:55,000 --> 00:43:58,840
+ wheels, rollers, and that thing just drove just right.
+
+924
+00:43:58,840 --> 00:44:00,920
+ It's not tire mechanics, but it's just the friction
+
+925
+00:44:00,920 --> 00:44:02,440
+ of the contact forces of the ground or whatever.
+
+926
+00:44:02,440 --> 00:44:03,480
+ It just-- you could drive around.
+
+927
+00:44:03,480 --> 00:44:04,400
+ It was super fun.
+
+928
+00:44:04,400 --> 00:44:06,320
+ Maybe I'll put that as an example.
+
+929
+00:44:06,320 --> 00:44:07,680
+ So you can simulate that.
+
+930
+00:44:07,680 --> 00:44:10,560
+ It's not simulating tire mechanics.
+
+931
+00:44:10,560 --> 00:44:14,160
+ So typically, if people are doing racing cars,
+
+932
+00:44:14,160 --> 00:44:19,440
+ they will have special purpose magic tire models and the like
+
+933
+00:44:19,440 --> 00:44:22,000
+ to capture the pneumatic tires on the road and stuff
+
+934
+00:44:22,000 --> 00:44:22,200
+ like that.
+
+935
+00:44:22,200 --> 00:44:23,200
+ We're not doing that.
+
+936
+00:44:23,200 --> 00:44:25,560
+ But in terms of a basic physics engine of rigid bodies
+
+937
+00:44:25,560 --> 00:44:27,280
+ interacting and getting the right forces,
+
+938
+00:44:27,280 --> 00:44:28,840
+ it'll do all that.
+
+939
+00:44:28,840 --> 00:44:30,400
+ This one doesn't have wheels.
+
+940
+00:44:30,400 --> 00:44:32,400
+ We'll have versions that have wheels coming up.
+
+941
+00:44:32,400 --> 00:44:40,200
+ OK, so if you want to do torque sensing,
+
+942
+00:44:40,200 --> 00:44:43,480
+ then there's various ways to do that.
+
+943
+00:44:43,480 --> 00:44:45,540
+ Let me show you how EWA does it.
+
+944
+00:44:45,540 --> 00:44:48,640
+ The basic idea, of course, is that you put a--
+
+945
+00:44:48,640 --> 00:44:52,600
+ somewhere in your linkage, but on the robot side.
+
+946
+00:44:52,600 --> 00:44:54,480
+ So the motor is over here.
+
+947
+00:44:54,480 --> 00:44:57,800
+ Got a lot of different-- this is a harmonic drive gear unit.
+
+948
+00:44:57,800 --> 00:45:00,080
+ And on the end here is a torque sensor
+
+949
+00:45:00,080 --> 00:45:02,280
+ that's measuring the joint torque.
+
+950
+00:45:02,280 --> 00:45:05,400
+ It's a beautiful-- I think torque sensing,
+
+951
+00:45:05,400 --> 00:45:09,600
+ to get it right and performant, requires exquisite engineering.
+
+952
+00:45:09,600 --> 00:45:11,960
+ And I think they've done an incredibly good job of this.
+
+953
+00:45:11,960 --> 00:45:14,200
+ Strain gauges are finicky and the like.
+
+954
+00:45:14,200 --> 00:45:16,560
+ But there's some incredibly good engineering
+
+955
+00:45:16,560 --> 00:45:20,400
+ that makes torque sensing viable in this robot.
+
+956
+00:45:20,400 --> 00:45:25,200
+ And it's a little extra shaft at the end of the robot.
+
+957
+00:45:25,200 --> 00:45:28,400
+ And that allows you to do things like stop
+
+958
+00:45:28,400 --> 00:45:31,920
+ if you run into something and you didn't expect,
+
+959
+00:45:31,920 --> 00:45:34,760
+ or potentially do better control.
+
+960
+00:45:34,760 --> 00:45:37,080
+ And one of the ways that that was popularized, actually,
+
+961
+00:45:37,080 --> 00:45:38,440
+ when--
+
+962
+00:45:38,440 --> 00:45:41,280
+ this is Sammy Haddad, when he was a student, probably,
+
+963
+00:45:41,280 --> 00:45:47,720
+ at DLR in the German Aerospace Research Lab.
+
+964
+00:45:47,720 --> 00:45:49,560
+ And he's showing off how valuable
+
+965
+00:45:49,560 --> 00:45:53,400
+ it is to have joint torque sensing in order
+
+966
+00:45:53,400 --> 00:45:56,600
+ to make safe human-robot interaction.
+
+967
+00:45:56,600 --> 00:45:58,560
+ But it's just--
+
+968
+00:45:58,560 --> 00:46:01,520
+ I love that as a famous set of videos,
+
+969
+00:46:01,520 --> 00:46:04,520
+ because he just keeps hitting himself at high speeds
+
+970
+00:46:04,520 --> 00:46:07,320
+ with a robot to make a case.
+
+971
+00:46:07,320 --> 00:46:10,920
+ And Sammy's a pretty established roboticist now.
+
+972
+00:46:10,920 --> 00:46:13,120
+ He started the-- he was one of the founders of the Franca
+
+973
+00:46:13,120 --> 00:46:15,000
+ Emica company later.
+
+974
+00:46:15,000 --> 00:46:17,280
+ But back in the day, he was hitting himself
+
+975
+00:46:17,280 --> 00:46:19,720
+ in the head with robots at high speeds,
+
+976
+00:46:19,720 --> 00:46:26,320
+ and making the point that having the ability to sense a force
+
+977
+00:46:26,320 --> 00:46:28,720
+ and a control system that can stop quickly enough--
+
+978
+00:46:28,720 --> 00:46:29,800
+ I mean, that still looks like it hurt.
+
+979
+00:46:29,800 --> 00:46:30,360
+ I don't know.
+
+980
+00:46:30,360 --> 00:46:30,860
+ But--
+
+981
+00:46:30,860 --> 00:46:33,120
+ [LAUGHTER]
+
+982
+00:46:33,120 --> 00:46:34,960
+ But they built up--
+
+983
+00:46:34,960 --> 00:46:38,400
+ his thesis was about building safety cases for robots.
+
+984
+00:46:38,400 --> 00:46:43,400
+ And it really can be a difference maker.
+
+985
+00:46:43,400 --> 00:46:45,760
+ It also allows you to do different types of control.
+
+986
+00:46:45,760 --> 00:46:51,040
+ So I told you that a lot of our arms
+
+987
+00:46:51,040 --> 00:46:53,320
+ will actually fault if you deviate
+
+988
+00:46:53,320 --> 00:46:55,320
+ from a commanded position.
+
+989
+00:46:55,320 --> 00:46:58,160
+ But if you're thinking about more in the torque space,
+
+990
+00:46:58,160 --> 00:46:59,880
+ then you can say, maybe my goal is just
+
+991
+00:46:59,880 --> 00:47:02,080
+ to be able to produce some amount of torque
+
+992
+00:47:02,080 --> 00:47:03,200
+ at the end effector.
+
+993
+00:47:03,200 --> 00:47:04,820
+ When I'm in contact, I'm going to push
+
+994
+00:47:04,820 --> 00:47:06,560
+ with a certain amount of force.
+
+995
+00:47:06,560 --> 00:47:09,400
+ And I don't care what position I'm in.
+
+996
+00:47:09,400 --> 00:47:11,240
+ Or even more interesting maybe is
+
+997
+00:47:11,240 --> 00:47:13,760
+ if I'm going to produce a certain stiffness
+
+998
+00:47:13,760 --> 00:47:14,600
+ at the end effector.
+
+999
+00:47:14,600 --> 00:47:17,720
+ So I want to say that I'm going to go to some normal position.
+
+1000
+00:47:17,720 --> 00:47:19,820
+ But if I push, I want to act like there's
+
+1001
+00:47:19,820 --> 00:47:22,320
+ a spring between me and the target position,
+
+1002
+00:47:22,320 --> 00:47:26,160
+ and produce forces to let that go.
+
+1003
+00:47:26,160 --> 00:47:28,280
+ So this is an example.
+
+1004
+00:47:28,280 --> 00:47:30,600
+ We'll talk a lot more about it later.
+
+1005
+00:47:30,600 --> 00:47:33,720
+ But we'll do an actual one lecture later
+
+1006
+00:47:33,720 --> 00:47:36,960
+ on the low level control.
+
+1007
+00:47:36,960 --> 00:47:38,640
+ But the first thing they do to show
+
+1008
+00:47:38,640 --> 00:47:40,720
+ they've got mastery of the dynamics of the robot
+
+1009
+00:47:40,720 --> 00:47:43,320
+ and torque control is they'll show, first of all,
+
+1010
+00:47:43,320 --> 00:47:45,200
+ that they can just cancel gravity out and make
+
+1011
+00:47:45,200 --> 00:47:47,200
+ the robot act like it's not there.
+
+1012
+00:47:47,200 --> 00:47:50,600
+ That's the standard gravity comp video that you'll see.
+
+1013
+00:47:50,600 --> 00:47:53,960
+ That's like-- that's how you earn bragging rights saying,
+
+1014
+00:47:53,960 --> 00:47:56,320
+ I've got a great torque controller and great torque
+
+1015
+00:47:56,320 --> 00:48:00,560
+ sensing, because you show you do gravity control.
+
+1016
+00:48:00,560 --> 00:48:02,600
+ And then, yeah, I guess I didn't include it.
+
+1017
+00:48:02,600 --> 00:48:03,640
+ Or did I include it here?
+
+1018
+00:48:03,640 --> 00:48:05,280
+ Next.
+
+1019
+00:48:05,280 --> 00:48:06,520
+ No.
+
+1020
+00:48:06,520 --> 00:48:08,240
+ You can also do--
+
+1021
+00:48:08,240 --> 00:48:09,840
+ yeah, we'll see impedance control
+
+1022
+00:48:09,840 --> 00:48:12,400
+ and some of the other things that work naturally
+
+1023
+00:48:12,400 --> 00:48:13,960
+ once you have joint torque sensing.
+
+1024
+00:48:13,960 --> 00:48:14,460
+ Yeah.
+
+1025
+00:48:14,460 --> 00:48:17,440
+ [INAUDIBLE]
+
+1026
+00:48:17,440 --> 00:48:28,840
+ Yeah, that's really good.
+
+1027
+00:48:28,840 --> 00:48:32,240
+ So typically, we're going to bring your own hand
+
+1028
+00:48:32,240 --> 00:48:33,920
+ and/or bring your own barbell.
+
+1029
+00:48:33,920 --> 00:48:36,040
+ It's kind of a weird hand to bring.
+
+1030
+00:48:36,040 --> 00:48:37,960
+ Or you might pick up some object.
+
+1031
+00:48:37,960 --> 00:48:39,760
+ The interface for this, which is what
+
+1032
+00:48:39,760 --> 00:48:41,920
+ commands the low level software, allows
+
+1033
+00:48:41,920 --> 00:48:46,280
+ you to specify an inertia of the load of the end effector.
+
+1034
+00:48:46,280 --> 00:48:48,400
+ You typically-- I mean, even a dexterous hand
+
+1035
+00:48:48,400 --> 00:48:49,840
+ is not a constant inertia.
+
+1036
+00:48:49,840 --> 00:48:52,480
+ But you would just kind of pick a canonical pose of it,
+
+1037
+00:48:52,480 --> 00:48:54,480
+ compute the inertia, and tell the robot low level
+
+1038
+00:48:54,480 --> 00:48:55,400
+ controller about that.
+
+1039
+00:48:55,400 --> 00:48:57,000
+ So that when it's doing gravity comp,
+
+1040
+00:48:57,000 --> 00:48:58,840
+ it's pretending the hand is always like this
+
+1041
+00:48:58,840 --> 00:48:59,920
+ and just a statue.
+
+1042
+00:48:59,920 --> 00:49:01,960
+ And then you treat the fact that it's doing this
+
+1043
+00:49:01,960 --> 00:49:04,600
+ as a disturbance.
+
+1044
+00:49:04,600 --> 00:49:05,100
+ Yes?
+
+1045
+00:49:05,100 --> 00:49:08,560
+ [INAUDIBLE]
+
+1046
+00:49:08,560 --> 00:49:12,720
+ That is true.
+
+1047
+00:49:12,720 --> 00:49:16,160
+ Yes, so PID control is not doing gravity compensation.
+
+1048
+00:49:16,160 --> 00:49:19,120
+ You can do them both.
+
+1049
+00:49:19,120 --> 00:49:21,280
+ You could do gravity compensation first.
+
+1050
+00:49:21,280 --> 00:49:23,880
+ And then, so if you were to take this controller
+
+1051
+00:49:23,880 --> 00:49:30,840
+ and then just add on plus tau gravity comp, for instance.
+
+1052
+00:49:30,840 --> 00:49:35,000
+ [TYPING]
+
+1053
+00:49:35,000 --> 00:49:37,400
+ Then if your control system is capable of doing this,
+
+1054
+00:49:37,400 --> 00:49:39,760
+ if you're doing it on the joint torque commands instead
+
+1055
+00:49:39,760 --> 00:49:43,560
+ of motor commands, then that becomes viable.
+
+1056
+00:49:43,560 --> 00:49:46,600
+ And you can still write things that look like a PID control,
+
+1057
+00:49:46,600 --> 00:49:49,720
+ but also cancel out gravity in a feed forward term.
+
+1058
+00:49:49,720 --> 00:49:54,080
+ And we'll talk about that in some detail later.
+
+1059
+00:49:54,080 --> 00:49:54,600
+ Yes, please?
+
+1060
+00:49:54,600 --> 00:49:58,760
+ [INAUDIBLE]
+
+1061
+00:49:58,760 --> 00:50:01,560
+ Yes, so at the end effector, on this robot,
+
+1062
+00:50:01,560 --> 00:50:05,040
+ it's a few newtons, of course.
+
+1063
+00:50:05,040 --> 00:50:07,120
+ You can detect.
+
+1064
+00:50:07,120 --> 00:50:08,480
+ And it depends on the robot.
+
+1065
+00:50:08,480 --> 00:50:11,560
+ But they're not exquisitely accurate.
+
+1066
+00:50:11,560 --> 00:50:13,480
+ If I hit it with a feather or something,
+
+1067
+00:50:13,480 --> 00:50:16,840
+ maybe I wouldn't notice it.
+
+1068
+00:50:16,840 --> 00:50:21,000
+ Sorry, if I was pushing down on a table, it's newtons.
+
+1069
+00:50:21,000 --> 00:50:24,360
+ And then so that is related through the kinematics
+
+1070
+00:50:24,360 --> 00:50:26,440
+ to some newton meter resolution.
+
+1071
+00:50:26,440 --> 00:50:29,160
+ Yeah.
+
+1072
+00:50:29,160 --> 00:50:30,920
+ OK, there's a few other ways.
+
+1073
+00:50:30,920 --> 00:50:34,840
+ So that's one way to accomplish joint torque sensing.
+
+1074
+00:50:34,840 --> 00:50:36,640
+ And that's the way that this robot did it.
+
+1075
+00:50:36,640 --> 00:50:38,920
+ And the Panda does it.
+
+1076
+00:50:38,920 --> 00:50:42,960
+ The Jayco, I think, does not do it that way.
+
+1077
+00:50:42,960 --> 00:50:45,920
+ But there's another way that you might hear about,
+
+1078
+00:50:45,920 --> 00:50:48,200
+ which is good to know, that's called
+
+1079
+00:50:48,200 --> 00:50:50,320
+ series elastic actuators.
+
+1080
+00:50:50,320 --> 00:50:51,480
+ It's actually the same way.
+
+1081
+00:50:51,480 --> 00:50:56,080
+ But it emphasizes something different.
+
+1082
+00:50:56,080 --> 00:51:05,440
+ So series elastic actuators, which
+
+1083
+00:51:05,440 --> 00:51:07,320
+ says I'm going to take my motor.
+
+1084
+00:51:07,320 --> 00:51:21,120
+ And I'm going to put a spring in series with my motor.
+
+1085
+00:51:21,120 --> 00:51:22,600
+ And then this is my output shaft.
+
+1086
+00:51:23,600 --> 00:51:24,100
+ OK.
+
+1087
+00:51:24,100 --> 00:51:29,840
+ And you could think, actually--
+
+1088
+00:51:29,840 --> 00:51:33,320
+ I mean, of course, the EWA has a strain gauge
+
+1089
+00:51:33,320 --> 00:51:36,320
+ on a sheet that is actually--
+
+1090
+00:51:36,320 --> 00:51:39,520
+ you could think of as a very steep, stiff spring, where
+
+1091
+00:51:39,520 --> 00:51:41,840
+ the reason the strain gauge can measure anything
+
+1092
+00:51:41,840 --> 00:51:44,880
+ is because that piece is deflecting
+
+1093
+00:51:44,880 --> 00:51:46,600
+ and it's measuring the forces.
+
+1094
+00:51:46,600 --> 00:51:56,720
+ But whereas the EWA sensor, torque sensor,
+
+1095
+00:51:56,720 --> 00:52:00,440
+ is, I think, estimated at one time
+
+1096
+00:52:00,440 --> 00:52:08,920
+ to be something like a stiffness of 55,000 newton
+
+1097
+00:52:08,920 --> 00:52:15,060
+ meters per radian, a series elastic actuator,
+
+1098
+00:52:15,060 --> 00:52:18,280
+ like maybe the one you'd see in Baxter, for instance.
+
+1099
+00:52:18,280 --> 00:52:20,760
+ I'm going to go back.
+
+1100
+00:52:20,760 --> 00:52:24,560
+ This robot was also capable of torque sensing.
+
+1101
+00:52:24,560 --> 00:52:27,840
+ But a series elastic actuator, SEA,
+
+1102
+00:52:27,840 --> 00:52:29,280
+ would typically be much lower.
+
+1103
+00:52:29,280 --> 00:52:31,000
+ And they don't always publish their specs.
+
+1104
+00:52:31,000 --> 00:52:36,040
+ But I was guessing that this one was around 100 newton meters
+
+1105
+00:52:36,040 --> 00:52:37,480
+ per radian.
+
+1106
+00:52:37,480 --> 00:52:41,600
+ So this is kind of a different philosophy in actuator design.
+
+1107
+00:52:41,600 --> 00:52:45,380
+ That robot can be stiff and follow position trajectories
+
+1108
+00:52:45,380 --> 00:52:46,940
+ well if you want to.
+
+1109
+00:52:46,940 --> 00:52:49,460
+ But you can also measure the torques.
+
+1110
+00:52:49,460 --> 00:52:52,980
+ This one-- I don't want to say it can't be--
+
+1111
+00:52:52,980 --> 00:52:55,180
+ but it can't be very accurate in some sense.
+
+1112
+00:52:55,180 --> 00:52:58,340
+ It's got-- between the motors and the world
+
+1113
+00:52:58,340 --> 00:52:59,500
+ is a pretty soft spring.
+
+1114
+00:52:59,500 --> 00:53:02,980
+ So you go and push it and it feels squishy, right?
+
+1115
+00:53:02,980 --> 00:53:06,460
+ So this is a very different regime.
+
+1116
+00:53:06,460 --> 00:53:10,220
+ And a spring is a torque sensor, because you
+
+1117
+00:53:10,220 --> 00:53:14,180
+ can measure the deflection of the spring
+
+1118
+00:53:14,180 --> 00:53:17,220
+ and estimate the force or the torque.
+
+1119
+00:53:17,220 --> 00:53:19,980
+ So this time, now if I just take my old conventional sensors,
+
+1120
+00:53:19,980 --> 00:53:21,520
+ which work really well, and I measure
+
+1121
+00:53:21,520 --> 00:53:24,140
+ the position of the output shaft and the position of the motor
+
+1122
+00:53:24,140 --> 00:53:26,020
+ shaft, and I estimate that difference,
+
+1123
+00:53:26,020 --> 00:53:28,020
+ then I've got the deflection of the spring
+
+1124
+00:53:28,020 --> 00:53:31,820
+ and I've got a good torque sensor.
+
+1125
+00:53:31,820 --> 00:53:34,340
+ I'm going to distribute the questions.
+
+1126
+00:53:34,340 --> 00:53:35,320
+ Yeah.
+
+1127
+00:53:35,320 --> 00:53:35,820
+ Yeah.
+
+1128
+00:53:35,820 --> 00:53:36,780
+ [INAUDIBLE]
+
+1129
+00:53:36,780 --> 00:53:54,300
+ So the question is, can you produce one or the other
+
+1130
+00:53:54,300 --> 00:53:56,260
+ from the other one using control?
+
+1131
+00:53:56,260 --> 00:53:59,820
+ And the answer is, yes, up to your bandwidth limitations.
+
+1132
+00:53:59,820 --> 00:54:01,780
+ So there is actually some bandwidth limitations
+
+1133
+00:54:01,780 --> 00:54:03,060
+ of your motor.
+
+1134
+00:54:03,060 --> 00:54:04,700
+ Your motor can only change its command
+
+1135
+00:54:04,700 --> 00:54:06,980
+ at a certain frequency, for instance.
+
+1136
+00:54:06,980 --> 00:54:09,060
+ And there is a mechanical bandwidth
+
+1137
+00:54:09,060 --> 00:54:10,460
+ that comes from the spring.
+
+1138
+00:54:10,460 --> 00:54:12,700
+ So you will at some point have a bandwidth limitation
+
+1139
+00:54:12,700 --> 00:54:15,820
+ on your whole system that will be lower bandwidth
+
+1140
+00:54:15,820 --> 00:54:18,460
+ capable on the very soft spring.
+
+1141
+00:54:18,460 --> 00:54:20,660
+ So I think the best motors might not
+
+1142
+00:54:20,660 --> 00:54:23,820
+ be able to act like a stiff spring if you've got a SEA.
+
+1143
+00:54:23,820 --> 00:54:25,900
+ And I think in practice, we see that difference.
+
+1144
+00:54:25,900 --> 00:54:30,820
+ You can also do--
+
+1145
+00:54:30,820 --> 00:54:35,140
+ so Baxter was a famous series elastic actuator,
+
+1146
+00:54:35,140 --> 00:54:36,020
+ a heavy robotics.
+
+1147
+00:54:36,020 --> 00:54:38,220
+ There's a few others that market these series
+
+1148
+00:54:38,220 --> 00:54:39,980
+ elastic actuators.
+
+1149
+00:54:39,980 --> 00:54:44,460
+ You can also do torque control with hydraulics.
+
+1150
+00:54:44,460 --> 00:54:46,340
+ If you choose to build a hydraulic robot,
+
+1151
+00:54:46,340 --> 00:54:48,220
+ this is the Atlas robot.
+
+1152
+00:54:48,220 --> 00:54:50,620
+ This was the first version of the Atlas robot.
+
+1153
+00:54:50,620 --> 00:54:52,420
+ That was a hydraulic robot.
+
+1154
+00:54:52,420 --> 00:54:55,700
+ So if you're pushing fluids around and you have valves,
+
+1155
+00:54:55,700 --> 00:54:57,740
+ then the differential pressure across the valve
+
+1156
+00:54:57,740 --> 00:55:02,780
+ is proportional to the forces or torques that you're producing.
+
+1157
+00:55:02,780 --> 00:55:06,180
+ So that's another option, but less common.
+
+1158
+00:55:06,180 --> 00:55:08,540
+ And even Boston Dynamics, when they went to build SPOT,
+
+1159
+00:55:08,540 --> 00:55:09,580
+ made an electric version.
+
+1160
+00:55:09,580 --> 00:55:13,980
+ I think that's extremely good for laboratory and development
+
+1161
+00:55:13,980 --> 00:55:16,980
+ and stuff, but it's a little bit less viable maybe
+
+1162
+00:55:16,980 --> 00:55:20,980
+ to have those in the world.
+
+1163
+00:55:20,980 --> 00:55:25,620
+ OK, that was kind of a quick run through robot arm hardware.
+
+1164
+00:55:25,620 --> 00:55:27,380
+ Any other high-level questions?
+
+1165
+00:55:27,380 --> 00:55:29,540
+ Yeah.
+
+1166
+00:55:29,540 --> 00:55:30,040
+ Yeah.
+
+1167
+00:55:30,040 --> 00:55:36,860
+ You read both sides of the spring.
+
+1168
+00:55:36,860 --> 00:55:39,700
+ And that's actually-- by virtue of reading the output shaft,
+
+1169
+00:55:39,700 --> 00:55:41,580
+ you do know where you are in the output shaft.
+
+1170
+00:55:41,580 --> 00:55:43,860
+ It's the difference of those two signals that tells you
+
+1171
+00:55:43,860 --> 00:55:46,220
+ the deflection of the spring.
+
+1172
+00:55:46,220 --> 00:55:47,940
+ You always do have that output shaft.
+
+1173
+00:55:47,940 --> 00:55:50,060
+ It's just a matter of whether you can control it.
+
+1174
+00:55:50,060 --> 00:55:53,540
+ Your PD control might not be able to regulate a position
+
+1175
+00:55:53,540 --> 00:55:55,500
+ command accurately.
+
+1176
+00:55:55,500 --> 00:55:56,900
+ Good question.
+
+1177
+00:55:56,900 --> 00:55:57,400
+ Yes.
+
+1178
+00:55:57,400 --> 00:56:03,660
+ You can do linear or rotational joints.
+
+1179
+00:56:03,660 --> 00:56:06,740
+ For almost anything I've said today, you can--
+
+1180
+00:56:06,740 --> 00:56:07,940
+ so I've seen both.
+
+1181
+00:56:07,940 --> 00:56:11,620
+ Sometimes I've seen electric motors with ball--
+
+1182
+00:56:11,620 --> 00:56:13,700
+ with screw joints that are--
+
+1183
+00:56:13,700 --> 00:56:16,220
+ the spring is actually a linear spring.
+
+1184
+00:56:16,220 --> 00:56:18,140
+ I've seen rotary springs.
+
+1185
+00:56:18,140 --> 00:56:21,660
+ Either one is possible.
+
+1186
+00:56:21,660 --> 00:56:22,180
+ Cool.
+
+1187
+00:56:22,180 --> 00:56:23,540
+ OK.
+
+1188
+00:56:23,540 --> 00:56:30,100
+ So let's go from the robot arm hardware into a simulation.
+
+1189
+00:56:30,100 --> 00:56:32,820
+ And there's more to it than just the physics.
+
+1190
+00:56:32,820 --> 00:56:39,380
+ So we talked about the hardware station diagram abstraction.
+
+1191
+00:56:39,380 --> 00:56:42,740
+ And EWA doesn't take in torque commands.
+
+1192
+00:56:42,740 --> 00:56:44,860
+ It takes in position commands and then
+
+1193
+00:56:44,860 --> 00:56:47,420
+ an optional feed-forward torque.
+
+1194
+00:56:47,420 --> 00:56:49,940
+ That's the messages that the control box
+
+1195
+00:56:49,940 --> 00:56:53,940
+ that you get when you purchase the EWA is listening for.
+
+1196
+00:56:53,940 --> 00:56:56,580
+ And it outputs the commanded position, the measured
+
+1197
+00:56:56,580 --> 00:56:58,180
+ position, the velocity--
+
+1198
+00:56:58,180 --> 00:57:01,220
+ excuse me-- estimated, the state estimated,
+
+1199
+00:57:01,220 --> 00:57:03,180
+ the torque you commanded, the torque measured,
+
+1200
+00:57:03,180 --> 00:57:05,420
+ all these different things, the torque external.
+
+1201
+00:57:05,420 --> 00:57:07,420
+ So it's trying to say, these are the torques
+
+1202
+00:57:07,420 --> 00:57:11,020
+ that I expected from my robot mass and the barbell
+
+1203
+00:57:11,020 --> 00:57:14,620
+ that I told it about, and then from the difference.
+
+1204
+00:57:14,620 --> 00:57:16,380
+ And you can just look at the torque external
+
+1205
+00:57:16,380 --> 00:57:19,980
+ and just see the unexpected forces.
+
+1206
+00:57:19,980 --> 00:57:20,480
+ OK.
+
+1207
+00:57:20,480 --> 00:57:25,060
+ But how do we actually achieve that in, let's say,
+
+1208
+00:57:25,060 --> 00:57:27,420
+ our simulator here?
+
+1209
+00:57:27,420 --> 00:57:28,940
+ I'll stop this old one.
+
+1210
+00:57:28,940 --> 00:57:46,780
+ [AUDIO OUT]
+
+1211
+00:57:46,780 --> 00:57:53,700
+ OK, so the first thing to know is we have a physics engine.
+
+1212
+00:57:53,700 --> 00:57:55,820
+ That physics engine is called multi-body planning.
+
+1213
+00:57:55,820 --> 00:58:16,620
+ [AUDIO OUT]
+
+1214
+00:58:16,620 --> 00:58:20,060
+ Plant comes from the world of controls.
+
+1215
+00:58:20,060 --> 00:58:22,660
+ It was originally chemical plants, but it's stuck.
+
+1216
+00:58:22,660 --> 00:58:24,820
+ And now anything we try to control,
+
+1217
+00:58:24,820 --> 00:58:27,620
+ we tend to call it a plant.
+
+1218
+00:58:27,620 --> 00:58:29,500
+ I still do.
+
+1219
+00:58:29,500 --> 00:58:31,060
+ Younger people don't.
+
+1220
+00:58:31,060 --> 00:58:35,340
+ But OK, multi-body plant is our physics engine.
+
+1221
+00:58:35,340 --> 00:58:39,140
+ And if you look at the multi-body plant diagram,
+
+1222
+00:58:39,140 --> 00:58:44,060
+ then this takes torque commands input as input.
+
+1223
+00:58:44,060 --> 00:58:46,580
+ This would be like the torque at the joint, for instance.
+
+1224
+00:58:46,580 --> 00:58:48,900
+ We don't normally put the motor dynamics in.
+
+1225
+00:58:48,900 --> 00:58:50,500
+ We could put it in there.
+
+1226
+00:58:50,500 --> 00:58:53,900
+ But this is a torque command input.
+
+1227
+00:58:53,900 --> 00:58:58,100
+ And it takes and computes the updated body angles,
+
+1228
+00:58:58,100 --> 00:59:01,460
+ joint angles, positions, velocities, accelerations,
+
+1229
+00:59:01,460 --> 00:59:02,380
+ and things like that.
+
+1230
+00:59:02,380 --> 00:59:05,460
+ That's the core physics engine.
+
+1231
+00:59:05,460 --> 00:59:11,080
+ OK, so the second thing you need to put your simulator together
+
+1232
+00:59:11,080 --> 00:59:13,340
+ is we call it the--
+
+1233
+00:59:13,340 --> 00:59:15,100
+ it's our geometry engine here, which
+
+1234
+00:59:15,100 --> 00:59:18,700
+ is for rendering and contact and stuff like this.
+
+1235
+00:59:18,700 --> 00:59:22,260
+ Our geometry engine is called Scene Graph.
+
+1236
+00:59:22,260 --> 00:59:26,340
+ It's a common name.
+
+1237
+00:59:26,340 --> 00:59:30,300
+ You see a scene graph in any sort of computer game world.
+
+1238
+00:59:30,300 --> 00:59:34,300
+ This is collecting information about the mesh files
+
+1239
+00:59:34,300 --> 00:59:39,060
+ that you used to define your robot.
+
+1240
+00:59:39,060 --> 00:59:41,980
+ It can answer queries like, how far away are these two meshes
+
+1241
+00:59:41,980 --> 00:59:44,220
+ from each other, which are pretty
+
+1242
+00:59:44,220 --> 00:59:47,060
+ heavy computational geometry happening inside the scene
+
+1243
+00:59:47,060 --> 00:59:47,740
+ graph.
+
+1244
+00:59:47,740 --> 00:59:49,740
+ But it can also very quickly tell you if things
+
+1245
+00:59:49,740 --> 00:59:52,700
+ are in collision or not.
+
+1246
+00:59:52,700 --> 00:59:56,300
+ And that's almost enough to put together a simulation.
+
+1247
+00:59:56,300 --> 00:59:58,620
+ But you need a few more little pieces.
+
+1248
+00:59:58,620 --> 01:00:05,020
+ So you have to populate the physics engine from disk,
+
+1249
+01:00:05,020 --> 01:00:06,820
+ from some description of the robot.
+
+1250
+01:00:06,820 --> 01:00:08,560
+ This is the one we were looking at before.
+
+1251
+01:00:08,560 --> 01:00:13,420
+ So you parse an EWA model from a description format
+
+1252
+01:00:13,420 --> 01:00:15,460
+ into the multi-body plan.
+
+1253
+01:00:15,460 --> 01:00:18,020
+ So I'm going to add the model from file.
+
+1254
+01:00:18,020 --> 01:00:19,780
+ And then I'm going to make sure it's not--
+
+1255
+01:00:19,780 --> 01:00:22,100
+ if I left out this weld frames command,
+
+1256
+01:00:22,100 --> 01:00:24,500
+ then the robot would fall down through the world.
+
+1257
+01:00:24,500 --> 01:00:25,100
+ Yeah, what's up?
+
+1258
+01:00:25,100 --> 01:00:27,620
+ [INAUDIBLE]
+
+1259
+01:00:27,620 --> 01:00:29,260
+ Nope, they're separate systems.
+
+1260
+01:00:29,260 --> 01:00:30,700
+ They're wired together.
+
+1261
+01:00:30,700 --> 01:00:31,740
+ Yeah?
+
+1262
+01:00:31,740 --> 01:00:33,620
+ OK.
+
+1263
+01:00:33,620 --> 01:00:35,340
+ And the robot description format,
+
+1264
+01:00:35,340 --> 01:00:37,940
+ you typically don't have to write them yourself.
+
+1265
+01:00:37,940 --> 01:00:41,060
+ But you might want to check them.
+
+1266
+01:00:41,060 --> 01:00:43,620
+ They're just these standard text description formats,
+
+1267
+01:00:43,620 --> 01:00:45,460
+ which says I have a link here.
+
+1268
+01:00:45,460 --> 01:00:46,660
+ It's at a certain position.
+
+1269
+01:00:46,660 --> 01:00:48,300
+ It's got a certain inertial matrix.
+
+1270
+01:00:48,300 --> 01:00:54,340
+ It's got a mesh file that shows me how to render it.
+
+1271
+01:00:54,340 --> 01:00:56,140
+ It has certain material properties.
+
+1272
+01:00:56,140 --> 01:00:58,220
+ So if you did find a robot, if you're making your own robot
+
+1273
+01:00:58,220 --> 01:01:00,060
+ and you wanted to add it to the simulator,
+
+1274
+01:01:00,060 --> 01:01:02,600
+ you would end up writing a robot description file like this.
+
+1275
+01:01:02,600 --> 01:01:05,540
+ But nowadays, you mostly just find the existing ones
+
+1276
+01:01:05,540 --> 01:01:06,380
+ and use them.
+
+1277
+01:01:06,380 --> 01:01:12,500
+ And then scene graph is this simple thing
+
+1278
+01:01:12,500 --> 01:01:16,900
+ that takes in poses and outputs all the geometry information.
+
+1279
+01:01:16,900 --> 01:01:18,140
+ And if you put that together--
+
+1280
+01:01:18,140 --> 01:01:25,940
+ I'm going to run all the way down to this one.
+
+1281
+01:01:25,940 --> 01:01:28,780
+ And you run your little simulation.
+
+1282
+01:01:28,780 --> 01:01:31,380
+ And this is what happens.
+
+1283
+01:01:31,380 --> 01:01:34,260
+ I commanded 0 on the input port.
+
+1284
+01:01:34,260 --> 01:01:36,380
+ And I just ran my simulation.
+
+1285
+01:01:36,380 --> 01:01:40,060
+ And that's what EWA does.
+
+1286
+01:01:40,060 --> 01:01:41,860
+ The torque command is 0.
+
+1287
+01:01:41,860 --> 01:01:44,220
+ So I've never seen a real EWA do that.
+
+1288
+01:01:44,220 --> 01:01:48,980
+ If I did, I would quickly assume that the robot was broken.
+
+1289
+01:01:48,980 --> 01:01:50,860
+ So don't do that.
+
+1290
+01:01:50,860 --> 01:01:54,620
+ But that is a complete physics description of the EWA
+
+1291
+01:01:54,620 --> 01:01:57,380
+ and the rendering enough to make the geometry work.
+
+1292
+01:01:57,380 --> 01:01:57,880
+ Yes?
+
+1293
+01:01:57,880 --> 01:01:58,380
+ [INAUDIBLE]
+
+1294
+01:01:58,380 --> 01:02:10,900
+ That's exactly the point.
+
+1295
+01:02:10,900 --> 01:02:15,620
+ So the point is that I don't send 0 torque to this.
+
+1296
+01:02:15,620 --> 01:02:19,580
+ The control cabinet is doing some extra work
+
+1297
+01:02:19,580 --> 01:02:23,740
+ to do gravity compensation, to turn the brakes on and off.
+
+1298
+01:02:23,740 --> 01:02:25,300
+ Right now, since it's not plugged in,
+
+1299
+01:02:25,300 --> 01:02:26,420
+ the brakes are just locked.
+
+1300
+01:02:26,420 --> 01:02:27,780
+ And it's sitting there.
+
+1301
+01:02:27,780 --> 01:02:30,740
+ But in general, in order to understand
+
+1302
+01:02:30,740 --> 01:02:32,860
+ how my commands are going to affect the robot,
+
+1303
+01:02:32,860 --> 01:02:34,420
+ I actually need a mathematical model
+
+1304
+01:02:34,420 --> 01:02:37,740
+ of that low-level controller.
+
+1305
+01:02:37,740 --> 01:02:38,860
+ So that's the next piece.
+
+1306
+01:02:38,860 --> 01:02:41,020
+ There's various ways that we can model that.
+
+1307
+01:02:41,020 --> 01:02:43,500
+ I think we know what the governing equations are.
+
+1308
+01:02:43,500 --> 01:02:46,220
+ But partly because they run it at 10 kilohertz
+
+1309
+01:02:46,220 --> 01:02:48,580
+ on specialized hardware, and we don't
+
+1310
+01:02:48,580 --> 01:02:51,340
+ want to slow down our simulator to run it that way,
+
+1311
+01:02:51,340 --> 01:02:53,460
+ we actually make slightly different models,
+
+1312
+01:02:53,460 --> 01:02:58,460
+ abstractions of that controller on the real robot.
+
+1313
+01:02:58,460 --> 01:03:03,300
+ So we can add an inverse dynamics controller
+
+1314
+01:03:03,300 --> 01:03:06,340
+ as a simplest model of what's happening on the robot.
+
+1315
+01:03:06,340 --> 01:03:10,340
+ It's one more diagram here, one more element in the diagram
+
+1316
+01:03:10,340 --> 01:03:11,180
+ here.
+
+1317
+01:03:11,180 --> 01:03:13,540
+ It takes in the estimated state, the desired state,
+
+1318
+01:03:13,540 --> 01:03:16,260
+ and produces torques.
+
+1319
+01:03:16,260 --> 01:03:17,180
+ OK?
+
+1320
+01:03:17,180 --> 01:03:22,980
+ And if I add that in, then I get a diagram.
+
+1321
+01:03:22,980 --> 01:03:23,480
+ Oops.
+
+1322
+01:03:23,480 --> 01:03:23,980
+ What did I do?
+
+1323
+01:03:23,980 --> 01:03:41,420
+ [AUDIO OUT]
+
+1324
+01:03:41,420 --> 01:03:43,060
+ Here we go.
+
+1325
+01:03:43,060 --> 01:03:47,220
+ I get a diagram that has the plant.
+
+1326
+01:03:47,220 --> 01:03:48,940
+ It has the scene graph.
+
+1327
+01:03:48,940 --> 01:03:51,460
+ It has the state of the EWA that's
+
+1328
+01:03:51,460 --> 01:03:54,500
+ coming out from the plant pumped into the controller
+
+1329
+01:03:54,500 --> 01:03:56,020
+ as the estimated state.
+
+1330
+01:03:56,020 --> 01:03:58,100
+ I've set the desired state to 0, OK?
+
+1331
+01:03:58,100 --> 01:04:02,060
+ And then I just put the force back through.
+
+1332
+01:04:02,060 --> 01:04:04,740
+ That's my whole new diagram.
+
+1333
+01:04:04,740 --> 01:04:08,900
+ And now I get sort of the expected result of--
+
+1334
+01:04:08,900 --> 01:04:13,660
+ it just sits there, which is more boring, but more correct.
+
+1335
+01:04:13,660 --> 01:04:16,080
+ So the point is that if you want to build up a simulator,
+
+1336
+01:04:16,080 --> 01:04:18,500
+ you actually have to model the low-level control.
+
+1337
+01:04:18,500 --> 01:04:20,120
+ And you have to model it well if you're
+
+1338
+01:04:20,120 --> 01:04:22,420
+ going to do higher-performance things, because that will
+
+1339
+01:04:22,420 --> 01:04:23,260
+ impact--
+
+1340
+01:04:23,260 --> 01:04:25,580
+ there's even the way that it interpolates.
+
+1341
+01:04:25,580 --> 01:04:27,980
+ Like, you send position commands in sequence.
+
+1342
+01:04:27,980 --> 01:04:31,500
+ It will extract an effective velocity command
+
+1343
+01:04:31,500 --> 01:04:32,940
+ using some approximation.
+
+1344
+01:04:32,940 --> 01:04:34,480
+ And if you don't model that correctly,
+
+1345
+01:04:34,480 --> 01:04:36,420
+ you're not going to be able to do very high-bandwidth kind
+
+1346
+01:04:36,420 --> 01:04:36,920
+ of controls.
+
+1347
+01:04:36,920 --> 01:04:45,180
+ That's the state interpolator business.
+
+1348
+01:04:45,180 --> 01:04:45,680
+ OK?
+
+1349
+01:04:45,680 --> 01:04:48,940
+ And then the whole thing comes together to be--
+
+1350
+01:04:48,940 --> 01:04:52,540
+ this gives you this abstraction of having positions in,
+
+1351
+01:04:52,540 --> 01:04:55,060
+ optionally additional feedforward torques in,
+
+1352
+01:04:55,060 --> 01:04:55,980
+ and the states out.
+
+1353
+01:04:55,980 --> 01:04:57,100
+ That's the bigger diagram.
+
+1354
+01:04:57,100 --> 01:04:57,600
+ Yeah?
+
+1355
+01:04:57,600 --> 01:05:10,000
+ So I should be more careful.
+
+1356
+01:05:10,000 --> 01:05:14,320
+ We do have support for rotor inertia and reflected inertia.
+
+1357
+01:05:14,320 --> 01:05:16,980
+ But we don't model the lower--
+
+1358
+01:05:16,980 --> 01:05:19,740
+ so we only model the motor at that level of detail.
+
+1359
+01:05:19,740 --> 01:05:22,300
+ We just assume it's a lumped mass, or lumped inertia,
+
+1360
+01:05:22,300 --> 01:05:25,540
+ that's reflected through-- with the reflected inertia.
+
+1361
+01:05:25,540 --> 01:05:29,140
+ However, a lot of simulations don't include that.
+
+1362
+01:05:29,140 --> 01:05:30,700
+ Because the reason I know that--
+
+1363
+01:05:30,700 --> 01:05:33,120
+ and not only because I've looked at the other simulators,
+
+1364
+01:05:33,120 --> 01:05:35,100
+ but also because the robot description formats
+
+1365
+01:05:35,100 --> 01:05:37,300
+ that everybody uses doesn't even have
+
+1366
+01:05:37,300 --> 01:05:41,220
+ a field for reflected inertia.
+
+1367
+01:05:41,220 --> 01:05:43,020
+ Which is like, they just missed that one.
+
+1368
+01:05:43,020 --> 01:05:45,260
+ And it accounts for some huge percentage
+
+1369
+01:05:45,260 --> 01:05:47,020
+ of the dynamics of the robot.
+
+1370
+01:05:47,020 --> 01:05:50,660
+ So I think a lot of people worry about how
+
+1371
+01:05:50,660 --> 01:05:53,140
+ accurate the simulators can be for manipulation.
+
+1372
+01:05:53,140 --> 01:05:55,860
+ But they forgot a big one on that one.
+
+1373
+01:05:55,860 --> 01:06:02,140
+ So-- cool.
+
+1374
+01:06:02,140 --> 01:06:06,460
+ OK, so that's a basic story of robot arms.
+
+1375
+01:06:06,460 --> 01:06:10,140
+ I want to spend the last few minutes talking about hands.
+
+1376
+01:06:10,140 --> 01:06:11,380
+ Yeah?
+
+1377
+01:06:11,380 --> 01:06:12,940
+ So bring your own hand.
+
+1378
+01:06:12,940 --> 01:06:14,940
+ I've got a-- I did bring a bunch of my own hands.
+
+1379
+01:06:14,940 --> 01:06:18,700
+ I also, like I said, slightly broke them on the drive over
+
+1380
+01:06:18,700 --> 01:06:20,860
+ here, on the walk over here.
+
+1381
+01:06:20,860 --> 01:06:22,940
+ But let me just tell you a little bit about hands.
+
+1382
+01:06:22,940 --> 01:06:29,500
+ So everybody who does robots, I think,
+
+1383
+01:06:29,500 --> 01:06:32,940
+ is somehow fascinated by Dexter's hands.
+
+1384
+01:06:32,940 --> 01:06:37,220
+ You can't not like the idea of having a human-like hand
+
+1385
+01:06:37,220 --> 01:06:39,900
+ on the end of a robot.
+
+1386
+01:06:39,900 --> 01:06:41,580
+ And there are some famous ones out there.
+
+1387
+01:06:41,580 --> 01:06:42,780
+ This is the shadow hand.
+
+1388
+01:06:42,780 --> 01:06:45,500
+ The Allegro hand is here.
+
+1389
+01:06:45,500 --> 01:06:49,380
+ It's another sort of famous one.
+
+1390
+01:06:49,380 --> 01:06:51,900
+ And the shadow hand was made--
+
+1391
+01:06:51,900 --> 01:06:54,580
+ also was made famous by the open AI experiments
+
+1392
+01:06:54,580 --> 01:06:57,940
+ of trying to learn Rubik's cubes, for instance.
+
+1393
+01:06:57,940 --> 01:07:00,020
+ But these are very delicate devices.
+
+1394
+01:07:00,020 --> 01:07:02,300
+ I think they hammered on this like crazy.
+
+1395
+01:07:02,300 --> 01:07:05,180
+ And they had to improve the robustness of that like crazy
+
+1396
+01:07:05,180 --> 01:07:07,900
+ in order to do the experiments you
+
+1397
+01:07:07,900 --> 01:07:10,980
+ saw in the reinforcement learning papers there.
+
+1398
+01:07:11,340 --> 01:07:13,900
+ And I think in general, most people would say that Dexterous
+
+1399
+01:07:13,900 --> 01:07:17,940
+ hands are still not quite ready for mainstream.
+
+1400
+01:07:17,940 --> 01:07:19,500
+ They're very much a research product.
+
+1401
+01:07:19,500 --> 01:07:21,740
+ If you go down the Dexterous hand route,
+
+1402
+01:07:21,740 --> 01:07:25,980
+ you're going to expect lower quality sensing information,
+
+1403
+01:07:25,980 --> 01:07:29,380
+ things that lose calibration, things that break,
+
+1404
+01:07:29,380 --> 01:07:31,260
+ cables that snap, stuff like that.
+
+1405
+01:07:31,260 --> 01:07:32,940
+ But that's good for research.
+
+1406
+01:07:32,940 --> 01:07:34,100
+ That's where we want to be.
+
+1407
+01:07:34,100 --> 01:07:37,260
+ But the argument, the counter argument,
+
+1408
+01:07:37,260 --> 01:07:39,740
+ the few people in robotics that don't love Dexterous hands
+
+1409
+01:07:39,740 --> 01:07:42,940
+ or whatever, I think have a pretty reasonable argument,
+
+1410
+01:07:42,940 --> 01:07:45,540
+ which is that maybe you don't need a Dexterous hand
+
+1411
+01:07:45,540 --> 01:07:47,580
+ to be useful in the home.
+
+1412
+01:07:47,580 --> 01:07:50,820
+ And the plainest argument I like for this
+
+1413
+01:07:50,820 --> 01:07:52,540
+ is just to say, if I were to give you
+
+1414
+01:07:52,540 --> 01:07:56,500
+ one of these little grippers and ask you to go into the home,
+
+1415
+01:07:56,500 --> 01:07:58,100
+ you could still be pretty useful.
+
+1416
+01:07:58,100 --> 01:08:02,220
+ You can do a lot of stuff with a big brain and a simple claw.
+
+1417
+01:08:02,220 --> 01:08:04,820
+ And the people that made that argument the best, I think,
+
+1418
+01:08:04,820 --> 01:08:07,620
+ is when they built this PR2 robot.
+
+1419
+01:08:07,620 --> 01:08:09,980
+ This was many years ago now.
+
+1420
+01:08:09,980 --> 01:08:11,460
+ This is a tele-operated robot.
+
+1421
+01:08:11,460 --> 01:08:13,980
+ So there's a human looking through the camera
+
+1422
+01:08:13,980 --> 01:08:15,900
+ of the robot and driving the robot around.
+
+1423
+01:08:15,900 --> 01:08:17,660
+ And this is sped up a little bit.
+
+1424
+01:08:17,660 --> 01:08:20,700
+ But basically, everything you'd want a robot to do in the home
+
+1425
+01:08:20,700 --> 01:08:23,620
+ could be done with that kind of interface
+
+1426
+01:08:23,620 --> 01:08:26,740
+ and a simple two-fingered gripper.
+
+1427
+01:08:26,740 --> 01:08:29,180
+ I mean, we've seen lots of examples of places
+
+1428
+01:08:29,180 --> 01:08:31,420
+ where it sure would have been nice to have
+
+1429
+01:08:31,420 --> 01:08:32,820
+ a few more fingers.
+
+1430
+01:08:32,820 --> 01:08:35,100
+ We see it in our own research, where it just
+
+1431
+01:08:35,100 --> 01:08:36,660
+ takes you longer to do things.
+
+1432
+01:08:36,660 --> 01:08:42,660
+ If you want to pick up a mug and set it down in the dishwasher,
+
+1433
+01:08:42,660 --> 01:08:44,420
+ and it's in the wrong orientation,
+
+1434
+01:08:44,420 --> 01:08:46,080
+ and you've got your two fingers, you've
+
+1435
+01:08:46,080 --> 01:08:48,580
+ got to set it back down, pick it up like this, you can do it.
+
+1436
+01:08:48,580 --> 01:08:49,300
+ It's just annoying.
+
+1437
+01:08:49,300 --> 01:08:51,420
+ Whereas a human would just do in-hand reorientation
+
+1438
+01:08:51,420 --> 01:08:53,780
+ and then set it down.
+
+1439
+01:08:53,780 --> 01:08:56,020
+ But you can do a lot of things with a big brain
+
+1440
+01:08:56,020 --> 01:08:58,660
+ and a simple hand.
+
+1441
+01:08:58,660 --> 01:09:00,100
+ So because of that, we're actually
+
+1442
+01:09:00,100 --> 01:09:03,700
+ going to do a lot of work in the class with the start off.
+
+1443
+01:09:03,700 --> 01:09:07,420
+ Like in the simpler case with a two-fingered gripper,
+
+1444
+01:09:07,420 --> 01:09:11,220
+ this is the force-controlled planar gripper from Shunk.
+
+1445
+01:09:11,220 --> 01:09:12,660
+ It's called the WSG.
+
+1446
+01:09:12,660 --> 01:09:15,220
+ It's kind of the EWA of grippers.
+
+1447
+01:09:15,220 --> 01:09:18,700
+ You have force-controlled torque sensing kind of things.
+
+1448
+01:09:18,700 --> 01:09:21,100
+ And this one is more bring your own finger.
+
+1449
+01:09:21,100 --> 01:09:23,980
+ So you can actually put various different end effectors on it.
+
+1450
+01:09:23,980 --> 01:09:28,060
+ I've got a version here that has some visual tactile sensors
+
+1451
+01:09:28,060 --> 01:09:28,740
+ mounted on it.
+
+1452
+01:09:28,740 --> 01:09:30,200
+ You can just change out the fingers.
+
+1453
+01:09:30,200 --> 01:09:34,740
+ But I also have the simpler fingers here
+
+1454
+01:09:34,740 --> 01:09:36,940
+ that you can play with.
+
+1455
+01:09:36,940 --> 01:09:37,740
+ There's a lot of--
+
+1456
+01:09:37,740 --> 01:09:39,700
+ it's a big back-drivable robot.
+
+1457
+01:09:39,700 --> 01:09:41,280
+ I just got the power light to turn on.
+
+1458
+01:09:41,280 --> 01:09:44,020
+ That's cool.
+
+1459
+01:09:44,020 --> 01:09:45,700
+ And we'll spend a lot of time on this.
+
+1460
+01:09:45,700 --> 01:09:47,660
+ I saw here-- did you have a question?
+
+1461
+01:09:47,660 --> 01:09:50,620
+ [INAUDIBLE]
+
+1462
+01:09:50,620 --> 01:09:55,620
+ That's true.
+
+1463
+01:09:55,620 --> 01:09:58,500
+ It becomes a packing problem of how much
+
+1464
+01:09:58,500 --> 01:09:59,740
+ can you fit in a small space.
+
+1465
+01:09:59,740 --> 01:10:01,140
+ And where do you run the wires?
+
+1466
+01:10:01,140 --> 01:10:02,620
+ Where do you run the cables?
+
+1467
+01:10:02,620 --> 01:10:03,940
+ So people-- I think there's--
+
+1468
+01:10:03,940 --> 01:10:05,620
+ I'll show you a few of the clever ways
+
+1469
+01:10:05,620 --> 01:10:07,260
+ that people get in between them.
+
+1470
+01:10:07,260 --> 01:10:09,660
+ But it's still an open problem, I think, for design
+
+1471
+01:10:09,660 --> 01:10:14,220
+ and for control of those things.
+
+1472
+01:10:14,220 --> 01:10:17,020
+ So here's the ones I brought today.
+
+1473
+01:10:17,020 --> 01:10:19,580
+ I've got a Sandia hand here.
+
+1474
+01:10:19,580 --> 01:10:22,780
+ It's a beautiful, fairly dexterous hand.
+
+1475
+01:10:22,780 --> 01:10:27,220
+ It's got cameras in its grippers,
+
+1476
+01:10:27,220 --> 01:10:29,900
+ in the gripper there, which is--
+
+1477
+01:10:29,900 --> 01:10:34,300
+ I actually expected those to be more useful than they were.
+
+1478
+01:10:34,300 --> 01:10:38,420
+ It's kind of-- you can only do so much when you--
+
+1479
+01:10:38,420 --> 01:10:40,300
+ you can sort of see what you're going to do.
+
+1480
+01:10:40,300 --> 01:10:43,140
+ But then when you get close, it's just like--
+
+1481
+01:10:43,140 --> 01:10:46,180
+ so we ended up using those more--
+
+1482
+01:10:46,180 --> 01:10:47,420
+ we were using those on Atlas.
+
+1483
+01:10:47,420 --> 01:10:50,180
+ We would occasionally go like this and put one hand out
+
+1484
+01:10:50,180 --> 01:10:52,260
+ so we could look at what we were doing over here,
+
+1485
+01:10:52,260 --> 01:10:54,540
+ you know, because this one was kind of--
+
+1486
+01:10:54,540 --> 01:10:55,820
+ just didn't help that much.
+
+1487
+01:10:55,820 --> 01:10:58,660
+ You'll see a lot of people mount cameras on the wrists now,
+
+1488
+01:10:58,660 --> 01:11:00,900
+ so you get a little bit of throw.
+
+1489
+01:11:00,900 --> 01:11:04,700
+ Actually, Spot also has a camera in its palm.
+
+1490
+01:11:04,700 --> 01:11:08,420
+ This is the iHi hand, the iRobot Harvard Yale hand.
+
+1491
+01:11:08,420 --> 01:11:10,900
+ It's a beautiful sort of under-actuated hand.
+
+1492
+01:11:10,900 --> 01:11:12,820
+ I'll tell you more about that as we go.
+
+1493
+01:11:12,820 --> 01:11:15,740
+ OK, these robots that have less actuators
+
+1494
+01:11:15,740 --> 01:11:18,940
+ than degrees of freedom in the hand, and cables and springs
+
+1495
+01:11:18,940 --> 01:11:21,860
+ to make them still useful.
+
+1496
+01:11:21,860 --> 01:11:23,900
+ The Robotique three-fingered gripper,
+
+1497
+01:11:23,900 --> 01:11:25,620
+ this is the one we use the most on Atlas,
+
+1498
+01:11:25,620 --> 01:11:28,340
+ because it's extremely robust.
+
+1499
+01:11:28,340 --> 01:11:31,580
+ We actually-- I mean, this is a beautiful, beautiful hand.
+
+1500
+01:11:31,580 --> 01:11:34,380
+ And the story I'm about to tell you is completely our fault,
+
+1501
+01:11:34,380 --> 01:11:38,220
+ not iRobot's fault. But we were working
+
+1502
+01:11:38,220 --> 01:11:40,260
+ with Atlas in the competition, and we
+
+1503
+01:11:40,260 --> 01:11:43,300
+ had to pick up these boards, like two-by-fours,
+
+1504
+01:11:43,300 --> 01:11:44,500
+ and throw them out of the way.
+
+1505
+01:11:44,500 --> 01:11:45,620
+ It was a disaster response.
+
+1506
+01:11:45,620 --> 01:11:48,460
+ So like there's boards strewn in front of the door.
+
+1507
+01:11:48,460 --> 01:11:50,660
+ You have to get through, so you have to pick them up.
+
+1508
+01:11:50,660 --> 01:11:51,700
+ And we went like this.
+
+1509
+01:11:51,700 --> 01:11:53,780
+ We picked up the board, and we had snapped
+
+1510
+01:11:53,780 --> 01:11:55,940
+ the cable in the hand.
+
+1511
+01:11:55,940 --> 01:11:57,620
+ So now for the rest of the competition,
+
+1512
+01:11:57,620 --> 01:11:59,500
+ we had to walk around holding a two-by-four.
+
+1513
+01:11:59,500 --> 01:12:01,660
+ We were like trying to do everything with our left hand.
+
+1514
+01:12:01,660 --> 01:12:03,960
+ And they're like, why are you holding the two-by-four?
+
+1515
+01:12:03,960 --> 01:12:07,700
+ Well, our hand broke with it completely welded on the thing.
+
+1516
+01:12:07,700 --> 01:12:09,140
+ So after that experience, we went
+
+1517
+01:12:09,140 --> 01:12:13,780
+ to these massively rigid, strong hands,
+
+1518
+01:12:13,780 --> 01:12:15,700
+ the beautiful but heavy hand.
+
+1519
+01:12:15,700 --> 01:12:19,060
+ We actually fell on top of it.
+
+1520
+01:12:19,060 --> 01:12:19,940
+ We dropped the robot.
+
+1521
+01:12:19,940 --> 01:12:22,820
+ The walking controller failed and landed on top of it.
+
+1522
+01:12:22,820 --> 01:12:25,500
+ And it was bent, but we bent it back, and it kept working.
+
+1523
+01:12:25,500 --> 01:12:30,860
+ So that's the other end of the robustness trade-off.
+
+1524
+01:12:30,860 --> 01:12:32,740
+ And then the Allegro hand I mentioned before.
+
+1525
+01:12:32,740 --> 01:12:33,740
+ This is kind of--
+
+1526
+01:12:33,740 --> 01:12:34,660
+ there's newer versions.
+
+1527
+01:12:34,660 --> 01:12:36,300
+ You'll see a few research labs.
+
+1528
+01:12:36,300 --> 01:12:39,040
+ Poolkits Lab has been playing with one here.
+
+1529
+01:12:39,040 --> 01:12:41,080
+ There's a number of groups that have been trying
+
+1530
+01:12:41,080 --> 01:12:43,700
+ to make a newer version of the Allegro hand using Dynamixels,
+
+1531
+01:12:43,700 --> 01:12:44,940
+ if you know what those are.
+
+1532
+01:12:44,940 --> 01:12:48,860
+ So I think it's a good time to be thinking about hands again.
+
+1533
+01:12:48,860 --> 01:12:52,700
+ There's also a ridiculous number of humanoid startups
+
+1534
+01:12:52,700 --> 01:12:55,420
+ all of a sudden.
+
+1535
+01:12:55,420 --> 01:12:57,620
+ So this is Sanctuary AI, and they're
+
+1536
+01:12:57,620 --> 01:13:00,140
+ all trying to solve the problem of making humanoid robots.
+
+1537
+01:13:00,140 --> 01:13:02,100
+ And they're also trying to simultaneously solve
+
+1538
+01:13:02,100 --> 01:13:04,220
+ the dexterous hand problem, which is awesome.
+
+1539
+01:13:04,220 --> 01:13:05,100
+ I mean, that's great.
+
+1540
+01:13:05,100 --> 01:13:08,300
+ So hopefully-- I'm sort of optimistic
+
+1541
+01:13:08,300 --> 01:13:12,940
+ that the world will have more robust, dexterous hands soon.
+
+1542
+01:13:12,940 --> 01:13:14,140
+ Let's just see what comes out.
+
+1543
+01:13:14,140 --> 01:13:18,480
+ But it's not the only way to do it.
+
+1544
+01:13:18,480 --> 01:13:20,340
+ There's also this world of people
+
+1545
+01:13:20,340 --> 01:13:25,260
+ making very clever mechanisms to solve manipulation with hands.
+
+1546
+01:13:25,260 --> 01:13:27,340
+ And one of my favorite here is-- you can see--
+
+1547
+01:13:27,340 --> 01:13:32,740
+ robot grippers based on granular jamming media.
+
+1548
+01:13:32,740 --> 01:13:34,740
+ The story is very simple.
+
+1549
+01:13:34,740 --> 01:13:35,940
+ You take a sack.
+
+1550
+01:13:35,940 --> 01:13:38,100
+ You fill it with coffee grounds.
+
+1551
+01:13:38,100 --> 01:13:39,340
+ This is your manipulator.
+
+1552
+01:13:39,340 --> 01:13:41,160
+ You put a vacuum behind it.
+
+1553
+01:13:41,160 --> 01:13:45,700
+ You just let your coffee grounds sack sink over whatever
+
+1554
+01:13:45,700 --> 01:13:47,100
+ you're going to pick up.
+
+1555
+01:13:47,100 --> 01:13:49,220
+ You suck the air out of the inside.
+
+1556
+01:13:49,220 --> 01:13:53,260
+ The coffee beans jam, and it becomes rigid,
+
+1557
+01:13:53,260 --> 01:13:54,420
+ and it picks up anything.
+
+1558
+01:13:54,420 --> 01:13:54,940
+ Watch this.
+
+1559
+01:13:54,940 --> 01:13:57,660
+ This is just incredible.
+
+1560
+01:13:57,660 --> 01:13:59,500
+ It's literally coffee grounds in a sack.
+
+1561
+01:13:59,500 --> 01:14:01,220
+ That's the actuator.
+
+1562
+01:14:01,220 --> 01:14:12,900
+ So all they did was suck the air out,
+
+1563
+01:14:12,900 --> 01:14:18,860
+ and the coffee grounds jammed themselves together.
+
+1564
+01:14:18,860 --> 01:14:20,660
+ Super simple, super durable.
+
+1565
+01:14:20,660 --> 01:14:23,020
+ I guess you could probably place it.
+
+1566
+01:14:23,020 --> 01:14:24,260
+ And it could pick up anything.
+
+1567
+01:14:24,260 --> 01:14:29,620
+ It's not so good for buttoning your shirt
+
+1568
+01:14:29,620 --> 01:14:33,060
+ or tying your shoes, but for just picking stuff up,
+
+1569
+01:14:33,060 --> 01:14:34,420
+ it's pretty darn good, I think.
+
+1570
+01:14:34,420 --> 01:14:40,300
+ It's a real egg.
+
+1571
+01:14:40,300 --> 01:14:40,800
+ Yeah.
+
+1572
+01:14:40,800 --> 01:14:47,580
+ OK, so that's a pretty good one.
+
+1573
+01:14:47,580 --> 01:14:52,180
+ There's also a world of people building soft hands now.
+
+1574
+01:14:52,180 --> 01:14:55,420
+ So things that are using soft actuators, potentially,
+
+1575
+01:14:55,420 --> 01:14:58,580
+ certainly soft materials that make--
+
+1576
+01:14:58,580 --> 01:15:01,020
+ these are pneumatically actuated hands.
+
+1577
+01:15:01,020 --> 01:15:04,660
+ They have valves that are expanding and contracting
+
+1578
+01:15:04,660 --> 01:15:06,500
+ in order to make the fingers move.
+
+1579
+01:15:06,500 --> 01:15:10,540
+ And they can be surprisingly interesting devices.
+
+1580
+01:15:10,540 --> 01:15:13,180
+ And this is, of course, a play on the open AI
+
+1581
+01:15:13,180 --> 01:15:18,740
+ example of trying to make an in-hand reorientation.
+
+1582
+01:15:18,740 --> 01:15:22,860
+ But that was with a simpler hand.
+
+1583
+01:15:22,860 --> 01:15:26,580
+ This is the grippers that I've got here.
+
+1584
+01:15:26,580 --> 01:15:29,980
+ That's actually a combination of trying to make a soft hand,
+
+1585
+01:15:29,980 --> 01:15:32,500
+ but also integrating tactile sensing.
+
+1586
+01:15:32,500 --> 01:15:35,500
+ So it has some of the benefits of having the hands,
+
+1587
+01:15:35,500 --> 01:15:38,940
+ but it also has a depth camera behind the bubble and some
+
+1588
+01:15:38,940 --> 01:15:42,420
+ dots so that you can estimate shear and other things
+
+1589
+01:15:42,420 --> 01:15:43,820
+ inside there.
+
+1590
+01:15:43,820 --> 01:15:46,100
+ Very simple design, but I think very well done.
+
+1591
+01:15:46,100 --> 01:15:48,700
+ And it's impressive what you can do with it
+
+1592
+01:15:48,700 --> 01:15:53,140
+ in terms of force sensing and geometry sensing in the hand.
+
+1593
+01:15:53,140 --> 01:15:55,900
+ Unlike the hand that's sort of looking at this,
+
+1594
+01:15:55,900 --> 01:15:57,820
+ if you leave a little gap, then you
+
+1595
+01:15:57,820 --> 01:16:01,500
+ get to actually see the deflection of the skin
+
+1596
+01:16:01,500 --> 01:16:02,540
+ and do interesting things.
+
+1597
+01:16:03,540 --> 01:16:05,980
+ [AUDIO OUT]
+
+1598
+01:16:05,980 --> 01:16:10,140
+ There's a bunch of mobile manipulators we'll talk--
+
+1599
+01:16:10,140 --> 01:16:12,700
+ I'm going to allocate a little bit of lecture time,
+
+1600
+01:16:12,700 --> 01:16:15,620
+ definitely, to talk about mobile manipulators.
+
+1601
+01:16:15,620 --> 01:16:18,300
+ Carefully thought to be right before you finalize
+
+1602
+01:16:18,300 --> 01:16:20,820
+ your project ideas so that maybe a bunch of you
+
+1603
+01:16:20,820 --> 01:16:24,860
+ will do mobile robot manipulation for your projects.
+
+1604
+01:16:24,860 --> 01:16:28,300
+ This is the PR2 I showed you fun examples of.
+
+1605
+01:16:28,300 --> 01:16:32,400
+ Fetch and HSR were kind of one-arm versions of it.
+
+1606
+01:16:32,400 --> 01:16:35,020
+ This is the Everyday Robotics project from Google.
+
+1607
+01:16:35,020 --> 01:16:37,620
+ Spot, of course, you know.
+
+1608
+01:16:37,620 --> 01:16:39,380
+ So I think this is a--
+
+1609
+01:16:39,380 --> 01:16:42,620
+ OK, mobile manipulators are obviously good,
+
+1610
+01:16:42,620 --> 01:16:45,500
+ obviously interesting for research.
+
+1611
+01:16:45,500 --> 01:16:47,980
+ It's extremely hard to buy one.
+
+1612
+01:16:47,980 --> 01:16:49,940
+ There's not really many that you can buy anymore.
+
+1613
+01:16:49,940 --> 01:16:54,380
+ The PR2 sort of eventually died, and you really
+
+1614
+01:16:54,380 --> 01:16:59,900
+ can't buy as fully featured as a PR2 manipulator today.
+
+1615
+01:16:59,900 --> 01:17:01,700
+ So there are not as many around as I'd like.
+
+1616
+01:17:01,700 --> 01:17:04,800
+ And so Spot, in some ways, is one of the better choices
+
+1617
+01:17:04,800 --> 01:17:06,080
+ for mobile manipulation.
+
+1618
+01:17:06,080 --> 01:17:07,740
+ It's kind of frustrating just in the sense
+
+1619
+01:17:07,740 --> 01:17:09,380
+ that you can't see the table.
+
+1620
+01:17:09,380 --> 01:17:12,300
+ You know, you've got to only use the hand camera to sort of see
+
+1621
+01:17:12,300 --> 01:17:14,100
+ the table that you're trying to manipulate.
+
+1622
+01:17:14,100 --> 01:17:15,700
+ It'd be nice if it had a head.
+
+1623
+01:17:15,700 --> 01:17:20,220
+ But it's pretty good.
+
+1624
+01:17:20,220 --> 01:17:25,260
+ Of course, so TRI actually built their own custom hardware.
+
+1625
+01:17:25,260 --> 01:17:27,140
+ And I think groups that are working seriously
+
+1626
+01:17:27,140 --> 01:17:29,380
+ on mobile manipulation are often in the position
+
+1627
+01:17:29,380 --> 01:17:31,380
+ of building custom hardware because we
+
+1628
+01:17:31,380 --> 01:17:35,580
+ don't have great mobile manipulation options right now.
+
+1629
+01:17:35,580 --> 01:17:37,780
+ I think as soon as it becomes commercially viable,
+
+1630
+01:17:37,780 --> 01:17:42,340
+ then we'll see lots of great hardware coming out.
+
+1631
+01:17:42,340 --> 01:17:44,540
+ But we're in sort of a quirky time
+
+1632
+01:17:44,540 --> 01:17:46,180
+ right now where they're not available.
+
+1633
+01:17:46,180 --> 01:17:51,220
+ OK, so I want to end by telling you about my favorite robot
+
+1634
+01:17:51,220 --> 01:17:53,780
+ of all time.
+
+1635
+01:17:53,780 --> 01:17:55,540
+ It's the thing they ask you at parties,
+
+1636
+01:17:55,540 --> 01:17:56,500
+ like write in your name tag, what's
+
+1637
+01:17:56,500 --> 01:17:58,140
+ your favorite robot of all time?
+
+1638
+01:17:58,140 --> 01:18:05,100
+ And I answered that I like this high speed hand by Ishikawa.
+
+1639
+01:18:05,100 --> 01:18:10,020
+ So the idea here was we're going to build a semi-dextrous hand,
+
+1640
+01:18:10,020 --> 01:18:11,700
+ electric motors.
+
+1641
+01:18:11,700 --> 01:18:14,780
+ But we're going to just forget about the fact
+
+1642
+01:18:14,780 --> 01:18:15,860
+ that motors overheat.
+
+1643
+01:18:15,860 --> 01:18:18,140
+ We're going to overclock our motors, basically, remove
+
+1644
+01:18:18,140 --> 01:18:20,420
+ all of the safeties, and just inject
+
+1645
+01:18:20,420 --> 01:18:23,140
+ a significant amount of current for a small amount of time
+
+1646
+01:18:23,140 --> 01:18:25,220
+ into these motors and see what we can do.
+
+1647
+01:18:25,220 --> 01:18:27,460
+ This is actually a long time ago.
+
+1648
+01:18:27,460 --> 01:18:29,700
+ But they got some wicked fast.
+
+1649
+01:18:29,700 --> 01:18:30,780
+ And it's super awesome.
+
+1650
+01:18:30,780 --> 01:18:32,940
+ They did it also for tracking cameras.
+
+1651
+01:18:32,940 --> 01:18:34,500
+ This is before computer vision worked.
+
+1652
+01:18:34,500 --> 01:18:38,340
+ You had to track white objects on gray backgrounds.
+
+1653
+01:18:38,340 --> 01:18:40,660
+ But if they did it with a foveating camera
+
+1654
+01:18:40,660 --> 01:18:43,420
+ and high speed actuators, they could do that.
+
+1655
+01:18:43,420 --> 01:18:45,500
+ They had actually some tactile sensing.
+
+1656
+01:18:45,500 --> 01:18:47,460
+ But you're going to love what this thing can do.
+
+1657
+01:18:55,780 --> 01:18:59,940
+ Dribbling, that's easy to write on there.
+
+1658
+01:18:59,940 --> 01:19:01,300
+ Pen spinning, OK?
+
+1659
+01:19:01,300 --> 01:19:08,460
+ Rowing, that one's pretty cool, too.
+
+1660
+01:19:08,460 --> 01:19:08,940
+ OK.
+
+1661
+01:19:08,940 --> 01:19:10,060
+ This is high speed video.
+
+1662
+01:19:10,060 --> 01:19:13,260
+ Here we go.
+
+1663
+01:19:13,260 --> 01:19:18,220
+ Not sure what the choice of the middle finger is doing.
+
+1664
+01:19:18,220 --> 01:19:19,660
+ [LAUGHTER]
+
+1665
+01:19:23,540 --> 01:19:27,300
+ This is way more dynamic than you see on the average hand.
+
+1666
+01:19:27,300 --> 01:19:29,940
+ Pen spinning, pretty good, right?
+
+1667
+01:19:52,900 --> 01:19:53,540
+ Pretty good.
+
+1668
+01:19:53,540 --> 01:20:04,020
+ OK, I'm going to fast forward to the end here.
+
+1669
+01:20:04,020 --> 01:20:05,540
+ This is my favorite, re-grasping, OK?
+
+1670
+01:20:05,540 --> 01:20:06,460
+ This is a cell phone.
+
+1671
+01:20:06,460 --> 01:20:12,940
+ I have to believe that only worked once.
+
+1672
+01:20:12,940 --> 01:20:17,340
+ But still, that is awesome, right?
+
+1673
+01:20:17,340 --> 01:20:22,060
+ OK, one of the best robots of all time, for sure.
+
+1674
+01:20:22,060 --> 01:20:22,940
+ OK, good.
+
+1675
+01:20:22,940 --> 01:20:25,340
+ We'll move on to more of the control next time.
+
+1676
+01:20:25,340 --> 01:20:30,700
+ If anybody wants to come and see the hands,
+
+1677
+01:20:30,700 --> 01:20:33,140
+ you're welcome to come down and look.
+
+1678
+01:20:33,140 --> 01:20:43,140
+ [BLANK_AUDIO]
+

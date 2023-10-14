@@ -1,0 +1,3088 @@
+1
+00:00:00,000 --> 00:00:08,000
+ But having read your pre-proposals, which I thoroughly enjoyed, there was a
+
+2
+00:00:08,000 --> 00:00:12,560
+ surprising number of projects, not surprising, it's great, but a
+
+3
+00:00:12,560 --> 00:00:18,600
+ surprising number of projects that wanted to throw things or hit things or
+
+4
+00:00:18,600 --> 00:00:26,560
+ smash things or somehow do very dynamic things with the arm. And having just
+
+5
+00:00:26,560 --> 00:00:29,920
+ talked about motion planning and now seeing a lot of people that probably
+
+6
+00:00:29,920 --> 00:00:34,280
+ want to have fairly sophisticated motion planning in their project and
+
+7
+00:00:34,280 --> 00:00:38,480
+ possibly something with dynamics, I just want to take a minute to sort of
+
+8
+00:00:38,480 --> 00:00:44,440
+ make sure people realize what we were talking about, how it might relate to
+
+9
+00:00:44,440 --> 00:00:50,520
+ breaking stuff or throwing stuff or skipping stuff or... there was a
+
+10
+00:00:50,520 --> 00:00:55,880
+ definite theme there. I actually want to know why, I mean, but I know a bunch of
+
+11
+00:00:55,880 --> 00:00:58,680
+ you read the tossing bot paper, you know, that's a good, maybe that was a
+
+12
+00:00:58,680 --> 00:01:06,640
+ motivation, but it just, it was surprising. For me, see, I teach
+
+13
+00:01:06,640 --> 00:01:10,640
+ the two classes, I teach underactuated, I teach manipulation, and underactuated for
+
+14
+00:01:10,640 --> 00:01:15,320
+ me is about the dynamics, right, and manipulation for me is about perception
+
+15
+00:01:15,320 --> 00:01:19,400
+ and things are relatively static or quasi-static, you know, but you do
+
+16
+00:01:19,400 --> 00:01:23,080
+ perception, you do high-level planning, you do all the other stuff, but I think
+
+17
+00:01:23,080 --> 00:01:29,600
+ the worlds collide inevitably. Maybe it's even my own bias creeping in somehow, but
+
+18
+00:01:29,600 --> 00:01:40,040
+ let me just distinguish between kinematic versus dynamic trajectory
+
+19
+00:01:40,040 --> 00:01:48,960
+ optimization, because I think probably a lot of you said maybe I'll do some
+
+20
+00:01:48,960 --> 00:01:52,200
+ motion planning with trajectory optimization to catch something or
+
+21
+00:01:52,200 --> 00:02:01,320
+ throw something. So, you know, this is what we talked about last week, I would
+
+22
+00:02:01,320 --> 00:02:11,680
+ just say last week here. The dynamic version of that is actually a big topic
+
+23
+00:02:11,680 --> 00:02:26,160
+ in my underactuated class, but we didn't actually talk about it here, and maybe
+
+24
+00:02:26,160 --> 00:02:29,880
+ you guys, I think a lot of those projects don't need it, but let me just make sure
+
+25
+00:02:29,880 --> 00:02:33,720
+ you understand when, maybe when you'll need it or when you don't need it.
+
+26
+00:02:33,720 --> 00:02:40,680
+ Okay, so what we talked about last week was parameterizing some curve, you know,
+
+27
+00:02:40,680 --> 00:02:49,520
+ this is just a curve in space or a trajectory in space. And in fact, so the,
+
+28
+00:02:49,520 --> 00:02:53,960
+ you know, I told you I was going to finish pushing that kinematic trajectory
+
+29
+00:02:53,960 --> 00:03:00,120
+ optimization into Drake, it's there now. If you look at the constructor, just as a,
+
+30
+00:03:00,120 --> 00:03:03,080
+ you know, if you look at the constructor of the kinematic trajectory
+
+31
+00:03:03,080 --> 00:03:09,760
+ optimization class, it doesn't even take a plant. It has no notion of
+
+32
+00:03:09,760 --> 00:03:15,240
+ dynamics by default. The default is just, this is just some curve in space. You can
+
+33
+00:03:15,240 --> 00:03:19,200
+ associate it with a plant by adding kinematic constraints to it or add other
+
+34
+00:03:19,200 --> 00:03:23,800
+ constraints to it, but by default this is just some, you know, it's just some curve
+
+35
+00:03:23,800 --> 00:03:28,200
+ parameterized by a handful of numbers, that's it. And then you can, if you want
+
+36
+00:03:28,200 --> 00:03:31,240
+ to say, I want this to be a certain place, I wanted this to be associated with the
+
+37
+00:03:31,240 --> 00:03:36,640
+ kinematics of the arm, you can add costs and constraints that make that true. Okay,
+
+38
+00:03:36,640 --> 00:03:40,040
+ that is in contrast to some of the, if you look at some of the other trajectory
+
+39
+00:03:40,040 --> 00:03:45,200
+ optimization methods, like direct collocation for instance, takes the
+
+40
+00:03:45,200 --> 00:03:50,400
+ system directly in the constructor, right? And so does direct transcription and so
+
+41
+00:03:50,400 --> 00:03:56,000
+ does some of the other, multiple shooting, you know, these are, these are more
+
+42
+00:03:56,000 --> 00:04:00,600
+ fundamentally about dynamics. This is fundamentally starts with this, the
+
+43
+00:04:00,600 --> 00:04:06,120
+ construct of a dynamical system, continuous or discrete depending on
+
+44
+00:04:06,120 --> 00:04:12,680
+ which transcription it is, and the decision variables are all set up to
+
+45
+00:04:12,680 --> 00:04:18,400
+ basically, to basically solve the numerical integration of this, these
+
+46
+00:04:18,400 --> 00:04:24,960
+ differential equations, right? So the different, the decision variables encode
+
+47
+00:04:31,480 --> 00:04:40,560
+ the numerical integration. And actually the different transcriptions that you
+
+48
+00:04:40,560 --> 00:04:44,600
+ see, like the direct transcription versus the direct collocation, those correspond
+
+49
+00:04:44,600 --> 00:04:50,040
+ to sort of different numerical integrators. They're kind of, but that's
+
+50
+00:04:50,040 --> 00:04:55,440
+ the way you think about it. Okay, so you can of course put derivative constraints
+
+51
+00:04:55,440 --> 00:05:02,440
+ on this. You can say that Q double dot at some point has to equal something. This
+
+52
+00:05:02,440 --> 00:05:06,440
+ would be a constraint you could add in kinematic trajectory optimization. So you
+
+53
+00:05:06,440 --> 00:05:14,440
+ can start putting dynamic constraints onto your curve. And in full generality
+
+54
+00:05:14,440 --> 00:05:17,320
+ you could implement a numerical integration scheme as constraints on
+
+55
+00:05:17,320 --> 00:05:20,520
+ this curve. But the, you know, these methods were built for it. These methods
+
+56
+00:05:20,520 --> 00:05:27,000
+ you'd have to build them yourself. Okay, so I think most of you are probably
+
+57
+00:05:27,000 --> 00:05:30,440
+ going to be okay with this, but I want you to be aware of that sensitivity. So
+
+58
+00:05:30,440 --> 00:05:35,640
+ when would you go from this to this? It's when the dynamics matter, you
+
+59
+00:05:35,640 --> 00:05:39,800
+ know, in a way. So I can say for instance that I want my robot to execute
+
+60
+00:05:39,800 --> 00:05:43,320
+ some joint trajectory, and I could say it's got velocity limits, it's got
+
+61
+00:05:43,320 --> 00:05:49,120
+ acceleration limits. But if you suddenly have the robot and a ball, for instance,
+
+62
+00:05:49,120 --> 00:05:54,480
+ and you want the evolution of this curve to be, to represent both the robot's
+
+63
+00:05:54,480 --> 00:05:59,280
+ joints and the ball's joints, and that those are only coupled through the
+
+64
+00:05:59,280 --> 00:06:03,080
+ equations of motion, then that's where you start getting into the, you know, where
+
+65
+00:06:03,080 --> 00:06:08,320
+ you probably want to live in this space. I think a lot of the cases of catching,
+
+66
+00:06:08,320 --> 00:06:12,320
+ throwing, smashing, or whatever, are probably okay thinking about just the
+
+67
+00:06:12,320 --> 00:06:15,680
+ robot, and just making sure that once you're at the end and you're actually
+
+68
+00:06:15,680 --> 00:06:20,480
+ connecting with the robot, with the ball, or whatever it is, that you do so with a
+
+69
+00:06:20,480 --> 00:06:24,560
+ velocity to send the ball off into some ballistic trajectory. And, you know,
+
+70
+00:06:24,560 --> 00:06:27,880
+ you can compute some very simple dynamics of the ball here, and just make
+
+71
+00:06:27,880 --> 00:06:31,440
+ sure the robot gets there. And that coupling might be simple enough that you
+
+72
+00:06:31,440 --> 00:06:37,840
+ don't need this machinery. I think that, you know, or catch, or smash, or whatever,
+
+73
+00:06:37,840 --> 00:06:42,280
+ okay, I think most of you are in this regime. But I want to just make sure that
+
+74
+00:06:42,280 --> 00:06:46,640
+ that's clear. There's another set of tools. If you find yourself that the,
+
+75
+00:06:46,640 --> 00:06:50,840
+ basically, I would say start here. If you find yourself trying to write more and
+
+76
+00:06:50,840 --> 00:06:56,760
+ more dynamics constraints, the curve of the robot depends on the motion of the
+
+77
+00:06:56,760 --> 00:07:02,680
+ ball, of the objects, then you might look at that API, or even the notes in
+
+78
+00:07:02,680 --> 00:07:20,000
+ underactuated. Okay? Good. All right, so today is mostly about force control. And
+
+79
+00:07:20,000 --> 00:07:28,840
+ I have a bad joke ready, so I'm going to do an example of force control here. I
+
+80
+00:07:28,840 --> 00:07:41,160
+ know I have many bad jokes, but. Thank you. You got it, right? If you missed it, here's
+
+81
+00:07:41,160 --> 00:07:47,120
+ another example of force control. That's a pretty good example, too, right?
+
+82
+00:07:47,120 --> 00:07:51,560
+ Probably, when I was writing those letters that are erasing the board, I was
+
+83
+00:07:51,560 --> 00:07:57,400
+ in a force control mode in my arm, right? I mean, exactly what is my brain doing? I'm
+
+84
+00:07:57,400 --> 00:08:00,840
+ not trying to make any statements about that. But this is a kind of task that if
+
+85
+00:08:00,840 --> 00:08:04,400
+ you wanted to program a robot to write on the board, you might consider doing
+
+86
+00:08:04,400 --> 00:08:10,520
+ force control. Why? Because if I were, let's say I was executing a position
+
+87
+00:08:10,520 --> 00:08:15,920
+ trajectory, right? You missed my joke. If I was executing a position
+
+88
+00:08:15,920 --> 00:08:21,560
+ trajectory and just going through the letters example, you know, in joint
+
+89
+00:08:21,560 --> 00:08:27,360
+ space, and I was just a little bit off in my estimation, let's say I was in the
+
+90
+00:08:27,360 --> 00:08:32,680
+ perfect position to write my example, okay? But now I, you know, someone came and
+
+91
+00:08:32,680 --> 00:08:36,440
+ just like, I put the second robot down that's supposed to write and I just put
+
+92
+00:08:36,440 --> 00:08:40,360
+ it off two degrees to the side. And I start writing, I'm going to air ball a
+
+93
+00:08:40,360 --> 00:08:44,200
+ little bit, and then I'm going to break the chalk as I go into the board, right?
+
+94
+00:08:44,200 --> 00:08:51,040
+ If there's any uncertainty about where the board is, then following rigidly a
+
+95
+00:08:51,040 --> 00:08:56,880
+ joint trajectory could be a bad choice. Now in practice, since we're typically
+
+96
+00:08:56,880 --> 00:09:01,200
+ controlling our EWA through a joint impedance control mode, which we'll come
+
+97
+00:09:01,200 --> 00:09:05,720
+ to understand this week, there's going to be some flexibility in that. Even if you
+
+98
+00:09:05,720 --> 00:09:11,320
+ command, you know, just an end effector trajectory, it will comply to some extent.
+
+99
+00:09:11,320 --> 00:09:13,920
+ And that's because actually, but underneath it, it's doing some force
+
+100
+00:09:13,920 --> 00:09:21,200
+ control, okay? So, but if you were to just take a rigid, you know, factory position
+
+101
+00:09:21,200 --> 00:09:26,800
+ control only arm and try to do writing, you'd be sad, right? Unless you're super
+
+102
+00:09:26,800 --> 00:09:31,840
+ calibrated and dialed in to the location of the robot relative to the thing it's
+
+103
+00:09:31,840 --> 00:09:37,440
+ trying to put force on. In fact, that's one of the classical examples that
+
+104
+00:09:37,440 --> 00:09:43,840
+ people originally moated force control, motivated force control, was things like
+
+105
+00:09:43,840 --> 00:09:48,960
+ following a wall or painting or welding or something like this, where the robot
+
+106
+00:09:48,960 --> 00:09:54,760
+ had to follow some continuous curve in space, not based on, you know, open loop
+
+107
+00:09:54,760 --> 00:10:00,280
+ trajectories, but based on actually, you know, sensing the force on the robot and
+
+108
+00:10:00,280 --> 00:10:06,280
+ executing a path due to that force. Okay, so that's what we're going to talk about
+
+109
+00:10:06,280 --> 00:10:10,680
+ today and understand how to work with it, how to think about it. I'm going to
+
+110
+00:10:10,680 --> 00:10:17,920
+ break it up into into two pieces. I find there's a lot of notation, I would
+
+111
+00:10:17,920 --> 00:10:20,760
+ say there's even a lot of philosophy about that comes in when people talk
+
+112
+00:10:20,760 --> 00:10:26,840
+ about force control. People will say it's, you know, it's morally better to do force
+
+113
+00:10:26,840 --> 00:10:35,000
+ control, you know, or, you know, the world can only do this or... I'm gonna, I think I
+
+114
+00:10:35,000 --> 00:10:40,480
+ can keep it pretty simple, but I think it's helpful to distinguish first the
+
+115
+00:10:40,480 --> 00:10:45,640
+ case of just thinking about forces. I'm gonna assume the robot is a point, okay?
+
+116
+00:10:45,640 --> 00:10:49,000
+ I'm gonna start by just assuming that the robot is a point. There's a joke
+
+117
+00:10:49,000 --> 00:10:53,800
+ about assuming a spherical cow. I'm doing worse. I'm gonna assume it's a point.
+
+118
+00:10:53,800 --> 00:10:57,920
+ It's not even a sphere with any radius. I'm gonna just take a point robot, okay?
+
+119
+00:10:57,920 --> 00:11:02,080
+ Then we'll figure out how to make that force happen when we put the arm back in
+
+120
+00:11:02,080 --> 00:11:05,280
+ as a second pass, and we'll talk about the manipulator control, impedance
+
+121
+00:11:05,280 --> 00:11:09,560
+ control, and the like there. And we'll get basically the same things to happen, but
+
+122
+00:11:09,560 --> 00:11:16,480
+ we'll throw in some Jacobian transpose kind of logic there. So let's start by
+
+123
+00:11:16,480 --> 00:11:22,280
+ thinking about, you know, what is force control. So I'm gonna start with...
+
+124
+00:11:22,280 --> 00:11:28,040
+ Let me start with a little bit more motivation besides the writing, okay?
+
+125
+00:11:28,040 --> 00:11:33,200
+ So if you look at the images that I generated by generating lots of
+
+126
+00:11:33,200 --> 00:11:39,480
+ training data for the segmentation pipeline, this is one I actually had to
+
+127
+00:11:39,480 --> 00:11:46,240
+ take the cheez-it boxes out of the end-to-end clutter demonstration, because
+
+128
+00:11:46,240 --> 00:11:51,600
+ I can't get an antipodal grasp from the top that would have picked that up.
+
+129
+00:11:51,600 --> 00:11:55,600
+ Right? The cheez-it box is just too big for the hand. I actually asked my
+
+130
+00:11:55,600 --> 00:11:59,600
+ daughter. I said, "Okay." I gave her a two-fingered gripper, and I asked her to try
+
+131
+00:11:59,600 --> 00:12:03,800
+ to pick up a big box, and she did it really well. Not surprisingly, she's a
+
+132
+00:12:03,800 --> 00:12:12,280
+ human. And, you know, but we don't have... We haven't developed that capability yet,
+
+133
+00:12:12,280 --> 00:12:18,080
+ right? And so if you want to do more dexterous things in order to get those
+
+134
+00:12:18,080 --> 00:12:22,800
+ big boxes out of the bin, then we're gonna be in this regime.
+
+135
+00:12:22,800 --> 00:12:28,240
+ Now she's also got a dexterous hand, which is just not even fair, right? And
+
+136
+00:12:28,240 --> 00:12:36,560
+ she can even stretch her hand out to do that. So this is too advanced, but you get
+
+137
+00:12:36,560 --> 00:12:41,840
+ the point, okay? So we're gonna work towards that type of a demonstration
+
+138
+00:12:41,840 --> 00:12:47,680
+ right in our clutter clearing kind of example. And here's another good example
+
+139
+00:12:47,680 --> 00:12:55,120
+ that we'll talk about, and you'll even do a problem set about. So this is now...
+
+140
+00:12:55,120 --> 00:12:59,800
+ I'm gonna push the... We're gonna push the book to the side of the table, and you
+
+141
+00:12:59,800 --> 00:13:05,920
+ have to think about this for a second, but why does that work? Okay, we've
+
+142
+00:13:05,920 --> 00:13:09,520
+ thought a bit about friction cones and the like, but how is it that the robot is
+
+143
+00:13:09,520 --> 00:13:13,920
+ able to push the book to the side of the table? This is a clever way to pick up a
+
+144
+00:13:13,920 --> 00:13:17,600
+ big book.
+
+145
+00:13:21,680 --> 00:13:28,600
+ Okay, but even in this first part, right there,
+
+146
+00:13:28,600 --> 00:13:36,160
+ why does that work, right? So a couple things possibly could have happened,
+
+147
+00:13:36,160 --> 00:13:40,680
+ right? It could be that the robot went to do its thing and there was so much
+
+148
+00:13:40,680 --> 00:13:46,120
+ friction that the robot doesn't move. That didn't happen, okay? It could have
+
+149
+00:13:46,120 --> 00:13:51,920
+ been that the fingers slid on the book. That didn't happen either. This was a
+
+150
+00:13:51,920 --> 00:13:56,280
+ nice regime where the fingers stayed attached to the book, but the book slid
+
+151
+00:13:56,280 --> 00:14:01,200
+ on the table. So think about how that has to happen, right? There has to be some
+
+152
+00:14:01,200 --> 00:14:04,800
+ sort of difference in friction in order for that to happen. Our normal forces are
+
+153
+00:14:04,800 --> 00:14:08,640
+ similar, so somehow there's a difference in the friction cone. If you look
+
+154
+00:14:08,640 --> 00:14:13,200
+ really carefully, you'll see that there's some tape modifications on the end of
+
+155
+00:14:13,200 --> 00:14:17,200
+ that finger to just make sure it's nice and sticky. I mean, okay, it's not
+
+156
+00:14:17,200 --> 00:14:23,920
+ adhesive, but it was a textured tape that we put on onto the finger.
+
+157
+00:14:23,920 --> 00:14:28,280
+ Okay, so we'll understand that, but thinking about that, you have
+
+158
+00:14:28,280 --> 00:14:32,120
+ to put yourself in the regime where the forces you exert on the
+
+159
+00:14:32,120 --> 00:14:38,640
+ table and on the book are such that the friction cone allows you to slide the
+
+160
+00:14:38,640 --> 00:14:42,440
+ book, but if you push too hard, then nothing's moving. If you push too
+
+161
+00:14:42,440 --> 00:14:46,040
+ soft, you're going to slide on the book, but there's an intermediate regime which
+
+162
+00:14:46,040 --> 00:14:50,600
+ only exists if there's a difference in friction cones, at friction coefficients,
+
+163
+00:14:50,600 --> 00:14:54,840
+ but if you have that regime and you can control a force that
+
+164
+00:14:54,840 --> 00:15:04,280
+ puts you into that regime, then you can slide the book. Okay, so this is what I
+
+165
+00:15:04,280 --> 00:15:09,240
+ want to do. I'm going to flip up the Cheez-It box like my daughter,
+
+166
+00:15:09,240 --> 00:15:13,360
+ but I'm going to take even just a point finger example. Okay, so we're
+
+167
+00:15:13,360 --> 00:15:20,520
+ going to try to regulate the forces on the boxes by thinking
+
+168
+00:15:20,520 --> 00:15:26,280
+ through a point finger, and the reason to do this is just that everything is super
+
+169
+00:15:26,280 --> 00:15:29,960
+ simple and I can write the equations of motion in a heartbeat, so in this case
+
+170
+00:15:29,960 --> 00:15:36,400
+ I'm going to say q of the finger is just the xz position. I'll even stay in the
+
+171
+00:15:36,400 --> 00:15:58,640
+ plane. Okay, the dynamics of this, f equals ma, is going to be--ma, right, is on the
+
+172
+00:15:58,640 --> 00:16:04,880
+ other side I've got mg, where mg is going to be--is my vector notation, g is 0 and
+
+173
+00:16:04,880 --> 00:16:13,680
+ negative 9.8. Okay, I'm going to assume that I have the ability to just command
+
+174
+00:16:13,680 --> 00:16:18,600
+ the forces like it's a little jetpack on there, but I'm allowed to produce
+
+175
+00:16:18,600 --> 00:16:24,480
+ generalized forces directly on the finger. Again, we're going to add the
+
+176
+00:16:24,480 --> 00:16:31,360
+ robot back in at the end. Okay, and then I also have any contact forces that are
+
+177
+00:16:31,360 --> 00:16:35,840
+ coming from the finger interacting with the box or the wall or whatever, and now
+
+178
+00:16:35,840 --> 00:16:40,800
+ the spatial vector notation that I introduced before, we're going to lean on
+
+179
+00:16:40,800 --> 00:16:44,840
+ it heavily today, okay, because it's all about getting the forces in the
+
+180
+00:16:44,840 --> 00:16:53,680
+ right frames and everything like this. So this notation, remember, means that this
+
+181
+00:16:53,680 --> 00:17:08,080
+ is a force on body--force on the finger at point or frame C, which is my contact
+
+182
+00:17:08,080 --> 00:17:17,720
+ point. And you can imagine, for instance, if I--this is what my dynamics are trivial
+
+183
+00:17:17,720 --> 00:17:22,800
+ here--you can imagine maybe that this is something I could even have a force
+
+184
+00:17:22,800 --> 00:17:27,160
+ sensor for. There's various ways in the space of force control to try to
+
+185
+00:17:27,160 --> 00:17:31,520
+ regulate your force. You could try to measure your accelerations. You could
+
+186
+00:17:31,520 --> 00:17:34,880
+ assume accelerations are small. Let's just assume for a minute that I could
+
+187
+00:17:34,880 --> 00:17:41,440
+ actually, as I'm executing in the world, I can measure that force. Okay.
+
+188
+00:17:41,440 --> 00:18:01,440
+ Or, you know, or I can assume that x double dot, z double dot is small.
+
+189
+00:18:01,440 --> 00:18:05,080
+ Actually, maybe I'll do that one first. Let's just do this--let's do this one
+
+190
+00:18:05,080 --> 00:18:09,480
+ first, okay. If x double dot and z double dot are small, I'm not accelerating my
+
+191
+00:18:09,480 --> 00:18:15,720
+ finger rapidly, right. Then, if I want to control that force, then I could just
+
+192
+00:18:15,720 --> 00:18:20,160
+ choose a u. Let's take the position where I'm already in contact with the
+
+193
+00:18:20,160 --> 00:18:23,840
+ wall, okay. So I've got a point finger I'm pushing on the wall. What should I
+
+194
+00:18:23,840 --> 00:18:30,360
+ choose u to be to make that force be whatever I want? The accelerations are
+
+195
+00:18:30,360 --> 00:18:36,120
+ zero because I'm stuck on the wall. I can just choose u to be exactly what I need
+
+196
+00:18:36,120 --> 00:18:41,600
+ to make this--the equations--this would be zero here. I just want to choose u so
+
+197
+00:18:41,600 --> 00:18:50,720
+ that the force is the desired force, okay. So I can just say u equals negative mg
+
+198
+00:18:50,720 --> 00:19:01,160
+ minus f fc. I'll call it desired. I'll use little f since I'm talking about
+
+199
+00:19:01,160 --> 00:19:08,120
+ Cartesian forces so far. Okay, so if I have a desired force and I apply this
+
+200
+00:19:08,120 --> 00:19:12,480
+ thing, I should first just take out gravity, but otherwise I'm just going to
+
+201
+00:19:12,480 --> 00:19:18,920
+ apply the force I want. And by assertion that these are--this is small, that
+
+202
+00:19:18,920 --> 00:19:30,160
+ equation will just give me that the measured force equals the desired force.
+
+203
+00:19:30,880 --> 00:19:40,840
+ That's just logic, but I just want to make sure that the algebra is there. What
+
+204
+00:19:40,840 --> 00:19:44,600
+ happens if you're not in contact with the wall and I apply this controller,
+
+205
+00:19:44,600 --> 00:19:49,080
+ assuming that you are in contact with the wall? This is an extremely important
+
+206
+00:19:49,080 --> 00:19:54,720
+ point and it's one of the best things about force control. What's going to
+
+207
+00:19:54,720 --> 00:20:04,000
+ happen if, in fact, the real contact force is zero and I apply this
+
+208
+00:20:04,000 --> 00:20:28,720
+ controller? I'll get mg minus mg, those terms go to zero, and then I get minus
+
+209
+00:20:28,720 --> 00:20:43,440
+ my fc desired, and this thing is--I'm saying is zero. So I'm going to
+
+210
+00:20:43,440 --> 00:20:52,840
+ accelerate, right? In particular, I'm going to accelerate into the wall. This is a
+
+211
+00:20:52,840 --> 00:20:56,720
+ beautiful thing, okay? So the signs are a little bit hard to think through, but in
+
+212
+00:20:56,720 --> 00:21:00,440
+ general, this is the property that if I--I think intuitively it makes a lot of
+
+213
+00:21:00,440 --> 00:21:06,080
+ sense. So if I'm close to contact, I think I'm in contact, and I ask myself to get
+
+214
+00:21:06,080 --> 00:21:11,800
+ positive contact force off the board, the control I would execute to try to ramp
+
+215
+00:21:11,800 --> 00:21:16,360
+ up the contact force that I'm not getting will have the effect of driving
+
+216
+00:21:16,360 --> 00:21:21,080
+ me into the board. This is a hugely important thing, right? So this is
+
+217
+00:21:21,080 --> 00:21:25,760
+ why, for instance, in walking robots people like to use force control in
+
+218
+00:21:25,760 --> 00:21:31,960
+ their legs, okay? Well, it's more subtle than that. Typically, when you're swinging
+
+219
+00:21:31,960 --> 00:21:36,160
+ your leg through, you would typically try to do a position control and try to make
+
+220
+00:21:36,160 --> 00:21:39,280
+ sure you know where your foot's going to land and control that. But when you
+
+221
+00:21:39,280 --> 00:21:42,800
+ actually go to land, and when you're maybe when you're in stance, when this
+
+222
+00:21:42,800 --> 00:21:46,800
+ leg's in stance, you'll switch to a force control mode. And in particular, for that
+
+223
+00:21:46,800 --> 00:21:50,920
+ moment where you're about to put your foot down, where you may not know exactly
+
+224
+00:21:50,920 --> 00:21:55,800
+ where the terrain is, rather than have to perfectly estimate the shape of the
+
+225
+00:21:55,800 --> 00:21:59,760
+ terrain, you just push down. And you say, "I want some amount of force to be
+
+226
+00:21:59,760 --> 00:22:03,520
+ coming off my, maybe I've got some force sensors on my feet. I would like to push
+
+227
+00:22:03,520 --> 00:22:08,600
+ down until I feel the forces on my feet be the desired forces." Typically,
+
+228
+00:22:08,600 --> 00:22:14,480
+ roughly the opposite of the weight of the robot, right? And if I'm asked to
+
+229
+00:22:14,480 --> 00:22:18,880
+ have that force be large and my foot's in the air, then it tends to go down, okay?
+
+230
+00:22:18,880 --> 00:22:22,560
+ And this adds a lot of robustness. And this is why, when I'm writing on the
+
+231
+00:22:22,560 --> 00:22:26,560
+ board and I'm off by a few degrees, we're gonna get to that completely,
+
+232
+00:22:26,560 --> 00:22:30,440
+ completely, but that's why I can get some extra robustness if I'm thinking in the
+
+233
+00:22:30,440 --> 00:22:39,480
+ space of forces and not in the space of positions. Okay, so unsurprisingly, I have
+
+234
+00:22:39,480 --> 00:22:45,440
+ a couple notebook examples that I want to play. So let's think about the
+
+235
+00:22:45,440 --> 00:22:55,680
+ simplest version of this. I'm actually gonna draw the Cheez-It box a bunch in
+
+236
+00:22:55,680 --> 00:23:02,400
+ these examples with, you know, just like that, like it was on the screen here. So
+
+237
+00:23:02,400 --> 00:23:07,600
+ this is my bin that I was in with the wall that would have blocked my view, cut
+
+238
+00:23:07,600 --> 00:23:12,000
+ away, okay? And I actually, just to keep it simple, I make the Cheez-It box so it
+
+239
+00:23:12,000 --> 00:23:16,200
+ can only rotate in the plane. So I just took away the extra degrees. It won't
+
+240
+00:23:16,200 --> 00:23:20,640
+ spin around or whatever. The point fingers aligned, I'm just living in
+
+241
+00:23:20,640 --> 00:23:28,000
+ the plane, okay? But let's say I just come, I put my finger in some known position
+
+242
+00:23:28,000 --> 00:23:37,960
+ and I ask for a force to be exerted on the finger. I'd like the FFC, FFC
+
+243
+00:23:37,960 --> 00:23:45,160
+ desired, is that I want to be feeling a force that's pushing me that way. If I'm
+
+244
+00:23:45,160 --> 00:23:50,080
+ not feeling it, I'm gonna push harder this way to try to get it and it'll put
+
+245
+00:23:50,080 --> 00:23:59,680
+ me into contact. So the first notebook I'll just run here is what happens if I
+
+246
+00:23:59,680 --> 00:24:07,000
+ just apply a constant desired force and I start the finger here. Think about it
+
+247
+00:24:07,000 --> 00:24:11,880
+ for yourself for a second. If I just command a desired force and, you know, and
+
+248
+00:24:11,880 --> 00:24:15,520
+ start the robot here, the block here, the Cheez-It box here, and the finger there,
+
+249
+00:24:15,520 --> 00:24:20,160
+ what's gonna happen? I'm just gonna run a fixed duration simulation with a handful
+
+250
+00:24:20,160 --> 00:24:27,800
+ of different commanded forces. Commanding a constant force. What's gonna happen?
+
+251
+00:24:27,800 --> 00:24:33,800
+ Tell me what's gonna happen. It's gonna push the box into the wall, if there's
+
+252
+00:24:33,800 --> 00:24:42,040
+ enough force. But there's other cases, right? At the other extreme, it could just
+
+253
+00:24:42,040 --> 00:24:46,720
+ go up and do nothing. The box will stop it if you're not pushing hard enough
+
+254
+00:24:46,720 --> 00:24:50,160
+ because the friction on the floor. And then there's actually a super
+
+255
+00:24:50,160 --> 00:24:54,320
+ interesting regime where it slides, you know, different amounts
+
+256
+00:24:54,320 --> 00:24:59,640
+ it could slide depending on how hard you're pushing, right? So this is the
+
+257
+00:24:59,640 --> 00:25:04,760
+ different rollouts, if you will, where in one extreme, so the box is like right
+
+258
+00:25:04,760 --> 00:25:11,440
+ around 0.1, okay? The finger comes into the box. It comes in more slowly if you
+
+259
+00:25:11,440 --> 00:25:14,840
+ accelerate more slowly. The blue line is the one extreme with the smallest force
+
+260
+00:25:14,840 --> 00:25:19,760
+ and then it just hits the box and the box just, you know, stops it basically. It
+
+261
+00:25:19,760 --> 00:25:22,320
+ actually goes a little bit into penetration because that's what the
+
+262
+00:25:22,320 --> 00:25:26,340
+ contact model we're using is. It allows it to penetrate just a little bit, okay?
+
+263
+00:25:26,340 --> 00:25:31,480
+ The other extreme, it hits the box, it barely slows down whatsoever and starts
+
+264
+00:25:31,480 --> 00:25:37,160
+ pushing the box until the box jams into the far wall, you know? Okay, and in
+
+265
+00:25:37,160 --> 00:25:41,160
+ between you get all these other different possible behaviors, including
+
+266
+00:25:41,160 --> 00:25:45,600
+ this one pushed it for a while and then stopped because there was a collision
+
+267
+00:25:45,600 --> 00:25:49,000
+ event that started it moving, but the continuous, it could actually be under
+
+268
+00:25:49,000 --> 00:25:51,640
+ the friction cone. So there's lots of interesting different things that can
+
+269
+00:25:51,640 --> 00:26:04,000
+ happen. Okay, my claim is that there are some things, if you want to regulate the
+
+270
+00:26:04,000 --> 00:26:07,140
+ box, there's some things that are more natural. I mean, already we get some
+
+271
+00:26:07,140 --> 00:26:10,680
+ robustness by not knowing the geometry of the box and we can shove it around.
+
+272
+00:26:10,680 --> 00:26:15,280
+ Like the first thing my daughter did was shoved it to the side, right? She didn't
+
+273
+00:26:15,280 --> 00:26:18,180
+ need to know the geometry for that. She could just say, "I expect to feel forces,"
+
+274
+00:26:18,180 --> 00:26:21,880
+ and boom, he pushed it to the side. But we're gonna do something fancier here,
+
+275
+00:26:21,880 --> 00:26:27,480
+ which is what that other, that picture was. This is something that would be very
+
+276
+00:26:27,480 --> 00:26:31,400
+ hard to do. My daughter didn't do it, actually, in the video, I don't
+
+277
+00:26:31,400 --> 00:26:36,040
+ think. She could, I'm sure she could have, but this is a little fancier. This is, if
+
+278
+00:26:36,040 --> 00:26:40,320
+ you're really thinking about forces and regulating the forces, you can do pretty
+
+279
+00:26:40,320 --> 00:26:46,480
+ cool stuff. So I'm gonna see if we can take the finger, put it in a regime where
+
+280
+00:26:46,480 --> 00:26:52,440
+ it's actually rotating the box up right in the middle of the bin. How? We're gonna,
+
+281
+00:26:52,440 --> 00:26:55,480
+ we're gonna, there's, we're gonna be in a regime pretty quickly as soon as it
+
+282
+00:26:55,480 --> 00:26:59,280
+ takes off where there's two primary points of contact in the plane, right?
+
+283
+00:26:59,280 --> 00:27:04,520
+ There's more out of the plane, but you've got a friction force resisting the
+
+284
+00:27:04,520 --> 00:27:10,060
+ sliding in that corner. You've got the pushing you're doing there. Depending on
+
+285
+00:27:10,060 --> 00:27:12,880
+ the friction cones, if they're large enough, there's actually a place where
+
+286
+00:27:12,880 --> 00:27:17,960
+ you can start lifting it up. You get enough friction on the finger that you're,
+
+287
+00:27:17,960 --> 00:27:22,800
+ that you can provide a torque, okay? But you're not producing so much force that
+
+288
+00:27:22,800 --> 00:27:27,720
+ you're sliding. And you can put yourself in this regime where you can, you can
+
+289
+00:27:27,720 --> 00:27:32,400
+ lift up the box. That would be extremely hard. I hope it's clear that, I like this
+
+290
+00:27:32,400 --> 00:27:34,960
+ example because I think that would be extremely hard to do in position control
+
+291
+00:27:34,960 --> 00:27:42,480
+ mode. That's really a force kind of action. And if you, even if you don't have
+
+292
+00:27:42,480 --> 00:27:50,680
+ the perfect model, but if certainly if you do have the perfect model, then you
+
+293
+00:27:50,680 --> 00:28:02,160
+ can just do it. Okay, so here's my mesh cat cheese it box, right? The fingers off
+
+294
+00:28:02,160 --> 00:28:05,880
+ and in contact there, okay? It's come into contact because I commanded some non-zero
+
+295
+00:28:05,880 --> 00:28:09,360
+ force. The controller we're gonna write now, and I want to step through it on the
+
+296
+00:28:09,360 --> 00:28:12,320
+ board and be a little bit careful. I actually, that was the one feedback I got
+
+297
+00:28:12,320 --> 00:28:16,160
+ from your, what you guys said about the deep perception network is the lectures,
+
+298
+00:28:16,160 --> 00:28:19,520
+ which I really liked that level of feedback. People said, you maybe step
+
+299
+00:28:19,520 --> 00:28:23,000
+ through a few more examples a little bit more slowly. Happy to do it. I'll try to
+
+300
+00:28:23,000 --> 00:28:30,720
+ do that today and, and you tell me. Okay, so I've got, I've got, I'm gonna write a
+
+301
+00:28:30,720 --> 00:28:35,440
+ controller that controls basically the orientation of the box by controlling
+
+302
+00:28:35,440 --> 00:28:40,280
+ the force on the finger. That's our goal. And to convince you that it works, I just
+
+303
+00:28:40,280 --> 00:28:44,600
+ have a little, I'm only controlling through the finger, but I can basically
+
+304
+00:28:44,600 --> 00:28:48,760
+ regulate the orientation of the box. This is the full physics engine, right? Running
+
+305
+00:28:48,760 --> 00:28:54,240
+ and it's not sliding at the bottom corner. It is, and it's providing the
+
+306
+00:28:54,240 --> 00:29:00,560
+ forces only through the finger, through force control mode. Okay, it's actually
+
+307
+00:29:00,560 --> 00:29:03,960
+ worth going through the exercise of doing that, I think. Now let me do
+
+308
+00:29:03,960 --> 00:29:08,120
+ something a little crazy. So watch what happens to the finger if I go like this.
+
+309
+00:29:08,120 --> 00:29:11,840
+ That was actually pretty good.
+
+310
+00:29:11,840 --> 00:29:22,800
+ Darn it. I switched to the SAP solver, which is great, and I recommend it, because
+
+311
+00:29:22,800 --> 00:29:26,080
+ I recommend it to everybody. But now the finger, normally the finger was flying
+
+312
+00:29:26,080 --> 00:29:31,720
+ off at the end, and I guess it doesn't go flying off. Okay, my controller is better
+
+313
+00:29:31,720 --> 00:29:39,200
+ than I wanted it to be. Imagine that the finger happened to slide to the edge of
+
+314
+00:29:39,200 --> 00:29:44,360
+ the box, but it's still commanding a force, right? I made a strong, I'm making a
+
+315
+00:29:44,360 --> 00:29:48,840
+ strong assumption in this controller, which is that the finger is pushing on
+
+316
+00:29:48,840 --> 00:29:53,040
+ the side of the box. If you're regulating force and your finger is suddenly in
+
+317
+00:29:53,040 --> 00:29:56,520
+ free space, then what's it gonna do? It's gonna rocket itself down until it
+
+318
+00:29:56,520 --> 00:30:00,480
+ collides with the ground. Or, depending on the angle, it might rocket itself off into
+
+319
+00:30:00,480 --> 00:30:05,880
+ free, you know, off the box. And there you get into your throwing and smashing
+
+320
+00:30:05,880 --> 00:30:13,560
+ regime. Okay. Oh, I'm a little bummed that I, I think probably this is the right
+
+321
+00:30:13,560 --> 00:30:18,240
+ answer, but the other one was allowing a little bit of numerical errors. Okay, good.
+
+322
+00:30:18,240 --> 00:30:25,000
+ So let's, let's actually work that out a bit. How can you write a controller that
+
+323
+00:30:25,000 --> 00:30:37,240
+ does that? The hardest part about it, I think, is getting the notation right. And
+
+324
+00:30:37,240 --> 00:30:44,240
+ maybe there's some tricks of kind of how to write it in a way that doesn't, doesn't,
+
+325
+00:30:44,240 --> 00:30:50,440
+ isn't too susceptible to model errors and the like, like, okay. So let me draw my
+
+326
+00:30:50,440 --> 00:31:00,280
+ free body diagram. I'm in the middle of the bin. I'll exaggerate here and put it
+
+327
+00:31:00,280 --> 00:31:07,520
+ in some relatively large angle. Okay. I'm gonna have a bunch of frames that matter.
+
+328
+00:31:07,520 --> 00:31:16,040
+ This is my body frame, the X, Z. Okay. I'm gonna call this frame, since I've got B
+
+329
+00:31:16,040 --> 00:31:20,760
+ and I'm gonna have a contact frame C, I went ahead and used my imagination and
+
+330
+00:31:20,760 --> 00:31:23,320
+ called this one A.
+
+331
+00:31:23,320 --> 00:31:44,560
+ So that's frame A, where this is X and Z. And I'll have a contact frame over where
+
+332
+00:31:44,560 --> 00:31:53,760
+ my finger is touching the wall. And I'll put that frame, remember the normal
+
+333
+00:31:53,760 --> 00:32:00,040
+ forces always go in the Z axis in our contact frames, right. So this is frame C
+
+334
+00:32:00,040 --> 00:32:09,280
+ and this is Z and this is X, to keep with my right-hand rule. Now, when we were
+
+335
+00:32:09,280 --> 00:32:12,960
+ talking about the point of view of the robot, we were trying to command the
+
+336
+00:32:12,960 --> 00:32:21,920
+ force that the robot felt, you know, the force at C applied to the finger F. But
+
+337
+00:32:21,920 --> 00:32:26,600
+ for the free body analysis, I actually want to think about the equal and
+
+338
+00:32:26,600 --> 00:32:31,480
+ opposite force, which is the force that the finger is applying at C on the body
+
+339
+00:32:31,480 --> 00:32:42,000
+ B. So that force, which is gonna use all my colors here, so probably, and you could
+
+340
+00:32:42,000 --> 00:32:46,360
+ see it in my simulation, which I should probably stop just so I don't like run
+
+341
+00:32:46,360 --> 00:32:51,120
+ out of battery or something silly, probably I'm gonna have a force that's
+
+342
+00:32:51,120 --> 00:33:00,160
+ in this direction here. And that's gonna be, that force I'm gonna call the force
+
+343
+00:33:00,160 --> 00:33:11,200
+ on body B at A, see, oh my god, named ground, okay. And I can express it in
+
+344
+00:33:11,200 --> 00:33:18,600
+ various frames, but let's express it in the A frame, okay. And I have another
+
+345
+00:33:18,600 --> 00:33:23,640
+ force, which is probably gonna be pushing me, it's gonna stay inside the friction
+
+346
+00:33:23,640 --> 00:33:27,120
+ cone, okay, but if I wanted to tip up, it's gonna be, it's gonna have a component
+
+347
+00:33:27,120 --> 00:33:35,760
+ like this, right. This, by default, is gonna be on body B applied at C of the
+
+348
+00:33:35,760 --> 00:33:40,760
+ finger, that's my name for it, this is the finger, and it's most natural to express
+
+349
+00:33:40,760 --> 00:33:45,000
+ it in frame C, well, we know our transforms to go back and forth between
+
+350
+00:33:45,000 --> 00:33:56,840
+ them. And then, of course, I have a gravity force here, which, if we want to keep our
+
+351
+00:33:56,840 --> 00:34:04,840
+ notation consistent here, this is the force applied at body B, normally you can
+
+352
+00:34:04,840 --> 00:34:11,800
+ just write B for that, but I'll just be explicit from gravity, and I can write it
+
+353
+00:34:11,800 --> 00:34:15,480
+ in the B, actually it's most natural to express that in the world
+
+354
+00:34:15,480 --> 00:34:23,560
+ frame, because then it's just 0, negative, M times 9.8, whatever.
+
+355
+00:34:27,680 --> 00:34:38,000
+ Okay, what do we know about these different forces? We know, I'll stick
+
+356
+00:34:38,000 --> 00:34:48,920
+ with the color codes here to try to keep it clear, we can, let's assume for a
+
+357
+00:34:48,920 --> 00:34:53,600
+ minute we know the friction cones, we'll assume we know the mass, we'll assume we
+
+358
+00:34:53,600 --> 00:34:57,840
+ know the geometry, but I promise that the controller I give you is gonna actually
+
+359
+00:34:57,840 --> 00:35:06,680
+ be pretty good about that, not having to know them very perfectly. So, if I know
+
+360
+00:35:06,680 --> 00:35:17,960
+ the friction coefficient at the contact point, then by my notation, right, what I
+
+361
+00:35:17,960 --> 00:35:30,120
+ know is that the force of the finger, the Z component, well first of all, it's only,
+
+362
+00:35:30,120 --> 00:35:43,760
+ it can't pull on the box, okay, and then the X component, magnitude, is less than
+
+363
+00:35:43,760 --> 00:35:58,880
+ the friction coefficient times the Z component. In the frame of C, this is a
+
+364
+00:35:58,880 --> 00:36:04,480
+ simple thing to write, okay. The implications of that, of course, in the
+
+365
+00:36:04,480 --> 00:36:08,320
+ world frame, for instance, depend on transforming the frames into the world
+
+366
+00:36:08,320 --> 00:36:13,040
+ frame, but it's really just that simple, you'd call it the simple ice cream cone
+
+367
+00:36:13,040 --> 00:36:20,080
+ in that case, where it's just along the Z axis. Same thing for the
+
+368
+00:36:20,080 --> 00:36:23,240
+ bottom, for the ground, okay, right, we could say the same thing for the ground.
+
+369
+00:36:23,240 --> 00:36:33,520
+ I won't write it all out here, but the force B at A of the ground applied at A,
+
+370
+00:36:33,520 --> 00:36:40,640
+ can I just say that's in the friction cone at A? That's kind of a notational
+
+371
+00:36:40,640 --> 00:36:49,440
+ shorthand for that, yeah, and that would depend on mu A, of course, which I think I
+
+372
+00:36:49,440 --> 00:36:52,600
+ said to both of them, both would just be one in this case. It doesn't have to be,
+
+373
+00:36:52,600 --> 00:36:56,440
+ in the book case, they have to be different. This one, it's not clear
+
+374
+00:36:56,440 --> 00:36:59,320
+ to me that it has to be different. It depends on the geometries and other
+
+375
+00:36:59,320 --> 00:37:08,240
+ things. Okay, the force of the finger, if you think about that as a three-element
+
+376
+00:37:08,240 --> 00:37:11,640
+ force, we're going to be commanding that effectively, right, we're going to be
+
+377
+00:37:11,640 --> 00:37:16,120
+ regulating that. Our controller gets to, in some sense, set the force of the finger
+
+378
+00:37:16,120 --> 00:37:24,360
+ as an input. What do we, how do we think about the force on the ground?
+
+379
+00:37:24,360 --> 00:37:34,800
+ This is saying it's inside, this gives me a whole range of possible forces,
+
+380
+00:37:34,800 --> 00:37:38,920
+ but how do we know which force is going to happen? Which one's Newton going to
+
+381
+00:37:38,920 --> 00:37:42,720
+ give us, or God, or something?
+
+382
+00:37:42,720 --> 00:37:48,040
+ Cool.
+
+383
+00:37:48,040 --> 00:37:57,400
+ Good, right, it's the, it's whichever one's going to keep the point
+
+384
+00:37:57,400 --> 00:38:01,840
+ from moving, right, it's whatever force is necessary to set the velocity, to
+
+385
+00:38:01,840 --> 00:38:10,560
+ keep the velocity at zero. If we're in the stiction regime, so if no sliding,
+
+386
+00:38:10,560 --> 00:38:17,600
+ then if we comply in all these forces into the frame of A, this is the important
+
+387
+00:38:17,600 --> 00:38:20,560
+ way to say what you just said here, if we put all the forces into the frame of A,
+
+388
+00:38:20,560 --> 00:38:26,480
+ that they're in equilibrium at A. There's no acceleration at A. Okay,
+
+389
+00:38:26,480 --> 00:38:36,120
+ so the force of the finger, I can map that to point A, and I express it in A,
+
+390
+00:38:36,120 --> 00:38:44,080
+ plus the force of the ground, expressed in A, applied at A, plus the force of
+
+391
+00:38:44,080 --> 00:38:52,960
+ gravity at A, EA, that equals zero, because that's what friction does.
+
+392
+00:38:52,960 --> 00:39:00,600
+ Basically, given this and this, it will set this to make that zero. The causality
+
+393
+00:39:00,600 --> 00:39:06,360
+ is not something I'm trying to make a statement about, but in practice, since
+
+394
+00:39:06,360 --> 00:39:11,520
+ we're controlling this, we're going to be able to understand what the
+
+395
+00:39:11,520 --> 00:39:17,200
+ ground is going to be. So this is the important equation, the no-stick,
+
+396
+00:39:17,200 --> 00:39:21,920
+ or the stick no sliding condition at the ground, which helps me solve for the
+
+397
+00:39:21,920 --> 00:39:30,920
+ ground forces. But inside that, I can choose different forces to apply at that
+
+398
+00:39:30,920 --> 00:39:34,720
+ ground, as long as they are able to satisfy this equation by staying in the
+
+399
+00:39:34,720 --> 00:39:39,280
+ friction cone, then I have room to possibly push up, and try to torque this
+
+400
+00:39:39,280 --> 00:39:45,680
+ thing up. So the last important thing that we have to think about is the torque
+
+401
+00:39:45,680 --> 00:39:54,440
+ applied to the body, expressed at, let's say, the total torque in the frame of A,
+
+402
+00:39:54,440 --> 00:39:59,360
+ for instance. I want this, which is also going to be the same sum, you know,
+
+403
+00:39:59,360 --> 00:40:10,600
+ finger plus ground plus gravity in the torque components. The torque of the
+
+404
+00:40:10,600 --> 00:40:18,120
+ ground at the ground is zero, because its moment arm is zero, but I can
+
+405
+00:40:18,120 --> 00:40:29,240
+ control the-- I can choose this torque at the finger to try to make a torque around
+
+406
+00:40:29,240 --> 00:40:35,160
+ this bottom point. So by reasoning about the forces and the friction
+
+407
+00:40:35,160 --> 00:40:39,800
+ cones, I can lift up my objective to say I basically want a pure torque around
+
+408
+00:40:39,800 --> 00:40:43,840
+ there, subject to the constraints that the forces doesn't slide-- that the ground
+
+409
+00:40:43,840 --> 00:40:53,080
+ doesn't slide. So we just need a control strategy for choosing that,
+
+410
+00:40:53,080 --> 00:40:58,200
+ you know, this torque that's now, you know, abstracted-- we've abstracted away, we can
+
+411
+00:40:58,200 --> 00:41:03,200
+ sort of think about what torque do I want. And there's lots of possible
+
+412
+00:41:03,200 --> 00:41:10,880
+ answers. I could choose-- I could use my perfect model of the cracker box and my
+
+413
+00:41:10,880 --> 00:41:14,200
+ perfect sense of the geometry, but I don't want to do that. I want to show
+
+414
+00:41:14,200 --> 00:41:18,440
+ that force control is a little general and doesn't work-- doesn't require perfect
+
+415
+00:41:18,440 --> 00:41:25,600
+ knowledge. So let's just say I want the-- even the finger here, that's the one I
+
+416
+00:41:25,600 --> 00:41:33,600
+ have direct control of-- the finger to come out of a PID controller. How about
+
+417
+00:41:33,600 --> 00:41:41,840
+ that? And I'm going to have a-- I'm going to call it-- let me just see if I can write
+
+418
+00:41:41,840 --> 00:41:47,280
+ that. So I'd like to think of the torque as being-- you guys know PID control? I've
+
+419
+00:41:47,280 --> 00:41:53,480
+ said it a few times, but never perfectly defined it, right? The proportional
+
+420
+00:41:53,480 --> 00:42:03,320
+ integral derivative control. Why would I want to choose that? Well, let's say I
+
+421
+00:42:03,320 --> 00:42:07,000
+ don't know the force of gravity, the torque due to gravity, because I don't
+
+422
+00:42:07,000 --> 00:42:11,120
+ know the mass perfectly of the Chezyt box. I don't know that-- maybe I don't
+
+423
+00:42:11,120 --> 00:42:16,120
+ know the gain of my-- you know, if I don't know the position of the finger
+
+424
+00:42:16,120 --> 00:42:19,400
+ perfectly relative to the position of the ground, because I don't know how big
+
+425
+00:42:19,400 --> 00:42:24,720
+ the box is, then I might have some slop in any model-based control here. But if I
+
+426
+00:42:24,720 --> 00:42:29,400
+ do just a simple linear feedback, if the angle isn't as high as I expect it to be,
+
+427
+00:42:29,400 --> 00:42:34,360
+ I'll pull more, okay? I'll put more torque in. If it's too low, I'll
+
+428
+00:42:34,360 --> 00:42:38,440
+ push less, and I'll even have an integral term that could compensate for that mass.
+
+429
+00:42:38,440 --> 00:42:42,400
+ This is a very simple-- since it's a one degree of freedom problem, I can just do
+
+430
+00:42:42,400 --> 00:42:46,160
+ a very simple controller that'll use feedback that says if the angle's not
+
+431
+00:42:46,160 --> 00:42:52,040
+ where I want it, pull a little harder. If it's too far, pull a little back, okay?
+
+432
+00:42:52,040 --> 00:43:02,800
+ And that'll just change the torque of the finger. Is that clear?
+
+433
+00:43:02,800 --> 00:43:09,040
+ Unfortunately, this is a competing objective. It's not clear that
+
+434
+00:43:09,040 --> 00:43:13,280
+ I can choose any torque of the finger, because there's other constraints coming
+
+435
+00:43:13,280 --> 00:43:20,120
+ from the friction cone. So I'm going to pull up my optimization playbook, and why
+
+436
+00:43:20,120 --> 00:43:25,480
+ don't I say this is my goal, so why don't I write a minimization over the--
+
+437
+00:43:25,480 --> 00:43:30,760
+ ultimately, it's going to be on the force of the finger that I can pick, which
+
+438
+00:43:30,760 --> 00:43:39,120
+ I'll write it directly in the B of the contact-- I could pick any of them,
+
+439
+00:43:39,120 --> 00:43:46,280
+ though, really-- of the finger. These are my decision variables, okay? And I want it
+
+440
+00:43:46,280 --> 00:43:57,120
+ to be that my torque of my finger is approximately my PID controller. This is
+
+441
+00:43:57,120 --> 00:44:16,040
+ kind of my objective. This is my estimated angle of the-- I'll make that a
+
+442
+00:44:16,040 --> 00:44:22,720
+ quadratic objective, and I'll solve for it subject to my friction cone
+
+443
+00:44:22,720 --> 00:44:50,640
+ constraints, and the force balance constraint.
+
+444
+00:44:50,640 --> 00:45:06,280
+ And everything we wrote here, it turns out, is a linear constraint. Even though
+
+445
+00:45:06,280 --> 00:45:11,480
+ we're changing coordinate systems with our spatial algebra between frames A and
+
+446
+00:45:11,480 --> 00:45:18,800
+ frame C, it's a cross product that happens, but of a cross product
+
+447
+00:45:18,800 --> 00:45:25,920
+ with a known position, and the decision variables only enter linearly. So this is
+
+448
+00:45:25,920 --> 00:45:37,160
+ still a quadratic objective, and these are linear constraints. So this is the
+
+449
+00:45:37,160 --> 00:45:47,320
+ good case. It's a quadratic program, and you can solve your little quadratic
+
+450
+00:45:47,320 --> 00:45:51,880
+ program, and apparently never let the finger slip off the box. Okay, that's all
+
+451
+00:45:51,880 --> 00:46:07,560
+ I'm running right here. Is that level of detail useful? A little slow? Okay, send it
+
+452
+00:46:07,560 --> 00:46:12,640
+ to me on the survey or something. I will continue to try to dial it in.
+
+453
+00:46:12,640 --> 00:46:18,480
+ But so there's, you know, the particular instantiation of it as a quadratic
+
+454
+00:46:18,480 --> 00:46:25,680
+ program is cool, but I guess the essential element is that I can choose
+
+455
+00:46:25,680 --> 00:46:31,400
+ commands for my point finger that if I didn't think about forces, there's just
+
+456
+00:46:31,400 --> 00:46:36,680
+ like no hope. I could rotate that thing up and think, you know, the
+
+457
+00:46:36,680 --> 00:46:41,000
+ exact force that I'm applying, no matter what the angle is, is hugely dependent
+
+458
+00:46:41,000 --> 00:46:44,640
+ on my friction cones and things like that. And it's only with that that I can
+
+459
+00:46:44,640 --> 00:46:47,920
+ get this sort of rock-solid demo where I can move the box up and down.
+
+460
+00:46:47,920 --> 00:46:53,680
+ Actually, I thought about bringing a Cheez-It box down, but I didn't want to
+
+461
+00:46:53,680 --> 00:46:56,840
+ embarrass myself, because that's actually really hard to do that. I was also going
+
+462
+00:46:56,840 --> 00:47:00,600
+ to then have to bring like a rubber mat or something like that, and then it gets
+
+463
+00:47:00,600 --> 00:47:07,520
+ less cool. Dryad at home, homework. Flip up a Cheez-It box without using the
+
+464
+00:47:07,520 --> 00:47:11,600
+ wall. OK? Questions?
+
+465
+00:47:11,600 --> 00:47:21,600
+ That's a narrow example of something that I would-- we'll call direct force
+
+466
+00:47:21,600 --> 00:47:22,860
+ control.
+
+467
+00:47:22,860 --> 00:47:36,000
+ Even though I have two controllers in some sense happening here, I have this
+
+468
+00:47:36,000 --> 00:47:39,320
+ higher level controller, the command I'm sending to my robot is trying to
+
+469
+00:47:39,320 --> 00:47:45,600
+ directly command a force. And it'll make that happen in the-- point finger case,
+
+470
+00:47:45,600 --> 00:47:48,640
+ it's trivial to make it happen. In the robot case, maybe you have a force sensor
+
+471
+00:47:48,640 --> 00:47:56,360
+ or something to make that happen. OK? Guess what we're going to do? Indirect
+
+472
+00:47:56,360 --> 00:48:00,800
+ force control next. OK? But I guess I-- everybody still says they like the
+
+473
+00:48:00,800 --> 00:48:03,560
+ break, the stretch break. So let me stretch for a second, and then we'll do
+
+474
+00:48:03,560 --> 00:48:04,720
+ the indirect force control.
+
+475
+00:48:04,760 --> 00:48:08,240
+ [SIDE CONVERSATION]
+
+476
+00:48:08,240 --> 00:48:11,220
+ [END PLAYBACK]
+
+477
+00:48:11,220 --> 00:48:14,220
+ [VIDEO PLAYBACK]
+
+478
+00:48:14,220 --> 00:48:17,220
+ [SIDE CONVERSATION]
+
+479
+00:48:42,220 --> 00:48:43,220
+ Yes?
+
+480
+00:48:43,220 --> 00:48:44,220
+ [INAUDIBLE]
+
+481
+00:48:44,220 --> 00:48:52,220
+ Yeah, good.
+
+482
+00:48:52,220 --> 00:48:53,220
+ [INAUDIBLE]
+
+483
+00:48:53,220 --> 00:49:00,220
+ Good, good, good. So if I'm writing this in the code, I have to somehow relate
+
+484
+00:49:00,220 --> 00:49:05,740
+ tau finger A with the decision variables here. So this is really a function which
+
+485
+00:49:05,740 --> 00:49:12,260
+ does my spatial algebra, that does the coordinate change. But this is a linear
+
+486
+00:49:12,260 --> 00:49:19,700
+ function of this, given I know the position-- if I know the position of C in
+
+487
+00:49:19,700 --> 00:49:28,860
+ body B relative to A, for instance, then I have that cross, is what gives me this.
+
+488
+00:49:28,860 --> 00:49:35,060
+ But this is just a constant matrix times my decision variables. There's also,
+
+489
+00:49:35,060 --> 00:49:39,100
+ because I changed expressed in frames, I would have a rotation matrix also on top
+
+490
+00:49:39,100 --> 00:49:44,380
+ of that. But those are just-- that's a great question, thank you for asking it.
+
+491
+00:49:44,380 --> 00:49:51,020
+ Those are just linear functions of this. And you can play with it if you want. So
+
+492
+00:49:51,020 --> 00:49:56,140
+ if I didn't know this exactly, but I just estimated it, it's still going to work
+
+493
+00:49:56,140 --> 00:50:01,020
+ pretty well. In fact, the first version I did, I just assumed I knew the width of
+
+494
+00:50:01,020 --> 00:50:05,380
+ the box and I didn't even put in the term relative to the height of the box, and it
+
+495
+00:50:05,380 --> 00:50:09,500
+ was fine. In fact, I think I updated it. I can't remember which version I pushed to
+
+496
+00:50:09,500 --> 00:50:15,820
+ git. But yeah, so it's pretty robust to that.
+
+497
+00:50:15,820 --> 00:50:25,460
+ Okay, so I think this is a beautiful solution-- oh, please, go ahead.
+
+498
+00:50:25,460 --> 00:50:31,460
+ [INAUDIBLE]
+
+499
+00:50:31,460 --> 00:50:33,460
+ Okay.
+
+500
+00:50:33,460 --> 00:50:37,460
+ [INAUDIBLE]
+
+501
+00:50:37,460 --> 00:50:43,180
+ Yeah. So he says, what if we have a springy material? How would that change
+
+502
+00:50:43,180 --> 00:50:52,820
+ things? Yeah, let me think where you're coming from here on that. So I mean, in
+
+503
+00:50:52,820 --> 00:50:57,180
+ general, I would still be applying a force. So far I've said, let's say you
+
+504
+00:50:57,180 --> 00:51:01,580
+ can measure the force on the finger and regulate it. So it might be that by-- in
+
+505
+00:51:01,580 --> 00:51:05,260
+ order to regulate the force, it might push into whatever surface is a
+
+506
+00:51:05,260 --> 00:51:10,940
+ little bit springy. And it could change the equations that I'm trying to balance
+
+507
+00:51:10,940 --> 00:51:16,060
+ in order to, you know, reason about the far corner. So it might change the free
+
+508
+00:51:16,060 --> 00:51:22,340
+ body diagram. But I think the formulation will still work. I think that the basic
+
+509
+00:51:22,340 --> 00:51:25,420
+ concept of regulating-- just reasoning about the forces should be
+
+510
+00:51:25,420 --> 00:51:29,260
+ intact. And even, I think, linear springs, which is a pretty good model of those
+
+511
+00:51:29,260 --> 00:51:33,540
+ kind of contacts, should go through without even changing the complexity of
+
+512
+00:51:33,540 --> 00:51:39,380
+ the task. If you had a very nonlinear, you know, response curve or something in the
+
+513
+00:51:39,380 --> 00:51:42,180
+ spring, then it gets harder.
+
+514
+00:51:42,180 --> 00:51:44,180
+ [INAUDIBLE]
+
+515
+00:51:44,180 --> 00:51:51,980
+ I see. Okay. I see. So humans are-- so he says, what if it's a human arm?
+
+516
+00:51:51,980 --> 00:51:59,420
+ Right. So humans are annoying. I'm sorry. That's a bad way to go through life. Hard
+
+517
+00:51:59,420 --> 00:52:05,180
+ to model. Humans are hard to model, both physically and their intelligence is also
+
+518
+00:52:05,180 --> 00:52:12,100
+ hard to model. They're squishy, but we're kind of like full of water. And so we
+
+519
+00:52:12,100 --> 00:52:17,620
+ tend to not build high-fidelity models of their skin. And oftentimes fairly
+
+520
+00:52:17,620 --> 00:52:22,300
+ simple models of softness are sufficient. You're also not supposed to
+
+521
+00:52:22,300 --> 00:52:28,500
+ push on people, I think. Not with big robots. So be careful with that.
+
+522
+00:52:28,500 --> 00:52:33,700
+ Disclaimer, nothing-- if you push a person with this controller, I'm not to
+
+523
+00:52:33,700 --> 00:52:40,660
+ blame. It's all good. That's a great question. That's a great question. Okay.
+
+524
+00:52:40,660 --> 00:52:44,380
+ There's only one thing that I really think this controller is very
+
+525
+00:52:44,380 --> 00:52:50,860
+ sensitive to. I claimed it as a good thing that, you know, when you're close
+
+526
+00:52:50,860 --> 00:52:55,820
+ to contact and you're not in contact, you command a force. At least locally, it does
+
+527
+00:52:55,820 --> 00:53:00,660
+ the right thing. Okay. But if you're just a little bit off and you command a force,
+
+528
+00:53:00,660 --> 00:53:07,500
+ it could do an exceptionally wrong thing. Okay. So it is making a big
+
+529
+00:53:07,500 --> 00:53:11,100
+ assumption that you're in contact or nearly in contact. And applying
+
+530
+00:53:11,100 --> 00:53:17,300
+ that force is in contact. And it does require, you know, maybe, you know, it does
+
+531
+00:53:17,300 --> 00:53:21,140
+ require some free body diagram kind of modeling. It turns out there's a version
+
+532
+00:53:21,140 --> 00:53:25,260
+ of force control, an indirect version of force control, that can be a lot more
+
+533
+00:53:25,260 --> 00:53:30,980
+ natural. It can mix objectives about position and force and give you, you know,
+
+534
+00:53:30,980 --> 00:53:34,500
+ another programming language. Think of these as programming languages to
+
+535
+00:53:34,500 --> 00:53:39,740
+ control the end effector of your robot. Okay. Position was our first control, our
+
+536
+00:53:39,740 --> 00:53:44,100
+ programming language. Force, pure force was the next one. And we're going to go
+
+537
+00:53:44,100 --> 00:53:57,420
+ into kind of a mixed position and force, if you will. Indirect force control. In
+
+538
+00:53:57,420 --> 00:54:11,460
+ particular, let's start with stiffness control. So here's the paradigm, right? So
+
+539
+00:54:11,460 --> 00:54:16,300
+ let's say I am doing this dangerous thing of walking up to my robot and, you
+
+540
+00:54:16,300 --> 00:54:21,260
+ know, pushing on the end effector. But I'm going to push it. And the force I want,
+
+541
+00:54:21,260 --> 00:54:25,220
+ what if I wanted, even though it's a big robot and it's complicated, what if I
+
+542
+00:54:25,220 --> 00:54:30,380
+ want it to be, when I push on it, it acts just like a linear spring. That I want
+
+543
+00:54:30,380 --> 00:54:33,180
+ whatever force, you know, when I'm not pushing out at all, it should just sit
+
+544
+00:54:33,180 --> 00:54:37,380
+ still. When I push on it a little bit, I want it to push back proportional to how
+
+545
+00:54:37,380 --> 00:54:41,380
+ far I've pushed it from that. Right? It turns out we can make our whole big
+
+546
+00:54:41,380 --> 00:54:45,540
+ complicated robot act like a spring at that point. Okay? And that's sort
+
+547
+00:54:45,540 --> 00:54:52,620
+ of the second big idea. And again, if we write down our simple dynamics in the
+
+548
+00:54:52,620 --> 00:54:57,900
+ point finger world, it's simple to accomplish that and to even say more
+
+549
+00:54:57,900 --> 00:55:06,100
+ carefully what I mean. What I would like is to pick a u so that my effective
+
+550
+00:55:06,100 --> 00:55:26,740
+ dynamics look like this. On the wrong side.
+
+551
+00:55:33,300 --> 00:55:38,540
+ That would be the equations of a spring with a resting point at the desired
+
+552
+00:55:38,540 --> 00:55:45,300
+ location. Okay? So now, this is in some sense programming indirectly the forces,
+
+553
+00:55:45,300 --> 00:55:48,540
+ but it's programming the interaction that the robot is going to
+
+554
+00:55:48,540 --> 00:55:52,980
+ have with the world. If the world applies this, it's going to respond with some
+
+555
+00:55:52,980 --> 00:55:58,380
+ motion. Similarly, if the robot is at a motion, you know it's pushing back with a
+
+556
+00:55:58,380 --> 00:56:06,260
+ certain force. So it's defining that relationship. That turns out to be a
+
+557
+00:56:06,260 --> 00:56:17,020
+ really nice paradigm. Okay? Let me play with it. Okay? To do this, though, I needed
+
+558
+00:56:17,020 --> 00:56:23,500
+ to make the box in see-through. So let's see if I can make this clear. Okay, so the
+
+559
+00:56:23,500 --> 00:56:30,100
+ same box, it's just less, I've removed the market branding. Okay? And I've got two
+
+560
+00:56:30,100 --> 00:56:38,220
+ fingers because one is the virtual finger, which is my X desired and Z
+
+561
+00:56:38,220 --> 00:56:43,500
+ desired, and the other finger is getting pulled there with a spring. Okay? So as I
+
+562
+00:56:43,500 --> 00:56:48,020
+ move around in the free space, my finger, the actual finger tracks the desired
+
+563
+00:56:48,020 --> 00:56:57,060
+ finger. Okay? But if I push into here, now I'm applying more force depending on how
+
+564
+00:56:57,060 --> 00:57:03,620
+ big that spring is being pulled, and at some point I can move the box by moving
+
+565
+00:57:03,620 --> 00:57:07,540
+ my virtual finger. So I'm, there's this natural interaction of kind of, I can
+
+566
+00:57:07,540 --> 00:57:10,380
+ still think about forces, but I'm thinking about it through the set
+
+567
+00:57:10,380 --> 00:57:15,300
+ points of a spring. What's good about that is if I were to suddenly move up,
+
+568
+00:57:15,300 --> 00:57:28,060
+ for instance, it doesn't go totally crazy. Right? I've defined a more robust law, but
+
+569
+00:57:28,060 --> 00:57:34,020
+ you also saw, I kind of gave a hint there, right? It's actually not a bad way to
+
+570
+00:57:34,020 --> 00:57:45,260
+ flip up a box. Check this out. I'm leaning on the corner there. Okay? Let me reset
+
+571
+00:57:45,260 --> 00:57:47,740
+ and I can do it better.
+
+572
+00:57:47,740 --> 00:58:07,380
+ Okay, so now what if I just put the set point of the spring somewhere over here?
+
+573
+00:58:07,380 --> 00:58:11,220
+ We're gonna think about what the physics of that is, but it's actually a beautiful,
+
+574
+00:58:11,220 --> 00:58:17,300
+ beautiful idea. I want this suddenly to have forces applied to the box such that
+
+575
+00:58:17,300 --> 00:58:22,180
+ it's, there's like a spring rubber banding me to the wall right around
+
+576
+00:58:22,180 --> 00:58:33,980
+ that pivot point. Okay? What happens? Whoop! That's pretty good, right? Just in case I
+
+577
+00:58:33,980 --> 00:58:37,860
+ couldn't do it myself, I made an open-loop script that does the same
+
+578
+00:58:37,860 --> 00:58:46,340
+ thing, right? It's actually so, I would have had to be pretty, pretty bad to not
+
+579
+00:58:46,340 --> 00:58:55,220
+ get it to work. But this is now open-loop, if you will. It's just executing an
+
+580
+00:58:55,220 --> 00:59:01,140
+ open-loop script, no feedback required, except at the level of regular, of making
+
+581
+00:59:01,140 --> 00:59:09,900
+ this law happen. It's a beautiful way to program the interaction. Okay? You can
+
+582
+00:59:09,900 --> 00:59:15,220
+ imagine that, so stiffness control would be if you made it act like it had a
+
+583
+00:59:15,220 --> 00:59:20,420
+ particular stiffness. Okay? Damping control would be if you programmed the
+
+584
+00:59:20,420 --> 00:59:24,140
+ damping. Impedance control would be if you programmed all three of them. You
+
+585
+00:59:24,140 --> 00:59:30,940
+ could even change the effective mass. Okay? Those of you in Neville's lab can
+
+586
+00:59:30,940 --> 00:59:39,220
+ weigh in, but, right? So, impedance control is the most general name of it.
+
+587
+00:59:39,220 --> 00:59:56,180
+ You can program m, v, and k, for instance. It's kind of weird that you could apply
+
+588
+00:59:56,180 --> 01:00:02,500
+ forces, so I could push on my robot and have it act like it's a different mass
+
+589
+01:00:02,500 --> 01:00:07,580
+ robot than it is. Right? It turns out it's hard to do that, and I think a lot of
+
+590
+01:00:07,580 --> 01:00:13,820
+ people will do this and this, and I think it's less common to do mass. In the
+
+591
+01:00:13,820 --> 01:00:17,780
+ EWA specifically, it's called, it is an impedance controller, but they're not
+
+592
+01:00:17,780 --> 01:00:21,500
+ actually regulating the mass of the robot. They're regulating the mass of the
+
+593
+01:00:21,500 --> 01:00:25,940
+ rotor. So, at the rotor level, there's doing some amount of impedance
+
+594
+01:00:25,940 --> 01:00:30,420
+ regulation of mass matrix. Inertial shaping is what they might call it.
+
+595
+01:00:30,420 --> 01:00:37,100
+ Okay? But maybe not at the full. Make the robot, like, making a heavy robot act like
+
+596
+01:00:37,100 --> 01:00:43,780
+ it's very light requires typically high bandwidth, maybe either good force or
+
+597
+01:00:43,780 --> 01:00:48,500
+ acceleration sensing, those kind of things that are strong requirements
+
+598
+01:00:48,500 --> 01:00:54,940
+ for a control system. Okay. So, that's pretty good, right? So, and you saw what
+
+599
+01:00:54,940 --> 01:01:02,700
+ happened, right? Was that we took a different strategy to flip up the box. We
+
+600
+01:01:02,700 --> 01:01:11,940
+ made a virtual pivot point here, and we made effectively a spring that was here,
+
+601
+01:01:11,940 --> 01:01:18,260
+ that was applying forces just based on that spring, and then as I moved this up,
+
+602
+01:01:18,260 --> 01:01:25,420
+ the spring force caused it to not only flip over, but also push down, right? Once
+
+603
+01:01:25,420 --> 01:01:30,100
+ I got here, and it started pushing up and over, the forces changed direction from
+
+604
+01:01:30,100 --> 01:01:34,940
+ here to being here, and it actually did exactly what I wanted the whole sequence
+
+605
+01:01:34,940 --> 01:01:38,740
+ through by thinking of it not as programming the force directly, but by
+
+606
+01:01:38,740 --> 01:01:41,820
+ programming the interaction.
+
+607
+01:01:45,020 --> 01:01:48,020
+ Yes?
+
+608
+01:01:48,020 --> 01:01:55,020
+ [inaudible]
+
+609
+01:01:55,020 --> 01:02:04,060
+ I mean, normally it's, let me think about, so I think normally the task sort of
+
+610
+01:02:04,060 --> 01:02:10,860
+ provides that, right? So, in most cases I think there is a natural answer, but it
+
+611
+01:02:10,860 --> 01:02:14,700
+ comes from the task definition. Like, for, you know, for pushing books or
+
+612
+01:02:14,700 --> 01:02:18,420
+ something, then maybe books will have some natural stiffness that they'll want
+
+613
+01:02:18,420 --> 01:02:22,180
+ to be interacting with or whatever. I worry you're asking a deeper
+
+614
+01:02:22,180 --> 01:02:27,260
+ question than I'm answering. Can you give me an example of a situation where it
+
+615
+01:02:27,260 --> 01:02:31,100
+ would be hard to pick those?
+
+616
+01:02:31,100 --> 01:02:43,100
+ [inaudible]
+
+617
+01:02:43,100 --> 01:02:55,340
+ I see. Excellent. Okay, so the great, so great. So, even in this
+
+618
+01:02:55,340 --> 01:03:02,820
+ controller specifically, how did I pick kp and kd? Perfect. That I can answer. I
+
+619
+01:03:02,820 --> 01:03:08,380
+ think I set them to one. So, the point is, I think in this example it was
+
+620
+01:03:08,380 --> 01:03:11,860
+ pretty, I mean, maybe ten or something, you know, actually almost always I'll pick
+
+621
+01:03:11,860 --> 01:03:17,180
+ this to be, you know, square root of g more than this so that it's critically
+
+622
+01:03:17,180 --> 01:03:20,420
+ damped or something like that, okay? But, so that, there are basic heuristics like
+
+623
+01:03:20,420 --> 01:03:26,180
+ that. But, if I had picked a smaller or bigger gain, then I would have just moved
+
+624
+01:03:26,180 --> 01:03:29,900
+ the finger more into penetration or less into penetration, and I think the same
+
+625
+01:03:29,900 --> 01:03:32,940
+ phenomenon would have worked over a large range of gains. It's just a matter
+
+626
+01:03:32,940 --> 01:03:37,820
+ of how, you know, where that critical point for the virtual finger
+
+627
+01:03:37,820 --> 01:03:42,020
+ would have been, I think. I think this particular demo would have been very
+
+628
+01:03:42,020 --> 01:03:49,020
+ robust to that. The box is experiencing different forces, right? But, what's
+
+629
+01:03:49,020 --> 01:03:52,980
+ essential here is that there's a pivot point about which those forces are
+
+630
+01:03:52,980 --> 01:03:57,580
+ rotating, which is somehow inside the box. And I think that's true for basically
+
+631
+01:03:57,580 --> 01:04:00,060
+ all k's.
+
+632
+01:04:00,060 --> 01:04:04,060
+ [inaudible]
+
+633
+01:04:04,060 --> 01:04:09,940
+ For any given task, right? So, this is, in some sense, this is what's
+
+634
+01:04:09,940 --> 01:04:14,180
+ happening when you're commanding the EWA now, right? It's happening in joint space.
+
+635
+01:04:14,180 --> 01:04:20,260
+ We're going to talk about the rest of the robot on Thursday, but, you know, so
+
+636
+01:04:20,260 --> 01:04:23,260
+ far you've been thinking about commanding positions. In fact, what it's
+
+637
+01:04:23,260 --> 01:04:26,140
+ doing is it's setting a virtual position and it's putting a small spring between
+
+638
+01:04:26,140 --> 01:04:31,580
+ your command and the actual. And that's why when you take the dishwasher door,
+
+639
+01:04:31,580 --> 01:04:34,820
+ and you might not know exactly where the dishwasher door is, but you command some
+
+640
+01:04:34,820 --> 01:04:39,780
+ trajectory that's close, it will actually deform. The true, you know, finger
+
+641
+01:04:39,780 --> 01:04:45,900
+ will track, but with some error, the commanded cues in that position. So,
+
+642
+01:04:45,900 --> 01:04:50,780
+ oftentimes the programming paradigm is command what you want. Maybe you go
+
+643
+01:04:50,780 --> 01:04:53,300
+ a little bit more into penetration than you would have otherwise, or
+
+644
+01:04:53,300 --> 01:04:57,140
+ something like that. But you command what you want and the robot will get it done
+
+645
+01:04:57,140 --> 01:05:00,060
+ in a soft way.
+
+646
+01:05:00,060 --> 01:05:08,100
+ I did that for emphasis, you know, so if I made the stiffness higher, then it
+
+647
+01:05:08,100 --> 01:05:12,260
+ would have been pretty, it wouldn't be as far. There are interesting
+
+648
+01:05:12,260 --> 01:05:18,700
+ cases, maybe I should even jump to that, but I'll come back to the hybrid version
+
+649
+01:05:18,700 --> 01:05:25,340
+ in a second here. But let me actually make this point of the best case, the
+
+650
+01:05:25,340 --> 01:05:29,540
+ most interesting case of doing this. Maybe you guys know, do you know the
+
+651
+01:05:29,540 --> 01:05:34,100
+ remote centered compliance story? This is like so clever. It's really kind of what
+
+652
+01:05:34,100 --> 01:05:38,860
+ we just did. There's something called RCC, remote centered compliance. It's one of
+
+653
+01:05:38,860 --> 01:05:43,460
+ the most clever things, I think, in force control, because it's done in hardware.
+
+654
+01:05:43,460 --> 01:05:50,220
+ There's no software, okay? It was done in 1977 at MIT by a guy named Drake. I thought
+
+655
+01:05:50,220 --> 01:05:57,220
+ that was so cool. I didn't know that. That's great. Okay, so this was
+
+656
+01:05:57,220 --> 01:06:00,980
+ about, this was originally motivated by peg and hole tasks. It turns out it's
+
+657
+01:06:00,980 --> 01:06:06,740
+ more generally useful for assembly tasks, okay? So if you think about sticking a
+
+658
+01:06:06,740 --> 01:06:16,900
+ peg in a hole, then a lot of interesting things happen, okay? Certainly you can get
+
+659
+01:06:16,900 --> 01:06:22,340
+ a little bit out of line, right? And things could go bad if you're coming
+
+660
+01:06:22,340 --> 01:06:28,220
+ down with a peg and you're just out of alignment. That could be bad.
+
+661
+01:06:28,220 --> 01:06:34,900
+ But you can play some tricks like chamfering the edges to help a little
+
+662
+01:06:34,900 --> 01:06:40,140
+ bit with that. And people actually have changed the strategies
+
+663
+01:06:40,140 --> 01:06:43,140
+ where you often come down a little bit at an angle, so you have a little bit
+
+664
+01:06:43,140 --> 01:06:48,820
+ more robustness to the exact arrival. But the really nasty thing that can happen
+
+665
+01:06:48,820 --> 01:06:54,500
+ with the peg and hole task is you can be partially inserted but out of alignment.
+
+666
+01:06:54,500 --> 01:07:00,700
+ Let me see if I can draw it with a different color here. And you can get
+
+667
+01:07:00,700 --> 01:07:06,140
+ yourself jammed. Like actually the forces here and the forces here could be large
+
+668
+01:07:06,140 --> 01:07:10,460
+ enough that you can't really even pull yourself out, okay? So this is a really,
+
+669
+01:07:10,460 --> 01:07:16,180
+ this is nasty business. And this is such an important operation for assembly, you
+
+670
+01:07:16,180 --> 01:07:21,620
+ know, for factory robots that it got a lot of attention, you know, in 70s.
+
+671
+01:07:21,620 --> 01:07:25,340
+ Actually it motivated some of the early work in motion planning too. So if you
+
+672
+01:07:25,340 --> 01:07:30,100
+ know Tomas Lozano Perez's early work on configuration space, which is kind of a
+
+673
+01:07:30,100 --> 01:07:34,140
+ core idea, a lot of those initial papers were actually done in the
+
+674
+01:07:34,140 --> 01:07:40,300
+ context of peg and hole insertion, okay? So it motivated AI stuff too. But the one
+
+675
+01:07:40,300 --> 01:07:43,700
+ I'm telling you about here today is let's think about how would you program
+
+676
+01:07:43,700 --> 01:07:47,540
+ a response that you'd want to do here. What's the analogy of that box flip up
+
+677
+01:07:47,540 --> 01:07:56,940
+ for this, okay? It turns out that what you want to do is have a center of
+
+678
+01:07:56,940 --> 01:08:04,940
+ compliance that's somewhere down here instead of somewhere up here, okay? So I
+
+679
+01:08:04,940 --> 01:08:10,300
+ don't know how to make that super clear except maybe I'll use my eraser,
+
+680
+01:08:10,300 --> 01:08:15,980
+ okay? I'd probably get all chalky in the process. So if I've got a some sort of
+
+681
+01:08:15,980 --> 01:08:19,140
+ stiffness in my hand and I'm holding it at the top, which is where the robots
+
+682
+01:08:19,140 --> 01:08:23,100
+ going to be holding it for peg insertion, and I come down at a little angle but
+
+683
+01:08:23,100 --> 01:08:27,900
+ I'm a little bit out of alignment, then what happens? Right, this is me just
+
+684
+01:08:27,900 --> 01:08:33,820
+ trying to move my hand straight down, right? Things go pretty bad. Okay, let's
+
+685
+01:08:33,820 --> 01:08:37,180
+ say I had the center of compliance at the bottom. A little awkward that my hand
+
+686
+01:08:37,180 --> 01:08:41,500
+ would have to be in the hole, okay? But let's say I could do it for a second. I'm
+
+687
+01:08:41,500 --> 01:08:45,620
+ coming in at the same angle going straight down. It lines up beautifully. It
+
+688
+01:08:45,620 --> 01:08:48,300
+ lined up even better with the lighter eraser I had in my office when I was
+
+689
+01:08:48,300 --> 01:08:55,540
+ playing before. Let me try with a lighter eraser. Alright, so if I go straight down
+
+690
+01:08:55,540 --> 01:09:00,860
+ from this, not so good. If I come down straight down like this, it just actually
+
+691
+01:09:00,860 --> 01:09:05,980
+ lines perfectly up, okay? So the stiffness you want is like a torsional stiffness
+
+692
+01:09:05,980 --> 01:09:10,780
+ but not where the hand is. You want to have an effective stiffness down here.
+
+693
+01:09:10,780 --> 01:09:14,020
+ But your hands up here, you really can't put your hand in the hole, that would
+
+694
+01:09:14,020 --> 01:09:19,900
+ just not be good. It turns out there's this super clever mechanism that looks
+
+695
+01:09:19,900 --> 01:09:24,220
+ like that. Oh my god, there's a few of them, right? That was one of the
+
+696
+01:09:24,220 --> 01:09:31,780
+ original ones, which has cantilevered springs up here. See, it looks, it has
+
+697
+01:09:31,780 --> 01:09:36,980
+ these springs up here, the point of the tool comes in here, and this, it
+
+698
+01:09:36,980 --> 01:09:41,620
+ basically is this elaborate spring mechanism that makes the effective
+
+699
+01:09:41,620 --> 01:09:46,260
+ center of compliance. This is the instance center side of beam
+
+700
+01:09:46,260 --> 01:09:51,660
+ deflections and the center of compliance ends up down here. It gives a remote
+
+701
+01:09:51,660 --> 01:10:12,900
+ center of compliance. So this is far in the regime of, you know, I said most of
+
+702
+01:10:12,900 --> 01:10:16,340
+ the time you're just doing virtual things that are small. This is far
+
+703
+01:10:16,340 --> 01:10:20,300
+ in the regime of being very clever with where you put that virtual force, and so
+
+704
+01:10:20,300 --> 01:10:25,860
+ there are cases where you can do that. And this means that I go in and I jam
+
+705
+01:10:25,860 --> 01:10:32,860
+ my pin down, it's a slightly wrong location, and the mechanism with
+
+706
+01:10:32,860 --> 01:10:35,380
+ effectively infinite bandwidth, you don't have to, people tried to do this in
+
+707
+01:10:35,380 --> 01:10:39,700
+ software, you could try to do this in software, but the software is going to be
+
+708
+01:10:39,700 --> 01:10:43,180
+ running on a control system which reads the sensors at some rate, the
+
+709
+01:10:43,180 --> 01:10:46,780
+ actuators can only move at some rate. If you do it with physical springs, it's
+
+710
+01:10:46,780 --> 01:10:52,140
+ effectively, you know, arbitrarily fast. Physics is doing the work for you, and it
+
+711
+01:10:52,140 --> 01:10:57,380
+ can adjust itself and snap itself into place. And people really do
+
+712
+01:10:57,380 --> 01:11:07,260
+ this, like when you're jamming parts together, this is a physical one. This is
+
+713
+01:11:07,260 --> 01:11:11,820
+ mating, so there's some pins on the bottom and there's some holes on
+
+714
+01:11:11,820 --> 01:11:17,900
+ this top, and they have to align it, and the robot is not doing super detailed
+
+715
+01:11:17,900 --> 01:11:22,300
+ visual servoing, it's just kind of jamming it down, and the remote center
+
+716
+01:11:22,300 --> 01:11:30,140
+ compliance is doing the work. It's such a clever idea, so good, put it in hardware.
+
+717
+01:11:33,340 --> 01:11:39,340
+ Okay, so that's on the extreme of being very clever with it.
+
+718
+01:11:39,340 --> 01:11:48,300
+ All right, so but overall, the message of the lecture, I hope, is that you
+
+719
+01:11:48,300 --> 01:11:52,740
+ realize that sometimes it's more natural to talk to your robot through
+
+720
+01:11:52,740 --> 01:11:56,380
+ the language of forces than through the language of positions. That's true, by the
+
+721
+01:11:56,380 --> 01:12:01,260
+ way, if you care about reinforcement learning or supervised learning, you know,
+
+722
+01:12:01,260 --> 01:12:06,020
+ behavior cloning kind of learning, there are some tasks that you would want
+
+723
+01:12:06,020 --> 01:12:09,820
+ your neural network to output forces instead of outputting positions, right?
+
+724
+01:12:09,820 --> 01:12:16,340
+ This is a general concept, and people, you know, there's papers like, oh, I
+
+725
+01:12:16,340 --> 01:12:18,860
+ switched to impedance control mode on the output and it learns four times
+
+726
+01:12:18,860 --> 01:12:26,700
+ faster. Depends on the task, but that can happen.
+
+727
+01:12:29,820 --> 01:12:36,060
+ Okay, so the stiffness control, the impedance control, is one way to
+
+728
+01:12:36,060 --> 01:12:39,540
+ just say I'm not going to command forces directly, I'm going to switch to
+
+729
+01:12:39,540 --> 01:12:45,060
+ commanding virtual stiffness, but you don't have to, you can mix and mash these
+
+730
+01:12:45,060 --> 01:12:50,740
+ different ideas. So the book example was actually hybrid force control, where I
+
+731
+01:12:50,740 --> 01:12:54,580
+ cared about regulating the forces directly. I actually commanded force in
+
+732
+01:12:54,580 --> 01:12:58,580
+ the vertical position, because I wanted to be in that friction cone sweet spot,
+
+733
+01:12:58,580 --> 01:13:03,780
+ okay? But then for sliding, I wanted to have position control mode, because I
+
+734
+01:13:03,780 --> 01:13:07,060
+ wanted to control where the hand was going to go. And you'll do that, you'll
+
+735
+01:13:07,060 --> 01:13:13,460
+ work through that example on the homework. Okay, but instead, just to give
+
+736
+01:13:13,460 --> 01:13:22,620
+ you a couple different ways that you could do hybrid force or stiffness
+
+737
+01:13:22,620 --> 01:13:33,180
+ control, it's called-- it's often called force position control, but let's stick
+
+738
+01:13:33,180 --> 01:13:40,900
+ with the theme here. So what if I did in my-- this is my xy components here-- what
+
+739
+01:13:40,900 --> 01:13:45,820
+ if my x-axis, I wanted to do position control? So I'll program the stiffness in
+
+740
+01:13:45,820 --> 01:13:56,620
+ this. It's on this side, it's got to be like this, x desired minus x plus kd, x
+
+741
+01:13:56,620 --> 01:14:04,020
+ dot desired minus x dot, for instance. And on the x-axis, I'll go ahead and
+
+742
+01:14:04,020 --> 01:14:18,260
+ command the force desired in just-- sorry, in the z-axis. And if I want to
+
+743
+01:14:18,260 --> 01:14:25,020
+ command it like this, then I put a minus inside, okay? So that's roughly what
+
+744
+01:14:25,020 --> 01:14:28,980
+ happens in some of these hybrid, where you want to-- in one axis, you're going to
+
+745
+01:14:28,980 --> 01:14:32,260
+ act like a position source, and the other axis you'll act like a force controller.
+
+746
+01:14:32,260 --> 01:14:40,620
+ Okay? Now you don't have to choose world X and world Y, you could do this in any
+
+747
+01:14:40,620 --> 01:14:46,500
+ frame you want, multiply it by a rotation matrix in front, do your spatial algebra,
+
+748
+01:14:46,500 --> 01:14:52,780
+ and achieve forces that are, for instance, if you are welding that--
+
+749
+01:14:52,780 --> 01:14:56,100
+ following the wall, for instance, maybe you want to always in the
+
+750
+01:14:56,100 --> 01:14:59,740
+ normal direction, your current normal direction, you want to act like a force
+
+751
+01:14:59,740 --> 01:15:03,740
+ and in the horizontal, you know, tangential direction, you could act like
+
+752
+01:15:03,740 --> 01:15:08,060
+ a position, for instance. Those are these kind of things. Okay, so that's a general
+
+753
+01:15:08,060 --> 01:15:17,180
+ recipe. It's also not the only recipe. You can also mix them, sort of-- oftentimes
+
+754
+01:15:17,180 --> 01:15:21,820
+ you'll actually just mix them all together, right? So you could also do u
+
+755
+01:15:21,820 --> 01:15:29,900
+ equals negative mg plus-- maybe if I'm not using scalars anymore, I'll make it a
+
+756
+01:15:29,900 --> 01:15:58,020
+ capital-- Okay, so you can have a little bit of this and a little bit of that, and
+
+757
+01:15:58,020 --> 01:16:02,340
+ if you turn up kp-- if you turn kp down to zero, then you could be almost
+
+758
+01:16:02,340 --> 01:16:06,700
+ completely in, you know, if these two coefficients, these gains, are zero, you
+
+759
+01:16:06,700 --> 01:16:10,860
+ can be acting like a force source, and if they're turned up, then you can act more
+
+760
+01:16:10,860 --> 01:16:15,140
+ like a position source, and you keep that command small. That's another way to mix
+
+761
+01:16:15,140 --> 01:16:18,860
+ them. In fact, this is what-- this is a common interface for the
+
+762
+01:16:18,860 --> 01:16:23,420
+ panda or for the iwa, and this would be called-- typically called like a
+
+763
+01:16:23,420 --> 01:16:39,500
+ feed-forward torque or force. An extra command to send down, but you, you know,
+
+764
+01:16:39,500 --> 01:16:48,860
+ often primarily interact through the stiffness controller. Okay, so this is--
+
+765
+01:16:48,860 --> 01:16:52,620
+ this is actually great in some applications, but this is just maybe the
+
+766
+01:16:52,620 --> 01:16:56,740
+ most-- the most general way to write it, if you will. Certainly I could produce
+
+767
+01:16:56,740 --> 01:17:06,620
+ this with this with the proper choices of kp and kd and f. Yeah? Okay, so next time
+
+768
+01:17:06,620 --> 01:17:12,620
+ we'll tell you about-- we're gonna stop assuming a point robot, but that's a
+
+769
+01:17:12,620 --> 01:17:18,100
+ pretty good stopping point. Okay, see you Thursday.
+
+770
+01:17:40,860 --> 01:17:43,860
+ Hi.
+
+771
+01:17:43,860 --> 01:17:47,860
+ Sure, sure, sure.
+
+772
+01:17:47,860 --> 01:17:50,300
+ do the picking up with other.
+

@@ -1,0 +1,1678 @@
+ OK, welcome back, everybody.
+ So today, I want to talk a bit about hardware.
+ Most of the class is going to be about software and autonomy
+ and the higher level stack.
+ But just to make sure we lay the groundwork
+ and understand what we're going to be using,
+ I thought I'd spend a day talking
+ a little bit about some of the details of the hardware.
+ Now, someone asked last time, what's an EWA,
+ which is a reasonable question.
+ I'm sorry I keep using EWA as a thing people know.
+ I figured the best way would just be to bring one.
+ So here you go.
+ I also heard that it's hard to see from the back.
+ So this will give you a sense of how frickin' heavy the EWA is.
+ This is an EWA here.
+ It's a beautiful piece of machinery.
+ You'll notice it doesn't come with a hand by default.
+ It's bring your own hand.
+ And we'll talk about hands a little bit later.
+ And I brought a bunch of hardware examples
+ of some of the cool hands out there.
+ This is what an EWA is.
+ This is one of the many robot arms that you can buy.
+ And you'll see in research labs these days,
+ research groups working on manipulation.
+ And there's a couple of reasons why this is a good choice,
+ I think, for many research projects and manipulation.
+ So maybe a bit on the high end, expensive version,
+ but solid hardware that will continue to work for you,
+ even if you have a bug in your research code
+ and slam it into a table or something like that.
+ OK, so we'll talk a little bit about what makes
+ this EWA tick.
+ And then towards the end, we'll talk more
+ about all the dexterous hands.
+ And I'll make sure that I'll wheel this up
+ to the back or something when we're done.
+ And people can check them out.
+ And you have to be a little careful with it.
+ The bumps on the way over loosened a couple screws,
+ and your fingers might fall off.
+ But if you're gentle, then you can check them out.
+ All right, so let's get you a robot.
+ That's the goal for today.
+ We'll talk mostly about robot arms.
+ The hardware does matter.
+ Your choice of what arm to sit next to and program or purchase
+ or whatever will matter.
+ Your ability to do certain tasks will depend
+ on the hardware capabilities.
+ We're going to often use the EWA, but I'm trying to expand.
+ I'd like to be at the point where--
+ I don't know, when I was young, we
+ used to play these games like MechWarrior,
+ where you start off and there's a robot,
+ and you get to pick which bit you want here.
+ And here, and you get the little display.
+ I want the class to start off where there's like a--
+ pick your robot, and you pick your robot.
+ And then you go through, and you make all the decisions
+ and use that for the entire class.
+ Most of my code uses EWA right now.
+ It's not very baked in.
+ If you just change it for a panda or something like this,
+ almost all the demos would work.
+ But you'd find a few corner cases where it doesn't work.
+ OK, so we'll talk about that.
+ And I'll tell you why that's the arm of choice for now.
+ Then we'll talk about how to simulate the EWA, just
+ at the first level of detail.
+ And I guess the biggest takeaway there
+ is that the physics of the EWA is not
+ enough to simulate the EWA.
+ The fact that there's joints here,
+ and it's actually not falling down passively
+ already tells you that there's something else going on.
+ And I didn't carry the control cabinet,
+ but there's a whole control cabinet
+ that comes with the EWA that you kind of have to simulate
+ if you want to know what your commands are
+ going to do between the place where you program your autonomy
+ and send it to the robot.
+ Just give me a second.
+ And then when we get towards the end,
+ we'll talk about, like I said, robot hands.
+ There's a particular hand we'll use the most.
+ But again, it's not exclusive, and I brought
+ a bunch of different varieties.
+ Yes?
+ [INAUDIBLE]
+ Yeah, yeah.
+ So you're going to see that in great deal.
+ Yep.
+ Not directly.
+ We don't run their code in the middle of the simulation.
+ We don't do the hardware in the loop version.
+ You could.
+ We haven't done that as an intermediate step.
+ OK.
+ So again, when you see things in class,
+ I almost always try to push them, the demos,
+ to DeepNote.
+ So if you have been looking at the notes,
+ you might have seen it already.
+ Some of the demos I'll do today, you
+ could just get them yourself.
+ If you're on the corresponding chapter,
+ you click Launch in DeepNote, and you
+ should be able to run it, just like your problem
+ sets that you're starting on.
+ Oh, I had a big note here to say,
+ make sure you've signed up for Piazza.
+ If you're an undergrad doing the CIM,
+ make sure you've signed up for Canvas.
+ And in particular, you should be signing up
+ for the sections for the CIM.
+ We need to lock that in so that people
+ know which sections to go to on Friday
+ if you're the undergrad in CIM.
+ And one thought-- it was mentioned in the posts,
+ but one thing to think about--
+ I know it's impossible to ask you to pick your project groups
+ now.
+ But if you happen to know who you're
+ going to work with or something, that
+ would be ideal if you were in the same section.
+ We can maybe try to shuffle things around a little bit
+ later, but ideally, it's easier if everybody's
+ in the same section.
+ But we're understanding because you can't possibly
+ know that completely yet.
+ OK.
+ And then one last starting point.
+ I do think that understanding the hardware
+ is valuable in just not only, like I said, what you buy
+ and what you can do, but I think having
+ a detailed understanding of the algorithms that
+ are running this hardware and the hardware underneath it
+ will change the way you write your code.
+ There's kind of a dream, which I share the dream,
+ that when our machine learning tools are good enough,
+ then you can just get crappy hardware,
+ and the machine learning will paper over all the details
+ for you, and everything will work beautifully.
+ Maybe we're approaching that, but we're not there yet.
+ And I think the labs that are doing
+ the most impressive things on real robots
+ with AI and autonomy have often spent a lot of time
+ mastering what's happening at the low-level control stack.
+ And they're not sending current commands to the motor.
+ They actually have a deep understanding
+ of the low-level control that's running at high frequencies
+ and stuff like that.
+ So this is good stuff to know, even if you only
+ care about higher-level ideas.
+ OK, we've had robot arms for a very long time.
+ They used to look a little bit more like this.
+ They used to be--
+ and they still do.
+ I mean, there's still lots of places
+ where you'll see robot arms like this, and factories
+ or the like, and they're often behind cages
+ or in rooms by themselves doing lots
+ of incredibly useful work.
+ But the robots have been changing over the last few
+ years, a decade maybe.
+ And we're working towards this vision of co-bots,
+ where robots that are working much closer
+ to people, alongside people.
+ This was kind of a carefully chosen glamour
+ shot for Rod Brooks back at the time
+ when they were doing rethink robotics.
+ And the point was that you shouldn't
+ have to be afraid of having the robot drape its arms over you,
+ which was quite a statement at the time.
+ And there's some important differences
+ on the applications on the left and the hardware that
+ was generated by those applications,
+ and the applications on the right, which Rod, by the way,
+ started that company saying, mom and pop own a bakery,
+ and they want to be able to just unpack a robot
+ and do some very simple things.
+ And anybody can program a robot very simply,
+ and it's going to be working alongside people.
+ That was the vision for these kind of robots.
+ And increasingly, the field has visions
+ of getting robots in every home.
+ And that, whereas the applications on the left,
+ you want robots that are strong enough to lift a car
+ and move extremely fast and are extremely precise.
+ And that's different than robots that you're going to let hug
+ you.
+ And so the actual hardware underneath these things
+ have changed.
+ Maybe we're working towards this sort of vision of Baymax,
+ where you really want to cuddle with the robot.
+ We'll see.
+ But if you go into a research lab today in industry
+ or in academia that's working on manipulation,
+ then there's kind of a standard cast of characters
+ that you'll see in terms of robots.
+ You'll see universal robots.
+ There's little ones, and there's big ones,
+ and they have different payloads and the like.
+ You can see rods rethink.
+ The company isn't making the robot anymore,
+ but they're still around.
+ You'll see this Konova Jayco is a great arm that
+ was originally marketed for being
+ on the end of a wheelchair.
+ So it's actually-- one of its incredible selling points
+ is that it doesn't have a control cabinet
+ you have to carry around.
+ It's actually got all its electronics
+ embedded in the bottom of the arm.
+ So it's more mobile than most of them.
+ And then the Ewa you see.
+ Panda is a newer version of the Ewa in some sense.
+ The people that worked on the Ewa
+ were involved in starting the company Frank Amica that
+ made Panda and makes Panda.
+ ABB is a more traditional robotic arm manufacturer.
+ They build some of the big robots
+ that you see in the factories, but they've also
+ started making Cobots, these robots that
+ are a little bit more huggable.
+ That's too much.
+ But OK, so before I go there, so there's
+ a couple of things that distinguish these newer
+ robots from the big ones, like I said.
+ So precision versus huggability.
+ But what makes something more huggable?
+ So if you take one of the big traditional robots
+ and if it bumps into something it didn't expect,
+ it actually won't even have sensors typically
+ that would detect these kind of failures.
+ So a lot of times the only sensors
+ that an industrial robotic arm will have
+ will be just joint position sensors.
+ So you're sending joint commands to the robot or trajectories
+ to the robot.
+ It's trying to execute them with very high precision.
+ And if it deviates at all from that desired trajectory,
+ it will fault. It'll say something went horribly wrong.
+ I don't want to hurt anybody.
+ I'm going to turn off.
+ System error.
+ And you have to reboot.
+ And that makes them completely impractical for use
+ in the home, because you're going
+ to bump into stuff in the home.
+ Even if you have--
+ the reason I put this dishwasher example in again.
+ So just take the example of the robot opening the dishwasher,
+ which I showed you before.
+ In the home, you probably don't know exactly
+ where the dishwasher is.
+ You probably don't know exactly where the robot is
+ relative to the dishwasher.
+ You probably don't know exactly where the hinge joint is.
+ So if you want to do this sort of opening, which
+ is moving along a constrained motion defined
+ by the hinge of the dishwasher door,
+ if you have any calibration error, uncertainty error
+ in that, and you're trying to find a very rigid trajectory,
+ the robot will simply fault. You probably
+ can't do this task in a robust sense
+ with a robot that's trying to do exquisite position control.
+ It's just the wrong robot for the job.
+ It was built for different requirements.
+ OK, so what's happened is we've seen
+ a progression of those original robots
+ towards things that can sense a little bit more of the world.
+ So one of the first things you'll see
+ is in one of the universal robots, for instance,
+ you'll see force torque sensors at the wrist.
+ That's a standard thing.
+ You can take a traditional robot arm,
+ put an extra sensor between the arm and the hand
+ that'll measure contact force at that joint or torques.
+ And then you can write your controllers
+ to be a little bit more informed about,
+ I made a contact with the world somewhere in a way
+ I didn't expect, and react to that.
+ But that's a pretty common setup.
+ There's a few arms out there that say that's not enough,
+ that I actually need to be able to sense contact anywhere
+ I'm along my arm in some sense.
+ And the way to do that is to add more instrumentation
+ to the joints so that you could potentially
+ measure a contact force or torque, an unexpected torque,
+ even at the joints all the way up.
+ Because the wrist is only going to get it
+ if you make a contact at the hand.
+ If you bump your elbow into something,
+ that's not going to be detected by the wrist force torque
+ sensor.
+ So the original arms--
+ I'll start writing down some few words, key words here.
+ So original arms had joint position and/or velocity
+ sensors.
+ And then you could start adding on force torque sensors, often
+ at the wrist.
+ Quick check.
+ Someone in the back, is that large enough?
+ Or should I write bigger?
+ OK, I get a few thumbs up.
+ That's good.
+ I'll still try to write bigger because I got some feedback
+ saying I should write bigger.
+ But thank you for the confirmation.
+ Good.
+ And then if you want even more than that,
+ then you could try to do joint torque sensors.
+ And conceptually, what that's going to allow you to do
+ is if I bump into something with my upper arm,
+ then I have a chance of detecting
+ that there was an unexpected torque or wrench
+ at the joints.
+ Even more than that, you'll see the Baymax view
+ is maybe to have--
+ that's the big Disney inflatable robot.
+ Maybe we'll eventually have tactile skin.
+ And there's a lot of groups working hard on that.
+ And there are fundamental limits to what you can do
+ with joint torque sensing only.
+ And at some point, if you want to be
+ able to understand more about the contact you're making,
+ you actually do need to have something more like a skin.
+ Yes?
+ [INAUDIBLE]
+ So there's lots of different ways people--
+ the question is, what does a tactile skin consist of?
+ There's lots of different ways people do it.
+ Sometimes people will just have arrays
+ of loads of single-axis force sensors, for instance,
+ or even binary sensors.
+ Sometimes they'll have an entire camera under the skin.
+ And you'll try to actually measure
+ deflection of a soft membrane.
+ That would be the other extreme.
+ People call them visual tactile sensors.
+ If we get to it and towards the end,
+ we could have a boutique lecture on tactile sensing
+ and get into some of the details of that.
+ Let me go behind you first.
+ Yeah?
+ [INAUDIBLE]
+ Good.
+ So the question is, what would you use?
+ I used as an example that the torque sensor would
+ be if you bumped into something.
+ But if I wanted to pick something up and estimate
+ its weight, for instance, that would be another application.
+ Or if I was already in contact, maybe you
+ could imagine an example of Tommy
+ carrying one side of a table and the robot carrying
+ the other side of the table, and we're working together,
+ then the contact forces that we're exchanging
+ that I would want to measure through some interface
+ like that could be very important.
+ Yes?
+ [INAUDIBLE]
+ Yeah, so he asked about texture sensing.
+ So certainly in the hand, people are
+ investing in these visual tactile sensors.
+ And some of them are amazing, that you can actually
+ see the prints.
+ People, when they measure things with their sensors,
+ they don't have cameras.
+ And I don't have a camera in my finger,
+ but I do have a different set of sensors
+ that measure vibrations.
+ And we can talk about those when we
+ get to different mechanovibratory sensors
+ with the finger.
+ OK, so I would say most robots that you-- just by quantity,
+ like the number of robots that have been built
+ are more like this joint position sensor only,
+ primarily.
+ And then we see a lot of joint force-torque sensors.
+ And we're getting now--
+ EWA is one of the examples of a system that
+ went a little extra way to provide
+ torque sensing at the joint.
+ And we'll talk about how to do that.
+ Yes?
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ That's an extremely good question.
+ So if I measure a force or torque, especially
+ a point force or torque, then that's not enough to decide if
+ I'm--
+ it could be a person that's trying to command me.
+ I should push this way.
+ Or it could be a wall that is immobile.
+ And I don't have enough information just from that.
+ So you need some greater situational awareness
+ of the world in order to decide what to do with it.
+ I think a very standard thing to do with it is if you hit--
+ if you sense torque you didn't expect,
+ you stop just so you have a safety case.
+ You don't hurt somebody.
+ But doing something better once you've made unexpected contact
+ is a dream.
+ And there's also, I think, another point to your question
+ is having just a point sensor is often not enough to know--
+ if you just have a few joint-torque sensors,
+ there's a limited-- there's information limits
+ of what you can tell.
+ If someone was pushing you in two places,
+ you might not be able to distinguish that
+ between being pushed in one place
+ or being pushed by a surface versus a point.
+ There's kind of an information bottleneck there.
+ Yeah?
+ [INAUDIBLE]
+ For sure.
+ Yeah, that'll affect the way joint-torque sensors are also
+ used in control.
+ Repeat the question.
+ Good.
+ OK, so because these are so common,
+ and this is less common as we talk about control,
+ you'll see that most robots today--
+ most robot arms, let's say--
+ are position-controlled, as opposed to torque-controlled.
+ And that's a big difference in the way
+ that we interact with the robot.
+ It's actually fairly subtle why that is.
+ And I think it's worth just saying it once for you.
+ This is like if you want to impress your friends
+ at a party, and you're talking about joint-controlled robots,
+ this would be good for that moment.
+ Why are most robots position-controlled?
+ It's a subtle thing.
+ A lot of people know that they're mostly position-controlled,
+ but not many people know why.
+ And here's why it's a little subtle,
+ is because most robots use electric motors.
+ Electric motors, we know that the current we put in
+ to an electric motor is approximately proportional
+ to the torque that comes out.
+ And the voltage we put in is proportional to the speed
+ we get out.
+ So current in is related to--
+ I'll say proportional to--
+ it's obviously more complicated than this in general,
+ but is related to torque.
+ And voltage is related to speed.
+ So if I know how to do torque--
+ or current control, I know a little bit about electronics.
+ We can do current control.
+ That's not so hard.
+ Why can't I do torque control?
+ Yeah, this is like--
+ yeah?
+ Yes?
+ OK, so even the electronics could be a bottleneck there.
+ It's true.
+ And in fact, people actually send PWM commands down
+ to the motor for efficiency type reasons and robustness reasons.
+ That's true.
+ But even at the-- there's a mechanics reason, too.
+ Yeah?
+ No, I think I could send current commands.
+ I think that's not my reason.
+ Yeah?
+ [INAUDIBLE]
+ OK, that's a great point.
+ So torque talks-- it's talking about accelerations and motion.
+ So in both cases, whether we choose
+ to send command speed or torque or position,
+ we're going to need some sort of feedback loop on the outside
+ in order to accomplish, like you say,
+ both motions, rapid motions and sort of standing still.
+ So in either case, we will need a feedback loop.
+ And you're right.
+ I haven't addressed that part of it yet.
+ Let me tell you my reason.
+ These are all good reasons.
+ So the problem is that electric motors like to move fast.
+ Robots-- I mean, I like fast robots.
+ But this is like thousands of RPMs, potentially.
+ I don't want EWA to move at thousands of RPMs.
+ Electric motors tend to produce small torque.
+ They're most efficient in the high speed, low torque regime.
+ And that's not what we want here.
+ We want high torque, low speed.
+ So these things are high speed, low torque.
+ And I want my robot to be lower speed, higher torque.
+ So almost always, there's a big transmission
+ between the electric motor and the world.
+ And those transmissions are complicated and lossy and messy.
+ And they break.
+ So you can do that with pulleys.
+ You can do that with more complicated things.
+ But if you were to look inside here--
+ and we will look inside here in a minute--
+ you're going to see complicated transmissions
+ with harmonic drives or planetary drives that
+ have gears meshing and lots of messy stuff
+ happening in the middle.
+ And the conventional wisdom is because
+ of the friction and compliance--
+ so gears do things.
+ Like when you put them under load--
+ so the best case is you just have two gears
+ and they're moving along and everybody's happy.
+ But already, if you just change your mind
+ and move the other direction, there's always a little gap.
+ That's called backlash.
+ So you get a little bit of a backlash when you go.
+ That's the first thing.
+ When you put them under load, the teeth of your gears
+ are actually going to flex and bend.
+ And then there's all kinds of friction happening inside here.
+ So the conventional wisdom is that even though you
+ can control the torque on the motor,
+ that does not map nicely to the torque
+ on the other side of the transmission.
+ So if you want to control the torque at the joints,
+ you can't just do that from the current.
+ So how do you get around that messy transmission?
+ You put a sensor on the other side,
+ on the robot side, the output shaft.
+ And you try to close a feedback loop.
+ So instead of commanding the motor side current or velocity,
+ you'll try to command the robot side velocity or torque.
+ And it's just much easier to put a position sensor
+ on the output shaft of the robot.
+ So you get big transmissions.
+ Current is no longer proportional to torque,
+ robot torque.
+ So the solution to that is robot joint side sensing, typically
+ position sensors.
+ And then we start at our first level of feedback control.
+ We'll close a loop that sends currents to the motor
+ in order to drive the output shaft to the desired position,
+ velocity, whatever.
+ And the most common form of that is a position controller.
+ That you'll see on a lot of robots
+ would be a PID control, proportional integral
+ derivative control.
+ How many people have seen PID control?
+ You don't have to.
+ Yeah.
+ Good.
+ Yeah.
+ So it's a good chance for me to just introduce my notation
+ real quick here.
+ So we're going to use Q for the joint angles.
+ [WRITING ON BOARD]
+ In general, Q will be a vector of all the joint angles.
+ But in a single motor case, we'll
+ just have Q be a scalar for one joint angle.
+ I'll say Q desired is my desired joint angle.
+ And then I'll use dot notation for derivatives.
+ This would be the joint velocity.
+ It's the time derivative of Q. Yes?
+ [INAUDIBLE]
+ That's your choice.
+ But typically, it's internal coordinates,
+ like a relative coordinate.
+ Yeah?
+ So a solution here would be to command the torque of the motor
+ even if you don't know the details of the transmission,
+ a pretty simple feedback control loop that does something
+ like-- this would be a gain.
+ Q desired minus Q. This would be a proportional gain.
+ [WRITING ON BOARD]
+ Which says if the desired is higher than the--
+ this is typically a positive number.
+ It's always a positive number, I guess.
+ When this is higher than this, then I
+ want to just add more current, more torque at my motor,
+ on the motor side.
+ I can control that.
+ That's the simplest one.
+ So if I'm trying to be here, I'm actually here.
+ I have to push harder.
+ You would typically augment this with the integral
+ and the derivative terms.
+ So you put an integral in here from 0 to t,
+ dt of Q desired minus Q. That's saying that--
+ so the reason you'd need to do that, for instance,
+ is let's say I'm trying to get here, and I'm actually here.
+ Gravity is applying a torque against me.
+ So even if I just had a proportional control,
+ then it will come to a steady state
+ wherever the command I'm sending exactly balances gravity.
+ But it's not actually going to have zero error.
+ So to compensate for the DC term, the constant terms
+ that you weren't modeling, you put in an integral term
+ that will zero that out.
+ And then you can do a little--
+ I've got my Ki.
+ That's the integral gain.
+ And then you would typically put a derivative term on here,
+ too.
+ That allows you to track things at higher speeds a little
+ better.
+ Yes?
+ [INAUDIBLE]
+ So the question is, do you change these gains
+ while the robot's moving?
+ And the surprising answer is no, almost never.
+ But there's actually a very subtle reason for that.
+ And I was going to say that.
+ So it turns out that PID control works shockingly well
+ for robots.
+ And it's deployed often.
+ And you typically just pick KP, Ki, and KD once in the factory,
+ and you let it go.
+ And that's surprising to me.
+ When I really stopped and thought about that,
+ I was like, wait a second.
+ How does that even work?
+ Because you would think if I'm holding a jug of milk
+ at full extension, then I'd be at a very different dynamic
+ regime than if I'm having my arm down.
+ The loads that the robot experiences
+ are very configuration dependent.
+ Even if I'm just holding my arm out with-- forget
+ about the jug of milk.
+ Just holding my arm out is requiring very different torques
+ than what I'm doing here.
+ Actually, some robots will overheat.
+ If you take too long with your planning algorithm
+ with your robot like this, you might see smoke coming out.
+ This robot and a lot of the more expensive robots
+ actually put brakes in every joint.
+ So when you're not moving, it'll actually
+ turn the brakes on just so it doesn't heat up its motors.
+ But what's surprising is even though the dynamic effects are
+ very different, you can often get away
+ with KP and KI and KD being fixed.
+ So what's the alternative?
+ So a lot of times people-- in other fields,
+ you'll see things like gain scheduled control,
+ where you'd have a different-- in different operating modes,
+ you might use different gains.
+ Like in an aircraft doing interesting things,
+ you'd expect to see a gain scheduled controller.
+ So it's actually pretty subtle why that works.
+ And the answer may be a problem for some of you
+ on your homework, but I'll give you a quick view of it here.
+ Is this sort of important thing called reflected inertia.
+ [VIDEO PLAYBACK]
+ So if you think about--
+ I mean, I guess you've all played with pulleys
+ over your life, right?
+ The Museum of Science, you have the little kid
+ pulled down the enormous weight because of a pulley, right?
+ And I guess we've got a type of pulley
+ even in this animation there.
+ Pulleys are trading speed for torque.
+ So what's happening-- and we're doing the same thing
+ in this joint, right?
+ So we have a motor moving at high speeds
+ now in order for the output to be moving small.
+ And a little bit of torque here acts like a lot
+ of torque on the other side.
+ But that goes both ways.
+ That goes both ways.
+ And it turns out that the relationship,
+ if you think about it, you work it through,
+ which it's worked through in the notes,
+ is actually that the reflected inertia of the motor--
+ so the motor has a little bit of magnets in it.
+ Typically, electric motors will be made with magnets
+ like this.
+ And those magnets are moving around.
+ So there's some inertia.
+ This is reminding you all of your physics backgrounds,
+ right?
+ There's some inertia inside the motor.
+ And it's moving around.
+ But it's moving around wicked fast.
+ And it's being scaled by the transmission.
+ So actually, the inertia of the motor
+ that is felt on the robot side is actually
+ multiplied-- the rotor inertia times the squared of the gear
+ ratio.
+ And similarly, if you're looking from the view of the motor
+ on the other side of the transmission,
+ the robot has inertia.
+ But that inertia is actually shrunk
+ by the squared of the gear ratio in the other direction
+ when you get to the motor.
+ So the motor, shockingly, even though these are typically
+ tiny motors and big, heavy robots moving things around,
+ the motor has to do as much work or more work sometimes
+ just to move itself around at high speeds
+ than it has to move the robot around at high speeds
+ or low speeds.
+ That effect, when you multiply--
+ so the gear ratios in these transmissions on this robot,
+ for instance, is 160 to 1.
+ 160 squared is a big number.
+ And you take your inertia of your motor,
+ even though that's a small number to start with,
+ it is comparable to the inertias of the robot.
+ In fact, I think we worked it out at one point for the EWA.
+ It's like, I don't know, 85% of the inertia of a link
+ comes from--
+ don't quote me on that number.
+ But it's a surprisingly big number
+ that comes from moving the motor around instead
+ of moving the robot around.
+ That's a counterintuitive maybe effect
+ of having a big transmission.
+ And what that means is when the motor is doing all its work,
+ it's sort of irrelevant where the arm is, right?
+ Or if it's holding something or not holding something.
+ You'll feel it a bit.
+ But you feel it just as much just moving those motors around.
+ And it has an effect of making it so that you can--
+ when you're designing, you're tuning in your controllers,
+ you don't have to worry too much about the configuration
+ of the robot.
+ Did I say that clearly enough?
+ I could say it in equations.
+ But I think that's the main point.
+ Question about that?
+ Yeah.
+ Yeah, so independent is a little too strong.
+ You can still heat up your motors.
+ I did say that.
+ But the motor inertia is unaffected by the weight.
+ The rotor inertia is unaffected by the weight.
+ And the weight that you're carrying
+ gets scaled by the transmission squared on the motor side.
+ Thank you for asking that.
+ OK, so there's actually been a movement, an effort
+ over the years to try to not do that.
+ Yeah, please.
+ [INAUDIBLE]
+ Yeah, so that's a great question.
+ So would you want to implement the control gains
+ in electronics, for instance, or in mechanics?
+ But analog electronics would often
+ be a great way to implement this.
+ Although computers are so fast these days,
+ the sample frequency of a digital implementation
+ of that, which can be a little bit more configurable,
+ they're running at 10 kilohertz on a robot, and it's fine.
+ The inertial time constants are low
+ relative to the 10 kilohertz.
+ That's well over your mechanical frequency.
+ So I'd say most people have switched to digital
+ and said that's good.
+ But definitely, when we were slower,
+ it was like, let's think about doing analog versions of it.
+ That's a great question.
+ So there was a movement that was popularized at MIT
+ many years ago, actually.
+ This was recognizing the equations of motion of my arm,
+ where the arm actually gets affected by the gear ratio
+ squared.
+ So those are roughly the equations
+ I would have written if I had written it all out.
+ And they said, well, what about not using--
+ what would it look like if we built robots that
+ didn't have big transmissions?
+ Let's say-- we'll call a direct drive robot one that's
+ like gear ratio 10 or less.
+ Let's say maybe 20 or something.
+ OK, then who's selling?
+ We'll call those direct drive robots.
+ And it was interesting.
+ Back in the day, the direct drive robots
+ had these ginormous motors.
+ It was like a little arm with a big motor attached.
+ And that was good.
+ But now you'll see them-- they're more common.
+ We've gotten better with our motors.
+ We've got outrunner motors are kind of a cool thing.
+ It started with quadrotors and airplanes and stuff.
+ Now they're more popular in robots.
+ So like Songbei's Cheetah Lab, for instance,
+ does things close to direct drive
+ now on a lot of his Cheetah robots.
+ And that's a more viable alternative than it used to be.
+ If you can get rid of the transmission,
+ then you can think about doing torque sensing or torque
+ control by looking at the current on the motor side,
+ which is powerful.
+ But there's a reason we use gears.
+ I mean, motors are happy at high speeds.
+ So-- OK.
+ Yes?
+ [INAUDIBLE]
+ For sure.
+ The torque sensing robots also have position sensing.
+ Yes.
+ Position sensors are like commodities.
+ So almost every robot has it.
+ OK.
+ So let's just take a second to look at our family of robot
+ arms.
+ So this notebook is there for you.
+ This is our EWA.
+ And you can play with it, all the joint angles,
+ slide them around and see what happens.
+ Whoops, I could print it, but I don't want to do that.
+ OK, but like I said, you can also
+ do things like look at the inertial properties
+ of the robot.
+ So here's the inertia ellipses of that robot.
+ This is just of the actual links of the robot.
+ So what is an inertial visualization of the robot?
+ Like, what does that mean?
+ So robots are-- this robot in particular
+ is very curvy and complicated.
+ It's hard to do inertial computations in your head.
+ OK.
+ So a standard thing to do would be
+ to take each link of your robot and replace it
+ with a canonical ellipse that is the same size as if you
+ had the density of water.
+ And it's the same position and orientation.
+ So if you were to replace and just say the robot is
+ the density of water, and it's made up
+ of these equivalent geometries, from a dynamics perspective,
+ that's an equivalent representation
+ of the dynamics of this robot.
+ But it's easier to think about and visualize.
+ And sometimes-- actually, I know for a fact I could do this.
+ If you get different robot descriptions
+ from the manufacturer or whatever,
+ this is just a different version of the EWA.
+ I'm pretty sure.
+ I didn't actually check this.
+ But yeah.
+ So it's actually also a really good debugging tool.
+ So let me see if I can do this.
+ OK.
+ So we noticed this the other day.
+ So the description format you get of the robot
+ from the manufacturer actually just has bugs in it.
+ And the inertial ellipses of even links
+ are rotated by 90 degrees.
+ OK, great.
+ So everybody's been working really hard
+ on their controllers, and your inertia estimate was just wrong.
+ But that's why you visualize things, right?
+ So I am embarrassed that we didn't visualize-- notice that.
+ Actually, we knew about it probably two years ago.
+ I thought we had fixed it everywhere,
+ but we found this one model of the robot that's still not
+ fixed.
+ It'll be fixed soon.
+ OK, that's super valuable.
+ But just to say that reflected inertia one more time,
+ I wish I had made the visualization now.
+ But if I were to look through the lens of the motor
+ and try to make sort of an equivalent visualization,
+ it's like there's a little circle
+ at every joint of the robot that's
+ getting blown up by the square to the gear ratio
+ to the point where the picture would look something--
+ if I had just like a one-link robot,
+ and I had an inertial ellipse of the link that
+ sort of looks like this, there's a little motor here
+ which accounts for relatively little
+ of the mass of the robot.
+ But its effect on the dynamics looks
+ like a big inertial ellipse that's
+ centered exactly at the joint.
+ So when you're moving this joint around,
+ the effect of the link is actually small--
+ can be small if the gear ratio is large compared to that.
+ Yeah?
+ [INAUDIBLE]
+ No, it's not included in the visualization.
+ I wish I had.
+ It would be-- that's homework for me.
+ And then you can see--
+ you download the manufacturer specs for all the-- whoops.
+ That's just a space.
+ You can play with all the different robots.
+ And that one's zero position is in collision,
+ which is awesome.
+ That's why you have green arrows of contact forces,
+ because it's hitting itself.
+ But I do think you can basically,
+ for your projects, for instance, you
+ can just pick your favorite robot.
+ And for the most part, it'll work.
+ This one is also in collision at zero.
+ Awesome.
+ Here's the UR3.
+ But they're all there.
+ And we have-- the robotics world has an ecosystem now
+ where the manufacturer will publish their specs,
+ and then we fix them a little bit, I guess.
+ But then, yeah, you can work with any robot.
+ [INAUDIBLE]
+ Yeah, so I think there's different types of motors.
+ Some of the-- yeah, I think some--
+ you see frameless motors and stuff
+ like this that can be very big and flat.
+ It would depend on exactly which technology you're looking at.
+ [INAUDIBLE]
+ Yeah, so Songbase got a particular way
+ of winding the coils to get closer to direct drive.
+ And they tend to be much wider.
+ I'm not an expert in his latest designs, though.
+ Yes?
+ [INAUDIBLE]
+ Yeah?
+ [INAUDIBLE]
+ So I'm biased, but I think Drake's awesome.
+ And the mechanics engine is awesome.
+ And one of the best tests we had--
+ my daughter was doing FTC, FIRST Robotics,
+ and she had a mechanim wheel.
+ And we just put in the geometries of the mechanim
+ wheels, rollers, and that thing just drove just right.
+ It's not tire mechanics, but it's just the friction
+ of the contact forces of the ground or whatever.
+ It just-- you could drive around.
+ It was super fun.
+ Maybe I'll put that as an example.
+ So you can simulate that.
+ It's not simulating tire mechanics.
+ So typically, if people are doing racing cars,
+ they will have special purpose magic tire models and the like
+ to capture the pneumatic tires on the road and stuff
+ like that.
+ We're not doing that.
+ But in terms of a basic physics engine of rigid bodies
+ interacting and getting the right forces,
+ it'll do all that.
+ This one doesn't have wheels.
+ We'll have versions that have wheels coming up.
+ OK, so if you want to do torque sensing,
+ then there's various ways to do that.
+ Let me show you how EWA does it.
+ The basic idea, of course, is that you put a--
+ somewhere in your linkage, but on the robot side.
+ So the motor is over here.
+ Got a lot of different-- this is a harmonic drive gear unit.
+ And on the end here is a torque sensor
+ that's measuring the joint torque.
+ It's a beautiful-- I think torque sensing,
+ to get it right and performant, requires exquisite engineering.
+ And I think they've done an incredibly good job of this.
+ Strain gauges are finicky and the like.
+ But there's some incredibly good engineering
+ that makes torque sensing viable in this robot.
+ And it's a little extra shaft at the end of the robot.
+ And that allows you to do things like stop
+ if you run into something and you didn't expect,
+ or potentially do better control.
+ And one of the ways that that was popularized, actually,
+ when--
+ this is Sammy Haddad, when he was a student, probably,
+ at DLR in the German Aerospace Research Lab.
+ And he's showing off how valuable
+ it is to have joint torque sensing in order
+ to make safe human-robot interaction.
+ But it's just--
+ I love that as a famous set of videos,
+ because he just keeps hitting himself at high speeds
+ with a robot to make a case.
+ And Sammy's a pretty established roboticist now.
+ He started the-- he was one of the founders of the Franca
+ Emica company later.
+ But back in the day, he was hitting himself
+ in the head with robots at high speeds,
+ and making the point that having the ability to sense a force
+ and a control system that can stop quickly enough--
+ I mean, that still looks like it hurt.
+ I don't know.
+ But--
+ [LAUGHTER]
+ But they built up--
+ his thesis was about building safety cases for robots.
+ And it really can be a difference maker.
+ It also allows you to do different types of control.
+ So I told you that a lot of our arms
+ will actually fault if you deviate
+ from a commanded position.
+ But if you're thinking about more in the torque space,
+ then you can say, maybe my goal is just
+ to be able to produce some amount of torque
+ at the end effector.
+ When I'm in contact, I'm going to push
+ with a certain amount of force.
+ And I don't care what position I'm in.
+ Or even more interesting maybe is
+ if I'm going to produce a certain stiffness
+ at the end effector.
+ So I want to say that I'm going to go to some normal position.
+ But if I push, I want to act like there's
+ a spring between me and the target position,
+ and produce forces to let that go.
+ So this is an example.
+ We'll talk a lot more about it later.
+ But we'll do an actual one lecture later
+ on the low level control.
+ But the first thing they do to show
+ they've got mastery of the dynamics of the robot
+ and torque control is they'll show, first of all,
+ that they can just cancel gravity out and make
+ the robot act like it's not there.
+ That's the standard gravity comp video that you'll see.
+ That's like-- that's how you earn bragging rights saying,
+ I've got a great torque controller and great torque
+ sensing, because you show you do gravity control.
+ And then, yeah, I guess I didn't include it.
+ Or did I include it here?
+ Next.
+ No.
+ You can also do--
+ yeah, we'll see impedance control
+ and some of the other things that work naturally
+ once you have joint torque sensing.
+ Yeah.
+ [INAUDIBLE]
+ Yeah, that's really good.
+ So typically, we're going to bring your own hand
+ and/or bring your own barbell.
+ It's kind of a weird hand to bring.
+ Or you might pick up some object.
+ The interface for this, which is what
+ commands the low level software, allows
+ you to specify an inertia of the load of the end effector.
+ You typically-- I mean, even a dexterous hand
+ is not a constant inertia.
+ But you would just kind of pick a canonical pose of it,
+ compute the inertia, and tell the robot low level
+ controller about that.
+ So that when it's doing gravity comp,
+ it's pretending the hand is always like this
+ and just a statue.
+ And then you treat the fact that it's doing this
+ as a disturbance.
+ Yes?
+ [INAUDIBLE]
+ That is true.
+ Yes, so PID control is not doing gravity compensation.
+ You can do them both.
+ You could do gravity compensation first.
+ And then, so if you were to take this controller
+ and then just add on plus tau gravity comp, for instance.
+ [TYPING]
+ Then if your control system is capable of doing this,
+ if you're doing it on the joint torque commands instead
+ of motor commands, then that becomes viable.
+ And you can still write things that look like a PID control,
+ but also cancel out gravity in a feed forward term.
+ And we'll talk about that in some detail later.
+ Yes, please?
+ [INAUDIBLE]
+ Yes, so at the end effector, on this robot,
+ it's a few newtons, of course.
+ You can detect.
+ And it depends on the robot.
+ But they're not exquisitely accurate.
+ If I hit it with a feather or something,
+ maybe I wouldn't notice it.
+ Sorry, if I was pushing down on a table, it's newtons.
+ And then so that is related through the kinematics
+ to some newton meter resolution.
+ Yeah.
+ OK, there's a few other ways.
+ So that's one way to accomplish joint torque sensing.
+ And that's the way that this robot did it.
+ And the Panda does it.
+ The Jayco, I think, does not do it that way.
+ But there's another way that you might hear about,
+ which is good to know, that's called
+ series elastic actuators.
+ It's actually the same way.
+ But it emphasizes something different.
+ So series elastic actuators, which
+ says I'm going to take my motor.
+ And I'm going to put a spring in series with my motor.
+ And then this is my output shaft.
+ OK.
+ And you could think, actually--
+ I mean, of course, the EWA has a strain gauge
+ on a sheet that is actually--
+ you could think of as a very steep, stiff spring, where
+ the reason the strain gauge can measure anything
+ is because that piece is deflecting
+ and it's measuring the forces.
+ But whereas the EWA sensor, torque sensor,
+ is, I think, estimated at one time
+ to be something like a stiffness of 55,000 newton
+ meters per radian, a series elastic actuator,
+ like maybe the one you'd see in Baxter, for instance.
+ I'm going to go back.
+ This robot was also capable of torque sensing.
+ But a series elastic actuator, SEA,
+ would typically be much lower.
+ And they don't always publish their specs.
+ But I was guessing that this one was around 100 newton meters
+ per radian.
+ So this is kind of a different philosophy in actuator design.
+ That robot can be stiff and follow position trajectories
+ well if you want to.
+ But you can also measure the torques.
+ This one-- I don't want to say it can't be--
+ but it can't be very accurate in some sense.
+ It's got-- between the motors and the world
+ is a pretty soft spring.
+ So you go and push it and it feels squishy, right?
+ So this is a very different regime.
+ And a spring is a torque sensor, because you
+ can measure the deflection of the spring
+ and estimate the force or the torque.
+ So this time, now if I just take my old conventional sensors,
+ which work really well, and I measure
+ the position of the output shaft and the position of the motor
+ shaft, and I estimate that difference,
+ then I've got the deflection of the spring
+ and I've got a good torque sensor.
+ I'm going to distribute the questions.
+ Yeah.
+ Yeah.
+ [INAUDIBLE]
+ So the question is, can you produce one or the other
+ from the other one using control?
+ And the answer is, yes, up to your bandwidth limitations.
+ So there is actually some bandwidth limitations
+ of your motor.
+ Your motor can only change its command
+ at a certain frequency, for instance.
+ And there is a mechanical bandwidth
+ that comes from the spring.
+ So you will at some point have a bandwidth limitation
+ on your whole system that will be lower bandwidth
+ capable on the very soft spring.
+ So I think the best motors might not
+ be able to act like a stiff spring if you've got a SEA.
+ And I think in practice, we see that difference.
+ You can also do--
+ so Baxter was a famous series elastic actuator,
+ a heavy robotics.
+ There's a few others that market these series
+ elastic actuators.
+ You can also do torque control with hydraulics.
+ If you choose to build a hydraulic robot,
+ this is the Atlas robot.
+ This was the first version of the Atlas robot.
+ That was a hydraulic robot.
+ So if you're pushing fluids around and you have valves,
+ then the differential pressure across the valve
+ is proportional to the forces or torques that you're producing.
+ So that's another option, but less common.
+ And even Boston Dynamics, when they went to build SPOT,
+ made an electric version.
+ I think that's extremely good for laboratory and development
+ and stuff, but it's a little bit less viable maybe
+ to have those in the world.
+ OK, that was kind of a quick run through robot arm hardware.
+ Any other high-level questions?
+ Yeah.
+ Yeah.
+ You read both sides of the spring.
+ And that's actually-- by virtue of reading the output shaft,
+ you do know where you are in the output shaft.
+ It's the difference of those two signals that tells you
+ the deflection of the spring.
+ You always do have that output shaft.
+ It's just a matter of whether you can control it.
+ Your PD control might not be able to regulate a position
+ command accurately.
+ Good question.
+ Yes.
+ You can do linear or rotational joints.
+ For almost anything I've said today, you can--
+ so I've seen both.
+ Sometimes I've seen electric motors with ball--
+ with screw joints that are--
+ the spring is actually a linear spring.
+ I've seen rotary springs.
+ Either one is possible.
+ Cool.
+ OK.
+ So let's go from the robot arm hardware into a simulation.
+ And there's more to it than just the physics.
+ So we talked about the hardware station diagram abstraction.
+ And EWA doesn't take in torque commands.
+ It takes in position commands and then
+ an optional feed-forward torque.
+ That's the messages that the control box
+ that you get when you purchase the EWA is listening for.
+ And it outputs the commanded position, the measured
+ position, the velocity--
+ excuse me-- estimated, the state estimated,
+ the torque you commanded, the torque measured,
+ all these different things, the torque external.
+ So it's trying to say, these are the torques
+ that I expected from my robot mass and the barbell
+ that I told it about, and then from the difference.
+ And you can just look at the torque external
+ and just see the unexpected forces.
+ OK.
+ But how do we actually achieve that in, let's say,
+ our simulator here?
+ I'll stop this old one.
+ [AUDIO OUT]
+ OK, so the first thing to know is we have a physics engine.
+ That physics engine is called multi-body planning.
+ [AUDIO OUT]
+ Plant comes from the world of controls.
+ It was originally chemical plants, but it's stuck.
+ And now anything we try to control,
+ we tend to call it a plant.
+ I still do.
+ Younger people don't.
+ But OK, multi-body plant is our physics engine.
+ And if you look at the multi-body plant diagram,
+ then this takes torque commands input as input.
+ This would be like the torque at the joint, for instance.
+ We don't normally put the motor dynamics in.
+ We could put it in there.
+ But this is a torque command input.
+ And it takes and computes the updated body angles,
+ joint angles, positions, velocities, accelerations,
+ and things like that.
+ That's the core physics engine.
+ OK, so the second thing you need to put your simulator together
+ is we call it the--
+ it's our geometry engine here, which
+ is for rendering and contact and stuff like this.
+ Our geometry engine is called Scene Graph.
+ It's a common name.
+ You see a scene graph in any sort of computer game world.
+ This is collecting information about the mesh files
+ that you used to define your robot.
+ It can answer queries like, how far away are these two meshes
+ from each other, which are pretty
+ heavy computational geometry happening inside the scene
+ graph.
+ But it can also very quickly tell you if things
+ are in collision or not.
+ And that's almost enough to put together a simulation.
+ But you need a few more little pieces.
+ So you have to populate the physics engine from disk,
+ from some description of the robot.
+ This is the one we were looking at before.
+ So you parse an EWA model from a description format
+ into the multi-body plan.
+ So I'm going to add the model from file.
+ And then I'm going to make sure it's not--
+ if I left out this weld frames command,
+ then the robot would fall down through the world.
+ Yeah, what's up?
+ [INAUDIBLE]
+ Nope, they're separate systems.
+ They're wired together.
+ Yeah?
+ OK.
+ And the robot description format,
+ you typically don't have to write them yourself.
+ But you might want to check them.
+ They're just these standard text description formats,
+ which says I have a link here.
+ It's at a certain position.
+ It's got a certain inertial matrix.
+ It's got a mesh file that shows me how to render it.
+ It has certain material properties.
+ So if you did find a robot, if you're making your own robot
+ and you wanted to add it to the simulator,
+ you would end up writing a robot description file like this.
+ But nowadays, you mostly just find the existing ones
+ and use them.
+ And then scene graph is this simple thing
+ that takes in poses and outputs all the geometry information.
+ And if you put that together--
+ I'm going to run all the way down to this one.
+ And you run your little simulation.
+ And this is what happens.
+ I commanded 0 on the input port.
+ And I just ran my simulation.
+ And that's what EWA does.
+ The torque command is 0.
+ So I've never seen a real EWA do that.
+ If I did, I would quickly assume that the robot was broken.
+ So don't do that.
+ But that is a complete physics description of the EWA
+ and the rendering enough to make the geometry work.
+ Yes?
+ [INAUDIBLE]
+ That's exactly the point.
+ So the point is that I don't send 0 torque to this.
+ The control cabinet is doing some extra work
+ to do gravity compensation, to turn the brakes on and off.
+ Right now, since it's not plugged in,
+ the brakes are just locked.
+ And it's sitting there.
+ But in general, in order to understand
+ how my commands are going to affect the robot,
+ I actually need a mathematical model
+ of that low-level controller.
+ So that's the next piece.
+ There's various ways that we can model that.
+ I think we know what the governing equations are.
+ But partly because they run it at 10 kilohertz
+ on specialized hardware, and we don't
+ want to slow down our simulator to run it that way,
+ we actually make slightly different models,
+ abstractions of that controller on the real robot.
+ So we can add an inverse dynamics controller
+ as a simplest model of what's happening on the robot.
+ It's one more diagram here, one more element in the diagram
+ here.
+ It takes in the estimated state, the desired state,
+ and produces torques.
+ OK?
+ And if I add that in, then I get a diagram.
+ Oops.
+ What did I do?
+ [AUDIO OUT]
+ Here we go.
+ I get a diagram that has the plant.
+ It has the scene graph.
+ It has the state of the EWA that's
+ coming out from the plant pumped into the controller
+ as the estimated state.
+ I've set the desired state to 0, OK?
+ And then I just put the force back through.
+ That's my whole new diagram.
+ And now I get sort of the expected result of--
+ it just sits there, which is more boring, but more correct.
+ So the point is that if you want to build up a simulator,
+ you actually have to model the low-level control.
+ And you have to model it well if you're
+ going to do higher-performance things, because that will
+ impact--
+ there's even the way that it interpolates.
+ Like, you send position commands in sequence.
+ It will extract an effective velocity command
+ using some approximation.
+ And if you don't model that correctly,
+ you're not going to be able to do very high-bandwidth kind
+ of controls.
+ That's the state interpolator business.
+ OK?
+ And then the whole thing comes together to be--
+ this gives you this abstraction of having positions in,
+ optionally additional feedforward torques in,
+ and the states out.
+ That's the bigger diagram.
+ Yeah?
+ So I should be more careful.
+ We do have support for rotor inertia and reflected inertia.
+ But we don't model the lower--
+ so we only model the motor at that level of detail.
+ We just assume it's a lumped mass, or lumped inertia,
+ that's reflected through-- with the reflected inertia.
+ However, a lot of simulations don't include that.
+ Because the reason I know that--
+ and not only because I've looked at the other simulators,
+ but also because the robot description formats
+ that everybody uses doesn't even have
+ a field for reflected inertia.
+ Which is like, they just missed that one.
+ And it accounts for some huge percentage
+ of the dynamics of the robot.
+ So I think a lot of people worry about how
+ accurate the simulators can be for manipulation.
+ But they forgot a big one on that one.
+ So-- cool.
+ OK, so that's a basic story of robot arms.
+ I want to spend the last few minutes talking about hands.
+ Yeah?
+ So bring your own hand.
+ I've got a-- I did bring a bunch of my own hands.
+ I also, like I said, slightly broke them on the drive over
+ here, on the walk over here.
+ But let me just tell you a little bit about hands.
+ So everybody who does robots, I think,
+ is somehow fascinated by Dexter's hands.
+ You can't not like the idea of having a human-like hand
+ on the end of a robot.
+ And there are some famous ones out there.
+ This is the shadow hand.
+ The Allegro hand is here.
+ It's another sort of famous one.
+ And the shadow hand was made--
+ also was made famous by the open AI experiments
+ of trying to learn Rubik's cubes, for instance.
+ But these are very delicate devices.
+ I think they hammered on this like crazy.
+ And they had to improve the robustness of that like crazy
+ in order to do the experiments you
+ saw in the reinforcement learning papers there.
+ And I think in general, most people would say that Dexterous
+ hands are still not quite ready for mainstream.
+ They're very much a research product.
+ If you go down the Dexterous hand route,
+ you're going to expect lower quality sensing information,
+ things that lose calibration, things that break,
+ cables that snap, stuff like that.
+ But that's good for research.
+ That's where we want to be.
+ But the argument, the counter argument,
+ the few people in robotics that don't love Dexterous hands
+ or whatever, I think have a pretty reasonable argument,
+ which is that maybe you don't need a Dexterous hand
+ to be useful in the home.
+ And the plainest argument I like for this
+ is just to say, if I were to give you
+ one of these little grippers and ask you to go into the home,
+ you could still be pretty useful.
+ You can do a lot of stuff with a big brain and a simple claw.
+ And the people that made that argument the best, I think,
+ is when they built this PR2 robot.
+ This was many years ago now.
+ This is a tele-operated robot.
+ So there's a human looking through the camera
+ of the robot and driving the robot around.
+ And this is sped up a little bit.
+ But basically, everything you'd want a robot to do in the home
+ could be done with that kind of interface
+ and a simple two-fingered gripper.
+ I mean, we've seen lots of examples of places
+ where it sure would have been nice to have
+ a few more fingers.
+ We see it in our own research, where it just
+ takes you longer to do things.
+ If you want to pick up a mug and set it down in the dishwasher,
+ and it's in the wrong orientation,
+ and you've got your two fingers, you've
+ got to set it back down, pick it up like this, you can do it.
+ It's just annoying.
+ Whereas a human would just do in-hand reorientation
+ and then set it down.
+ But you can do a lot of things with a big brain
+ and a simple hand.
+ So because of that, we're actually
+ going to do a lot of work in the class with the start off.
+ Like in the simpler case with a two-fingered gripper,
+ this is the force-controlled planar gripper from Shunk.
+ It's called the WSG.
+ It's kind of the EWA of grippers.
+ You have force-controlled torque sensing kind of things.
+ And this one is more bring your own finger.
+ So you can actually put various different end effectors on it.
+ I've got a version here that has some visual tactile sensors
+ mounted on it.
+ You can just change out the fingers.
+ But I also have the simpler fingers here
+ that you can play with.
+ There's a lot of--
+ it's a big back-drivable robot.
+ I just got the power light to turn on.
+ That's cool.
+ And we'll spend a lot of time on this.
+ I saw here-- did you have a question?
+ [INAUDIBLE]
+ That's true.
+ It becomes a packing problem of how much
+ can you fit in a small space.
+ And where do you run the wires?
+ Where do you run the cables?
+ So people-- I think there's--
+ I'll show you a few of the clever ways
+ that people get in between them.
+ But it's still an open problem, I think, for design
+ and for control of those things.
+ So here's the ones I brought today.
+ I've got a Sandia hand here.
+ It's a beautiful, fairly dexterous hand.
+ It's got cameras in its grippers,
+ in the gripper there, which is--
+ I actually expected those to be more useful than they were.
+ It's kind of-- you can only do so much when you--
+ you can sort of see what you're going to do.
+ But then when you get close, it's just like--
+ so we ended up using those more--
+ we were using those on Atlas.
+ We would occasionally go like this and put one hand out
+ so we could look at what we were doing over here,
+ you know, because this one was kind of--
+ just didn't help that much.
+ You'll see a lot of people mount cameras on the wrists now,
+ so you get a little bit of throw.
+ Actually, Spot also has a camera in its palm.
+ This is the iHi hand, the iRobot Harvard Yale hand.
+ It's a beautiful sort of under-actuated hand.
+ I'll tell you more about that as we go.
+ OK, these robots that have less actuators
+ than degrees of freedom in the hand, and cables and springs
+ to make them still useful.
+ The Robotique three-fingered gripper,
+ this is the one we use the most on Atlas,
+ because it's extremely robust.
+ We actually-- I mean, this is a beautiful, beautiful hand.
+ And the story I'm about to tell you is completely our fault,
+ not iRobot's fault. But we were working
+ with Atlas in the competition, and we
+ had to pick up these boards, like two-by-fours,
+ and throw them out of the way.
+ It was a disaster response.
+ So like there's boards strewn in front of the door.
+ You have to get through, so you have to pick them up.
+ And we went like this.
+ We picked up the board, and we had snapped
+ the cable in the hand.
+ So now for the rest of the competition,
+ we had to walk around holding a two-by-four.
+ We were like trying to do everything with our left hand.
+ And they're like, why are you holding the two-by-four?
+ Well, our hand broke with it completely welded on the thing.
+ So after that experience, we went
+ to these massively rigid, strong hands,
+ the beautiful but heavy hand.
+ We actually fell on top of it.
+ We dropped the robot.
+ The walking controller failed and landed on top of it.
+ And it was bent, but we bent it back, and it kept working.
+ So that's the other end of the robustness trade-off.
+ And then the Allegro hand I mentioned before.
+ This is kind of--
+ there's newer versions.
+ You'll see a few research labs.
+ Poolkits Lab has been playing with one here.
+ There's a number of groups that have been trying
+ to make a newer version of the Allegro hand using Dynamixels,
+ if you know what those are.
+ So I think it's a good time to be thinking about hands again.
+ There's also a ridiculous number of humanoid startups
+ all of a sudden.
+ So this is Sanctuary AI, and they're
+ all trying to solve the problem of making humanoid robots.
+ And they're also trying to simultaneously solve
+ the dexterous hand problem, which is awesome.
+ I mean, that's great.
+ So hopefully-- I'm sort of optimistic
+ that the world will have more robust, dexterous hands soon.
+ Let's just see what comes out.
+ But it's not the only way to do it.
+ There's also this world of people
+ making very clever mechanisms to solve manipulation with hands.
+ And one of my favorite here is-- you can see--
+ robot grippers based on granular jamming media.
+ The story is very simple.
+ You take a sack.
+ You fill it with coffee grounds.
+ This is your manipulator.
+ You put a vacuum behind it.
+ You just let your coffee grounds sack sink over whatever
+ you're going to pick up.
+ You suck the air out of the inside.
+ The coffee beans jam, and it becomes rigid,
+ and it picks up anything.
+ Watch this.
+ This is just incredible.
+ It's literally coffee grounds in a sack.
+ That's the actuator.
+ So all they did was suck the air out,
+ and the coffee grounds jammed themselves together.
+ Super simple, super durable.
+ I guess you could probably place it.
+ And it could pick up anything.
+ It's not so good for buttoning your shirt
+ or tying your shoes, but for just picking stuff up,
+ it's pretty darn good, I think.
+ It's a real egg.
+ Yeah.
+ OK, so that's a pretty good one.
+ There's also a world of people building soft hands now.
+ So things that are using soft actuators, potentially,
+ certainly soft materials that make--
+ these are pneumatically actuated hands.
+ They have valves that are expanding and contracting
+ in order to make the fingers move.
+ And they can be surprisingly interesting devices.
+ And this is, of course, a play on the open AI
+ example of trying to make an in-hand reorientation.
+ But that was with a simpler hand.
+ This is the grippers that I've got here.
+ That's actually a combination of trying to make a soft hand,
+ but also integrating tactile sensing.
+ So it has some of the benefits of having the hands,
+ but it also has a depth camera behind the bubble and some
+ dots so that you can estimate shear and other things
+ inside there.
+ Very simple design, but I think very well done.
+ And it's impressive what you can do with it
+ in terms of force sensing and geometry sensing in the hand.
+ Unlike the hand that's sort of looking at this,
+ if you leave a little gap, then you
+ get to actually see the deflection of the skin
+ and do interesting things.
+ [AUDIO OUT]
+ There's a bunch of mobile manipulators we'll talk--
+ I'm going to allocate a little bit of lecture time,
+ definitely, to talk about mobile manipulators.
+ Carefully thought to be right before you finalize
+ your project ideas so that maybe a bunch of you
+ will do mobile robot manipulation for your projects.
+ This is the PR2 I showed you fun examples of.
+ Fetch and HSR were kind of one-arm versions of it.
+ This is the Everyday Robotics project from Google.
+ Spot, of course, you know.
+ So I think this is a--
+ OK, mobile manipulators are obviously good,
+ obviously interesting for research.
+ It's extremely hard to buy one.
+ There's not really many that you can buy anymore.
+ The PR2 sort of eventually died, and you really
+ can't buy as fully featured as a PR2 manipulator today.
+ So there are not as many around as I'd like.
+ And so Spot, in some ways, is one of the better choices
+ for mobile manipulation.
+ It's kind of frustrating just in the sense
+ that you can't see the table.
+ You know, you've got to only use the hand camera to sort of see
+ the table that you're trying to manipulate.
+ It'd be nice if it had a head.
+ But it's pretty good.
+ Of course, so TRI actually built their own custom hardware.
+ And I think groups that are working seriously
+ on mobile manipulation are often in the position
+ of building custom hardware because we
+ don't have great mobile manipulation options right now.
+ I think as soon as it becomes commercially viable,
+ then we'll see lots of great hardware coming out.
+ But we're in sort of a quirky time
+ right now where they're not available.
+ OK, so I want to end by telling you about my favorite robot
+ of all time.
+ It's the thing they ask you at parties,
+ like write in your name tag, what's
+ your favorite robot of all time?
+ And I answered that I like this high speed hand by Ishikawa.
+ So the idea here was we're going to build a semi-dextrous hand,
+ electric motors.
+ But we're going to just forget about the fact
+ that motors overheat.
+ We're going to overclock our motors, basically, remove
+ all of the safeties, and just inject
+ a significant amount of current for a small amount of time
+ into these motors and see what we can do.
+ This is actually a long time ago.
+ But they got some wicked fast.
+ And it's super awesome.
+ They did it also for tracking cameras.
+ This is before computer vision worked.
+ You had to track white objects on gray backgrounds.
+ But if they did it with a foveating camera
+ and high speed actuators, they could do that.
+ They had actually some tactile sensing.
+ But you're going to love what this thing can do.
+ Dribbling, that's easy to write on there.
+ Pen spinning, OK?
+ Rowing, that one's pretty cool, too.
+ OK.
+ This is high speed video.
+ Here we go.
+ Not sure what the choice of the middle finger is doing.
+ [LAUGHTER]
+ This is way more dynamic than you see on the average hand.
+ Pen spinning, pretty good, right?
+ Pretty good.
+ OK, I'm going to fast forward to the end here.
+ This is my favorite, re-grasping, OK?
+ This is a cell phone.
+ I have to believe that only worked once.
+ But still, that is awesome, right?
+ OK, one of the best robots of all time, for sure.
+ OK, good.
+ We'll move on to more of the control next time.
+ If anybody wants to come and see the hands,
+ you're welcome to come down and look.
+ [BLANK_AUDIO]

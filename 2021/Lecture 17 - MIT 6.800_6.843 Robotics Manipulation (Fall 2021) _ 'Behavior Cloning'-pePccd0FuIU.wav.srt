@@ -1,0 +1,5604 @@
+1
+00:00:00,000 --> 00:00:03,000
+ All right.
+
+2
+00:00:03,000 --> 00:00:05,560
+ Hi, everybody.
+
+3
+00:00:05,560 --> 00:00:06,960
+ I want to talk today about-- this
+
+4
+00:00:06,960 --> 00:00:09,280
+ is sort of the prelude to reinforcement learning.
+
+5
+00:00:09,280 --> 00:00:11,000
+ And I know I sort of--
+
+6
+00:00:11,000 --> 00:00:13,920
+ we polled you and asked you if you want to even hear a lecture
+
+7
+00:00:13,920 --> 00:00:15,480
+ about behavior cloning or not.
+
+8
+00:00:15,480 --> 00:00:17,780
+ And what I was thinking at exactly what I wanted to say,
+
+9
+00:00:17,780 --> 00:00:18,860
+ I thought, you know what?
+
+10
+00:00:18,860 --> 00:00:20,800
+ It really goes first, right before the RLs.
+
+11
+00:00:20,800 --> 00:00:22,840
+ And plus, we have the one day--
+
+12
+00:00:22,840 --> 00:00:25,440
+ I don't have lecture on Thursday because of Veterans Day, right?
+
+13
+00:00:25,440 --> 00:00:28,360
+ So I'm sneaking this one in.
+
+14
+00:00:28,360 --> 00:00:31,120
+ Sorry to have polled and not waited for your answer.
+
+15
+00:00:31,120 --> 00:00:32,840
+ But I hope you'll like it.
+
+16
+00:00:32,840 --> 00:00:37,760
+ I think it makes sense as sort of the prelude to RL.
+
+17
+00:00:37,760 --> 00:00:40,640
+ So let me--
+
+18
+00:00:40,640 --> 00:00:44,160
+ well, let me-- actually, I had a couple administrative things.
+
+19
+00:00:44,160 --> 00:00:48,160
+ So for the project feedback, we're
+
+20
+00:00:48,160 --> 00:00:51,600
+ going to try to give you quick feedback from the same people
+
+21
+00:00:51,600 --> 00:00:54,040
+ that read your pre-proposal on your final proposal,
+
+22
+00:00:54,040 --> 00:00:56,880
+ just to make sure you got a green light on everything
+
+23
+00:00:56,880 --> 00:00:57,360
+ you need.
+
+24
+00:00:57,360 --> 00:01:00,360
+ We'll also try to--
+
+25
+00:01:00,360 --> 00:01:02,200
+ so that means the person who read it before
+
+26
+00:01:02,200 --> 00:01:06,760
+ will read it again and confirm that any concerns they had
+
+27
+00:01:06,760 --> 00:01:08,720
+ or whatever were addressed.
+
+28
+00:01:08,720 --> 00:01:10,960
+ But we're also going to try to just--
+
+29
+00:01:10,960 --> 00:01:12,200
+ I'll try to read all of them.
+
+30
+00:01:12,200 --> 00:01:14,480
+ I think we'll try to give you a little bit slower
+
+31
+00:01:14,480 --> 00:01:17,200
+ trickle feedback as--
+
+32
+00:01:17,200 --> 00:01:20,080
+ to the extent possible, too.
+
+33
+00:01:20,080 --> 00:01:21,880
+ A few people have been asking good projects
+
+34
+00:01:21,880 --> 00:01:24,320
+ about how to set things up on Piazza.
+
+35
+00:01:24,320 --> 00:01:26,120
+ Please keep the questions coming.
+
+36
+00:01:26,120 --> 00:01:31,400
+ In particular, I marked as, please read--
+
+37
+00:01:31,400 --> 00:01:34,600
+ we do have a Python-only version of the manipulation station,
+
+38
+00:01:34,600 --> 00:01:38,680
+ which I wrote last time, in exactly this time of the year,
+
+39
+00:01:38,680 --> 00:01:40,920
+ when people were asking, how do I make the manipulation
+
+40
+00:01:40,920 --> 00:01:42,440
+ station do x?
+
+41
+00:01:42,440 --> 00:01:44,080
+ That's not quite what it's meant for.
+
+42
+00:01:44,080 --> 00:01:46,400
+ And it's buried in C++ and hard to change.
+
+43
+00:01:46,400 --> 00:01:49,400
+ But it really can exist completely in Python now.
+
+44
+00:01:49,400 --> 00:01:54,240
+ And so there's a notebook there in one of the Piazza posts.
+
+45
+00:01:54,240 --> 00:01:58,640
+ If you find it useful, it's easy to change.
+
+46
+00:01:58,640 --> 00:02:00,360
+ And I guess that's the main-- those
+
+47
+00:02:00,360 --> 00:02:02,800
+ are the main announcements, yeah?
+
+48
+00:02:02,800 --> 00:02:05,280
+ Good, OK.
+
+49
+00:02:05,280 --> 00:02:11,400
+ So let's talk about feedback controllers and visual motor
+
+50
+00:02:11,400 --> 00:02:13,320
+ policies.
+
+51
+00:02:13,320 --> 00:02:20,560
+ So last time-- last week, I'd say,
+
+52
+00:02:20,560 --> 00:02:24,280
+ we talked about trajectory motion planning, right?
+
+53
+00:02:24,280 --> 00:02:40,820
+ So given either a cost function in the trajectory optimization
+
+54
+00:02:40,820 --> 00:02:47,880
+ case or just a start and a goal in the randomized motion
+
+55
+00:02:47,880 --> 00:02:52,000
+ planning case, typically, we had a start and a goal.
+
+56
+00:02:52,000 --> 00:02:55,920
+ We were designing a single trajectory through space.
+
+57
+00:02:55,920 --> 00:02:58,760
+ And we had some good tools to do that, and potentially,
+
+58
+00:02:58,760 --> 00:03:04,000
+ tools that scale pretty well to large dimensions.
+
+59
+00:03:04,000 --> 00:03:07,140
+ As we transition to RL, RL is trying
+
+60
+00:03:07,140 --> 00:03:09,840
+ to solve a bigger problem, right?
+
+61
+00:03:09,840 --> 00:03:27,240
+ So maybe bigger problem where the output of a motion planner
+
+62
+00:03:27,240 --> 00:03:31,600
+ is a particular path or trajectory, right?
+
+63
+00:03:31,600 --> 00:03:34,200
+ And now we're trying to solve--
+
+64
+00:03:34,200 --> 00:03:35,240
+ trying to find a policy.
+
+65
+00:03:35,240 --> 00:03:38,640
+ [WRITING ON BOARD]
+
+66
+00:03:38,640 --> 00:03:48,720
+ So that's synonymous with a controller for people
+
+67
+00:03:48,720 --> 00:03:50,360
+ who want to think about it that way.
+
+68
+00:03:50,360 --> 00:03:53,040
+ But even in the motion planning picture,
+
+69
+00:03:53,040 --> 00:03:55,960
+ if you think of this original motion planning gives me
+
+70
+00:03:55,960 --> 00:03:58,960
+ q as a function of time, what I'd
+
+71
+00:03:58,960 --> 00:04:07,240
+ like-- the simplest analogy for a policy would be maybe I
+
+72
+00:04:07,240 --> 00:04:10,280
+ want to do a vector field.
+
+73
+00:04:10,280 --> 00:04:13,600
+ I want to represent potentially the same sort of behavior.
+
+74
+00:04:13,600 --> 00:04:16,840
+ But instead of having just a single path,
+
+75
+00:04:16,840 --> 00:04:21,160
+ I'd like to say for every q, not just for every time,
+
+76
+00:04:21,160 --> 00:04:23,760
+ but for every q, I'd like to say what direction I should
+
+77
+00:04:23,760 --> 00:04:29,880
+ be going in in order to accomplish my desires, my cost,
+
+78
+00:04:29,880 --> 00:04:35,200
+ or achieve my goal, right?
+
+79
+00:04:35,200 --> 00:04:39,520
+ So it's potentially trying to solve a bigger problem.
+
+80
+00:04:39,520 --> 00:04:46,040
+ This is for all q, I'd like to have some instructions.
+
+81
+00:04:46,040 --> 00:04:48,840
+ And you could think of them as representing-- certainly,
+
+82
+00:04:48,840 --> 00:04:51,640
+ this captures-- if I were to start at this one
+
+83
+00:04:51,640 --> 00:04:53,520
+ and follow the vector field, then
+
+84
+00:04:53,520 --> 00:04:55,200
+ you can pull a trajectory out of that one.
+
+85
+00:04:55,200 --> 00:05:00,200
+ But it's potentially saying much more.
+
+86
+00:05:00,200 --> 00:05:02,640
+ It says what happens when you're away from the trajectory.
+
+87
+00:05:02,640 --> 00:05:03,140
+ Yeah?
+
+88
+00:05:03,140 --> 00:05:07,600
+ So if I were to just give you the trajectory of an RRT,
+
+89
+00:05:07,600 --> 00:05:09,580
+ I'd say it's probably more like a QT.
+
+90
+00:05:09,580 --> 00:05:12,760
+ But an RRT feels a lot more like that cycle.
+
+91
+00:05:12,760 --> 00:05:13,260
+ Good.
+
+92
+00:05:13,260 --> 00:05:13,760
+ Yeah, yeah.
+
+93
+00:05:13,760 --> 00:05:15,800
+ So I'm going to try to make that connection, too.
+
+94
+00:05:15,800 --> 00:05:17,640
+ So the observation was-- actually,
+
+95
+00:05:17,640 --> 00:05:19,600
+ what I'm drawing here doesn't look
+
+96
+00:05:19,600 --> 00:05:24,920
+ so different than maybe the PRM or the RRT in its full glory.
+
+97
+00:05:24,920 --> 00:05:26,840
+ So yeah, there's good connections there.
+
+98
+00:05:26,840 --> 00:05:31,960
+ In fact, since you asked, why don't I show slide one?
+
+99
+00:05:31,960 --> 00:05:32,480
+ Yeah.
+
+100
+00:05:32,480 --> 00:05:34,800
+ OK, so my favorite version of this,
+
+101
+00:05:34,800 --> 00:05:37,480
+ actually, is the optimizing version of RRT,
+
+102
+00:05:37,480 --> 00:05:41,960
+ which is RRT*, where they very explicitly make the point
+
+103
+00:05:41,960 --> 00:05:44,880
+ that if you do that rewiring, then you can have a system--
+
+104
+00:05:44,880 --> 00:05:45,880
+ it's a little bit small.
+
+105
+00:05:45,880 --> 00:05:46,720
+ I hope you can see.
+
+106
+00:05:46,880 --> 00:05:50,120
+ You can have a system that finds a path fairly quickly.
+
+107
+00:05:50,120 --> 00:05:52,500
+ But if you just keep adding, keep sampling, keep sampling,
+
+108
+00:05:52,500 --> 00:05:55,080
+ keep rewiring, then what you end up with, really,
+
+109
+00:05:55,080 --> 00:05:56,640
+ is more than just a path.
+
+110
+00:05:56,640 --> 00:05:58,840
+ You can end up with a policy that
+
+111
+00:05:58,840 --> 00:06:03,480
+ tells you the vector field over the entire space.
+
+112
+00:06:03,480 --> 00:06:06,720
+ So you can really go from a lot of the planning algorithms
+
+113
+00:06:06,720 --> 00:06:08,060
+ to something more like policies.
+
+114
+00:06:08,060 --> 00:06:12,560
+ OK.
+
+115
+00:06:12,560 --> 00:06:29,440
+ So a lot of the variance, you could think of it that way.
+
+116
+00:06:29,440 --> 00:06:31,000
+ Alternatively, another connection
+
+117
+00:06:31,000 --> 00:06:33,240
+ would be if you were just to do replanning.
+
+118
+00:06:33,240 --> 00:06:35,800
+ If you can plan fast enough, and then
+
+119
+00:06:35,800 --> 00:06:39,120
+ if you look at whatever state you're currently in,
+
+120
+00:06:39,120 --> 00:06:49,160
+ then you can execute a plan on the fly, online planning
+
+121
+00:06:49,160 --> 00:06:51,260
+ is a policy, basically.
+
+122
+00:06:51,260 --> 00:06:52,920
+ And that's what people talk about when
+
+123
+00:06:52,920 --> 00:06:55,680
+ they talk about model predictive control, for instance.
+
+124
+00:06:55,680 --> 00:07:07,700
+ OK.
+
+125
+00:07:07,700 --> 00:07:09,820
+ So there's lots of connections between these two.
+
+126
+00:07:09,820 --> 00:07:13,240
+ And actually, even in the details,
+
+127
+00:07:13,240 --> 00:07:15,560
+ I really don't want it to be you're
+
+128
+00:07:15,560 --> 00:07:16,920
+ either a plan or a policy.
+
+129
+00:07:16,920 --> 00:07:22,280
+ Because I think there are beautiful ways
+
+130
+00:07:22,280 --> 00:07:24,320
+ to sort of blend the two.
+
+131
+00:07:24,320 --> 00:07:28,920
+ Like if you've looked at alpha 0, for instance,
+
+132
+00:07:28,920 --> 00:07:33,840
+ I think that's a very nice way of sort of planning and then
+
+133
+00:07:33,840 --> 00:07:36,880
+ using the planner to build a policy and vice versa.
+
+134
+00:07:36,880 --> 00:07:39,080
+ We'll talk about that one later.
+
+135
+00:07:39,080 --> 00:07:39,720
+ OK.
+
+136
+00:07:39,720 --> 00:07:41,480
+ So let's just compare the relative merits.
+
+137
+00:07:41,480 --> 00:07:46,640
+ As a representation, as the goal of an optimization problem
+
+138
+00:07:46,640 --> 00:07:52,040
+ or a planning problem, you would think that Q of t
+
+139
+00:07:52,040 --> 00:07:54,160
+ would be asking less.
+
+140
+00:07:54,160 --> 00:07:59,320
+ In many cases, it's not asking what
+
+141
+00:07:59,320 --> 00:08:01,440
+ should the behavior be at all possible states.
+
+142
+00:08:01,440 --> 00:08:05,200
+ It's just asking along one particular path.
+
+143
+00:08:05,200 --> 00:08:09,200
+ So in a sense, you do benefit from that in a very real way.
+
+144
+00:08:09,200 --> 00:08:11,720
+ But you can often plan for systems
+
+145
+00:08:11,720 --> 00:08:13,600
+ of very high dimensionality.
+
+146
+00:08:13,600 --> 00:08:18,200
+ And you're roughly immune to the curse of dimensionality.
+
+147
+00:08:18,200 --> 00:08:20,800
+ The number of possible states that I
+
+148
+00:08:20,800 --> 00:08:23,680
+ might have to cover with a description of a policy
+
+149
+00:08:23,680 --> 00:08:25,720
+ can grow badly.
+
+150
+00:08:25,720 --> 00:08:27,060
+ If I were to make a grid and have
+
+151
+00:08:27,060 --> 00:08:29,320
+ to give a discrete answer for every point on the grid,
+
+152
+00:08:29,320 --> 00:08:31,600
+ then it's exponential in the number of state variables.
+
+153
+00:08:34,200 --> 00:08:38,720
+ And a path, because it's only parameterized by t, not by Q,
+
+154
+00:08:38,720 --> 00:08:41,440
+ t is always dimension 1.
+
+155
+00:08:41,440 --> 00:08:43,800
+ So you can say the vector you have to put out
+
+156
+00:08:43,800 --> 00:08:44,440
+ is a little bit bigger.
+
+157
+00:08:44,440 --> 00:08:45,760
+ But that doesn't really matter.
+
+158
+00:08:45,760 --> 00:08:48,840
+ So what matters is that I have a single path
+
+159
+00:08:48,840 --> 00:08:51,880
+ through a potentially very high dimensional space.
+
+160
+00:08:51,880 --> 00:08:53,680
+ So in that sense, you might think
+
+161
+00:08:53,680 --> 00:08:56,040
+ that planning can scale much better.
+
+162
+00:08:56,040 --> 00:08:59,920
+ And I think there's certainly places where that's the case.
+
+163
+00:08:59,920 --> 00:09:03,960
+ The counter argument is that sometimes plans
+
+164
+00:09:03,960 --> 00:09:07,920
+ can be extremely complicated to represent.
+
+165
+00:09:07,920 --> 00:09:11,200
+ And sometimes very simple policies
+
+166
+00:09:11,200 --> 00:09:13,880
+ can actually describe behavior, even
+
+167
+00:09:13,880 --> 00:09:15,640
+ in very complicated systems.
+
+168
+00:09:15,640 --> 00:09:30,600
+ Can describe rich behavior.
+
+169
+00:09:31,600 --> 00:09:38,600
+ And I've mentioned a few examples of that before.
+
+170
+00:09:38,600 --> 00:09:42,680
+ My favorite of all time is the hopping robot
+
+171
+00:09:42,680 --> 00:09:46,720
+ from Mark Raybert, where it's just--
+
+172
+00:09:46,720 --> 00:09:48,240
+ to this day, I just love the fact
+
+173
+00:09:48,240 --> 00:09:51,600
+ that the whole controller fits on one page of this super small
+
+174
+00:09:51,600 --> 00:09:52,320
+ book.
+
+175
+00:09:52,320 --> 00:09:55,000
+ And it's basically a picture and then a few PD controllers.
+
+176
+00:09:55,000 --> 00:09:57,120
+ And it makes robots throw themselves through the air
+
+177
+00:09:57,120 --> 00:10:01,920
+ and had a huge impact on the field of leg and locomotion.
+
+178
+00:10:01,920 --> 00:10:04,960
+ So very simple controller saying roughly
+
+179
+00:10:04,960 --> 00:10:06,920
+ when you're on the ground, jump.
+
+180
+00:10:06,920 --> 00:10:09,280
+ When you're in the air, put your leg out in front of you,
+
+181
+00:10:09,280 --> 00:10:10,680
+ roughly where you want to land.
+
+182
+00:10:10,680 --> 00:10:13,800
+ And the resulting behavior, when you
+
+183
+00:10:13,800 --> 00:10:15,840
+ couple that with the dynamical system, which
+
+184
+00:10:15,840 --> 00:10:19,600
+ is the springy hopping robot, gives you
+
+185
+00:10:19,600 --> 00:10:21,360
+ this beautiful rich output.
+
+186
+00:10:21,360 --> 00:10:23,600
+ And actually, if you had to plan a path for that,
+
+187
+00:10:23,600 --> 00:10:26,240
+ it might be a harder problem.
+
+188
+00:10:26,240 --> 00:10:30,840
+ And I think that's also true if you start thinking about--
+
+189
+00:10:30,840 --> 00:10:33,280
+ this is an example of it can be very robust,
+
+190
+00:10:33,280 --> 00:10:34,940
+ even if they're relatively simple plans.
+
+191
+00:10:34,940 --> 00:10:36,720
+ That's what I showed you before.
+
+192
+00:10:36,720 --> 00:10:40,820
+ But now think about this as a very manipulation-specific
+
+193
+00:10:40,820 --> 00:10:42,360
+ example.
+
+194
+00:10:42,360 --> 00:10:46,840
+ If you have to plan every detail of that multi-fingered hand
+
+195
+00:10:46,840 --> 00:10:50,120
+ and every contact that comes in contact with the plate,
+
+196
+00:10:50,120 --> 00:10:53,960
+ that can be an enormously complicated plan to generate.
+
+197
+00:10:53,960 --> 00:10:56,120
+ But if you have a simple controller that just kind
+
+198
+00:10:56,120 --> 00:10:59,120
+ of goes down until you touch and then squeezes the hand,
+
+199
+00:10:59,120 --> 00:11:02,200
+ it might be that you can write that controller very easily
+
+200
+00:11:02,200 --> 00:11:06,800
+ and maybe or maybe not get beautiful performance out.
+
+201
+00:11:06,800 --> 00:11:08,760
+ I would say this is an open question and one that
+
+202
+00:11:08,760 --> 00:11:12,120
+ we'll discuss a bit today.
+
+203
+00:11:12,120 --> 00:11:16,560
+ I got to find one that's not going to be irritating.
+
+204
+00:11:16,560 --> 00:11:17,840
+ I think I can pause this one.
+
+205
+00:11:17,840 --> 00:11:18,320
+ OK.
+
+206
+00:11:18,320 --> 00:11:25,960
+ Maybe I can go on to the next thing here.
+
+207
+00:11:25,960 --> 00:11:26,460
+ Let's see.
+
+208
+00:11:26,460 --> 00:11:30,200
+ OK.
+
+209
+00:11:30,200 --> 00:11:33,560
+ So I do think the concept of planning
+
+210
+00:11:33,560 --> 00:11:36,960
+ and the concept of feedback control and policies,
+
+211
+00:11:36,960 --> 00:11:39,080
+ I think both of them need to probably live
+
+212
+00:11:39,080 --> 00:11:43,360
+ in our future manipulation systems.
+
+213
+00:11:43,360 --> 00:11:45,480
+ We talked about motion planning at one level,
+
+214
+00:11:45,480 --> 00:11:48,680
+ but even higher than that was our task level planner.
+
+215
+00:11:48,680 --> 00:11:51,400
+ So deciding that I'm going to first pick up the mug,
+
+216
+00:11:51,400 --> 00:11:53,560
+ and then I'm going to open the dishwasher drawer,
+
+217
+00:11:53,560 --> 00:11:55,480
+ and then pick up the mug, and then put it down.
+
+218
+00:11:55,480 --> 00:11:58,920
+ That's a high level logical planner.
+
+219
+00:11:58,920 --> 00:12:01,680
+ When I've described it before, quickly, we
+
+220
+00:12:01,680 --> 00:12:05,000
+ talked about that as a planner, not a policy.
+
+221
+00:12:05,000 --> 00:12:09,080
+ And my favorite thing from Leslie Kelbling,
+
+222
+00:12:09,080 --> 00:12:13,200
+ Leslie likes to say, imagine you're trying
+
+223
+00:12:13,200 --> 00:12:15,600
+ to book a vacation to Paris.
+
+224
+00:12:15,600 --> 00:12:18,840
+ You don't have a policy for booking a vacation to Paris.
+
+225
+00:12:18,840 --> 00:12:21,200
+ It's not that you've like every possible place
+
+226
+00:12:21,200 --> 00:12:23,160
+ that you're ever going to vacation.
+
+227
+00:12:23,160 --> 00:12:25,400
+ You've already pre-recorded a solution for that.
+
+228
+00:12:25,400 --> 00:12:28,480
+ And then you just look up the solution to that.
+
+229
+00:12:28,480 --> 00:12:32,080
+ It seems like there are places in our lives
+
+230
+00:12:32,080 --> 00:12:33,960
+ where we solve problems on the fly,
+
+231
+00:12:33,960 --> 00:12:38,400
+ and do some deductive reasoning, and do effectively planning.
+
+232
+00:12:38,400 --> 00:12:43,440
+ Now at the very low level, we've got very continuous motions
+
+233
+00:12:43,440 --> 00:12:46,480
+ with very complex contact mechanics or whatever.
+
+234
+00:12:46,480 --> 00:12:50,680
+ We'll talk a little bit.
+
+235
+00:12:50,680 --> 00:12:52,880
+ I think it's still a little unclear,
+
+236
+00:12:52,880 --> 00:12:54,640
+ but that feels more like a control problem
+
+237
+00:12:54,640 --> 00:12:56,080
+ where you really want to know what's
+
+238
+00:12:56,080 --> 00:12:59,080
+ going to happen from all the different states.
+
+239
+00:12:59,080 --> 00:13:00,660
+ And the exact details of what happens
+
+240
+00:13:00,660 --> 00:13:03,440
+ along a particular trajectory are probably not
+
+241
+00:13:03,440 --> 00:13:05,480
+ as important.
+
+242
+00:13:05,480 --> 00:13:09,440
+ So maybe at the low level, we kind of have policies.
+
+243
+00:13:09,440 --> 00:13:11,800
+ And what's super interesting is to think
+
+244
+00:13:11,800 --> 00:13:13,240
+ about how that transition happens,
+
+245
+00:13:13,240 --> 00:13:18,080
+ and where up and down the ladder, I guess,
+
+246
+00:13:18,080 --> 00:13:19,280
+ does that transition happen?
+
+247
+00:13:19,280 --> 00:13:20,240
+ And how does it happen?
+
+248
+00:13:20,240 --> 00:13:22,240
+ How does it happen gracefully?
+
+249
+00:13:22,240 --> 00:13:24,320
+ We talked about motion planning of the arm.
+
+250
+00:13:24,320 --> 00:13:26,120
+ That's a case of a super powerful set
+
+251
+00:13:26,120 --> 00:13:27,560
+ of tools that we have.
+
+252
+00:13:27,560 --> 00:13:30,680
+ Does it belong in our long-term solution?
+
+253
+00:13:30,680 --> 00:13:31,920
+ Maybe depends what the task is.
+
+254
+00:13:31,920 --> 00:13:39,800
+ I would even say that my position on this has changed.
+
+255
+00:13:39,800 --> 00:13:43,480
+ So in legged robots, I think it's
+
+256
+00:13:43,480 --> 00:13:46,360
+ very natural to think about having low-level controllers.
+
+257
+00:13:46,360 --> 00:13:49,320
+ You're constantly trying to not fall down.
+
+258
+00:13:49,320 --> 00:13:51,720
+ So balance is a premium.
+
+259
+00:13:51,720 --> 00:13:54,200
+ The lowest level thing you want is to be a stabilization
+
+260
+00:13:54,200 --> 00:13:55,360
+ based thing.
+
+261
+00:13:55,360 --> 00:13:58,000
+ And roughly, there's kind of a nominal thing that I do.
+
+262
+00:13:58,000 --> 00:13:59,640
+ I have a nominal gate.
+
+263
+00:13:59,640 --> 00:14:01,200
+ I'd like to have that programmed in.
+
+264
+00:14:01,200 --> 00:14:03,560
+ I'd like to know what's going to happen if I'm near that.
+
+265
+00:14:03,560 --> 00:14:05,480
+ If I take my foot a slightly bad step,
+
+266
+00:14:05,480 --> 00:14:07,200
+ feels very much like a policy to me.
+
+267
+00:14:07,200 --> 00:14:11,800
+ And you could imagine having a handful of maybe a step reflex
+
+268
+00:14:11,800 --> 00:14:15,260
+ or just a handful of policies that you could combine and be
+
+269
+00:14:15,260 --> 00:14:19,760
+ a very effective walker, like a locomotor.
+
+270
+00:14:19,760 --> 00:14:22,160
+ In manipulation, I would have initially--
+
+271
+00:14:22,160 --> 00:14:24,760
+ I did initially, a handful of years ago,
+
+272
+00:14:24,760 --> 00:14:29,400
+ thought it was different because the sheer diversity of things
+
+273
+00:14:29,400 --> 00:14:32,680
+ that we do with our hands.
+
+274
+00:14:32,680 --> 00:14:35,440
+ It's amazing, all the different things we do with our hands.
+
+275
+00:14:35,440 --> 00:14:37,520
+ And to some extent, we are not in this sort
+
+276
+00:14:37,520 --> 00:14:45,200
+ of periodic, very regular pattern.
+
+277
+00:14:45,200 --> 00:14:47,160
+ To some extent, it feels like every time we
+
+278
+00:14:47,160 --> 00:14:48,140
+ do something with our hands, we're
+
+279
+00:14:48,140 --> 00:14:50,600
+ doing something different we've never done before.
+
+280
+00:14:50,600 --> 00:14:53,120
+ And maybe the situation that we're seeing in front of us
+
+281
+00:14:53,120 --> 00:14:55,200
+ is kind of, if it's never been seen before,
+
+282
+00:14:55,200 --> 00:14:56,660
+ then it really puts us in a place
+
+283
+00:14:56,660 --> 00:14:58,620
+ where I just need to figure out this one thing,
+
+284
+00:14:58,620 --> 00:15:01,120
+ the single query RRT view of the world,
+
+285
+00:15:01,120 --> 00:15:03,880
+ rather than the multi-query if you
+
+286
+00:15:03,880 --> 00:15:06,680
+ try to solve an entire feedback policy.
+
+287
+00:15:06,680 --> 00:15:13,440
+ And I still think there's good logic to that.
+
+288
+00:15:13,440 --> 00:15:15,920
+ But I've changed my mind a bit.
+
+289
+00:15:15,920 --> 00:15:19,700
+ I think now that we probably do have--
+
+290
+00:15:19,700 --> 00:15:22,280
+ I mean, I don't know how high up the ladder it goes.
+
+291
+00:15:22,280 --> 00:15:26,600
+ But I do think a relatively small set of policies
+
+292
+00:15:26,600 --> 00:15:28,200
+ down at the low level can probably
+
+293
+00:15:28,200 --> 00:15:30,640
+ describe a lot of the details of what we do with our hands.
+
+294
+00:15:30,640 --> 00:15:32,440
+ And there's lots of evidence of--
+
+295
+00:15:32,440 --> 00:15:36,400
+ people talk about if you just watch
+
+296
+00:15:36,400 --> 00:15:39,500
+ the kinematics of people's hands when they're doing maneuvers,
+
+297
+00:15:39,500 --> 00:15:41,420
+ it's actually relatively low dimensional.
+
+298
+00:15:41,420 --> 00:15:43,320
+ There's like eigengrasps, and there's all kinds
+
+299
+00:15:43,320 --> 00:15:44,720
+ of discussions about this.
+
+300
+00:15:44,720 --> 00:15:46,240
+ But I would think even fundamentally,
+
+301
+00:15:46,240 --> 00:15:49,600
+ I think there's handfuls of things
+
+302
+00:15:49,600 --> 00:15:52,880
+ that we do that was not intentional that we do that I
+
+303
+00:15:52,880 --> 00:15:56,000
+ think we probably could, through practice,
+
+304
+00:15:56,000 --> 00:15:58,940
+ get very good at a small number of policies
+
+305
+00:15:58,940 --> 00:16:03,760
+ and assemble them and achieve a great diversity of motions.
+
+306
+00:16:03,760 --> 00:16:04,560
+ But I don't know.
+
+307
+00:16:04,560 --> 00:16:06,920
+ I mean, I think somewhere--
+
+308
+00:16:06,920 --> 00:16:10,440
+ we have to live somewhere in this balance.
+
+309
+00:16:10,440 --> 00:16:18,480
+ OK, there's another problem actually with this picture.
+
+310
+00:16:18,480 --> 00:16:20,800
+ So if I put this back up again--
+
+311
+00:16:20,800 --> 00:16:22,480
+ or another thing that it doesn't address
+
+312
+00:16:22,480 --> 00:16:24,720
+ that I want to call out.
+
+313
+00:16:24,720 --> 00:16:38,160
+ So this view of policies from plans,
+
+314
+00:16:38,160 --> 00:16:41,920
+ this sort of Q dot is some policy.
+
+315
+00:16:41,920 --> 00:16:43,960
+ We almost always use pi for policy.
+
+316
+00:16:43,960 --> 00:16:46,640
+ And that's the RL notation.
+
+317
+00:16:46,640 --> 00:16:52,760
+ OK, this presumes that we somehow have a measurement
+
+318
+00:16:52,760 --> 00:16:55,000
+ or even know what Q is.
+
+319
+00:16:55,000 --> 00:17:04,360
+ It presumes that we know Q and have estimated it, let's say.
+
+320
+00:17:04,360 --> 00:17:20,880
+ And-- OK, and this is obviously a major assumption.
+
+321
+00:17:20,880 --> 00:17:24,640
+ So for an arm moving through, when
+
+322
+00:17:24,640 --> 00:17:27,660
+ Q is just the state of the arm and I'm doing motion planning,
+
+323
+00:17:27,660 --> 00:17:29,320
+ that doesn't feel like a bad assumption.
+
+324
+00:17:29,320 --> 00:17:30,880
+ We have very good sensors.
+
+325
+00:17:31,400 --> 00:17:35,240
+ We've paid for the nice KUKA instrumentation.
+
+326
+00:17:35,240 --> 00:17:37,800
+ It gives very accurate measurements
+
+327
+00:17:37,800 --> 00:17:39,880
+ of the joint positions of the arm.
+
+328
+00:17:39,880 --> 00:17:44,040
+ But if we're in this bigger view of manipulation,
+
+329
+00:17:44,040 --> 00:17:48,400
+ where the policy really needs to know not just
+
+330
+00:17:48,400 --> 00:17:53,440
+ the state of the arm, but it's really somehow I'm
+
+331
+00:17:53,440 --> 00:17:57,080
+ making some control decisions based
+
+332
+00:17:57,080 --> 00:18:00,560
+ on the entire state of the arm plus the world, right?
+
+333
+00:18:00,560 --> 00:18:10,120
+ This now is Q of the robot, V of the robot in general, right?
+
+334
+00:18:10,120 --> 00:18:16,720
+ Q of the world of the environment obstacle, object,
+
+335
+00:18:16,720 --> 00:18:21,240
+ V, and so on and so forth, right?
+
+336
+00:18:21,240 --> 00:18:23,860
+ I don't have good instrumentation on the red brick.
+
+337
+00:18:23,860 --> 00:18:25,520
+ And the red brick is as easy as it gets.
+
+338
+00:18:25,520 --> 00:18:27,200
+ It doesn't get easier than the red brick.
+
+339
+00:18:27,200 --> 00:18:29,360
+ It only gets worse from there.
+
+340
+00:18:29,360 --> 00:18:30,240
+ OK?
+
+341
+00:18:30,240 --> 00:18:34,120
+ So already, implicitly by saying that I've
+
+342
+00:18:34,120 --> 00:18:37,320
+ written my policy like this, it sort of
+
+343
+00:18:37,320 --> 00:18:40,040
+ assumes that I've been able to estimate those positions
+
+344
+00:18:40,040 --> 00:18:42,000
+ and velocities.
+
+345
+00:18:42,000 --> 00:18:42,840
+ OK?
+
+346
+00:18:42,840 --> 00:18:46,600
+ Sometimes I don't even know how to write them down.
+
+347
+00:18:46,600 --> 00:18:49,600
+ Not just-- I don't want to assume I estimate them,
+
+348
+00:18:49,600 --> 00:18:52,120
+ but maybe I don't even know what choice of Q
+
+349
+00:18:52,120 --> 00:18:54,320
+ is a good state representation for the world, right?
+
+350
+00:18:54,320 --> 00:18:56,920
+ So my favorite example of that is just
+
+351
+00:18:56,920 --> 00:18:59,760
+ thinking about the problem of chopping onions, right?
+
+352
+00:18:59,760 --> 00:19:04,480
+ And if you think about trying to write the pose and velocity
+
+353
+00:19:04,480 --> 00:19:07,760
+ of all the pieces of the onion, and maybe it changes in number
+
+354
+00:19:07,760 --> 00:19:09,480
+ every time I make a cut, right?
+
+355
+00:19:09,480 --> 00:19:14,040
+ So I don't even know what the x of this state of this system
+
+356
+00:19:14,040 --> 00:19:15,360
+ should be, right?
+
+357
+00:19:15,360 --> 00:19:18,160
+ So that's when I say, presumes that we know Q, right?
+
+358
+00:19:18,160 --> 00:19:22,640
+ I don't even know a good representation for that yet.
+
+359
+00:19:22,640 --> 00:19:25,080
+ OK, so what I really wanted to talk about here
+
+360
+00:19:25,080 --> 00:19:28,440
+ is a broader view of what a policy is.
+
+361
+00:19:28,440 --> 00:19:31,360
+ It's not just a map from state to actions.
+
+362
+00:19:31,360 --> 00:19:35,920
+ It's potentially a map from observations to actions,
+
+363
+00:19:35,920 --> 00:19:37,480
+ and it's a dynamical system.
+
+364
+00:19:37,480 --> 00:19:38,680
+ OK, so let me come over here.
+
+365
+00:19:38,680 --> 00:19:46,680
+ So really, what we have is our dynamic systems
+
+366
+00:19:46,680 --> 00:19:47,800
+ view of the world.
+
+367
+00:19:47,800 --> 00:19:54,840
+ I've got my plant, which is the robot, plus the onions, right?
+
+368
+00:19:54,840 --> 00:19:56,960
+ OK, I've got my sensors coming out.
+
+369
+00:19:57,960 --> 00:20:00,280
+ I've got my actuators coming in.
+
+370
+00:20:00,280 --> 00:20:05,440
+ There's a view of the world, which
+
+371
+00:20:05,440 --> 00:20:08,800
+ says that I should just write a state estimator first.
+
+372
+00:20:08,800 --> 00:20:17,560
+ And that gives me some estimate of x,
+
+373
+00:20:17,560 --> 00:20:23,280
+ and then I can write my policy u equals pi of x hat,
+
+374
+00:20:23,280 --> 00:20:29,040
+ and I could feed that policy around to the plant.
+
+375
+00:20:29,040 --> 00:20:35,800
+ That means that the implications of that model
+
+376
+00:20:35,800 --> 00:20:40,280
+ here, which is a classic model that we've gotten from control,
+
+377
+00:20:40,280 --> 00:20:45,560
+ is that this thing has to be a perception system that
+
+378
+00:20:45,560 --> 00:20:51,800
+ estimates the state of the onion in addition to the robot.
+
+379
+00:20:51,800 --> 00:20:54,600
+ It has to be running at full frame rate
+
+380
+00:20:54,600 --> 00:20:55,760
+ according to this diagram.
+
+381
+00:20:55,760 --> 00:21:01,560
+ If you think about how we've used them so far,
+
+382
+00:21:01,560 --> 00:21:04,160
+ we've really said, let's do perception and then
+
+383
+00:21:04,160 --> 00:21:06,280
+ plan a trajectory, and we basically close our eyes
+
+384
+00:21:06,280 --> 00:21:08,440
+ while we go and execute the trajectory.
+
+385
+00:21:08,440 --> 00:21:09,720
+ But this is asking for more.
+
+386
+00:21:09,720 --> 00:21:11,840
+ This is asking for a constant stream of sensors
+
+387
+00:21:11,840 --> 00:21:17,040
+ to be coming in and put out a constant stream of x estimates
+
+388
+00:21:17,040 --> 00:21:18,920
+ coming out in order to make these decisions.
+
+389
+00:21:19,720 --> 00:21:20,220
+ OK.
+
+390
+00:21:20,220 --> 00:21:26,280
+ And this has been good to us in control,
+
+391
+00:21:26,280 --> 00:21:30,440
+ but it's breaking down when it gets to manipulation.
+
+392
+00:21:30,440 --> 00:21:34,920
+ This assumption of having a state estimator in the middle
+
+393
+00:21:34,920 --> 00:21:40,360
+ and having its requirement to output x hat is just too great.
+
+394
+00:21:40,360 --> 00:21:47,320
+ And I would say that this burden of state estimation
+
+395
+00:21:47,320 --> 00:21:48,160
+ is just too great.
+
+396
+00:21:48,160 --> 00:22:02,840
+ And it's not necessary, necessarily,
+
+397
+00:22:02,840 --> 00:22:06,080
+ to estimate the full state to make good decisions.
+
+398
+00:22:06,080 --> 00:22:13,120
+ OK, so I think one of the great things
+
+399
+00:22:13,120 --> 00:22:15,440
+ that manipulation is doing for control
+
+400
+00:22:15,440 --> 00:22:20,000
+ is it's fighting down some of this model
+
+401
+00:22:20,000 --> 00:22:22,080
+ of trying to do state estimation and then control.
+
+402
+00:22:22,080 --> 00:22:22,580
+ Yeah?
+
+403
+00:22:22,580 --> 00:22:23,080
+ [INAUDIBLE]
+
+404
+00:22:23,080 --> 00:22:39,560
+ So this definitely has the multibody state.
+
+405
+00:22:45,360 --> 00:22:47,040
+ If I just think about what state variables
+
+406
+00:22:47,040 --> 00:22:49,920
+ did I have to declare to simulate the thing,
+
+407
+00:22:49,920 --> 00:22:54,560
+ in this model, this could be a simple function.
+
+408
+00:22:54,560 --> 00:22:57,680
+ Input output function, no state.
+
+409
+00:22:57,680 --> 00:23:00,600
+ We're going to generalize it, of course.
+
+410
+00:23:00,600 --> 00:23:07,800
+ And if I think of this as like a Kalman filter, for instance,
+
+411
+00:23:07,800 --> 00:23:11,080
+ or an extended Kalman filter, has a state.
+
+412
+00:23:14,360 --> 00:23:17,120
+ It's running an internal estimate x hat.
+
+413
+00:23:17,120 --> 00:23:18,840
+ That's not the only way to implement that.
+
+414
+00:23:18,840 --> 00:23:22,560
+ You can write state estimators that just have sliding windows
+
+415
+00:23:22,560 --> 00:23:26,080
+ or whatever, but that would be a natural approximation.
+
+416
+00:23:26,080 --> 00:23:28,000
+ So there would be state variables here,
+
+417
+00:23:28,000 --> 00:23:31,240
+ state variables here, and that could be a static function.
+
+418
+00:23:31,240 --> 00:23:32,520
+ That would be the classic view.
+
+419
+00:23:32,520 --> 00:23:39,240
+ As I was thinking about this, I was
+
+420
+00:23:39,240 --> 00:23:42,160
+ kind of reflecting on my own journey through this process.
+
+421
+00:23:42,160 --> 00:23:46,600
+ So even when I was purely focused on legged locomotion
+
+422
+00:23:46,600 --> 00:23:49,720
+ and UAVs, I guess, we were feeling the pain of this.
+
+423
+00:23:49,720 --> 00:23:51,760
+ And I would say, when people ask me,
+
+424
+00:23:51,760 --> 00:23:54,800
+ what do I think, why aren't I working on legged locomotion
+
+425
+00:23:54,800 --> 00:23:56,960
+ right now, and am I going to work on it again,
+
+426
+00:23:56,960 --> 00:24:00,680
+ I think this is still a limitation.
+
+427
+00:24:00,680 --> 00:24:03,560
+ We're leaning hard on this paradigm
+
+428
+00:24:03,560 --> 00:24:04,920
+ in our legged locomotion.
+
+429
+00:24:04,920 --> 00:24:07,600
+ Atlas has an incredible state estimation system.
+
+430
+00:24:07,600 --> 00:24:10,280
+ I think they would tell you that it could even be better.
+
+431
+00:24:10,280 --> 00:24:11,840
+ But the inclination would be, if I
+
+432
+00:24:11,840 --> 00:24:13,240
+ want to improve the performance, I
+
+433
+00:24:13,240 --> 00:24:15,080
+ can make my state estimator better.
+
+434
+00:24:15,080 --> 00:24:19,680
+ I think it's going to take a big leap to break that mold
+
+435
+00:24:19,680 --> 00:24:21,280
+ and try to do control differently
+
+436
+00:24:21,280 --> 00:24:22,680
+ in legged locomotion.
+
+437
+00:24:22,680 --> 00:24:23,920
+ But I was already feeling it.
+
+438
+00:24:23,920 --> 00:24:24,760
+ And I was writing--
+
+439
+00:24:24,760 --> 00:24:26,160
+ I remember, I actually looked back,
+
+440
+00:24:26,160 --> 00:24:27,320
+ just to look at the dates this morning.
+
+441
+00:24:27,320 --> 00:24:28,280
+ And I was looking back.
+
+442
+00:24:28,280 --> 00:24:31,840
+ I wrote proposals, like in 2011, that were saying,
+
+443
+00:24:31,840 --> 00:24:33,960
+ we have to do integrated perception and control.
+
+444
+00:24:33,960 --> 00:24:35,560
+ That was what we called it back then,
+
+445
+00:24:35,560 --> 00:24:37,000
+ integrated perception and control.
+
+446
+00:24:38,000 --> 00:24:40,960
+ [WRITING]
+
+447
+00:24:40,960 --> 00:24:52,720
+ Saying, don't break those up into two separate processes.
+
+448
+00:24:52,720 --> 00:24:54,760
+ Put it into one system.
+
+449
+00:24:54,760 --> 00:24:56,880
+ Solve them jointly.
+
+450
+00:24:56,880 --> 00:24:59,160
+ And a lot of people were using those words at the time.
+
+451
+00:24:59,160 --> 00:25:01,040
+ And it sort of evolved.
+
+452
+00:25:01,040 --> 00:25:05,520
+ Another name for this is output feedback.
+
+453
+00:25:05,520 --> 00:25:06,680
+ We'll talk about that.
+
+454
+00:25:06,680 --> 00:25:16,200
+ In particular, it would be dynamic output feedback,
+
+455
+00:25:16,200 --> 00:25:18,740
+ where I have to take-- where I'm trying to design a feedback
+
+456
+00:25:18,740 --> 00:25:22,080
+ controller that goes all the way from sensors to actions.
+
+457
+00:25:22,080 --> 00:25:24,320
+ That's an output feedback, as opposed
+
+458
+00:25:24,320 --> 00:25:26,400
+ to a full state feedback.
+
+459
+00:25:26,400 --> 00:25:29,320
+ [WRITING]
+
+460
+00:25:29,320 --> 00:25:40,080
+ I remember struggling and struggling to convince people
+
+461
+00:25:40,080 --> 00:25:41,080
+ that this was important.
+
+462
+00:25:41,080 --> 00:25:43,480
+ Even my students would kind of be like, yeah, I hear you.
+
+463
+00:25:43,480 --> 00:25:46,840
+ But can we just make the state estimator better?
+
+464
+00:25:46,840 --> 00:25:53,000
+ And in UAVs, we started to finally--
+
+465
+00:25:53,000 --> 00:25:55,360
+ started to see was we were flying very fast
+
+466
+00:25:55,360 --> 00:25:56,360
+ through forests.
+
+467
+00:25:56,360 --> 00:25:58,760
+ That was the first project where we really started doing--
+
+468
+00:25:58,760 --> 00:26:01,680
+ I think letting go a little bit of the full state
+
+469
+00:26:01,680 --> 00:26:05,200
+ and trying to just say, we need a minimal sensing
+
+470
+00:26:05,200 --> 00:26:06,760
+ of the upcoming obstacles.
+
+471
+00:26:06,760 --> 00:26:09,120
+ And that's sufficient to make our short-term control
+
+472
+00:26:09,120 --> 00:26:10,320
+ decisions.
+
+473
+00:26:10,320 --> 00:26:13,560
+ So our first papers and talks about integrated perception
+
+474
+00:26:13,560 --> 00:26:16,200
+ and control actually came in the UAV space.
+
+475
+00:26:16,200 --> 00:26:24,200
+ And it really-- deep learning happened around 2015, 2016-ish.
+
+476
+00:26:24,200 --> 00:26:25,920
+ People started calling it visual motor,
+
+477
+00:26:25,920 --> 00:26:29,720
+ especially in the manipulation space, visual motor policies.
+
+478
+00:26:29,720 --> 00:26:33,800
+ And I think, in my mind, they mean the same thing.
+
+479
+00:26:33,800 --> 00:26:36,520
+ And this is the word to use today.
+
+480
+00:26:36,520 --> 00:26:38,920
+ And it's really this sort of bigger view
+
+481
+00:26:38,920 --> 00:26:43,040
+ of trying to write a controller that goes directly
+
+482
+00:26:43,040 --> 00:26:45,920
+ from your sensors to your actions.
+
+483
+00:26:45,920 --> 00:26:49,080
+ And we'll ask the question of, does it have state inside it?
+
+484
+00:26:49,080 --> 00:26:52,680
+ But this is a beautiful view of visual motor policies.
+
+485
+00:26:52,680 --> 00:26:56,400
+ And in my mind, this is the reason
+
+486
+00:26:56,400 --> 00:26:58,840
+ to do manipulation for me.
+
+487
+00:26:58,840 --> 00:27:03,640
+ I think this is forcing big questions that we don't know
+
+488
+00:27:03,640 --> 00:27:06,880
+ how to address solidly and control yet when the sensors
+
+489
+00:27:06,880 --> 00:27:09,720
+ are cameras or depth cameras or RGB, right?
+
+490
+00:27:09,720 --> 00:27:11,680
+ And we're trying to come in and write the best
+
+491
+00:27:11,680 --> 00:27:15,360
+ controller we know how in order to make an action based
+
+492
+00:27:15,360 --> 00:27:18,880
+ on a stream of rich visual motor sensor inputs.
+
+493
+00:27:19,840 --> 00:27:20,340
+ OK.
+
+494
+00:27:20,340 --> 00:27:28,440
+ So this view of visual motor policies--
+
+495
+00:27:28,440 --> 00:27:41,160
+ I just draw that same thing again here,
+
+496
+00:27:41,160 --> 00:27:42,240
+ but zoom in a little bit.
+
+497
+00:27:42,240 --> 00:27:42,740
+ OK.
+
+498
+00:27:42,740 --> 00:27:53,520
+ The simplest thing I could write here
+
+499
+00:27:53,520 --> 00:27:56,680
+ would just be, as Alex was asking about,
+
+500
+00:27:56,680 --> 00:28:01,680
+ I could write that just I call my sensors y, which I always
+
+501
+00:28:01,680 --> 00:28:06,680
+ do because I come more from the control, I guess, these days.
+
+502
+00:28:06,680 --> 00:28:11,840
+ Right?
+
+503
+00:28:11,840 --> 00:28:19,560
+ I could just have a static function
+
+504
+00:28:19,560 --> 00:28:22,400
+ that maps from my current observation
+
+505
+00:28:22,400 --> 00:28:24,720
+ to my current action.
+
+506
+00:28:24,720 --> 00:28:29,120
+ That's a reasonable thing to do, but it's limiting.
+
+507
+00:28:29,120 --> 00:28:30,580
+ We already know that it's limiting,
+
+508
+00:28:30,580 --> 00:28:33,280
+ because even for sort of basic control,
+
+509
+00:28:33,280 --> 00:28:34,680
+ the simplest versions of control,
+
+510
+00:28:34,680 --> 00:28:37,240
+ the simplest versions of output feedback in control
+
+511
+00:28:37,240 --> 00:28:44,680
+ would be like linear quadratic, linear Gaussian optimal
+
+512
+00:28:44,680 --> 00:29:01,920
+ control, already demands dynamic policies,
+
+513
+00:29:01,920 --> 00:29:05,240
+ dynamic controllers, which is exactly the column and filter
+
+514
+00:29:05,240 --> 00:29:07,400
+ state plus the LQR.
+
+515
+00:29:07,400 --> 00:29:08,440
+ OK.
+
+516
+00:29:08,440 --> 00:29:09,920
+ So another way to think about this
+
+517
+00:29:09,920 --> 00:29:12,520
+ is that this is a new dynamical system.
+
+518
+00:29:12,520 --> 00:29:14,400
+ It has its own internal state.
+
+519
+00:29:14,400 --> 00:29:15,160
+ OK.
+
+520
+00:29:15,160 --> 00:29:17,320
+ One version of that is that inside,
+
+521
+00:29:17,320 --> 00:29:22,280
+ it has the state estimator, which has internal state.
+
+522
+00:29:22,280 --> 00:29:25,080
+ It has the controller here.
+
+523
+00:29:25,080 --> 00:29:25,580
+ Right?
+
+524
+00:29:25,580 --> 00:29:27,600
+ That is a version of a dynamic controller.
+
+525
+00:29:27,600 --> 00:29:31,120
+ That is the optimal thing to do in a linear Gaussian
+
+526
+00:29:31,120 --> 00:29:34,520
+ quadratic optimal control problem, OK,
+
+527
+00:29:34,520 --> 00:29:38,120
+ is to have a dynamic controller that estimates the full state
+
+528
+00:29:38,120 --> 00:29:40,120
+ and makes decisions.
+
+529
+00:29:40,120 --> 00:29:42,520
+ But that's not true in general.
+
+530
+00:29:42,520 --> 00:29:44,960
+ It is true in general that having dynamic policies
+
+531
+00:29:44,960 --> 00:29:47,400
+ can do great things.
+
+532
+00:29:47,400 --> 00:29:48,080
+ Question?
+
+533
+00:29:48,080 --> 00:29:48,580
+ Yes.
+
+534
+00:29:48,580 --> 00:29:51,360
+ What's the trade-off between having a dynamic policy
+
+535
+00:29:51,360 --> 00:29:54,520
+ versus augmenting your policy with a history of observation?
+
+536
+00:29:54,520 --> 00:29:55,440
+ Yeah.
+
+537
+00:29:55,440 --> 00:29:55,920
+ Good.
+
+538
+00:29:55,920 --> 00:30:00,480
+ So let's first just jump to say, think of this--
+
+539
+00:30:00,480 --> 00:30:01,560
+ this is a dynamical system.
+
+540
+00:30:01,560 --> 00:30:03,820
+ We think of this as an input-output dynamical system.
+
+541
+00:30:03,820 --> 00:30:05,400
+ It's got a stream of actuator commands.
+
+542
+00:30:05,400 --> 00:30:07,240
+ It has to predict the stream of sensors.
+
+543
+00:30:07,240 --> 00:30:09,120
+ I want you to think about these controllers
+
+544
+00:30:09,120 --> 00:30:11,760
+ as having the same stream of sensor inputs
+
+545
+00:30:11,760 --> 00:30:13,600
+ and a stream of outputs command.
+
+546
+00:30:13,600 --> 00:30:14,080
+ Right?
+
+547
+00:30:14,080 --> 00:30:15,480
+ So this is just a dynamical system.
+
+548
+00:30:15,480 --> 00:30:19,460
+ OK.
+
+549
+00:30:19,460 --> 00:30:22,400
+ So now in this weird case, it's sort of y's coming in
+
+550
+00:30:22,400 --> 00:30:23,520
+ and u's coming out.
+
+551
+00:30:23,520 --> 00:30:26,080
+ But these are signals coming in.
+
+552
+00:30:26,080 --> 00:30:28,200
+ And I have a system in the middle.
+
+553
+00:30:28,200 --> 00:30:28,680
+ OK.
+
+554
+00:30:28,680 --> 00:30:30,840
+ There are many ways to represent a system.
+
+555
+00:30:30,840 --> 00:30:40,400
+ You could have a state space representation,
+
+556
+00:30:40,400 --> 00:30:42,280
+ which is what we've been using most of the time
+
+557
+00:30:42,280 --> 00:30:43,740
+ and which we're most familiar with.
+
+558
+00:30:43,740 --> 00:30:45,620
+ I could say maybe xc is my--
+
+559
+00:30:45,620 --> 00:30:48,980
+ maybe it should be x pi, but I'll call it c.
+
+560
+00:30:48,980 --> 00:30:55,180
+ xc of n plus 1 is some f of c xc of n.
+
+561
+00:30:55,180 --> 00:30:58,080
+ y of n is coming in.
+
+562
+00:30:58,080 --> 00:31:01,780
+ And then I'm saying that u coming out
+
+563
+00:31:01,780 --> 00:31:06,300
+ is like my pi, which depends on both the internal state
+
+564
+00:31:06,300 --> 00:31:10,100
+ and my inputs coming in.
+
+565
+00:31:10,100 --> 00:31:12,380
+ That would be a state space model
+
+566
+00:31:12,380 --> 00:31:14,820
+ where I have explicitly written down the state.
+
+567
+00:31:14,820 --> 00:31:17,100
+ I move forward with a difference equation
+
+568
+00:31:17,100 --> 00:31:19,200
+ or a differential equation, that state,
+
+569
+00:31:19,200 --> 00:31:21,620
+ and I'm producing my outputs.
+
+570
+00:31:21,620 --> 00:31:24,480
+ But there are also other perfectly good models
+
+571
+00:31:24,480 --> 00:31:27,780
+ of differential equations.
+
+572
+00:31:27,780 --> 00:31:29,260
+ I think the one you're referring to
+
+573
+00:31:29,260 --> 00:31:33,140
+ would be like an ARA model or ARMA or ARMA
+
+574
+00:31:33,140 --> 00:31:35,340
+ with exogenous inputs, which is--
+
+575
+00:31:35,340 --> 00:31:39,820
+ this is an autoregressive model with--
+
+576
+00:31:39,820 --> 00:31:41,100
+ yeah, it doesn't really matter.
+
+577
+00:31:41,100 --> 00:31:42,820
+ But it's with exogenous inputs.
+
+578
+00:31:42,820 --> 00:31:49,220
+ But roughly, it is now pi takes a history of observations.
+
+579
+00:31:49,220 --> 00:31:59,620
+ So pi coming in.
+
+580
+00:31:59,620 --> 00:32:01,880
+ It also potentially takes a history
+
+581
+00:32:01,880 --> 00:32:06,180
+ of its own outputs, which is a little bit goofy to write it
+
+582
+00:32:06,180 --> 00:32:07,800
+ the way I've got u and y flipped here.
+
+583
+00:32:07,800 --> 00:32:11,580
+ But luckily, the message is the same.
+
+584
+00:32:11,580 --> 00:32:13,300
+ You need both of them in there.
+
+585
+00:32:13,300 --> 00:32:15,060
+ That's why it's autoregressive, because it
+
+586
+00:32:15,060 --> 00:32:16,380
+ gets to see its own output.
+
+587
+00:32:16,380 --> 00:32:18,220
+ And it now just predicts its next controller.
+
+588
+00:32:18,220 --> 00:32:24,980
+ Maybe it's not allowed to see this one.
+
+589
+00:32:24,980 --> 00:32:27,780
+ This is another perfectly good input-output dynamical system.
+
+590
+00:32:27,780 --> 00:32:40,460
+ The question is, are they equivalently expressive?
+
+591
+00:32:40,460 --> 00:32:42,220
+ So in the limit, yes.
+
+592
+00:32:42,220 --> 00:32:47,580
+ So certainly, for any finite horizon history,
+
+593
+00:32:47,580 --> 00:32:51,380
+ I could take the history of y's and call that my state.
+
+594
+00:32:51,380 --> 00:32:53,220
+ And then that would be a state-space model.
+
+595
+00:32:53,220 --> 00:32:56,020
+ So you can certainly always go this way.
+
+596
+00:32:56,020 --> 00:33:00,880
+ You can also-- so again, in the limit of infinite states,
+
+597
+00:33:00,880 --> 00:33:02,580
+ you can always go both ways in the limit.
+
+598
+00:33:02,580 --> 00:33:06,660
+ But in practice, if you have a truncated history,
+
+599
+00:33:06,660 --> 00:33:08,420
+ then this is good at some things.
+
+600
+00:33:08,420 --> 00:33:11,220
+ And this is good at other things.
+
+601
+00:33:11,220 --> 00:33:13,340
+ So what's an example of-- this is one of the points
+
+602
+00:33:13,340 --> 00:33:14,040
+ I wanted to make.
+
+603
+00:33:14,040 --> 00:33:16,220
+ So thank you for asking it anyway.
+
+604
+00:33:16,220 --> 00:33:18,760
+ So something that would be good, that this would be perfectly
+
+605
+00:33:18,760 --> 00:33:19,340
+ adequate for.
+
+606
+00:33:19,340 --> 00:33:28,540
+ Let's say my observations, which are y of n here,
+
+607
+00:33:28,540 --> 00:33:31,260
+ are let's say-- some of you are working on ping pong, right?
+
+608
+00:33:31,260 --> 00:33:34,580
+ So it's the position of a ping pong ball in my camera image.
+
+609
+00:33:34,940 --> 00:33:37,420
+ [TAPPING]
+
+610
+00:33:37,420 --> 00:33:48,380
+ Clearly, if I want to take a swing at the ping pong ball,
+
+611
+00:33:48,380 --> 00:33:50,300
+ and I have to make a decision just purely based
+
+612
+00:33:50,300 --> 00:33:53,100
+ on a single image, that seems inadequate, right?
+
+613
+00:33:53,100 --> 00:33:55,220
+ If I don't know what direction it's moving,
+
+614
+00:33:55,220 --> 00:33:58,820
+ I need to know something more, right?
+
+615
+00:33:58,820 --> 00:34:03,860
+ If I have even just two images, let's say,
+
+616
+00:34:03,860 --> 00:34:05,100
+ or positions of the ping pong ball,
+
+617
+00:34:05,100 --> 00:34:07,480
+ then I could estimate the velocity of the ping pong ball.
+
+618
+00:34:07,480 --> 00:34:08,820
+ That's already pretty useful.
+
+619
+00:34:08,820 --> 00:34:11,860
+ And you could imagine if I had a slightly longer history,
+
+620
+00:34:11,860 --> 00:34:15,140
+ maybe I could filter out a little bit of measurement noise
+
+621
+00:34:15,140 --> 00:34:16,100
+ or something like that.
+
+622
+00:34:16,100 --> 00:34:19,060
+ But that would be a very reasonable local estimator
+
+623
+00:34:19,060 --> 00:34:22,300
+ of my velocity of my ping pong ball.
+
+624
+00:34:22,300 --> 00:34:26,300
+ If I wanted to, for instance, remember--
+
+625
+00:34:26,300 --> 00:34:27,680
+ if I'm looking at the sink, and I
+
+626
+00:34:27,680 --> 00:34:30,140
+ want to remember if I already opened up the dishwasher top
+
+627
+00:34:30,140 --> 00:34:31,900
+ drawer, because I'm about to pick up a mug
+
+628
+00:34:31,900 --> 00:34:35,460
+ and I'm not looking at it right now, that would be potentially--
+
+629
+00:34:35,460 --> 00:34:39,460
+ if I have to remember that a long time into the future,
+
+630
+00:34:39,460 --> 00:34:41,180
+ that would be maybe a very painful thing
+
+631
+00:34:41,180 --> 00:34:44,500
+ to try to represent with a history of observations.
+
+632
+00:34:44,500 --> 00:34:55,220
+ So this is good for short term, not so good for long term.
+
+633
+00:35:01,620 --> 00:35:04,820
+ Memories, let's say.
+
+634
+00:35:04,820 --> 00:35:06,060
+ But it can be very clean.
+
+635
+00:35:06,060 --> 00:35:10,300
+ So I get to, for instance, if I'm taking just a bunch
+
+636
+00:35:10,300 --> 00:35:13,380
+ of images in, I could just use a feedforward neural network
+
+637
+00:35:13,380 --> 00:35:14,300
+ to make my prediction.
+
+638
+00:35:14,300 --> 00:35:15,800
+ That's a very appealing thing to do.
+
+639
+00:35:15,800 --> 00:35:20,100
+ We know we're pretty good at training those things.
+
+640
+00:35:20,100 --> 00:35:21,900
+ In the states-based representation,
+
+641
+00:35:21,900 --> 00:35:26,620
+ I want to remember the mug, let's say,
+
+642
+00:35:26,620 --> 00:35:28,060
+ or remember the dishwasher drawer.
+
+643
+00:35:29,020 --> 00:35:35,100
+ Now, that feels like a state.
+
+644
+00:35:35,100 --> 00:35:41,940
+ I could have x 32 being, is the dishwasher open?
+
+645
+00:35:41,940 --> 00:35:50,660
+ These are very familiar concepts.
+
+646
+00:35:50,660 --> 00:35:54,420
+ I mean, if you look at even just linear control theory,
+
+647
+00:35:54,420 --> 00:35:56,940
+ we know a lot of things about how to fit these models to data.
+
+648
+00:35:56,940 --> 00:35:58,320
+ We know a lot of things about how
+
+649
+00:35:58,320 --> 00:36:00,300
+ to do motion planning with those models,
+
+650
+00:36:00,300 --> 00:36:02,340
+ trajectory optimization with those models.
+
+651
+00:36:02,340 --> 00:36:04,420
+ Same thing for these models.
+
+652
+00:36:04,420 --> 00:36:06,900
+ There's nothing new, really, about visual motor policies
+
+653
+00:36:06,900 --> 00:36:07,900
+ in this discussion.
+
+654
+00:36:07,900 --> 00:36:09,280
+ I think there is a choice you get
+
+655
+00:36:09,280 --> 00:36:12,860
+ to make about how you represent a dynamic controller,
+
+656
+00:36:12,860 --> 00:36:15,540
+ either with histories or states-based representations
+
+657
+00:36:15,540 --> 00:36:19,020
+ or possibly combinations.
+
+658
+00:36:19,020 --> 00:36:21,300
+ A very nice combination would be, for instance,
+
+659
+00:36:21,300 --> 00:36:26,940
+ maybe take a simple filter bank of recent observations
+
+660
+00:36:26,940 --> 00:36:29,140
+ and use that as a surrogate for state.
+
+661
+00:36:29,140 --> 00:36:33,460
+ There's all kinds of intermediate solutions.
+
+662
+00:36:33,460 --> 00:36:36,380
+ So when you think about the way people--
+
+663
+00:36:36,380 --> 00:36:38,780
+ I jumped to this kind of description here.
+
+664
+00:36:38,780 --> 00:36:42,140
+ So if we have an input-to-output dynamical system, in general,
+
+665
+00:36:42,140 --> 00:36:43,680
+ you could do it in states-based form.
+
+666
+00:36:43,680 --> 00:36:49,900
+ We can do it in autoregressive form.
+
+667
+00:36:49,900 --> 00:36:51,340
+ Ah, I forgot the other part of it.
+
+668
+00:36:51,340 --> 00:36:51,820
+ Shoot.
+
+669
+00:36:51,820 --> 00:36:53,500
+ I was basically going to write down here
+
+670
+00:36:53,500 --> 00:36:59,860
+ that when you think about a recurrent neural network model,
+
+671
+00:36:59,860 --> 00:37:01,860
+ those are states-based models.
+
+672
+00:37:01,860 --> 00:37:03,980
+ So if you see someone talking about recurrent neural
+
+673
+00:37:03,980 --> 00:37:17,660
+ networks, that's going to be a states-based model.
+
+674
+00:37:17,660 --> 00:37:23,780
+ So for instance, LSTM, the long short-term memory,
+
+675
+00:37:23,780 --> 00:37:27,180
+ or other sort of recurrent models.
+
+676
+00:37:27,180 --> 00:37:29,460
+ And this would be, for instance, feedforward networks.
+
+677
+00:37:29,460 --> 00:37:44,620
+ Again, there's nothing here about--
+
+678
+00:37:44,620 --> 00:37:47,460
+ I mean, if we start representing them with neural networks,
+
+679
+00:37:47,460 --> 00:37:49,900
+ we've gotten into new tools.
+
+680
+00:37:49,900 --> 00:37:55,500
+ But the modeling framework is old and well understood,
+
+681
+00:37:55,500 --> 00:37:56,000
+ I would say.
+
+682
+00:37:56,000 --> 00:38:03,620
+ For those of you that think about partial observability,
+
+683
+00:38:03,620 --> 00:38:07,260
+ if you think about POMDPs or whatever,
+
+684
+00:38:07,260 --> 00:38:09,980
+ if I want to have a dynamic controller that's
+
+685
+00:38:09,980 --> 00:38:12,700
+ reasoning in a partially observable environment,
+
+686
+00:38:12,700 --> 00:38:14,140
+ then x--
+
+687
+00:38:14,140 --> 00:38:15,700
+ the Kalman filter view of the world,
+
+688
+00:38:15,700 --> 00:38:18,940
+ you'd think of x as being the state of the system.
+
+689
+00:38:18,940 --> 00:38:21,740
+ But really, you should think about my state of my controller
+
+690
+00:38:21,740 --> 00:38:23,540
+ as being my belief representation,
+
+691
+00:38:23,540 --> 00:38:26,500
+ or some approximation of the belief representation.
+
+692
+00:38:26,500 --> 00:38:30,740
+ So this x could be a compressed belief state, for instance.
+
+693
+00:38:30,740 --> 00:38:34,180
+ So you'd like to think that if I'm training a recurrent
+
+694
+00:38:34,180 --> 00:38:39,060
+ network policy, that somehow the internal dynamics are somehow
+
+695
+00:38:39,060 --> 00:38:40,980
+ building up a belief, or whatever
+
+696
+00:38:40,980 --> 00:38:42,780
+ is necessary to accomplish the task.
+
+697
+00:38:42,780 --> 00:38:46,220
+ [SIDE CONVERSATION]
+
+698
+00:38:46,220 --> 00:38:58,380
+ The biggest thing to change, though, is that basically,
+
+699
+00:38:58,380 --> 00:38:59,960
+ we learned how to do computer vision.
+
+700
+00:38:59,960 --> 00:39:02,080
+ And neural networks got big, and data sets got big.
+
+701
+00:39:02,080 --> 00:39:04,940
+ And so now people are writing the policies down
+
+702
+00:39:04,940 --> 00:39:10,100
+ with taking the entire image in.
+
+703
+00:39:10,100 --> 00:39:12,740
+ Oftentimes, if you look at some of the original works--
+
+704
+00:39:12,740 --> 00:39:14,660
+ and actually, a pretty standard framework
+
+705
+00:39:14,660 --> 00:39:18,220
+ that you see for visual motor policies throughout--
+
+706
+00:39:18,220 --> 00:39:23,380
+ is to have a big pre-trained, typically,
+
+707
+00:39:23,380 --> 00:39:27,460
+ network that gets you from RGB space down to something
+
+708
+00:39:27,460 --> 00:39:31,460
+ smaller, like a 32-dimensional feature vector.
+
+709
+00:39:31,460 --> 00:39:34,260
+ How you design z is something we can talk about.
+
+710
+00:39:34,260 --> 00:39:38,180
+ But oftentimes, there's a relatively small policy
+
+711
+00:39:38,180 --> 00:39:40,980
+ that you're going to represent, a relatively small network.
+
+712
+00:39:40,980 --> 00:39:45,000
+ These tend to be a multi-layer perceptron
+
+713
+00:39:45,000 --> 00:39:46,860
+ with three layers and 255 units.
+
+714
+00:39:46,860 --> 00:39:50,620
+ That's the standard thing.
+
+715
+00:39:50,620 --> 00:39:56,860
+ And this tends to be like a ResNet, millions of parameters.
+
+716
+00:39:56,860 --> 00:39:59,060
+ And the reason is you can pre-train this
+
+717
+00:39:59,060 --> 00:40:01,580
+ on an image-only task, for instance,
+
+718
+00:40:01,580 --> 00:40:04,400
+ and get potentially very good features out.
+
+719
+00:40:04,400 --> 00:40:06,660
+ And then if you're going to do reinforcement learning
+
+720
+00:40:06,660 --> 00:40:09,580
+ or behavior cloning, you can train a relatively much
+
+721
+00:40:09,580 --> 00:40:15,860
+ smaller network for the control, given good features.
+
+722
+00:40:15,860 --> 00:40:19,660
+ Because often, our control training algorithms
+
+723
+00:40:19,660 --> 00:40:22,100
+ are more data-hungry.
+
+724
+00:40:22,100 --> 00:40:24,940
+ And training all the way through the ResNet would be tough.
+
+725
+00:40:24,940 --> 00:40:27,400
+ Some people try to do it or certainly fine-tune through it.
+
+726
+00:40:27,400 --> 00:40:31,460
+ But that's considered hard.
+
+727
+00:40:31,460 --> 00:40:33,380
+ OK, so the million-dollar question, then,
+
+728
+00:40:33,380 --> 00:40:37,140
+ is how do we design the weights of our LSTM
+
+729
+00:40:37,140 --> 00:40:38,300
+ or our feed-forward network?
+
+730
+00:40:38,300 --> 00:40:41,220
+ How do we design pi?
+
+731
+00:40:41,220 --> 00:40:48,500
+ And again, the new thing here is the cameras coming in
+
+732
+00:40:48,500 --> 00:40:50,540
+ and the neural networks in the middle.
+
+733
+00:40:50,540 --> 00:40:52,220
+ Actually, I would say even control people
+
+734
+00:40:52,220 --> 00:40:55,220
+ have thought about neural networks for a long time also.
+
+735
+00:40:55,220 --> 00:41:00,460
+ So I think the biggest new thing is the size of these
+
+736
+00:41:00,460 --> 00:41:03,060
+ and the fact that we're jamming images into them.
+
+737
+00:41:03,060 --> 00:41:04,700
+ And the perception sort of works now.
+
+738
+00:41:04,700 --> 00:41:05,700
+ All right.
+
+739
+00:41:05,700 --> 00:41:28,260
+ The big answer these days is reinforcement learning.
+
+740
+00:41:28,260 --> 00:41:30,460
+ That's what we're going to mostly focus on.
+
+741
+00:41:30,460 --> 00:41:35,500
+ I really want to think about this being good, certainly
+
+742
+00:41:35,500 --> 00:41:39,460
+ down at the low level of my ladder,
+
+743
+00:41:39,460 --> 00:41:41,300
+ where I'm doing really dynamic things.
+
+744
+00:41:41,300 --> 00:41:45,260
+ And I want to represent a policy instead of a plan.
+
+745
+00:41:45,260 --> 00:41:48,260
+ There are lots of people that think about RL for higher level
+
+746
+00:41:48,260 --> 00:41:50,140
+ decision-making and the like.
+
+747
+00:41:50,140 --> 00:41:53,820
+ I think that's not the use case I'm going to emphasize here.
+
+748
+00:41:53,820 --> 00:41:56,140
+ It's not the one I believe in as much.
+
+749
+00:41:56,140 --> 00:41:57,540
+ OK.
+
+750
+00:41:57,540 --> 00:42:02,260
+ Even RL, people ask me, even in the context
+
+751
+00:42:02,260 --> 00:42:07,860
+ of projects for the course, I don't even know--
+
+752
+00:42:07,860 --> 00:42:09,400
+ so this is the big answer these days.
+
+753
+00:42:09,400 --> 00:42:13,060
+ I don't know if it's really a good answer.
+
+754
+00:42:13,060 --> 00:42:14,600
+ And it's not because I don't like RL.
+
+755
+00:42:14,600 --> 00:42:15,780
+ I think RL is awesome.
+
+756
+00:42:15,780 --> 00:42:19,700
+ But I think given this problem formulation,
+
+757
+00:42:19,700 --> 00:42:23,540
+ we should understand that RL is a very general purpose
+
+758
+00:42:23,540 --> 00:42:27,780
+ tool for trying to solve pi.
+
+759
+00:42:27,780 --> 00:42:30,500
+ It makes very few assumptions.
+
+760
+00:42:30,500 --> 00:42:33,900
+ As a consequence, it is statistically very weak.
+
+761
+00:42:33,900 --> 00:42:36,780
+ So it's kind of--
+
+762
+00:42:36,780 --> 00:42:38,740
+ I mean this with much love, but it's the thing
+
+763
+00:42:38,740 --> 00:42:41,700
+ you should do if you don't know how to do something better,
+
+764
+00:42:41,700 --> 00:42:44,100
+ roughly.
+
+765
+00:42:44,100 --> 00:42:46,620
+ And I mean that RL research is very good.
+
+766
+00:42:46,620 --> 00:42:47,180
+ I've done it.
+
+767
+00:42:47,180 --> 00:42:48,380
+ That's what my thesis was on.
+
+768
+00:42:48,380 --> 00:42:51,900
+ But I also think that there's a lot of things
+
+769
+00:42:51,900 --> 00:42:53,300
+ we know of from control, and they
+
+770
+00:42:53,300 --> 00:42:54,540
+ should be blended together.
+
+771
+00:42:54,540 --> 00:42:56,460
+ And there's many ways to find pi.
+
+772
+00:42:56,460 --> 00:43:01,580
+ In particular, today, I think there's
+
+773
+00:43:01,580 --> 00:43:05,220
+ a shortcut, which is we can talk about behavior cloning.
+
+774
+00:43:05,220 --> 00:43:11,380
+ And the reason I want to take that shortcut
+
+775
+00:43:11,380 --> 00:43:15,340
+ is because RL has a lot of challenges with it
+
+776
+00:43:15,340 --> 00:43:17,460
+ in terms of sample efficiency, in terms of just
+
+777
+00:43:17,460 --> 00:43:21,140
+ whether it's going to converge or not.
+
+778
+00:43:21,140 --> 00:43:24,740
+ And it mixes up questions about the fundamental questions
+
+779
+00:43:24,740 --> 00:43:27,780
+ of representation of the policy, is putting cameras in.
+
+780
+00:43:27,780 --> 00:43:29,380
+ What should my architecture be?
+
+781
+00:43:29,380 --> 00:43:33,700
+ What should my action space be, my observation space be?
+
+782
+00:43:33,700 --> 00:43:37,460
+ It mixes up all these questions with did my RL algorithm
+
+783
+00:43:37,460 --> 00:43:38,260
+ perform well?
+
+784
+00:43:38,260 --> 00:43:41,120
+ Did I feed it and give it enough samples
+
+785
+00:43:41,120 --> 00:43:42,540
+ or give it enough rollouts?
+
+786
+00:43:42,540 --> 00:43:43,620
+ Did I roll it?
+
+787
+00:43:43,620 --> 00:43:44,740
+ All these different things.
+
+788
+00:43:44,740 --> 00:43:47,420
+ And I think you can sort of slice those down the middle
+
+789
+00:43:47,420 --> 00:43:53,060
+ if you take a shortcut and try to do behavior cloning instead.
+
+790
+00:43:53,060 --> 00:43:56,820
+ So what is behavior cloning?
+
+791
+00:43:56,820 --> 00:43:59,180
+ Behavior cloning is a subset of imitation learning.
+
+792
+00:43:59,180 --> 00:44:07,220
+ Imitation learning is also known as learning from demonstration.
+
+793
+00:44:08,220 --> 00:44:08,720
+ OK.
+
+794
+00:44:08,720 --> 00:44:20,700
+ I would say there's kind of two major camps
+
+795
+00:44:20,700 --> 00:44:23,760
+ in imitation learning.
+
+796
+00:44:23,760 --> 00:44:31,220
+ One of them would be sort of the behavior cloning,
+
+797
+00:44:31,220 --> 00:44:44,140
+ where the goal is to try to use supervised learning
+
+798
+00:44:44,140 --> 00:44:48,500
+ to mimic a demonstration.
+
+799
+00:44:48,500 --> 00:44:58,340
+ And the other big branch would be inverse optimal control.
+
+800
+00:44:59,340 --> 00:45:04,060
+ Or inverse RL, similar.
+
+801
+00:45:04,060 --> 00:45:14,060
+ Where instead of trying to basically take a demonstration
+
+802
+00:45:14,060 --> 00:45:16,100
+ and learn the policy directly, you
+
+803
+00:45:16,100 --> 00:45:27,420
+ might try to learn the cost function, then do planning.
+
+804
+00:45:27,420 --> 00:45:29,500
+ Or control or some other form.
+
+805
+00:45:29,500 --> 00:45:35,900
+ So these are kind of the two big camps in imitation learning.
+
+806
+00:45:35,900 --> 00:45:39,780
+ I think behavior cloning is immediately useful for us.
+
+807
+00:45:39,780 --> 00:45:41,740
+ And it's very popular right now.
+
+808
+00:45:41,740 --> 00:45:45,340
+ And it's producing just amazing demonstrations and manipulation.
+
+809
+00:45:45,340 --> 00:45:57,300
+ So the basic setup is, if I have a human demonstrating
+
+810
+00:45:57,300 --> 00:45:59,660
+ we'll talk about how they demonstrated
+
+811
+00:45:59,660 --> 00:46:04,340
+ examples of dexterous manipulation on a robot,
+
+812
+00:46:04,340 --> 00:46:09,220
+ you could think of that as feeding me input output
+
+813
+00:46:09,220 --> 00:46:14,260
+ data, the sensor to action map.
+
+814
+00:46:14,260 --> 00:46:17,140
+ And if I just want to find a function which
+
+815
+00:46:17,140 --> 00:46:20,420
+ describes the same map from sensors to actions,
+
+816
+00:46:20,420 --> 00:46:22,540
+ that's almost a supervised learning problem.
+
+817
+00:46:22,540 --> 00:46:25,220
+ Certainly I can apply supervised learning techniques
+
+818
+00:46:25,220 --> 00:46:28,220
+ to try to train pi.
+
+819
+00:46:28,220 --> 00:46:30,060
+ That's the behavior cloning paradigm.
+
+820
+00:46:30,060 --> 00:46:31,260
+ It's an old paradigm, sorry.
+
+821
+00:46:31,260 --> 00:46:42,540
+ This is 1995, but '89, '90 are the papers
+
+822
+00:46:42,540 --> 00:46:45,060
+ that are sort of the seminal papers in the field.
+
+823
+00:46:45,060 --> 00:46:48,380
+ But maybe they're harder to Google
+
+824
+00:46:48,380 --> 00:46:52,700
+ because this is Australian.
+
+825
+00:46:52,700 --> 00:46:57,500
+ But already there was a rich understanding
+
+826
+00:46:57,500 --> 00:47:05,460
+ of behavior cloning, its promise and its problems early on.
+
+827
+00:47:05,460 --> 00:47:08,380
+ And I think we've only continued to understand
+
+828
+00:47:08,380 --> 00:47:12,580
+ how to make it work well and its limitations.
+
+829
+00:47:12,580 --> 00:47:15,700
+ So the biggest limitations in behavior learning,
+
+830
+00:47:15,700 --> 00:47:17,780
+ I can sort of--
+
+831
+00:47:17,780 --> 00:47:20,940
+ let me see, I think I have a couple of good examples here.
+
+832
+00:47:20,940 --> 00:47:26,060
+ So this is one of the early examples
+
+833
+00:47:26,060 --> 00:47:28,660
+ of how you might provide that imitation learning
+
+834
+00:47:28,660 --> 00:47:30,220
+ data for a robot.
+
+835
+00:47:30,220 --> 00:47:30,820
+ That's Zoe.
+
+836
+00:47:30,820 --> 00:47:37,900
+ That's a PR2.
+
+837
+00:47:37,900 --> 00:47:39,300
+ PR2 is still alive upstairs?
+
+838
+00:47:39,300 --> 00:47:40,180
+ Yeah, just barely.
+
+839
+00:47:40,180 --> 00:47:49,020
+ This is obviously the virtual reality interface.
+
+840
+00:47:49,020 --> 00:47:53,340
+ Actually, if you watch this video,
+
+841
+00:47:53,340 --> 00:47:56,060
+ you'll see that the initial version that they used
+
+842
+00:47:56,060 --> 00:47:59,420
+ had sort of like robot gripper, special purpose robot grippers
+
+843
+00:47:59,420 --> 00:48:02,100
+ you had right there with IMUs on them.
+
+844
+00:48:02,100 --> 00:48:04,380
+ She had a little claw on her hand
+
+845
+00:48:04,380 --> 00:48:09,180
+ and was manipulating things through the eyes of the robot,
+
+846
+00:48:09,180 --> 00:48:10,500
+ which is important because if you
+
+847
+00:48:10,500 --> 00:48:13,620
+ want to give exactly the same inputs and outputs
+
+848
+00:48:13,620 --> 00:48:15,460
+ to your policy, then you really need
+
+849
+00:48:15,460 --> 00:48:17,900
+ to use the same actuators as your robot
+
+850
+00:48:17,900 --> 00:48:20,180
+ and give the same sensor readings based
+
+851
+00:48:20,180 --> 00:48:21,780
+ on the same sensor readings.
+
+852
+00:48:21,780 --> 00:48:24,700
+ In the paper that they wrote and then they
+
+853
+00:48:24,700 --> 00:48:28,100
+ went on to use extensively, they switched
+
+854
+00:48:28,100 --> 00:48:29,940
+ to a more commodity interface.
+
+855
+00:48:29,940 --> 00:48:34,900
+ So it was just HTC Vive controllers in this.
+
+856
+00:48:34,900 --> 00:48:37,540
+ But I think it's pretty cool to make a little PR2
+
+857
+00:48:37,540 --> 00:48:38,580
+ hand for your fingers.
+
+858
+00:48:38,580 --> 00:48:42,660
+ And there's a big question of just
+
+859
+00:48:42,660 --> 00:48:44,700
+ like how much can you make that scale?
+
+860
+00:48:44,700 --> 00:48:48,380
+ I'll show you some of the scaling efforts at the end.
+
+861
+00:48:48,380 --> 00:48:50,900
+ But if you put that into a system
+
+862
+00:48:50,900 --> 00:48:53,700
+ and just do supervised type learning on it,
+
+863
+00:48:53,700 --> 00:48:55,980
+ that's how we did some--
+
+864
+00:48:55,980 --> 00:48:57,740
+ really, I think this is what changed
+
+865
+00:48:57,740 --> 00:49:01,220
+ my mind about behavior cloning and about visual motor policies.
+
+866
+00:49:01,220 --> 00:49:04,180
+ It was just like really, really impressive for me,
+
+867
+00:49:04,180 --> 00:49:10,020
+ robust controllers that came out of this thing, which
+
+868
+00:49:10,020 --> 00:49:11,420
+ were making--
+
+869
+00:49:11,420 --> 00:49:12,940
+ the hallmark of these controllers
+
+870
+00:49:12,940 --> 00:49:15,780
+ is that they are making real-time decisions based
+
+871
+00:49:15,780 --> 00:49:19,660
+ on the camera-based feedback, as opposed to stop,
+
+872
+00:49:19,660 --> 00:49:22,780
+ perceive the world, make a plan, go.
+
+873
+00:49:22,780 --> 00:49:24,440
+ These things, as you knock them around,
+
+874
+00:49:24,440 --> 00:49:27,860
+ they're constantly adjusting via the camera-based feedback.
+
+875
+00:49:27,860 --> 00:49:31,780
+ The value of doing that is just so high
+
+876
+00:49:31,780 --> 00:49:36,100
+ that we're in a regime right now where our control synthesis
+
+877
+00:49:36,100 --> 00:49:38,340
+ algorithms, I think, are relatively weak.
+
+878
+00:49:38,340 --> 00:49:42,700
+ But I'd rather apply a weak algorithm on a rich input
+
+879
+00:49:42,700 --> 00:49:45,620
+ and get this kind of feedback out.
+
+880
+00:49:45,620 --> 00:49:50,540
+ So there's a couple of things that people definitely
+
+881
+00:49:50,540 --> 00:49:54,620
+ know about behavior cloning that I want to communicate here,
+
+882
+00:49:54,620 --> 00:49:59,900
+ some of the big ideas and things to watch out for.
+
+883
+00:49:59,900 --> 00:50:01,380
+ [SIDE CONVERSATION]
+
+884
+00:50:01,380 --> 00:50:21,260
+ The first one is distribution shift.
+
+885
+00:50:21,260 --> 00:50:22,740
+ [SIDE CONVERSATION]
+
+886
+00:50:22,740 --> 00:50:37,300
+ I'll just write them up here real quick, and we'll begin.
+
+887
+00:50:37,300 --> 00:50:38,780
+ [SIDE CONVERSATION]
+
+888
+00:50:38,780 --> 00:51:03,380
+, OK.
+
+889
+00:51:03,380 --> 00:51:06,180
+ So what's this problem of distribution shift?
+
+890
+00:51:06,180 --> 00:51:09,700
+ So I said we've got a bunch of input/output data.
+
+891
+00:51:09,700 --> 00:51:15,860
+ We have a bunch of examples of y coming in, u going out,
+
+892
+00:51:15,860 --> 00:51:20,980
+ that we got from Zoe or somebody else tele-opting our robot.
+
+893
+00:51:20,980 --> 00:51:23,820
+ Pete did it a lot in the videos that are on the screen
+
+894
+00:51:23,820 --> 00:51:24,320
+ right now.
+
+895
+00:51:27,180 --> 00:51:38,660
+ So you can use supervised learning to train.
+
+896
+00:51:38,660 --> 00:51:45,780
+ But I think Drew Bagnell, for instance,
+
+897
+00:51:45,780 --> 00:51:57,780
+ says behavior cloning, imitation learning is not
+
+898
+00:51:57,780 --> 00:51:58,940
+ equal to supervised learning.
+
+899
+00:51:58,940 --> 00:52:05,820
+ Even though we can use the same gradient descent type
+
+900
+00:52:05,820 --> 00:52:08,340
+ algorithms to train it, there's some really important
+
+901
+00:52:08,340 --> 00:52:11,020
+ differences.
+
+902
+00:52:11,020 --> 00:52:14,060
+ The biggest difference is because of feedback.
+
+903
+00:52:14,060 --> 00:52:15,300
+ [SIDE CONVERSATION]
+
+904
+00:52:15,300 --> 00:52:25,860
+ And the classic example-- I don't think you can really do
+
+905
+00:52:25,860 --> 00:52:28,300
+ it better than the driving example, which
+
+906
+00:52:28,300 --> 00:52:30,820
+ is what everybody uses.
+
+907
+00:52:30,820 --> 00:52:36,200
+ So if I've got someone training my autonomous car to drive,
+
+908
+00:52:36,200 --> 00:52:41,340
+ or my video game car, and Drew's original work for it,
+
+909
+00:52:41,340 --> 00:52:45,340
+ and I've got a bunch of examples of people driving and staying
+
+910
+00:52:45,340 --> 00:52:50,860
+ in the lane, then I've got a bunch of data,
+
+911
+00:52:50,860 --> 00:52:53,140
+ u equals pi of y.
+
+912
+00:52:53,140 --> 00:52:58,060
+ Maybe this one only requires instantaneous y.
+
+913
+00:52:58,060 --> 00:52:59,700
+ If I have an approximation that I
+
+914
+00:52:59,700 --> 00:53:05,020
+ get from supervised learning that's pretty close,
+
+915
+00:53:05,020 --> 00:53:09,460
+ maybe it's the original plus just some epsilon.
+
+916
+00:53:09,460 --> 00:53:15,380
+ I've got an epsilon perfect supervision-based loss.
+
+917
+00:53:15,380 --> 00:53:19,140
+ Then what happens is after a single run,
+
+918
+00:53:19,140 --> 00:53:23,140
+ I've predicted almost perfectly.
+
+919
+00:53:23,140 --> 00:53:26,820
+ But now I'm maybe slightly away from where
+
+920
+00:53:26,820 --> 00:53:30,900
+ I was on the original training data.
+
+921
+00:53:30,900 --> 00:53:36,020
+ And what happens in the case where I take my output,
+
+922
+00:53:36,020 --> 00:53:38,780
+ that's now the new state when I pass it through the controller
+
+923
+00:53:38,780 --> 00:53:42,980
+ and I feed it back through, then I can quickly drift away.
+
+924
+00:53:42,980 --> 00:53:45,180
+ Whereas the original training data maybe
+
+925
+00:53:45,180 --> 00:53:47,780
+ has lots of data in the lane, it doesn't
+
+926
+00:53:47,780 --> 00:53:50,820
+ take very much to have compounding errors
+
+927
+00:53:50,820 --> 00:53:55,020
+ and instability, which quickly takes my system off
+
+928
+00:53:55,020 --> 00:53:57,260
+ the original training data.
+
+929
+00:53:57,260 --> 00:54:01,540
+ And it has no idea what to do once it's away from the data.
+
+930
+00:54:01,540 --> 00:54:03,180
+ And you'll spiral out of control.
+
+931
+00:54:03,180 --> 00:54:04,500
+ Bad things for autonomous cars.
+
+932
+00:54:07,700 --> 00:54:09,700
+ So this is the problem of distribution shift.
+
+933
+00:54:09,700 --> 00:54:11,340
+ Why is that called distribution shift?
+
+934
+00:54:11,340 --> 00:54:15,400
+ Yeah?
+
+935
+00:54:15,400 --> 00:54:17,360
+ AUDIENCE: It's reviewing the training distribution
+
+936
+00:54:17,360 --> 00:54:18,220
+ that we saw.
+
+937
+00:54:18,220 --> 00:54:18,980
+ PROFESSOR: Right.
+
+938
+00:54:18,980 --> 00:54:24,780
+ The training distribution is some distribution here.
+
+939
+00:54:24,780 --> 00:54:29,940
+ The closed loop distribution is very different, right?
+
+940
+00:54:29,940 --> 00:54:32,740
+ The on-policy distribution.
+
+941
+00:54:32,740 --> 00:54:33,260
+ All right.
+
+942
+00:54:33,260 --> 00:54:34,220
+ So how do you fix that?
+
+943
+00:54:34,940 --> 00:54:36,380
+ [WRITING]
+
+944
+00:54:36,380 --> 00:54:40,500
+ People know the fix?
+
+945
+00:54:40,500 --> 00:54:43,560
+ Yeah?
+
+946
+00:54:43,560 --> 00:54:44,620
+ AUDIENCE: The Dagger--
+
+947
+00:54:44,620 --> 00:54:48,260
+ PROFESSOR: Dagger's algorithm is Drew's version
+
+948
+00:54:48,260 --> 00:54:49,900
+ of the algorithm, absolutely.
+
+949
+00:54:49,900 --> 00:54:53,100
+ I would say-- so it stands for data aggregation.
+
+950
+00:54:53,100 --> 00:54:59,260
+ For me, I always think of first teacher forcing,
+
+951
+00:54:59,260 --> 00:55:01,460
+ which is similar in spirit.
+
+952
+00:55:01,460 --> 00:55:03,060
+ Dagger added the analysis, I would say,
+
+953
+00:55:03,060 --> 00:55:09,140
+ to the teacher forcing idea, which is basically
+
+954
+00:55:09,140 --> 00:55:12,100
+ keep the demonstrator in the loop
+
+955
+00:55:12,100 --> 00:55:15,780
+ as you start giving control to your policy.
+
+956
+00:55:15,780 --> 00:55:18,400
+ So the teacher forcing version, which
+
+957
+00:55:18,400 --> 00:55:22,260
+ is the older kind of version of it, it's Williams '89.
+
+958
+00:55:22,260 --> 00:55:22,700
+ It was the--
+
+959
+00:55:22,700 --> 00:55:27,100
+ 1989, that is.
+
+960
+00:55:31,340 --> 00:55:34,060
+ This is the real-time recurrent learning paper
+
+961
+00:55:34,060 --> 00:55:37,460
+ that I learned about a long time ago, right?
+
+962
+00:55:37,460 --> 00:55:39,880
+ They basically said, OK, you have this problem where you're
+
+963
+00:55:39,880 --> 00:55:41,900
+ going to drift away from your data.
+
+964
+00:55:41,900 --> 00:55:43,620
+ So what you should do is you should start
+
+965
+00:55:43,620 --> 00:55:47,260
+ by training with only the data that's
+
+966
+00:55:47,260 --> 00:55:51,180
+ coming from your original demonstrations.
+
+967
+00:55:51,180 --> 00:55:53,060
+ But then keep the demonstrator in the loop
+
+968
+00:55:53,060 --> 00:55:55,380
+ and slowly add control.
+
+969
+00:55:55,380 --> 00:55:57,660
+ Maybe there's a knob from--
+
+970
+00:55:57,660 --> 00:55:59,820
+ alpha goes from 0 to 1, right?
+
+971
+00:55:59,820 --> 00:56:03,740
+ And at the beginning, it's completely driven by the human
+
+972
+00:56:03,740 --> 00:56:06,580
+ and 0 on the controller.
+
+973
+00:56:06,580 --> 00:56:09,620
+ And I start slowly moving the knob,
+
+974
+00:56:09,620 --> 00:56:12,860
+ taking the training wheels off, and letting the controller
+
+975
+00:56:12,860 --> 00:56:17,020
+ drive, as opposed to just immediately stopping
+
+976
+00:56:17,020 --> 00:56:22,220
+ the demonstrations and starting the policy driving.
+
+977
+00:56:22,220 --> 00:56:24,980
+ The reason for that is you start--
+
+978
+00:56:24,980 --> 00:56:28,060
+ if you can keep the training wheels on,
+
+979
+00:56:28,060 --> 00:56:32,420
+ then you'll start to get data that is off the original human
+
+980
+00:56:32,420 --> 00:56:33,780
+ only demonstrations.
+
+981
+00:56:33,780 --> 00:56:36,220
+ The policy, when it's on a little bit,
+
+982
+00:56:36,220 --> 00:56:40,220
+ will pull me away, but the human will pull me back.
+
+983
+00:56:40,220 --> 00:56:41,820
+ The demonstrator will pull me back.
+
+984
+00:56:41,820 --> 00:56:46,020
+ And it starts to broaden the distribution.
+
+985
+00:56:46,020 --> 00:56:50,180
+ And similarly, as the policy gets trained off
+
+986
+00:56:50,180 --> 00:56:54,140
+ the nominal trajectory, it will become a stable system and not
+
+987
+00:56:54,140 --> 00:56:55,060
+ an unstable system.
+
+988
+00:56:55,060 --> 00:56:59,380
+ And it will tend to stay close to the original data.
+
+989
+00:56:59,380 --> 00:57:05,740
+ Dagger is the one that Drew came up with,
+
+990
+00:57:05,740 --> 00:57:09,180
+ which is data aggregation.
+
+991
+00:57:09,180 --> 00:57:13,060
+ It gave some nice analysis to that, talking about the--
+
+992
+00:57:13,060 --> 00:57:19,020
+ if you assume just you have an epsilon erring policy,
+
+993
+00:57:19,020 --> 00:57:20,420
+ then you get cascading errors.
+
+994
+00:57:20,420 --> 00:57:26,860
+ You get something that grows at least the squared of your time
+
+995
+00:57:26,860 --> 00:57:27,340
+ horizon.
+
+996
+00:57:27,340 --> 00:57:31,780
+ And you can, by just feeding back in extra supervisory data,
+
+997
+00:57:31,780 --> 00:57:36,020
+ the simplest case would actually be just let your human provide
+
+998
+00:57:36,020 --> 00:57:40,620
+ sensory supervision on the bad data.
+
+999
+00:57:40,620 --> 00:57:43,100
+ And you throw that into your system to aggregate,
+
+1000
+00:57:43,100 --> 00:57:45,860
+ and you can sort of remedy this basic problem.
+
+1001
+00:57:49,380 --> 00:57:53,100
+ So teacher forcing, or somehow keeping the human in the loop,
+
+1002
+00:57:53,100 --> 00:57:56,100
+ is a good remedy for this problem.
+
+1003
+00:57:56,100 --> 00:57:58,820
+ Data augmentation is another big one.
+
+1004
+00:57:58,820 --> 00:58:11,780
+ And people have done this for autonomous driving.
+
+1005
+00:58:11,780 --> 00:58:14,220
+ NVIDIA did this famously for autonomous driving.
+
+1006
+00:58:14,220 --> 00:58:16,900
+ They basically just took their original data.
+
+1007
+00:58:16,900 --> 00:58:18,980
+ They actually had cameras facing off to the left
+
+1008
+00:58:18,980 --> 00:58:22,260
+ and to the right, looking sort of this way
+
+1009
+00:58:22,260 --> 00:58:24,580
+ and looking this way, so they could make real data that
+
+1010
+00:58:24,580 --> 00:58:28,220
+ looked like it was a little bit off in the wrong direction.
+
+1011
+00:58:28,220 --> 00:58:30,220
+ And they basically said, the human
+
+1012
+00:58:30,220 --> 00:58:32,180
+ told me to drive like this, but I'm
+
+1013
+00:58:32,180 --> 00:58:37,860
+ going to augment my data with a simple corrective policy.
+
+1014
+00:58:37,860 --> 00:58:41,020
+ That if I hallucinated myself, I didn't actually
+
+1015
+00:58:41,020 --> 00:58:43,700
+ get data off this, off the main trajectory.
+
+1016
+00:58:43,700 --> 00:58:45,980
+ But I'll hallucinate that I was off the trajectory
+
+1017
+00:58:45,980 --> 00:58:48,900
+ and would have taken the simple stabilizing controller
+
+1018
+00:58:48,900 --> 00:58:52,220
+ that would have gotten me back to the human-based data.
+
+1019
+00:58:52,220 --> 00:58:54,620
+ And that's data augmentation.
+
+1020
+00:58:54,620 --> 00:58:56,900
+ That's one approach to data augmentation.
+
+1021
+00:58:56,900 --> 00:58:59,420
+ In fact, Pete and Lucas used data augmentation,
+
+1022
+00:58:59,420 --> 00:59:03,300
+ a very similar form of data augmentation in that work,
+
+1023
+00:59:03,300 --> 00:59:05,680
+ where they basically, as they pushed the hat or the box
+
+1024
+00:59:05,680 --> 00:59:08,340
+ around, they would just take their data set
+
+1025
+00:59:08,340 --> 00:59:11,140
+ and just add random pose perturbations
+
+1026
+00:59:11,140 --> 00:59:15,220
+ to the object they were pushing, and then just move it back
+
+1027
+00:59:15,220 --> 00:59:17,700
+ towards basically the next frame in the data.
+
+1028
+00:59:17,700 --> 00:59:20,460
+ Assume that the finger would have pushed it back
+
+1029
+00:59:20,460 --> 00:59:26,140
+ into the trajectory that the data actually followed.
+
+1030
+00:59:26,140 --> 00:59:27,540
+ And you hear over and over again,
+
+1031
+00:59:27,540 --> 00:59:29,940
+ people that are training these behavior cloning policies,
+
+1032
+00:59:29,940 --> 00:59:32,940
+ they're like, if you don't do this, it just doesn't work.
+
+1033
+00:59:32,940 --> 00:59:34,740
+ You will not get a good policy out.
+
+1034
+00:59:34,740 --> 00:59:36,220
+ A little bit of data augmentation,
+
+1035
+00:59:36,220 --> 00:59:37,220
+ it works amazingly well.
+
+1036
+00:59:37,220 --> 00:59:42,900
+ There's other ways that people do it.
+
+1037
+00:59:42,900 --> 00:59:46,140
+ People do it by just adding noise directly
+
+1038
+00:59:46,140 --> 00:59:49,460
+ into the supervisory signal.
+
+1039
+00:59:49,460 --> 00:59:53,020
+ So another version of this would be--
+
+1040
+00:59:53,020 --> 00:59:57,380
+ I know we've said Dart four times in the class,
+
+1041
+00:59:57,380 --> 01:00:04,420
+ but Mike Lasky had a version, I think in probably '17
+
+1042
+01:00:04,420 --> 01:00:07,380
+ or something like that, where you basically add
+
+1043
+01:00:07,380 --> 01:00:09,100
+ noise to the demonstrator.
+
+1044
+01:00:09,620 --> 01:00:12,580
+ [TYPING]
+
+1045
+01:00:12,580 --> 01:00:18,180
+ It lives in this space clearly.
+
+1046
+01:00:18,180 --> 01:00:21,060
+ But basically, right as the demonstrator
+
+1047
+01:00:21,060 --> 01:00:24,780
+ is doing their thing, you take their action as a suggestion,
+
+1048
+01:00:24,780 --> 01:00:26,340
+ you add some random noise to it.
+
+1049
+01:00:26,340 --> 01:00:29,180
+ It causes this same sort of walkabout behavior,
+
+1050
+01:00:29,180 --> 01:00:32,060
+ and it causes you to get some data off the nominal policy
+
+1051
+01:00:32,060 --> 01:00:33,740
+ that is supervised by the human.
+
+1052
+01:00:33,740 --> 01:00:37,100
+ And if you just get enough data in the vicinity,
+
+1053
+01:00:37,100 --> 01:00:40,940
+ then that can already solve the problem.
+
+1054
+01:00:40,940 --> 01:00:42,460
+ There are other interesting ideas.
+
+1055
+01:00:42,460 --> 01:00:47,860
+ I've seen people do forecasting models, where you don't just
+
+1056
+01:00:47,860 --> 01:00:52,800
+ predict the next step in the trajectory,
+
+1057
+01:00:52,800 --> 01:00:55,500
+ but you try to predict an entire rollout.
+
+1058
+01:00:55,500 --> 01:00:59,020
+ That's, I think, a popular thing.
+
+1059
+01:00:59,020 --> 01:01:02,260
+ But yeah, just to say there are many other ideas out there.
+
+1060
+01:01:05,020 --> 01:01:10,500
+ So let's see how that plays out here for this example.
+
+1061
+01:01:10,500 --> 01:01:15,900
+ By the way, this is just some, I guess, hot off the press,
+
+1062
+01:01:15,900 --> 01:01:20,460
+ just a teaser of some of the behavior cloning work
+
+1063
+01:01:20,460 --> 01:01:21,740
+ that's happening at TRI.
+
+1064
+01:01:21,740 --> 01:01:25,500
+ But they're getting this stuff to work for incredibly
+
+1065
+01:01:25,500 --> 01:01:26,860
+ hard manipulation problems now.
+
+1066
+01:01:26,860 --> 01:01:29,820
+ So you can roll dough.
+
+1067
+01:01:29,820 --> 01:01:31,420
+ I don't even know what the state space
+
+1068
+01:01:31,420 --> 01:01:33,580
+ would be for these problems.
+
+1069
+01:01:33,580 --> 01:01:36,980
+ We can have-- there's Eric Cousineau
+
+1070
+01:01:36,980 --> 01:01:39,500
+ wrote a beautiful little joystick controller that
+
+1071
+01:01:39,500 --> 01:01:43,380
+ would drive both pandas around and spent very little time,
+
+1072
+01:01:43,380 --> 01:01:45,780
+ surprisingly little time, rolling the dough.
+
+1073
+01:01:45,780 --> 01:01:47,500
+ And now he can walk up, he can pick it up,
+
+1074
+01:01:47,500 --> 01:01:50,660
+ he can throw the dough down, and it'll just--
+
+1075
+01:01:50,660 --> 01:01:52,660
+ all day long, it'll sit there rolling the dough.
+
+1076
+01:01:52,660 --> 01:01:58,580
+ And C1's-- we're thinking about lots of food preparation
+
+1077
+01:01:58,580 --> 01:01:59,420
+ kind of examples.
+
+1078
+01:01:59,420 --> 01:02:05,060
+ And C1's got it doing a lot of the sort of kitchen type tasks.
+
+1079
+01:02:05,060 --> 01:02:07,500
+ He's just-- the form of antagonization
+
+1080
+01:02:07,500 --> 01:02:10,000
+ you can do when someone's trying to put an egg on your plate
+
+1081
+01:02:10,000 --> 01:02:14,260
+ is minimal, but it's using constant real time
+
+1082
+01:02:14,260 --> 01:02:18,780
+ camera-based feedback to do these kind of things.
+
+1083
+01:02:18,780 --> 01:02:21,620
+ It's shockingly powerful.
+
+1084
+01:02:21,620 --> 01:02:25,140
+ But maybe misleadingly so.
+
+1085
+01:02:25,140 --> 01:02:27,220
+ So I think it makes incredible demos.
+
+1086
+01:02:27,220 --> 01:02:28,880
+ And the question is really, can you
+
+1087
+01:02:28,880 --> 01:02:32,660
+ make it robust enough to field for the real system?
+
+1088
+01:02:32,660 --> 01:02:34,580
+ So let me just tell you how Pete and Lucas did
+
+1089
+01:02:34,580 --> 01:02:36,940
+ their version of it.
+
+1090
+01:02:36,940 --> 01:02:41,380
+ So we took the same sort of deep network front end.
+
+1091
+01:02:41,380 --> 01:02:42,920
+ And there's lots of different ways
+
+1092
+01:02:42,920 --> 01:02:47,380
+ people try to choose the z, the output of the deep network
+
+1093
+01:02:47,380 --> 01:02:51,060
+ perception part, to put into a small policy.
+
+1094
+01:02:51,060 --> 01:02:54,740
+ Pete and Lucas had just done their dense descriptor work.
+
+1095
+01:02:54,740 --> 01:02:56,780
+ So they chose to have dense descriptors
+
+1096
+01:02:56,780 --> 01:03:00,980
+ as the representation that they would put into their policy.
+
+1097
+01:03:00,980 --> 01:03:03,180
+ And they asked the question that, how does that perform
+
+1098
+01:03:03,180 --> 01:03:07,780
+ compared to some other choices for z
+
+1099
+01:03:07,780 --> 01:03:12,180
+ based on autoencoders or other kind of representations?
+
+1100
+01:03:12,180 --> 01:03:15,100
+ So the idea was, you remember the dense descriptors, right?
+
+1101
+01:03:15,100 --> 01:03:17,540
+ So we have some canonical colors.
+
+1102
+01:03:17,540 --> 01:03:22,940
+ If d equals 3, then we could render the descriptors
+
+1103
+01:03:22,940 --> 01:03:25,020
+ of the object as colors.
+
+1104
+01:03:25,020 --> 01:03:28,020
+ And you would basically just pick
+
+1105
+01:03:28,020 --> 01:03:30,740
+ some small number of random values
+
+1106
+01:03:30,740 --> 01:03:34,700
+ in this dense descriptor space and try to find--
+
+1107
+01:03:34,700 --> 01:03:37,080
+ at runtime, you would find the closest points
+
+1108
+01:03:37,080 --> 01:03:40,060
+ in the current image to those values.
+
+1109
+01:03:40,060 --> 01:03:42,040
+ And you just give the x, y, z location
+
+1110
+01:03:42,040 --> 01:03:44,020
+ of those dense descriptors.
+
+1111
+01:03:44,020 --> 01:03:46,300
+ You could think of this as an unsupervised form of key
+
+1112
+01:03:46,300 --> 01:03:47,820
+ points.
+
+1113
+01:03:47,820 --> 01:03:49,900
+ You push those into the policy.
+
+1114
+01:03:49,900 --> 01:03:53,300
+ And maybe that's a very good representation for some tasks.
+
+1115
+01:03:53,300 --> 01:03:56,860
+ I think it's a very good representation.
+
+1116
+01:03:56,860 --> 01:03:58,380
+ OK, so the setup looks like this.
+
+1117
+01:03:58,380 --> 01:04:00,900
+ And I'm actually going to try to reconstruct this so you guys
+
+1118
+01:04:00,900 --> 01:04:06,260
+ can play with it in simulation and have the whole pipeline.
+
+1119
+01:04:06,260 --> 01:04:10,620
+ So in simulation, there was a couple of tests
+
+1120
+01:04:10,620 --> 01:04:15,740
+ that was just pushing a box around or flipping up a box.
+
+1121
+01:04:15,740 --> 01:04:16,940
+ We have a mouse space.
+
+1122
+01:04:16,940 --> 01:04:20,660
+ You can see the teleop on the real robot.
+
+1123
+01:04:20,660 --> 01:04:24,500
+ This case, they actually wrote a simple hand-designed controller
+
+1124
+01:04:24,500 --> 01:04:27,020
+ and just tried to clone from a hand-designed controller
+
+1125
+01:04:27,020 --> 01:04:28,820
+ into the neural network as a unit test
+
+1126
+01:04:28,820 --> 01:04:30,360
+ just to make sure all the cloning was working,
+
+1127
+01:04:30,360 --> 01:04:32,020
+ all the dense descriptors were working,
+
+1128
+01:04:32,020 --> 01:04:34,140
+ and everything like that.
+
+1129
+01:04:34,140 --> 01:04:35,860
+ But even just a mouse--
+
+1130
+01:04:35,860 --> 01:04:38,980
+ so Pete didn't have a virtual reality interface.
+
+1131
+01:04:38,980 --> 01:04:41,260
+ He was just watching, standing there next to the robot,
+
+1132
+01:04:41,260 --> 01:04:45,620
+ using a mouse and keyboard, and did very effective teleop.
+
+1133
+01:04:45,620 --> 01:04:46,980
+ This was flipping up a shoe.
+
+1134
+01:04:50,460 --> 01:04:53,700
+ He got pretty good at it.
+
+1135
+01:04:53,700 --> 01:04:56,340
+ There is a thing where you can have
+
+1136
+01:04:56,340 --> 01:04:58,220
+ people that are good at demonstrations or not
+
+1137
+01:04:58,220 --> 01:04:59,820
+ good at demonstrations.
+
+1138
+01:04:59,820 --> 01:05:03,420
+ And that's for reason number two, primarily,
+
+1139
+01:05:03,420 --> 01:05:05,860
+ which we're going to talk about.
+
+1140
+01:05:05,860 --> 01:05:09,860
+ OK, the network representation there
+
+1141
+01:05:09,860 --> 01:05:15,300
+ was an LSTM because it seemed-- first of all,
+
+1142
+01:05:15,300 --> 01:05:18,060
+ the hand-designed controller that pushed the box
+
+1143
+01:05:18,060 --> 01:05:19,460
+ did have some internal state.
+
+1144
+01:05:19,460 --> 01:05:22,820
+ It had some notion of, was it in contact with the box yet or not?
+
+1145
+01:05:22,820 --> 01:05:25,900
+ So when they wrote the controller by hand,
+
+1146
+01:05:25,900 --> 01:05:28,260
+ they decided that it was useful to have a state variable.
+
+1147
+01:05:28,260 --> 01:05:33,900
+ And in fact, it turned out that having a small network of--
+
+1148
+01:05:33,900 --> 01:05:36,100
+ a recurrent network actually did outperform
+
+1149
+01:05:36,100 --> 01:05:39,140
+ the non-recurrent versions.
+
+1150
+01:05:39,140 --> 01:05:42,140
+ This one, I didn't-- did that play fast?
+
+1151
+01:05:42,140 --> 01:05:42,640
+ Yeah.
+
+1152
+01:05:42,640 --> 01:05:47,900
+ I think I was talking about flipping up the box at the time
+
+1153
+01:05:47,900 --> 01:05:51,980
+ and they did it pretty easily.
+
+1154
+01:05:51,980 --> 01:06:03,580
+ OK, it's a very useful pipeline, very powerful.
+
+1155
+01:06:03,580 --> 01:06:08,380
+ We talked about the distribution shift problem.
+
+1156
+01:06:08,380 --> 01:06:11,220
+ The second problem-- and it's a real one, a big one--
+
+1157
+01:06:11,220 --> 01:06:14,780
+ is this multimodal demonstrations.
+
+1158
+01:06:14,780 --> 01:06:29,460
+ So in the simplest model here, we'd
+
+1159
+01:06:29,460 --> 01:06:35,660
+ like it to be that the controller is-- in our simplest
+
+1160
+01:06:35,660 --> 01:06:38,980
+ form, if I say u equals pi of y, and let's just
+
+1161
+01:06:38,980 --> 01:06:41,180
+ say it's a static function, you'd
+
+1162
+01:06:41,180 --> 01:06:45,380
+ like it to be a perfect function of y,
+
+1163
+01:06:45,380 --> 01:06:49,940
+ that there's not ever two--
+
+1164
+01:06:49,940 --> 01:06:51,740
+ let's see-- a situation in your data
+
+1165
+01:06:51,740 --> 01:06:55,660
+ where y is the same value and there's different u's that come
+
+1166
+01:06:55,660 --> 01:06:57,620
+ out, a perfect function.
+
+1167
+01:06:57,620 --> 01:07:00,260
+ And this comes up all the time, even in optimal control
+
+1168
+01:07:00,260 --> 01:07:00,760
+ problems.
+
+1169
+01:07:00,760 --> 01:07:03,700
+ So if you remember the example I used for motion planning
+
+1170
+01:07:03,700 --> 01:07:06,140
+ last time of just going left or right around the box,
+
+1171
+01:07:06,140 --> 01:07:11,980
+ where I had my goal up here, my start down here,
+
+1172
+01:07:11,980 --> 01:07:14,100
+ and there was a solution that went like this,
+
+1173
+01:07:14,100 --> 01:07:17,060
+ and there's a solution that went like this.
+
+1174
+01:07:17,060 --> 01:07:29,580
+ So even if I have an optimal controller,
+
+1175
+01:07:29,580 --> 01:07:32,540
+ they're not always unique.
+
+1176
+01:07:32,540 --> 01:07:34,660
+ In this situation right here, there's
+
+1177
+01:07:34,660 --> 01:07:39,900
+ two perfectly valid optimal decisions I could make.
+
+1178
+01:07:39,900 --> 01:07:43,060
+ Those are both perfectly good control decisions.
+
+1179
+01:07:43,060 --> 01:07:45,500
+ If you've asked someone to tele-op your robot,
+
+1180
+01:07:45,500 --> 01:07:47,540
+ and they ever found themselves in the same state
+
+1181
+01:07:47,540 --> 01:07:49,540
+ and made slightly different decisions,
+
+1182
+01:07:49,540 --> 01:07:52,200
+ decided to go left one time and right another time,
+
+1183
+01:07:52,200 --> 01:07:53,900
+ then you've got an optimization problem
+
+1184
+01:07:53,900 --> 01:07:56,360
+ where you're trying to fit a function to something that's
+
+1185
+01:07:56,360 --> 01:07:57,580
+ not described by a function.
+
+1186
+01:08:00,420 --> 01:08:02,060
+ So this is the problem of having sort
+
+1187
+01:08:02,060 --> 01:08:09,060
+ of multimodal demonstrations.
+
+1188
+01:08:09,060 --> 01:08:16,940
+ And there's a few ways that people address it.
+
+1189
+01:08:16,940 --> 01:08:24,340
+ So you can have your network can output a multimodal--
+
+1190
+01:08:24,340 --> 01:08:25,300
+ a full distribution.
+
+1191
+01:08:25,300 --> 01:08:25,800
+ Right?
+
+1192
+01:08:25,800 --> 01:08:40,220
+ For instance, a mixture of Gaussians or something
+
+1193
+01:08:40,220 --> 01:08:42,500
+ like that.
+
+1194
+01:08:42,500 --> 01:08:45,500
+ I would say that's the standard thing that people try to do.
+
+1195
+01:08:45,500 --> 01:08:48,260
+ It gets to be a harder optimization problem,
+
+1196
+01:08:48,260 --> 01:08:54,540
+ of course, but oftentimes, if your policy--
+
+1197
+01:08:54,540 --> 01:08:57,060
+ you actually output a full distribution,
+
+1198
+01:08:57,060 --> 01:09:03,620
+ you can hopefully capture that full multimodal demonstration.
+
+1199
+01:09:03,620 --> 01:09:06,220
+ There are other approaches, too.
+
+1200
+01:09:06,220 --> 01:09:10,140
+ Pete has gone on and recently-- in fact,
+
+1201
+01:09:10,140 --> 01:09:11,300
+ he's at Coral right now.
+
+1202
+01:09:11,300 --> 01:09:13,720
+ The conference on robot learning is happening right now.
+
+1203
+01:09:13,720 --> 01:09:17,660
+ So it's a good time for me to be talking about this stuff.
+
+1204
+01:09:17,660 --> 01:09:20,260
+ He's got a new paper that he just presented,
+
+1205
+01:09:20,260 --> 01:09:22,100
+ which is, I think, really nice, called
+
+1206
+01:09:22,100 --> 01:09:32,220
+ "Implicit Behavior Cloning," which
+
+1207
+01:09:32,220 --> 01:09:36,300
+ is using energy-based methods.
+
+1208
+01:09:36,300 --> 01:09:37,780
+ I'm going to show you the videos.
+
+1209
+01:09:37,780 --> 01:09:39,420
+ It's pretty awesome.
+
+1210
+01:09:39,420 --> 01:09:47,300
+ So instead of u equals pi of y, he's
+
+1211
+01:09:47,300 --> 01:09:52,940
+ using a Yan-Lacoon-style energy-based method.
+
+1212
+01:09:52,940 --> 01:10:04,220
+ He tried to say u is argmin of u prime some energy u prime y.
+
+1213
+01:10:04,220 --> 01:10:06,260
+ So you learn a function that you have
+
+1214
+01:10:06,260 --> 01:10:08,540
+ to optimize in order to make your control decision.
+
+1215
+01:10:08,540 --> 01:10:17,100
+ And he's got some fantastic examples of making this work.
+
+1216
+01:10:17,100 --> 01:10:18,980
+ I encourage you, actually, to read the paper.
+
+1217
+01:10:18,980 --> 01:10:23,220
+ But it was released today.
+
+1218
+01:10:23,220 --> 01:10:24,980
+ He's got the same kind of examples,
+
+1219
+01:10:24,980 --> 01:10:27,740
+ but things that wouldn't have worked with the original.
+
+1220
+01:10:27,740 --> 01:10:32,900
+ For instance, trying to get this into a tight area.
+
+1221
+01:10:32,900 --> 01:10:36,580
+ You see-- I think he's got a bigger view of that.
+
+1222
+01:10:36,580 --> 01:10:39,460
+ Yeah, here we go.
+
+1223
+01:10:39,460 --> 01:10:42,700
+ So his argument here is that this was a very hard policy
+
+1224
+01:10:42,700 --> 01:10:46,900
+ to capture because of sharp discontinuities
+
+1225
+01:10:46,900 --> 01:10:49,460
+ and possibly multimodal demonstrations.
+
+1226
+01:10:49,460 --> 01:10:53,060
+ Did you see right there how the demonstrator
+
+1227
+01:10:53,060 --> 01:10:57,740
+ had a very similar state of the block and the hand?
+
+1228
+01:10:57,740 --> 01:11:00,060
+ And they took a very different corrective action
+
+1229
+01:11:00,060 --> 01:11:02,380
+ in order to nudge the thing here.
+
+1230
+01:11:02,380 --> 01:11:04,100
+ I think we're going to see it right here.
+
+1231
+01:11:04,100 --> 01:11:05,380
+ Watch right as it comes in here.
+
+1232
+01:11:05,380 --> 01:11:06,340
+ Very similar state.
+
+1233
+01:11:06,340 --> 01:11:07,420
+ Oh, that was not the one.
+
+1234
+01:11:07,420 --> 01:11:12,980
+ OK, right there.
+
+1235
+01:11:12,980 --> 01:11:17,020
+ That little corrective action is like a super small difference
+
+1236
+01:11:17,020 --> 01:11:22,140
+ in the controller, but to a very large difference in the policy.
+
+1237
+01:11:22,140 --> 01:11:23,660
+ And those things can really wreak havoc
+
+1238
+01:11:23,660 --> 01:11:28,940
+ on an existing supervised learning pipeline.
+
+1239
+01:11:28,940 --> 01:11:31,240
+ So roughly, they tried to learn the functions differently
+
+1240
+01:11:31,240 --> 01:11:33,780
+ so that they could represent discontinuities better
+
+1241
+01:11:33,780 --> 01:11:37,580
+ and potentially multimodal behaviors better.
+
+1242
+01:11:37,580 --> 01:11:40,220
+ OK, this is my favorite sort of generalization
+
+1243
+01:11:40,220 --> 01:11:43,500
+ that I've seen in a while of it's basically
+
+1244
+01:11:43,500 --> 01:11:45,340
+ just the blocks pushing task.
+
+1245
+01:11:45,340 --> 01:11:48,180
+ But it's brilliant because it's got
+
+1246
+01:11:48,180 --> 01:11:49,560
+ all kinds of logical components.
+
+1247
+01:11:49,560 --> 01:11:51,560
+ These things are going to get mixed up and be--
+
+1248
+01:11:51,560 --> 01:11:58,460
+ it's got the physics of the basic pushing a block around,
+
+1249
+01:11:58,460 --> 01:12:02,020
+ but the logic of trying to have to separate things by color
+
+1250
+01:12:02,020 --> 01:12:05,300
+ and potentially move the blue ones first out of the way
+
+1251
+01:12:05,300 --> 01:12:06,340
+ and then the yellow ones.
+
+1252
+01:12:06,340 --> 01:12:08,220
+ I think it's a really, really nice example.
+
+1253
+01:12:08,220 --> 01:12:09,780
+ I'd love to code it up myself.
+
+1254
+01:12:09,780 --> 01:12:21,940
+ But this is just continuing to show the power, I'd say,
+
+1255
+01:12:21,940 --> 01:12:23,660
+ of these kind of approaches.
+
+1256
+01:12:23,660 --> 01:12:30,500
+ A few other ideas here.
+
+1257
+01:12:30,500 --> 01:12:35,980
+ So people talk about a major limitation of behavior cloning
+
+1258
+01:12:35,980 --> 01:12:38,740
+ is that it's only as good as its demonstrators.
+
+1259
+01:12:38,740 --> 01:12:45,780
+ Now, that's-- I'll turn this down here a little bit.
+
+1260
+01:12:45,780 --> 01:12:47,100
+ OK, it's actually interesting.
+
+1261
+01:12:47,100 --> 01:12:50,340
+ The first behavior cloning papers argued differently.
+
+1262
+01:12:50,340 --> 01:12:54,700
+ They actually said that because of a robot's steady hand,
+
+1263
+01:12:54,700 --> 01:12:57,420
+ you basically, you filter, you have no feedback delays,
+
+1264
+01:12:57,420 --> 01:12:59,620
+ you can be better than your demonstrator.
+
+1265
+01:12:59,620 --> 01:13:02,140
+ OK, maybe a little bit.
+
+1266
+01:13:02,140 --> 01:13:03,900
+ Roughly speaking, people feel, I think,
+
+1267
+01:13:03,900 --> 01:13:07,180
+ bottlenecked by the quality of their demonstrations.
+
+1268
+01:13:07,180 --> 01:13:09,420
+ And that's a major motivation for the inverse optimal
+
+1269
+01:13:09,420 --> 01:13:13,340
+ control, to say somehow that the behavior cloning is doing
+
+1270
+01:13:13,340 --> 01:13:16,580
+ the dumb thing, that it's just trying to copy the demonstrator
+
+1271
+01:13:16,580 --> 01:13:19,260
+ without any understanding of its intent.
+
+1272
+01:13:19,260 --> 01:13:22,860
+ And I think that if you can try to, from demonstrations,
+
+1273
+01:13:22,860 --> 01:13:26,100
+ extract something higher level and put it through a planner,
+
+1274
+01:13:26,100 --> 01:13:28,860
+ you could potentially do much better.
+
+1275
+01:13:28,860 --> 01:13:31,140
+ And these things produce amazing demos,
+
+1276
+01:13:31,140 --> 01:13:34,620
+ but they really can be very narrow demos.
+
+1277
+01:13:34,620 --> 01:13:36,980
+ I think this is a big question of how--
+
+1278
+01:13:36,980 --> 01:13:39,260
+ if you can put the right features in or out in order
+
+1279
+01:13:39,260 --> 01:13:41,660
+ to get broader generalization.
+
+1280
+01:13:41,660 --> 01:13:44,860
+ But a lot of times, these demos look incredibly good,
+
+1281
+01:13:44,860 --> 01:13:47,940
+ work incredibly well inside the training data,
+
+1282
+01:13:47,940 --> 01:13:50,060
+ but then they fall down as soon as you go anywhere
+
+1283
+01:13:50,060 --> 01:13:50,980
+ off the training data.
+
+1284
+01:13:50,980 --> 01:13:55,780
+ OK, so that leads me to maybe the last point
+
+1285
+01:13:55,780 --> 01:13:57,580
+ I want to make here, which is where
+
+1286
+01:13:57,580 --> 01:13:58,820
+ do you get the training data?
+
+1287
+01:13:59,020 --> 01:14:02,500
+ [TAPPING]
+
+1288
+01:14:02,500 --> 01:14:13,460
+ There's some really clever ideas out there
+
+1289
+01:14:13,460 --> 01:14:19,020
+ about how to sort of scale this stuff up.
+
+1290
+01:14:19,020 --> 01:14:21,100
+ One of them is this Form2Fit project.
+
+1291
+01:14:21,100 --> 01:14:25,900
+ Kevin Zaka is a friend, and I think this is just so clever.
+
+1292
+01:14:25,900 --> 01:14:28,500
+ So they wanted to do a kidding task.
+
+1293
+01:14:28,500 --> 01:14:30,940
+ And there's more to the paper than what I'm mentioning now,
+
+1294
+01:14:30,940 --> 01:14:34,740
+ but they wanted to basically solve this problem of putting
+
+1295
+01:14:34,740 --> 01:14:36,700
+ objects into the bin.
+
+1296
+01:14:36,700 --> 01:14:39,820
+ And that's a very hard thing to--
+
+1297
+01:14:39,820 --> 01:14:41,940
+ you could take a long time to demonstrate
+
+1298
+01:14:41,940 --> 01:14:44,380
+ a lot of careful assemblies.
+
+1299
+01:14:44,380 --> 01:14:47,180
+ So what they did is they had basically the clutter clearing
+
+1300
+01:14:47,180 --> 01:14:49,540
+ kind of example we had.
+
+1301
+01:14:49,540 --> 01:14:54,220
+ They just had it disassemble all day long, automatically.
+
+1302
+01:14:54,220 --> 01:14:56,660
+ And then they just said, well, the opposite of that,
+
+1303
+01:14:56,660 --> 01:14:58,340
+ that if I time reverse the disassembly,
+
+1304
+01:14:58,340 --> 01:15:00,980
+ that's a pretty good demonstration of the assembly.
+
+1305
+01:15:00,980 --> 01:15:05,180
+ And they generated a bunch of supervision-based data
+
+1306
+01:15:05,180 --> 01:15:07,900
+ that just inverted time.
+
+1307
+01:15:07,900 --> 01:15:08,900
+ Super clever idea.
+
+1308
+01:15:08,900 --> 01:15:16,100
+ This is the paper, the Learning from Play paper,
+
+1309
+01:15:16,100 --> 01:15:19,380
+ which I think is also pretty compelling.
+
+1310
+01:15:19,380 --> 01:15:23,180
+ So they're saying that asking humans
+
+1311
+01:15:23,180 --> 01:15:26,900
+ to demonstrate one task at a time is maybe unnecessary
+
+1312
+01:15:26,900 --> 01:15:33,180
+ and potentially gives very narrow demonstration data.
+
+1313
+01:15:33,180 --> 01:15:36,620
+ So I think they gave a system, but they also
+
+1314
+01:15:36,620 --> 01:15:38,300
+ gave a pretty compelling argument
+
+1315
+01:15:38,300 --> 01:15:42,340
+ that if you just give people a robot simulator to play with,
+
+1316
+01:15:42,340 --> 01:15:44,580
+ they're going to do all kinds of crazy stuff.
+
+1317
+01:15:44,580 --> 01:15:46,380
+ If there's a button in the simulator,
+
+1318
+01:15:46,380 --> 01:15:48,780
+ they're totally going to make the robot press the button.
+
+1319
+01:15:48,780 --> 01:15:55,020
+ And actually, if you just go through and then effectively
+
+1320
+01:15:55,020 --> 01:15:56,580
+ label all--
+
+1321
+01:15:56,580 --> 01:15:59,340
+ similar to the form to fit, but basically,
+
+1322
+01:15:59,340 --> 01:16:02,060
+ if you take every trajectory that's rolling out,
+
+1323
+01:16:02,060 --> 01:16:04,620
+ anytime it visited a state in the simulator,
+
+1324
+01:16:04,620 --> 01:16:07,780
+ you have a trajectory that the human chose to execute
+
+1325
+01:16:07,780 --> 01:16:09,820
+ that got to that state in the world.
+
+1326
+01:16:09,820 --> 01:16:12,620
+ And if you wanted to use that as now demonstrations
+
+1327
+01:16:12,620 --> 01:16:14,540
+ to achieve that particular state,
+
+1328
+01:16:14,540 --> 01:16:17,740
+ you've got a trajectory that takes you to that state.
+
+1329
+01:16:17,740 --> 01:16:19,620
+ And they argue pretty convincingly, I think,
+
+1330
+01:16:19,620 --> 01:16:21,700
+ that it's not arbitrary-- that these are very
+
+1331
+01:16:21,700 --> 01:16:23,420
+ goal-directed behaviors.
+
+1332
+01:16:23,420 --> 01:16:25,140
+ It's not somehow random exploration
+
+1333
+01:16:25,140 --> 01:16:28,300
+ that you'd get if you were doing just random search
+
+1334
+01:16:28,300 --> 01:16:29,300
+ in the control inputs.
+
+1335
+01:16:29,300 --> 01:16:30,820
+ But it's got a very directed--
+
+1336
+01:16:30,820 --> 01:16:32,420
+ humans are choosing sub-goals.
+
+1337
+01:16:32,420 --> 01:16:35,220
+ They're executing them, and that you can actually just leverage
+
+1338
+01:16:35,220 --> 01:16:37,220
+ a pretty broad distribution of data
+
+1339
+01:16:37,220 --> 01:16:41,940
+ that way to train a more general agent.
+
+1340
+01:16:41,940 --> 01:16:43,660
+ And then there are people that are trying
+
+1341
+01:16:43,660 --> 01:16:45,340
+ to scale things up.
+
+1342
+01:16:45,340 --> 01:16:47,240
+ So this is the RoboTurk project, which
+
+1343
+01:16:47,240 --> 01:16:50,660
+ is on-- has gotten more mature now.
+
+1344
+01:16:50,660 --> 01:16:52,460
+ But this is one of their early versions,
+
+1345
+01:16:52,460 --> 01:16:53,740
+ where they're basically saying, let's
+
+1346
+01:16:53,740 --> 01:16:56,180
+ make it possible for people to tele-op with their iPhone.
+
+1347
+01:16:56,180 --> 01:16:58,700
+ You've got an IMU in your iPhone.
+
+1348
+01:16:58,700 --> 01:17:01,100
+ What if you use-- so if everybody who's got an iPhone
+
+1349
+01:17:01,100 --> 01:17:03,660
+ has a tele-op device, and we put a simulator in front of them,
+
+1350
+01:17:03,660 --> 01:17:06,420
+ then we can basically crowdsource tele-op.
+
+1351
+01:17:06,420 --> 01:17:08,420
+ And now they have these pretty massive data sets
+
+1352
+01:17:08,420 --> 01:17:14,340
+ that have come out of online demonstration data.
+
+1353
+01:17:14,340 --> 01:17:16,420
+ So I think it's a big question of whether you--
+
+1354
+01:17:16,420 --> 01:17:20,020
+ how far you really need to go--
+
+1355
+01:17:20,020 --> 01:17:22,740
+ how far you can go with human-based demonstrations
+
+1356
+01:17:22,740 --> 01:17:25,100
+ for the more dexterous manipulation.
+
+1357
+01:17:25,100 --> 01:17:30,220
+ All right, how does it fit with--
+
+1358
+01:17:30,220 --> 01:17:32,740
+ we talked about force control, impedance control.
+
+1359
+01:17:32,740 --> 01:17:38,380
+ We've talked about a couple of different approaches here.
+
+1360
+01:17:38,380 --> 01:17:45,820
+ The output of the network I wrote is just u so far, right?
+
+1361
+01:17:45,820 --> 01:17:48,540
+ In an arbitrary way.
+
+1362
+01:17:48,540 --> 01:17:49,660
+ But what is u?
+
+1363
+01:17:49,660 --> 01:17:56,940
+ In most of these tasks, people--
+
+1364
+01:17:56,940 --> 01:18:00,020
+ they will choose, for instance, an end-effector velocity,
+
+1365
+01:18:00,020 --> 01:18:03,340
+ let's say, or end-effector position or delta position.
+
+1366
+01:18:03,340 --> 01:18:06,780
+ [TAPPING]
+
+1367
+01:18:06,780 --> 01:18:19,900
+ And that means you're running a differential IK
+
+1368
+01:18:19,900 --> 01:18:21,980
+ or something-- this controller on top of that,
+
+1369
+01:18:21,980 --> 01:18:24,260
+ or an impedance controller or something on top of that
+
+1370
+01:18:24,260 --> 01:18:25,140
+ to do that, right?
+
+1371
+01:18:25,140 --> 01:18:28,020
+ So I think it's pretty rare that people actually
+
+1372
+01:18:28,020 --> 01:18:30,500
+ try to put torques out of the bottom of this thing, right?
+
+1373
+01:18:30,500 --> 01:18:33,620
+ It's often putting some clever controller,
+
+1374
+01:18:33,620 --> 01:18:35,580
+ whether it's an impedance controller or a force
+
+1375
+01:18:35,580 --> 01:18:38,700
+ controller-- if you had a task that was more assembly or more
+
+1376
+01:18:38,700 --> 01:18:41,660
+ welding or more handwriting or something like this,
+
+1377
+01:18:41,660 --> 01:18:45,540
+ you'd probably want to do some sort of force or stiffness
+
+1378
+01:18:45,540 --> 01:18:53,300
+ control down here, OK?
+
+1379
+01:18:53,300 --> 01:18:56,300
+ So I don't think this technology replaces
+
+1380
+01:18:56,300 --> 01:18:59,700
+ the sort of mechanics-based low-level, high-gain feedback
+
+1381
+01:18:59,700 --> 01:19:01,500
+ control that we know how to do well.
+
+1382
+01:19:01,500 --> 01:19:04,140
+ But it can send very interesting, rich commands
+
+1383
+01:19:04,140 --> 01:19:05,260
+ down inside of them, right?
+
+1384
+01:19:05,260 --> 01:19:10,180
+ All right.
+
+1385
+01:19:10,180 --> 01:19:13,660
+ So I think behavior cloning is this very clever way
+
+1386
+01:19:13,660 --> 01:19:16,860
+ to, like I said, separate out the question of,
+
+1387
+01:19:16,860 --> 01:19:19,420
+ how do you train the weights?
+
+1388
+01:19:19,420 --> 01:19:23,420
+ And is the representation of the policy
+
+1389
+01:19:23,420 --> 01:19:26,220
+ sufficient to do incredible tasks, right?
+
+1390
+01:19:26,220 --> 01:19:29,060
+ And we see over and over again-- this
+
+1391
+01:19:29,060 --> 01:19:31,340
+ has really been happening in the last few years--
+
+1392
+01:19:31,340 --> 01:19:35,260
+ people have incredible results of neural networks
+
+1393
+01:19:35,260 --> 01:19:38,820
+ solving really hard, dexterous tasks from vision, right?
+
+1394
+01:19:38,820 --> 01:19:40,940
+ So I think we've really made a lot of progress
+
+1395
+01:19:40,940 --> 01:19:42,740
+ in understanding the representational power
+
+1396
+01:19:42,740 --> 01:19:45,460
+ of these controllers.
+
+1397
+01:19:45,460 --> 01:19:48,140
+ The big question now is, if you don't
+
+1398
+01:19:48,140 --> 01:19:50,180
+ have to have everybody demonstrate,
+
+1399
+01:19:50,180 --> 01:19:52,580
+ how do you actually train those controllers?
+
+1400
+01:19:52,580 --> 01:19:57,420
+ So we'll take the RL approach next week.
+
+1401
+01:19:57,420 --> 01:20:00,260
+ Good, happy Veterans Day.
+

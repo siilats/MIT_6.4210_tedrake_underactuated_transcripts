@@ -1,0 +1,5328 @@
+1
+00:00:00,000 --> 00:00:10,000
+ [BLANK_AUDIO]
+
+2
+00:00:10,000 --> 00:00:20,000
+ [BLANK_AUDIO]
+
+3
+00:00:20,000 --> 00:00:30,000
+ [BLANK_AUDIO]
+
+4
+00:00:30,000 --> 00:00:40,000
+ [BLANK_AUDIO]
+
+5
+00:00:40,000 --> 00:00:50,000
+ [BLANK_AUDIO]
+
+6
+00:00:50,000 --> 00:01:00,000
+ [BLANK_AUDIO]
+
+7
+00:01:00,000 --> 00:01:10,000
+ [BLANK_AUDIO]
+
+8
+00:01:10,000 --> 00:01:20,000
+ [BLANK_AUDIO]
+
+9
+00:01:35,000 --> 00:01:40,000
+ >> It's on now.
+
+10
+00:01:40,000 --> 00:01:45,000
+ I'll keep talking for a second here for you.
+
+11
+00:01:45,000 --> 00:01:46,000
+ Yeah.
+
+12
+00:01:46,000 --> 00:01:56,000
+ [BLANK_AUDIO]
+
+13
+00:01:56,000 --> 00:02:06,000
+ [BLANK_AUDIO]
+
+14
+00:02:06,000 --> 00:02:16,000
+ [BLANK_AUDIO]
+
+15
+00:02:16,000 --> 00:02:26,000
+ [BLANK_AUDIO]
+
+16
+00:02:26,000 --> 00:02:36,000
+ [BLANK_AUDIO]
+
+17
+00:02:36,000 --> 00:02:46,000
+ [BLANK_AUDIO]
+
+18
+00:02:46,000 --> 00:02:56,000
+ [BLANK_AUDIO]
+
+19
+00:02:56,000 --> 00:03:06,000
+ [BLANK_AUDIO]
+
+20
+00:03:06,000 --> 00:03:16,000
+ [BLANK_AUDIO]
+
+21
+00:03:16,000 --> 00:03:26,000
+ [BLANK_AUDIO]
+
+22
+00:03:26,000 --> 00:03:36,000
+ [BLANK_AUDIO]
+
+23
+00:03:36,000 --> 00:03:46,000
+ [BLANK_AUDIO]
+
+24
+00:03:46,000 --> 00:03:56,000
+ [BLANK_AUDIO]
+
+25
+00:03:56,000 --> 00:04:06,000
+ [BLANK_AUDIO]
+
+26
+00:04:06,000 --> 00:04:16,000
+ [BLANK_AUDIO]
+
+27
+00:04:16,000 --> 00:04:26,000
+ [BLANK_AUDIO]
+
+28
+00:04:26,000 --> 00:04:36,000
+ [BLANK_AUDIO]
+
+29
+00:04:36,000 --> 00:04:46,000
+ [BLANK_AUDIO]
+
+30
+00:04:46,000 --> 00:04:48,000
+ [BLANK_AUDIO]
+
+31
+00:04:48,000 --> 00:04:51,000
+ >> Okay, let's get started.
+
+32
+00:04:51,000 --> 00:04:56,000
+ So last time we started our work on perception, right?
+
+33
+00:04:56,000 --> 00:05:01,000
+ And I had intended to get through iterative closest point.
+
+34
+00:05:01,000 --> 00:05:04,000
+ We didn't quite get through it, so I'll finish that off today.
+
+35
+00:05:04,000 --> 00:05:10,000
+ And the goal for today, last time we sort of assumed perfect point clouds.
+
+36
+00:05:10,000 --> 00:05:15,000
+ We assumed that our sensors were giving us the best possible information that
+
+37
+00:05:15,000 --> 00:05:19,000
+ they could given the projection through the lens.
+
+38
+00:05:19,000 --> 00:05:24,000
+ But there was no noise, there was no outliers, there were nothing like this.
+
+39
+00:05:24,000 --> 00:05:28,000
+ So today we're gonna think about what happens when those point clouds get messy,
+
+40
+00:05:28,000 --> 00:05:30,000
+ because real point clouds are very messy.
+
+41
+00:05:30,000 --> 00:05:36,000
+ And think about ways we're gonna sort of modify our basic computational framework
+
+42
+00:05:36,000 --> 00:05:37,000
+ to make this more robust.
+
+43
+00:05:37,000 --> 00:05:43,000
+ And I think there's a couple particular algorithms I'll try to show you.
+
+44
+00:05:43,000 --> 00:05:46,000
+ And I think they kind of represent a nice way to understand the problem,
+
+45
+00:05:46,000 --> 00:05:48,000
+ understand what you can do with it.
+
+46
+00:05:48,000 --> 00:05:51,000
+ There are many different variants out there, but
+
+47
+00:05:51,000 --> 00:05:55,000
+ I think there's a few that you can get a taste for what's possible.
+
+48
+00:05:55,000 --> 00:05:59,000
+ So just to set that up again, remember that our goal for today, for
+
+49
+00:05:59,000 --> 00:06:02,000
+ this week I guess, is to do the same thing we did before.
+
+50
+00:06:02,000 --> 00:06:09,000
+ But we've added these D415 cameras, and now we are reasoning about where
+
+51
+00:06:09,000 --> 00:06:13,000
+ in the scene, I hid my point cloud there, but
+
+52
+00:06:13,000 --> 00:06:17,000
+ we're actually using those cameras to find the mustard bottle.
+
+53
+00:06:17,000 --> 00:06:21,000
+ First by taking pictures, then by turning those pictures,
+
+54
+00:06:21,000 --> 00:06:25,000
+ those depth return, RGBD images into a point cloud.
+
+55
+00:06:25,000 --> 00:06:29,000
+ This is actually the result of after filtering the point cloud,
+
+56
+00:06:29,000 --> 00:06:32,000
+ getting it down to just the mustard that's left there, and
+
+57
+00:06:32,000 --> 00:06:35,000
+ removing the bins and all the distractors and stuff like this.
+
+58
+00:06:35,000 --> 00:06:42,000
+ And then what we'll see is we run ICP on this mustard bottle in order to
+
+59
+00:06:42,000 --> 00:06:44,000
+ then accomplish the task.
+
+60
+00:06:44,000 --> 00:06:45,000
+ Okay.
+
+61
+00:06:48,000 --> 00:06:55,000
+ So we started last time with a really important component of the algorithm
+
+62
+00:06:55,000 --> 00:06:59,000
+ that started us thinking about sort of connections between the kinematics
+
+63
+00:06:59,000 --> 00:07:02,000
+ problems we've talked about and the perception problems we're starting to
+
+64
+00:07:02,000 --> 00:07:03,000
+ talk about.
+
+65
+00:07:03,000 --> 00:07:07,000
+ So we started off by saying we were given a few things.
+
+66
+00:07:07,000 --> 00:07:14,000
+ We were given a model in the form of a point cloud, so our model points,
+
+67
+00:07:14,000 --> 00:07:21,000
+ where we wrote them as a bunch of points, model i, and
+
+68
+00:07:21,000 --> 00:07:26,000
+ we had this canonical model frame in the object frame, right?
+
+69
+00:07:26,000 --> 00:07:36,000
+ I'll write bigger, I remembered.
+
+70
+00:07:36,000 --> 00:07:37,000
+ Okay.
+
+71
+00:07:37,000 --> 00:07:39,000
+ And then we also had scene points.
+
+72
+00:07:42,000 --> 00:07:47,000
+ This is what we got from the camera with a little bit of processing to put it
+
+73
+00:07:47,000 --> 00:07:49,000
+ into a point cloud format.
+
+74
+00:07:49,000 --> 00:07:55,000
+ And this was originally, we obtained some scene points in the camera
+
+75
+00:07:55,000 --> 00:07:59,000
+ coordinates, and then we assumed we had the camera pose.
+
+76
+00:07:59,000 --> 00:08:07,000
+ So this is the camera.
+
+77
+00:08:07,000 --> 00:08:10,000
+ Right?
+
+78
+00:08:11,000 --> 00:08:15,000
+ And then the biggest assumption we made last time
+
+79
+00:08:15,000 --> 00:08:29,000
+ was that point mi corresponded with scene point si.
+
+80
+00:08:29,000 --> 00:08:30,000
+ Right?
+
+81
+00:08:36,000 --> 00:08:40,000
+ So we somehow could look through our camera and know that there was a
+
+82
+00:08:40,000 --> 00:08:43,000
+ particular point in the point cloud, and that should be associated with a
+
+83
+00:08:43,000 --> 00:08:45,000
+ particular point in our model.
+
+84
+00:08:45,000 --> 00:08:47,000
+ Okay?
+
+85
+00:08:47,000 --> 00:08:51,000
+ If we have this setup, then it's incredibly useful to know that given
+
+86
+00:08:51,000 --> 00:08:57,000
+ that setup, we can write an objective like this, minimize over the unknown
+
+87
+00:08:57,000 --> 00:09:01,000
+ pose, which would be the pose of the object in the world.
+
+88
+00:09:01,000 --> 00:09:04,000
+ And when I'm writing it as an optimization, I want to be clear, our
+
+89
+00:09:04,000 --> 00:09:09,000
+ notation sort of makes it clear, but I want to be super clear that as an
+
+90
+00:09:09,000 --> 00:09:16,000
+ argument to a mathematical program, that this is an object that is the poses.
+
+91
+00:09:16,000 --> 00:09:20,000
+ So especially you put it in group three.
+
+92
+00:09:20,000 --> 00:09:21,000
+ Okay?
+
+93
+00:09:21,000 --> 00:09:27,000
+ And the objective is that for all of the eyes, I'd like that if I take both
+
+94
+00:09:27,000 --> 00:09:35,000
+ the model points and the scene points into the world frame, then their
+
+95
+00:09:35,000 --> 00:09:37,000
+ distance is small.
+
+96
+00:09:37,000 --> 00:09:45,000
+ And I tried to show you the landscape of this.
+
+97
+00:09:45,000 --> 00:09:47,000
+ This is a quadratic objective.
+
+98
+00:09:47,000 --> 00:09:48,000
+ Right?
+
+99
+00:09:48,000 --> 00:09:53,000
+ When I plotted it with just two decision variables, which I could do in 2D
+
+100
+00:09:53,000 --> 00:09:58,000
+ with just rotations, right, then it looks like just this quadratic bowl.
+
+101
+00:09:58,000 --> 00:10:02,000
+ And then this constraint here, the fact that these are not arbitrary
+
+102
+00:10:02,000 --> 00:10:06,000
+ rotation matrices inside here, meant that there was an extra constraint,
+
+103
+00:10:06,000 --> 00:10:08,000
+ which was that unit disk.
+
+104
+00:10:08,000 --> 00:10:09,000
+ We'll see that picture again.
+
+105
+00:10:09,000 --> 00:10:16,000
+ But this was sort of a nice optimization problem, and it has a closed form.
+
+106
+00:10:16,000 --> 00:10:21,000
+ It's numerical, but an algorithm that's almost as good as closed form
+
+107
+00:10:21,000 --> 00:10:28,000
+ solution via SVD, singular value decomposition.
+
+108
+00:10:28,000 --> 00:10:35,000
+ That's where we were last time.
+
+109
+00:10:35,000 --> 00:10:38,000
+ Right?
+
+110
+00:10:38,000 --> 00:10:41,000
+ I want to just point out again, point out quickly here, because we're
+
+111
+00:10:41,000 --> 00:10:45,000
+ going to play with different formulations of this today, and different ways
+
+112
+00:10:45,000 --> 00:10:49,000
+ that are going to be good optimizations, ugly optimizations, that are going
+
+113
+00:10:49,000 --> 00:10:54,000
+ to give certain robustness properties.
+
+114
+00:10:54,000 --> 00:10:57,000
+ Maybe there's a point to plane version of this, where you can try to
+
+115
+00:10:57,000 --> 00:11:01,000
+ correspond points to whole faces of a mesh, for instance.
+
+116
+00:11:01,000 --> 00:11:03,000
+ There's a bunch of versions of this, but we're going to be doing
+
+117
+00:11:03,000 --> 00:11:05,000
+ manipulations on these basic equations.
+
+118
+00:11:05,000 --> 00:11:07,000
+ OK?
+
+119
+00:11:07,000 --> 00:11:11,000
+ So the first one, just to observe right off the bat, is that if I had
+
+120
+00:11:11,000 --> 00:11:16,000
+ written instead, if I wanted to transform the scene points into the
+
+121
+00:11:16,000 --> 00:11:21,000
+ object frame, for instance, if I had done-- what do I want?
+
+122
+00:11:21,000 --> 00:11:27,000
+ I want the transform from the world, let's say, into object frame,
+
+123
+00:11:27,000 --> 00:11:31,000
+ should be the inverse of this transform.
+
+124
+00:11:31,000 --> 00:11:39,000
+ And I'd written this optimization with this guy.
+
+125
+00:11:39,000 --> 00:11:40,000
+ OK?
+
+126
+00:11:40,000 --> 00:11:46,000
+ That's solving for a different transform.
+
+127
+00:11:46,000 --> 00:11:53,000
+ This is trying to put the points together, everything in the object
+
+128
+00:11:53,000 --> 00:11:54,000
+ frame.
+
+129
+00:11:54,000 --> 00:11:55,000
+ OK?
+
+130
+00:11:55,000 --> 00:11:58,000
+ But from the point of view of an optimization problem, this looks
+
+131
+00:11:58,000 --> 00:12:02,000
+ identical, and can also be solved with SVD.
+
+132
+00:12:02,000 --> 00:12:03,000
+ Right?
+
+133
+00:12:03,000 --> 00:12:10,000
+ This is still linear in the decision variables here, plus some
+
+134
+00:12:10,000 --> 00:12:14,000
+ constraints that are solved by SVD.
+
+135
+00:12:14,000 --> 00:12:15,000
+ OK?
+
+136
+00:12:15,000 --> 00:12:17,000
+ So you can go back and forth, and we're going to move these
+
+137
+00:12:17,000 --> 00:12:20,000
+ things around, and we'll understand where it breaks and where it
+
+138
+00:12:20,000 --> 00:12:24,000
+ works.
+
+139
+00:12:24,000 --> 00:12:28,000
+ OK, but I want to address this big assumption, because really, how
+
+140
+00:12:28,000 --> 00:12:33,000
+ could you possibly know which point in the model-- if I get a
+
+141
+00:12:33,000 --> 00:12:36,000
+ point cloud of a mustard bottle, how am I possibly going to know
+
+142
+00:12:36,000 --> 00:12:40,000
+ which one goes to the top, which one goes to the bottom?
+
+143
+00:12:40,000 --> 00:12:47,000
+ That's maybe the hardest part of perception, is to make that leap.
+
+144
+00:12:47,000 --> 00:12:50,000
+ OK, so I think a picture-- well, actually, the picture on the
+
+145
+00:12:50,000 --> 00:12:53,000
+ screen is a pretty useful one.
+
+146
+00:12:53,000 --> 00:12:57,000
+ So this is-- remember, my blue is my model.
+
+147
+00:12:57,000 --> 00:12:59,000
+ My salmon-colored is my scene.
+
+148
+00:12:59,000 --> 00:13:00,000
+ Right?
+
+149
+00:13:00,000 --> 00:13:05,000
+ The brown is what I get when they overlap, and it wasn't
+
+150
+00:13:05,000 --> 00:13:07,000
+ artistically chosen, clearly.
+
+151
+00:13:07,000 --> 00:13:08,000
+ OK?
+
+152
+00:13:08,000 --> 00:13:11,000
+ And the green here, the green lines, are the correspondences.
+
+153
+00:13:11,000 --> 00:13:14,000
+ I just drew in, saying, if I said that this point corresponds
+
+154
+00:13:14,000 --> 00:13:18,000
+ to this point, I'll just draw a line.
+
+155
+00:13:18,000 --> 00:13:21,000
+ OK, so let's say I didn't have those correspondences, but I had
+
+156
+00:13:21,000 --> 00:13:26,000
+ this initial frame of the model points and these initial scene
+
+157
+00:13:26,000 --> 00:13:28,000
+ points.
+
+158
+00:13:28,000 --> 00:13:31,000
+ You can imagine-- and the algorithm's name is a pretty
+
+159
+00:13:31,000 --> 00:13:34,000
+ good indication of what the first thing we're going to try
+
+160
+00:13:34,000 --> 00:13:38,000
+ is-- a fairly good heuristic would be to say, let's just
+
+161
+00:13:38,000 --> 00:13:41,000
+ guess that the points that are-- the correspondences are the
+
+162
+00:13:41,000 --> 00:13:43,000
+ points that are closest in space.
+
+163
+00:13:43,000 --> 00:13:47,000
+ I'll have an initial guess of the object, and I'll have the
+
+164
+00:13:47,000 --> 00:13:48,000
+ actual scene points.
+
+165
+00:13:48,000 --> 00:13:51,000
+ And let's just start by saying the ones that are closest in
+
+166
+00:13:51,000 --> 00:13:53,000
+ Euclidean distance are the ones that correspond.
+
+167
+00:13:53,000 --> 00:13:54,000
+ OK?
+
+168
+00:13:54,000 --> 00:13:55,000
+ It's interesting.
+
+169
+00:13:55,000 --> 00:13:57,000
+ Right here, you'd see that this one on the first guess
+
+170
+00:13:57,000 --> 00:14:00,000
+ might get it wrong, that this point would correspond to this
+
+171
+00:14:00,000 --> 00:14:02,000
+ point, probably.
+
+172
+00:14:02,000 --> 00:14:05,000
+ But if enough of the points correspond to the right points--
+
+173
+00:14:05,000 --> 00:14:08,000
+ I'll make this precise in a second here-- then we can have
+
+174
+00:14:08,000 --> 00:14:11,000
+ an algorithm that can be, I think, actually very effective.
+
+175
+00:14:11,000 --> 00:14:14,000
+ So this is the iterative closest point algorithm, which
+
+176
+00:14:14,000 --> 00:14:16,000
+ is doing exactly this.
+
+177
+00:14:16,000 --> 00:14:19,000
+ And I'll write the equations down to make that precise in
+
+178
+00:14:19,000 --> 00:14:20,000
+ just a second.
+
+179
+00:14:20,000 --> 00:14:24,000
+ And what you can see is, even if the first guess is wrong,
+
+180
+00:14:24,000 --> 00:14:29,000
+ and then you solve for a new pose, given this singular value
+
+181
+00:14:29,000 --> 00:14:32,000
+ decomposition, it puts you in a new condition where you can
+
+182
+00:14:32,000 --> 00:14:35,000
+ try to make your correspondences again.
+
+183
+00:14:35,000 --> 00:14:38,000
+ And as long as that alternation converges, you can get
+
+184
+00:14:38,000 --> 00:14:40,000
+ global solutions to this.
+
+185
+00:14:40,000 --> 00:14:43,000
+ Now, we're going to-- this is also susceptible to local
+
+186
+00:14:43,000 --> 00:14:44,000
+ minima.
+
+187
+00:14:44,000 --> 00:14:46,000
+ You'll see the bad cases in a minute, too.
+
+188
+00:14:46,000 --> 00:14:49,000
+ But this is the basic algorithm I want to understand next.
+
+189
+00:14:49,000 --> 00:15:03,000
+ So the iterative closest point algorithm
+
+190
+00:15:03,000 --> 00:15:06,000
+ is going to try to solve for the correspondences.
+
+191
+00:15:06,000 --> 00:15:08,000
+ So we need a notation for our correspondences.
+
+192
+00:15:11,000 --> 00:15:21,500
+ We're going to have an initial guess for the object.
+
+193
+00:15:21,500 --> 00:15:23,000
+ I'll stick with the original one.
+
+194
+00:15:23,000 --> 00:15:28,000
+ We're moving the model into the scene points.
+
+195
+00:15:28,000 --> 00:15:29,500
+ When I'm going to do an estimate,
+
+196
+00:15:29,500 --> 00:15:31,500
+ I'm going to try to use this hat notation to say,
+
+197
+00:15:31,500 --> 00:15:34,000
+ this is my guess at the true x.
+
+198
+00:15:34,000 --> 00:15:40,500
+ So given this, I want to find correspondences.
+
+199
+00:15:40,500 --> 00:15:41,500
+ So step one.
+
+200
+00:15:41,500 --> 00:15:54,400
+ And I'm going to write the correspondences
+
+201
+00:15:54,400 --> 00:15:56,000
+ in a correspondence vector.
+
+202
+00:15:56,000 --> 00:15:58,600
+ OK, so let's just write it like this.
+
+203
+00:15:58,600 --> 00:16:06,200
+ I'll call it the vector c here, where I'll say c-- let me do--
+
+204
+00:16:06,200 --> 00:16:10,900
+ ci, the i-th element of this vector c.
+
+205
+00:16:10,900 --> 00:16:14,740
+ I'll choose as my heuristic to take the point that
+
+206
+00:16:14,740 --> 00:16:16,340
+ is the minimum distance.
+
+207
+00:16:16,340 --> 00:16:19,540
+ I'll make sure this notation's clear in just a second.
+
+208
+00:16:19,540 --> 00:16:30,500
+ Given my initial estimate x hat, argument over j.
+
+209
+00:16:30,500 --> 00:16:35,700
+ I'll search over all of the j's, psi x squared.
+
+210
+00:16:35,700 --> 00:16:39,760
+ And since this is just going to be
+
+211
+00:16:39,760 --> 00:16:42,220
+ a guess at the correspondences, I'll put a hat there too.
+
+212
+00:16:42,220 --> 00:16:45,640
+ OK, so what is this?
+
+213
+00:16:45,640 --> 00:16:47,720
+ This is saying that I'll take each point--
+
+214
+00:16:47,720 --> 00:16:53,160
+ for every scene point i, I want to find a corresponding model
+
+215
+00:16:53,160 --> 00:16:55,360
+ point j.
+
+216
+00:16:55,360 --> 00:16:58,920
+ So I'm going to loop through all of the possible j's,
+
+217
+00:16:58,920 --> 00:17:01,000
+ try all the possible model points,
+
+218
+00:17:01,000 --> 00:17:03,440
+ and compute the distance between that model point
+
+219
+00:17:03,440 --> 00:17:06,520
+ j and my scene point i that I'm considering.
+
+220
+00:17:06,520 --> 00:17:10,200
+ And whichever one minimizes it-- so min
+
+221
+00:17:10,200 --> 00:17:12,200
+ would be the value of the optimization,
+
+222
+00:17:12,200 --> 00:17:15,880
+ and arg min is the element j which
+
+223
+00:17:15,880 --> 00:17:18,320
+ causes this to be smallest.
+
+224
+00:17:18,320 --> 00:17:21,960
+ That's the difference between min versus arg min, yeah?
+
+225
+00:17:21,960 --> 00:17:24,280
+ So this is returning the element j,
+
+226
+00:17:24,280 --> 00:17:27,400
+ and I'll tuck that into the vector c.
+
+227
+00:17:27,400 --> 00:17:30,640
+ Is that notation clear?
+
+228
+00:17:30,640 --> 00:17:32,040
+ So this is a vector of integers.
+
+229
+00:17:32,040 --> 00:17:40,840
+ So how would you compute this in general?
+
+230
+00:17:40,840 --> 00:17:45,280
+ So we talked about quadratic optimization over there.
+
+231
+00:17:45,280 --> 00:17:50,400
+ This is now an integer optimization,
+
+232
+00:17:50,400 --> 00:17:52,360
+ but it's just a list of numbers.
+
+233
+00:17:52,360 --> 00:17:54,040
+ So you can just compute-- worst case,
+
+234
+00:17:54,040 --> 00:17:55,360
+ you can compute all of the distances
+
+235
+00:17:55,360 --> 00:17:56,720
+ and just take the smallest one.
+
+236
+00:17:56,720 --> 00:17:58,560
+ There's a finite number of things to compute.
+
+237
+00:17:58,560 --> 00:18:00,120
+ Just take the smallest one.
+
+238
+00:18:00,120 --> 00:18:01,400
+ In practice, we don't do that.
+
+239
+00:18:01,400 --> 00:18:03,280
+ In practice, there's efficient data structure
+
+240
+00:18:03,280 --> 00:18:06,160
+ for nearest neighbor queries, so we're going to use those.
+
+241
+00:18:06,160 --> 00:18:09,680
+ So kdtrees, there's public libraries
+
+242
+00:18:09,680 --> 00:18:13,280
+ that make these very fast, approximate nearest neighbor
+
+243
+00:18:13,280 --> 00:18:15,240
+ queries and the like.
+
+244
+00:18:15,240 --> 00:18:18,080
+ So in practice, you can make this computation
+
+245
+00:18:18,080 --> 00:18:20,440
+ use your best nearest neighbor data structures.
+
+246
+00:18:24,840 --> 00:18:27,920
+ And then step two, the reason I chose this notation
+
+247
+00:18:27,920 --> 00:18:32,160
+ is that I can just say my new x hat is
+
+248
+00:18:32,160 --> 00:18:48,320
+ the result of that optimization with just the correspondence
+
+249
+00:18:48,320 --> 00:18:49,120
+ is written in here.
+
+250
+00:18:49,120 --> 00:18:54,760
+ So I've got model point ci hat in here minus psi.
+
+251
+00:18:54,760 --> 00:19:01,920
+ See what I did?
+
+252
+00:19:01,920 --> 00:19:05,440
+ I've got to sum all these up over i.
+
+253
+00:19:05,440 --> 00:19:10,520
+ So I used to just have mi here, assume that I knew
+
+254
+00:19:10,520 --> 00:19:11,920
+ one-to-one correspondence.
+
+255
+00:19:11,920 --> 00:19:14,420
+ Now I'm going to say I'm going to take whichever model point
+
+256
+00:19:14,420 --> 00:19:15,760
+ corresponds to that scene point.
+
+257
+00:19:15,760 --> 00:19:17,380
+ And I'll sum over all the scene points,
+
+258
+00:19:17,380 --> 00:19:21,200
+ and I can still-- it's, from the optimization perspective,
+
+259
+00:19:21,200 --> 00:19:23,360
+ the same as that optimization.
+
+260
+00:19:23,360 --> 00:19:24,320
+ So I can use my SVD.
+
+261
+00:19:24,320 --> 00:19:34,480
+ Is the algorithm clear?
+
+262
+00:19:34,480 --> 00:19:35,160
+ It's the simplest.
+
+263
+00:19:35,160 --> 00:19:40,040
+ It's like the bread and butter point cloud algorithm.
+
+264
+00:19:40,040 --> 00:19:41,960
+ You'll see it used in lots of places.
+
+265
+00:19:41,960 --> 00:19:42,460
+ Yes?
+
+266
+00:19:42,460 --> 00:19:44,120
+ I thought the question was still like,
+
+267
+00:19:44,120 --> 00:19:46,600
+ what if the dimensions don't match?
+
+268
+00:19:46,600 --> 00:19:47,480
+ Good.
+
+269
+00:19:47,480 --> 00:19:51,560
+ Yeah, so the question was, what if the dimensions don't match?
+
+270
+00:19:51,560 --> 00:19:54,400
+ So I made a choice here with my notation
+
+271
+00:19:54,400 --> 00:19:57,720
+ to say that I'd like to say for every scene point,
+
+272
+00:19:57,720 --> 00:20:01,520
+ I'll try to find a model that corresponds.
+
+273
+00:20:01,520 --> 00:20:02,800
+ We're going to talk about that.
+
+274
+00:20:02,800 --> 00:20:04,560
+ So that has implications.
+
+275
+00:20:04,560 --> 00:20:09,560
+ So in the case of partial views, for instance,
+
+276
+00:20:09,560 --> 00:20:11,080
+ that makes a lot of sense.
+
+277
+00:20:11,080 --> 00:20:12,820
+ I'll say this very carefully in a minute.
+
+278
+00:20:12,820 --> 00:20:15,660
+ But I made a choice so far to say that all I'm requiring
+
+279
+00:20:15,660 --> 00:20:17,860
+ is that every scene point, it corresponds
+
+280
+00:20:17,860 --> 00:20:19,580
+ with one model point.
+
+281
+00:20:19,580 --> 00:20:25,540
+ You could have many model points for ones
+
+282
+00:20:25,540 --> 00:20:28,300
+ that are used by the same-- sorry,
+
+283
+00:20:28,300 --> 00:20:30,300
+ one model point that's used by many scene points.
+
+284
+00:20:30,300 --> 00:20:31,880
+ You could have some model points that
+
+285
+00:20:31,880 --> 00:20:33,500
+ are used by no scene points.
+
+286
+00:20:33,500 --> 00:20:39,300
+ But this notation says that for all the scene points,
+
+287
+00:20:39,300 --> 00:20:39,900
+ I'll do this.
+
+288
+00:20:40,880 --> 00:20:42,560
+ Good question.
+
+289
+00:20:42,560 --> 00:20:43,060
+ Yes?
+
+290
+00:20:43,060 --> 00:20:45,920
+ Is this honoring Merck if you don't go around all
+
+291
+00:20:45,920 --> 00:20:48,920
+ of the top [INAUDIBLE]
+
+292
+00:20:48,920 --> 00:20:50,000
+ That's a great question.
+
+293
+00:20:50,000 --> 00:20:51,040
+ So the question is, what happens if you
+
+294
+00:20:51,040 --> 00:20:52,920
+ don't take all of the correspondences,
+
+295
+00:20:52,920 --> 00:20:54,160
+ but you take a few of them?
+
+296
+00:20:54,160 --> 00:20:56,500
+ And I think we're going to have to do that at some point
+
+297
+00:20:56,500 --> 00:20:58,120
+ to address some messiness.
+
+298
+00:20:58,120 --> 00:21:02,280
+ So we're going to think about the right way to do that.
+
+299
+00:21:02,280 --> 00:21:05,080
+ So at some point, we're going to have to deal with that.
+
+300
+00:21:05,080 --> 00:21:08,040
+ And let me give you an example right away that sort of, I
+
+301
+00:21:08,040 --> 00:21:14,480
+ think, makes that point.
+
+302
+00:21:14,480 --> 00:21:20,640
+ Imagine if I had my object of interest here.
+
+303
+00:21:20,640 --> 00:21:22,960
+ And this is the ghost of the-- I'll
+
+304
+00:21:22,960 --> 00:21:26,640
+ use my reddish color for my scene points.
+
+305
+00:21:26,640 --> 00:21:37,200
+ You get the idea?
+
+306
+00:21:37,200 --> 00:21:38,660
+ And what happens if, I don't know,
+
+307
+00:21:38,660 --> 00:21:40,360
+ there was a reflection or something,
+
+308
+00:21:40,360 --> 00:21:45,200
+ and I got a couple scene points way over here?
+
+309
+00:21:45,200 --> 00:21:50,000
+ And I have my model that started off with some initial guess.
+
+310
+00:21:50,000 --> 00:21:53,400
+ So this is nicely getting pulled in this direction.
+
+311
+00:21:53,400 --> 00:21:57,560
+ But I said so far that every scene point corresponds
+
+312
+00:21:57,560 --> 00:21:59,640
+ to at least one model point.
+
+313
+00:21:59,640 --> 00:22:06,520
+ So these points are still going to pick some point on the model.
+
+314
+00:22:06,520 --> 00:22:10,340
+ And they're going to pull this in this direction.
+
+315
+00:22:10,340 --> 00:22:11,960
+ They're trying to minimize the distance
+
+316
+00:22:11,960 --> 00:22:14,160
+ between the corresponding points.
+
+317
+00:22:14,160 --> 00:22:15,560
+ See, I've got all the colors here.
+
+318
+00:22:15,560 --> 00:22:21,960
+ I can say, if I've got some green correspondences here--
+
+319
+00:22:21,960 --> 00:22:24,420
+ I guess that would be the shortest one would be a straight
+
+320
+00:22:24,420 --> 00:22:25,920
+ line, like this.
+
+321
+00:22:25,920 --> 00:22:33,200
+ And then even if I have a lot of good correspondences here
+
+322
+00:22:33,200 --> 00:22:35,040
+ that's pulling me this way, I can
+
+323
+00:22:35,040 --> 00:22:38,200
+ have even a very small number of correspondences
+
+324
+00:22:38,200 --> 00:22:39,520
+ that are far off.
+
+325
+00:22:39,520 --> 00:22:41,080
+ But because that distance is large,
+
+326
+00:22:41,080 --> 00:22:43,840
+ they can have overwhelming effect
+
+327
+00:22:43,840 --> 00:22:45,240
+ on the quality of the algorithm.
+
+328
+00:22:45,240 --> 00:22:52,240
+ So that's a reason maybe that it feels unnatural
+
+329
+00:22:52,240 --> 00:22:55,040
+ to say that every scene point has
+
+330
+00:22:55,040 --> 00:22:57,120
+ to match with at least one model point.
+
+331
+00:22:57,120 --> 00:23:00,960
+ That makes you susceptible to outliers.
+
+332
+00:23:00,960 --> 00:23:05,400
+ But the reason I chose that was because there's
+
+333
+00:23:05,400 --> 00:23:09,480
+ another direction, too, which is that what if I only
+
+334
+00:23:09,480 --> 00:23:13,640
+ have partial views?
+
+335
+00:23:13,640 --> 00:23:20,480
+ So I've got a camera.
+
+336
+00:23:20,480 --> 00:23:22,000
+ I'll use white for my camera here.
+
+337
+00:23:22,000 --> 00:23:24,280
+ I've got my camera over here.
+
+338
+00:23:24,280 --> 00:23:25,240
+ And it's looking down.
+
+339
+00:23:25,240 --> 00:23:27,840
+ And I can see this part of the object.
+
+340
+00:23:27,840 --> 00:23:29,520
+ But I'm not seeing any points over here.
+
+341
+00:23:30,520 --> 00:23:31,440
+ OK.
+
+342
+00:23:31,440 --> 00:23:38,200
+ So if I said, for instance, that every model point
+
+343
+00:23:38,200 --> 00:23:41,360
+ has to correspond with one scene point,
+
+344
+00:23:41,360 --> 00:23:42,840
+ that would be the opposite choice
+
+345
+00:23:42,840 --> 00:23:45,800
+ if I had made the opposite choice over there.
+
+346
+00:23:45,800 --> 00:23:48,280
+ Then again, I've got some model points here
+
+347
+00:23:48,280 --> 00:23:51,240
+ which don't have a correspondence here.
+
+348
+00:23:51,240 --> 00:23:57,120
+ And they will cause big artifacts potentially here.
+
+349
+00:23:57,480 --> 00:24:05,160
+ So you can choose either to correspond scene to model
+
+350
+00:24:05,160 --> 00:24:07,440
+ or model to scene.
+
+351
+00:24:07,440 --> 00:24:09,760
+ One of them, the scene to model, I think,
+
+352
+00:24:09,760 --> 00:24:11,280
+ makes you susceptible to outliers.
+
+353
+00:24:11,280 --> 00:24:22,400
+ And the model to scene makes you susceptible to partial views.
+
+354
+00:24:22,400 --> 00:24:22,900
+ OK.
+
+355
+00:24:22,900 --> 00:24:31,200
+ And that's kind of the point of the lecture
+
+356
+00:24:31,200 --> 00:24:33,400
+ is that we're going to have to do a little bit better
+
+357
+00:24:33,400 --> 00:24:34,440
+ than both of those.
+
+358
+00:24:34,440 --> 00:24:45,280
+ I would say that these are the dominant problems,
+
+359
+00:24:45,280 --> 00:24:49,800
+ the important ways that real point clouds are messy.
+
+360
+00:24:49,800 --> 00:25:07,240
+ I would say messy is a silly term.
+
+361
+00:25:07,240 --> 00:25:09,320
+ But noise is taken.
+
+362
+00:25:09,320 --> 00:25:13,800
+ I would say I want to reserve noise for something
+
+363
+00:25:13,800 --> 00:25:15,760
+ like I'll say in a minute.
+
+364
+00:25:15,760 --> 00:25:19,040
+ So what would noise be in the context of a perception system
+
+365
+00:25:19,040 --> 00:25:19,520
+ like this?
+
+366
+00:25:19,520 --> 00:25:24,160
+ Maybe I measure the true scene point,
+
+367
+00:25:24,160 --> 00:25:27,040
+ but plus or minus some Gaussian noise, for instance.
+
+368
+00:25:27,040 --> 00:25:28,920
+ So every one of those points is just
+
+369
+00:25:28,920 --> 00:25:30,200
+ perturbed with some Gaussian.
+
+370
+00:25:30,200 --> 00:25:35,320
+ I shouldn't say this.
+
+371
+00:25:35,320 --> 00:25:36,880
+ That's what all the theorists pick
+
+372
+00:25:36,880 --> 00:25:38,880
+ when they try to prove something about perception
+
+373
+00:25:38,880 --> 00:25:39,840
+ or something like this.
+
+374
+00:25:39,840 --> 00:25:41,960
+ They always assume Gaussian noise.
+
+375
+00:25:41,960 --> 00:25:43,760
+ But that's not what real cameras do.
+
+376
+00:25:43,760 --> 00:25:47,560
+ In fact, I would say that it's the easiest thing to analyze.
+
+377
+00:25:47,560 --> 00:25:51,160
+ But it's not a property.
+
+378
+00:25:51,160 --> 00:25:53,680
+ I'd say that the real cameras are actually
+
+379
+00:25:53,680 --> 00:25:55,080
+ very low in terms of noise.
+
+380
+00:25:55,080 --> 00:26:04,360
+ And this kind of noise is relatively easy
+
+381
+00:26:04,360 --> 00:26:06,040
+ to be robust to.
+
+382
+00:26:06,040 --> 00:26:10,120
+ In fact, we've already got relatively good robustness
+
+383
+00:26:10,120 --> 00:26:14,760
+ to noise just by writing it in this least squares objective.
+
+384
+00:26:14,760 --> 00:26:18,400
+ To some extent, if you've got Gaussian noise added in here,
+
+385
+00:26:18,400 --> 00:26:20,440
+ then you'd expect this least squares objective
+
+386
+00:26:20,440 --> 00:26:24,680
+ to be the right metric for rejecting that noise.
+
+387
+00:26:24,680 --> 00:26:27,060
+ So by virtue of not asking David Urest
+
+388
+00:26:27,060 --> 00:26:29,480
+ the last time about whether we should make this a quality
+
+389
+00:26:29,480 --> 00:26:32,240
+ and what that looks like, by asking for it to be softer,
+
+390
+00:26:32,240 --> 00:26:36,160
+ this gives us nice robustness to that Gaussian noise.
+
+391
+00:26:36,160 --> 00:26:46,000
+ But I think partial views are a very big one.
+
+392
+00:26:46,000 --> 00:26:48,480
+ You're never going to see the bottom of your object that's
+
+393
+00:26:48,480 --> 00:26:51,360
+ sitting on the table until you pick it up.
+
+394
+00:26:51,360 --> 00:26:53,760
+ No amount of looking around or whatever is going to get you
+
+395
+00:26:53,760 --> 00:26:55,040
+ to see the bottom.
+
+396
+00:26:55,040 --> 00:26:57,080
+ So you're going to have partial views.
+
+397
+00:26:57,080 --> 00:27:03,480
+ Another way that you get partial views is from occlusions.
+
+398
+00:27:04,080 --> 00:27:08,560
+ Partly it's just by having a camera looking from one angle,
+
+399
+00:27:08,560 --> 00:27:12,040
+ but also when you get more cluttered scenes,
+
+400
+00:27:12,040 --> 00:27:13,560
+ you'll have occlusions.
+
+401
+00:27:13,560 --> 00:27:15,440
+ Something will block your view of an object.
+
+402
+00:27:15,440 --> 00:27:24,620
+ And I think the last big one is-- it's a type of noise,
+
+403
+00:27:24,620 --> 00:27:30,080
+ maybe, but the outliers are-- let's define them
+
+404
+00:27:30,080 --> 00:27:32,840
+ as spurious random points added to the image
+
+405
+00:27:32,840 --> 00:27:35,360
+ in arbitrary locations.
+
+406
+00:27:35,360 --> 00:27:37,360
+ A reasonable model, I think, of this
+
+407
+00:27:37,360 --> 00:27:44,700
+ would be just choose uniformly over the viewing window points
+
+408
+00:27:44,700 --> 00:27:45,560
+ at random.
+
+409
+00:27:45,560 --> 00:27:47,560
+ If you can be robust to that kind of outliers,
+
+410
+00:27:47,560 --> 00:27:51,120
+ that's a first order sort of robustness.
+
+411
+00:27:51,120 --> 00:27:54,040
+ More interesting outliers are where you have other objects.
+
+412
+00:27:59,160 --> 00:28:01,880
+ For instance, maybe you have a mustard bottle,
+
+413
+00:28:01,880 --> 00:28:03,480
+ but you have a ketchup bottle nearby,
+
+414
+00:28:03,480 --> 00:28:05,080
+ and it's kind of got some of the same shapes,
+
+415
+00:28:05,080 --> 00:28:06,560
+ but clearly your perception system
+
+416
+00:28:06,560 --> 00:28:08,400
+ should be able to disambiguate them.
+
+417
+00:28:08,400 --> 00:28:10,440
+ But maybe these kind of algorithms
+
+418
+00:28:10,440 --> 00:28:12,600
+ might get pulled towards the ketchup bottle
+
+419
+00:28:12,600 --> 00:28:15,480
+ and never break free if they're similar enough.
+
+420
+00:28:15,480 --> 00:28:18,600
+ So those outliers can be pretty complicated.
+
+421
+00:28:18,600 --> 00:28:23,680
+ I think there's at least one more type
+
+422
+00:28:23,680 --> 00:28:25,440
+ that you have to worry about with real cameras, which
+
+423
+00:28:25,440 --> 00:28:26,000
+ are dropouts.
+
+424
+00:28:26,000 --> 00:28:32,280
+ You remember the picture I showed
+
+425
+00:28:32,280 --> 00:28:33,680
+ of some of the real cameras?
+
+426
+00:28:33,680 --> 00:28:42,480
+ Yeah, like this.
+
+427
+00:28:42,480 --> 00:28:43,940
+ This is what real things look like.
+
+428
+00:28:43,940 --> 00:28:47,000
+ You'll just have no returns from the side or shiny parts
+
+429
+00:28:47,000 --> 00:28:48,320
+ of the images.
+
+430
+00:28:48,320 --> 00:28:49,680
+ So we want to be robust to that.
+
+431
+00:28:49,680 --> 00:28:54,800
+ But given this basic algorithm, I
+
+432
+00:28:54,800 --> 00:28:57,040
+ guess I got ahead of myself a little bit.
+
+433
+00:28:57,040 --> 00:28:59,160
+ This is a very powerful basic algorithm.
+
+434
+00:28:59,160 --> 00:29:02,360
+ This is just the ICP, and this is the Stanford bunny,
+
+435
+00:29:02,360 --> 00:29:05,280
+ which you basically-- if you were ever to write an ICP
+
+436
+00:29:05,280 --> 00:29:10,080
+ paper, it seems you must use-- a condition for acceptance
+
+437
+00:29:10,080 --> 00:29:14,160
+ is that you ran your system on the Stanford bunny data set.
+
+438
+00:29:14,160 --> 00:29:15,880
+ And you will do this on your problem set,
+
+439
+00:29:15,880 --> 00:29:18,440
+ so you can join the ranks.
+
+440
+00:29:18,440 --> 00:29:21,840
+ That bunny shows up everywhere.
+
+441
+00:29:21,840 --> 00:29:23,440
+ But this is ICP in actions.
+
+442
+00:29:23,440 --> 00:29:29,360
+ If you remember the dish loading robot from Toyota Research
+
+443
+00:29:29,360 --> 00:29:31,560
+ Institute, did you see what happened there?
+
+444
+00:29:31,560 --> 00:29:37,960
+ So there are two perceptions at work in that video.
+
+445
+00:29:37,960 --> 00:29:39,600
+ Let me show it again.
+
+446
+00:29:39,600 --> 00:29:41,720
+ There's an initial one that's actually using mostly
+
+447
+00:29:41,720 --> 00:29:44,160
+ deep learning to try to find where the mug is in the sink
+
+448
+00:29:44,160 --> 00:29:44,640
+ roughly.
+
+449
+00:29:44,640 --> 00:29:49,360
+ But then when it gets close, you see this little realignment?
+
+450
+00:29:49,360 --> 00:29:51,360
+ That was an ICP-based algorithm that
+
+451
+00:29:51,360 --> 00:29:54,760
+ was using the local camera on the hand,
+
+452
+00:29:54,760 --> 00:29:56,800
+ comparing it to the expected mug,
+
+453
+00:29:56,800 --> 00:29:59,440
+ and dialing it in and going in for the grab.
+
+454
+00:29:59,440 --> 00:30:03,120
+ And that's a pretty common pipeline.
+
+455
+00:30:03,120 --> 00:30:04,320
+ That was it again right there.
+
+456
+00:30:04,320 --> 00:30:05,080
+ Right there.
+
+457
+00:30:05,080 --> 00:30:06,440
+ A little refinement and then go.
+
+458
+00:30:06,440 --> 00:30:12,640
+ Can the camera see it that close?
+
+459
+00:30:12,640 --> 00:30:14,040
+ Yeah, right here you can see it.
+
+460
+00:30:14,040 --> 00:30:18,280
+ Once it gets too close, it becomes blind.
+
+461
+00:30:18,280 --> 00:30:19,360
+ Right here.
+
+462
+00:30:19,360 --> 00:30:21,440
+ Right there it can still see it, yeah.
+
+463
+00:30:21,440 --> 00:30:22,040
+ You're right.
+
+464
+00:30:22,040 --> 00:30:24,200
+ They do have minimum depth.
+
+465
+00:30:24,200 --> 00:30:26,080
+ And it gets blind pretty quick.
+
+466
+00:30:26,080 --> 00:30:30,440
+ And let me give you one more sort
+
+467
+00:30:30,440 --> 00:30:34,320
+ of high-level motivation for the ICP class of algorithms.
+
+468
+00:30:34,320 --> 00:30:37,920
+ This is actually when deep learning
+
+469
+00:30:37,920 --> 00:30:42,280
+ started approaching some of these perception problems.
+
+470
+00:30:42,280 --> 00:30:45,360
+ And everybody was trying to train their first deep networks
+
+471
+00:30:45,360 --> 00:30:48,320
+ to try to estimate the pose of objects, which
+
+472
+00:30:48,320 --> 00:30:50,840
+ is an extremely powerful pipeline now.
+
+473
+00:30:50,840 --> 00:30:53,120
+ But the first versions of these algorithms
+
+474
+00:30:53,120 --> 00:30:55,440
+ all required you to label the ground truth
+
+475
+00:30:55,440 --> 00:30:58,600
+ pose in real data sets.
+
+476
+00:30:58,600 --> 00:31:01,160
+ So this was a tool that was very useful for--
+
+477
+00:31:01,160 --> 00:31:02,760
+ and still is useful.
+
+478
+00:31:02,760 --> 00:31:04,880
+ We would take real data in the lab.
+
+479
+00:31:04,880 --> 00:31:07,920
+ That's the messy lab upstairs.
+
+480
+00:31:07,920 --> 00:31:10,160
+ And we had a model of the drill.
+
+481
+00:31:10,160 --> 00:31:12,400
+ And we would just have a user interface,
+
+482
+00:31:12,400 --> 00:31:15,080
+ which after collecting a video stream of data,
+
+483
+00:31:15,080 --> 00:31:17,600
+ would just click-- you'd click two or three times
+
+484
+00:31:17,600 --> 00:31:19,760
+ in the interface.
+
+485
+00:31:19,760 --> 00:31:21,080
+ Let me stop that.
+
+486
+00:31:21,080 --> 00:31:25,240
+ And you click two or three times just
+
+487
+00:31:25,240 --> 00:31:27,920
+ to give ICP an initial guess.
+
+488
+00:31:27,920 --> 00:31:30,340
+ It would fit the point cloud into this really noisy point
+
+489
+00:31:30,340 --> 00:31:32,440
+ cloud, this big complicated one.
+
+490
+00:31:32,440 --> 00:31:34,000
+ And then all of the images that you
+
+491
+00:31:34,000 --> 00:31:36,000
+ had from all the different interactions
+
+492
+00:31:36,000 --> 00:31:39,200
+ were suddenly perfectly labeled, or labeled by ICP.
+
+493
+00:31:39,200 --> 00:31:42,560
+ And then you use that to train a higher level perception system.
+
+494
+00:31:42,560 --> 00:31:43,560
+ Yes?
+
+495
+00:31:43,560 --> 00:31:48,560
+ In the dishwasher example, do you have models of the cups?
+
+496
+00:31:48,560 --> 00:31:49,400
+ In that case, yes.
+
+497
+00:31:49,400 --> 00:31:52,560
+ So in the dishwasher example, we had a model of the cup,
+
+498
+00:31:52,560 --> 00:31:54,400
+ the plates, the spoons.
+
+499
+00:31:54,400 --> 00:31:57,080
+ In fact, that's why we chose dish loading,
+
+500
+00:31:57,080 --> 00:32:00,480
+ was because you can sort of imagine going into a restaurant
+
+501
+00:32:00,480 --> 00:32:03,240
+ and having a finite number of things.
+
+502
+00:32:03,240 --> 00:32:06,200
+ It's a pretty good case for the known model assumption.
+
+503
+00:32:06,200 --> 00:32:08,200
+ And we tried to take that as far as possible.
+
+504
+00:32:08,200 --> 00:32:09,760
+ And then anything we didn't have a model for,
+
+505
+00:32:09,760 --> 00:32:11,960
+ that we couldn't register to one of the known models,
+
+506
+00:32:11,960 --> 00:32:14,080
+ we'd throw in the trash.
+
+507
+00:32:14,080 --> 00:32:15,760
+ Yeah.
+
+508
+00:32:15,760 --> 00:32:17,280
+ Every once in a while, we'd throw something important
+
+509
+00:32:17,280 --> 00:32:17,840
+ in the trash.
+
+510
+00:32:17,840 --> 00:32:25,280
+ OK.
+
+511
+00:32:25,280 --> 00:32:28,600
+ So partial views, I think-- partial views,
+
+512
+00:32:28,600 --> 00:32:33,800
+ it makes sense to do scene to model correspondences.
+
+513
+00:32:33,800 --> 00:32:37,640
+ For outliers-- I'm sorry, did I say that right?
+
+514
+00:32:37,640 --> 00:32:39,280
+ You'd like everything in the scene
+
+515
+00:32:39,280 --> 00:32:41,200
+ to correspond to at least one model.
+
+516
+00:32:41,200 --> 00:32:43,760
+ But for outliers, you'd like the opposite.
+
+517
+00:32:43,760 --> 00:32:46,960
+ And at some point, we have to do better
+
+518
+00:32:46,960 --> 00:32:50,160
+ than these hard correspondences of trying
+
+519
+00:32:50,160 --> 00:32:52,120
+ to correspond all the points to all the points.
+
+520
+00:32:52,120 --> 00:32:54,120
+ And we need some sort of mechanism
+
+521
+00:32:54,120 --> 00:32:56,960
+ to do something better than that.
+
+522
+00:32:56,960 --> 00:32:59,200
+ We're going to talk about soft correspondences.
+
+523
+00:32:59,200 --> 00:33:02,320
+ And we're going to talk about outlier robust correspondence
+
+524
+00:33:02,320 --> 00:33:04,000
+ rejection, basically.
+
+525
+00:33:04,000 --> 00:33:04,500
+ OK.
+
+526
+00:33:04,500 --> 00:33:09,560
+ Is that the sun changing?
+
+527
+00:33:10,560 --> 00:33:13,800
+ The lighting's just changed a lot.
+
+528
+00:33:13,800 --> 00:33:14,520
+ OK.
+
+529
+00:33:14,520 --> 00:33:16,440
+ Let's talk about soft correspondences first.
+
+530
+00:33:16,440 --> 00:33:22,840
+ Well, let me just-- I had a couple animations here, too.
+
+531
+00:33:22,840 --> 00:33:31,920
+ This is ICP running in the partial view case.
+
+532
+00:33:31,920 --> 00:33:37,400
+ It can do pretty well, but it can really mess things up.
+
+533
+00:33:37,400 --> 00:33:38,240
+ OK.
+
+534
+00:33:38,240 --> 00:33:41,120
+ And this is what happens with a few outliers,
+
+535
+00:33:41,120 --> 00:33:44,600
+ chosen how I did, where I just picked some random points
+
+536
+00:33:44,600 --> 00:33:45,200
+ in the world.
+
+537
+00:33:45,200 --> 00:33:54,400
+ And those points, even as it tries to converge,
+
+538
+00:33:54,400 --> 00:33:58,040
+ are going to have potentially an overwhelming effect
+
+539
+00:33:58,040 --> 00:33:59,880
+ on the convergence of the algorithm.
+
+540
+00:33:59,880 --> 00:34:01,380
+ So that's what we're trying to fight.
+
+541
+00:34:01,380 --> 00:34:05,200
+ OK.
+
+542
+00:34:05,200 --> 00:34:07,040
+ The first way we're going to try to fight it
+
+543
+00:34:07,040 --> 00:34:10,200
+ is by taking these hard correspondences
+
+544
+00:34:10,200 --> 00:34:11,920
+ and softening them.
+
+545
+00:34:11,920 --> 00:34:12,420
+ OK.
+
+546
+00:34:12,420 --> 00:34:15,300
+ [WRITING ON BOARD]
+
+547
+00:34:38,960 --> 00:34:45,440
+ So let me write the same thing we're doing here.
+
+548
+00:34:45,440 --> 00:34:47,960
+ I used this notation right here.
+
+549
+00:34:47,960 --> 00:34:52,400
+ I used this-- I'm going to sum over all seen points
+
+550
+00:34:52,400 --> 00:34:55,840
+ and look into the index of my correspondence.
+
+551
+00:34:55,840 --> 00:34:57,440
+ I'm going to write the same equation,
+
+552
+00:34:57,440 --> 00:34:59,400
+ but I'm going to write it a little differently.
+
+553
+00:34:59,400 --> 00:35:03,360
+ And it's going to lead to another algorithm here.
+
+554
+00:35:03,360 --> 00:35:08,840
+ So I'll take my min over x0 in SE3.
+
+555
+00:35:08,840 --> 00:35:21,640
+ I want to keep my x0, p0.
+
+556
+00:35:21,640 --> 00:35:25,520
+ But now I'm going to do mj minus psi.
+
+557
+00:35:30,120 --> 00:35:33,360
+ And I'm going to hit this up front with a correspondence
+
+558
+00:35:33,360 --> 00:35:35,480
+ matrix, Cij.
+
+559
+00:35:35,480 --> 00:35:38,600
+ And I'm going to sum over j and sum over i.
+
+560
+00:35:38,600 --> 00:35:44,120
+ This is now a correspondence matrix.
+
+561
+00:35:51,160 --> 00:36:06,280
+ And Cij is going to be 1 if i corresponds to j and 0
+
+562
+00:36:06,280 --> 00:36:06,780
+ otherwise.
+
+563
+00:36:19,120 --> 00:36:23,400
+ So this is just-- I'm taking my original single sum
+
+564
+00:36:23,400 --> 00:36:24,520
+ with an index.
+
+565
+00:36:24,520 --> 00:36:26,440
+ I'm going to write it as a double sum.
+
+566
+00:36:26,440 --> 00:36:28,640
+ And basically, every time I sum through this,
+
+567
+00:36:28,640 --> 00:36:31,200
+ if I wanted to get exactly the same correspondences,
+
+568
+00:36:31,200 --> 00:36:33,360
+ I just set a lot of the terms of the sum to 0.
+
+569
+00:36:33,360 --> 00:36:39,080
+ But out of the box, I'm going to say there's a chance
+
+570
+00:36:39,080 --> 00:36:42,160
+ that any of the model points can correspond
+
+571
+00:36:42,160 --> 00:36:46,600
+ to any of the seen points or any combination thereof.
+
+572
+00:36:46,600 --> 00:36:48,000
+ That's why it's a generalization.
+
+573
+00:36:48,000 --> 00:36:56,400
+ Now, if I wanted to impose something like every seen
+
+574
+00:36:56,400 --> 00:37:01,640
+ point must correspond to some model point, or vice versa,
+
+575
+00:37:01,640 --> 00:37:05,400
+ I could put a constraint on the rows or columns of this
+
+576
+00:37:05,400 --> 00:37:06,880
+ if I wanted to.
+
+577
+00:37:06,880 --> 00:37:07,480
+ But let's not.
+
+578
+00:37:07,480 --> 00:37:10,000
+ Let's leave it as a slightly more general case.
+
+579
+00:37:10,000 --> 00:37:11,680
+ This could have a row that's all 0's.
+
+580
+00:37:11,680 --> 00:37:14,240
+ It could have a row that has multiple 1's
+
+581
+00:37:14,240 --> 00:37:17,320
+ if there's multiple correspondences.
+
+582
+00:37:17,320 --> 00:37:18,320
+ Is that clear?
+
+583
+00:37:18,320 --> 00:37:18,820
+ No?
+
+584
+00:37:18,820 --> 00:37:26,800
+ So minimizing this is actually-- since this is just
+
+585
+00:37:26,800 --> 00:37:29,180
+ a constant-- if I use this as a constant matrix,
+
+586
+00:37:29,180 --> 00:37:32,080
+ if someone gives me this coefficient matrix,
+
+587
+00:37:32,080 --> 00:37:35,840
+ this is still something I can solve with SVD.
+
+588
+00:37:35,840 --> 00:37:38,800
+ It's got more terms, but it can still
+
+589
+00:37:38,800 --> 00:37:40,840
+ be solved in the same way.
+
+590
+00:37:40,840 --> 00:37:42,680
+ The trick is that this has to be fixed.
+
+591
+00:37:42,680 --> 00:37:45,600
+ [WRITING ON BOARD]
+
+592
+00:37:45,600 --> 00:37:56,040
+ I would love to optimize c and x simultaneously
+
+593
+00:37:56,040 --> 00:37:58,320
+ to be able to leave this as a decision variable.
+
+594
+00:37:58,320 --> 00:38:00,920
+ But in this problem, the correspondences
+
+595
+00:38:00,920 --> 00:38:02,620
+ are given in a slightly more general way,
+
+596
+00:38:02,620 --> 00:38:03,820
+ and I'm still just finding x.
+
+597
+00:38:03,820 --> 00:38:11,480
+ And the interesting case, then, the soft case--
+
+598
+00:38:11,480 --> 00:38:14,160
+ this so far is the same as what I've written before.
+
+599
+00:38:14,160 --> 00:38:26,960
+ I can make these soft now if I change and allow cij is just
+
+600
+00:38:26,960 --> 00:38:30,040
+ between 0 and 1, for instance, instead of saying
+
+601
+00:38:30,040 --> 00:38:31,280
+ it must be 0 or 1.
+
+602
+00:38:31,280 --> 00:38:38,480
+ I'm allowed to correspond a little bit
+
+603
+00:38:38,480 --> 00:38:39,480
+ with some of the points.
+
+604
+00:38:39,480 --> 00:38:39,980
+ Right?
+
+605
+00:38:39,980 --> 00:38:50,080
+ Does that make sense in the equations?
+
+606
+00:38:50,080 --> 00:38:51,600
+ It turns out that's exactly what's
+
+607
+00:38:51,600 --> 00:38:56,520
+ happening in one of the famous softer correspondence
+
+608
+00:38:56,520 --> 00:39:03,840
+ approaches called CPD-- coherent point drift.
+
+609
+00:39:03,840 --> 00:39:07,240
+ [WRITING ON BOARD]
+
+610
+00:39:07,240 --> 00:39:23,400
+ This is just another coherent point drift CPD.
+
+611
+00:39:23,400 --> 00:39:26,200
+ It's one of the famous alternatives, if you will,
+
+612
+00:39:26,200 --> 00:39:27,440
+ to ICP.
+
+613
+00:39:27,440 --> 00:39:32,200
+ But you can really just think of it as a soft version of ICP.
+
+614
+00:39:32,200 --> 00:39:35,840
+ The CPD paper, actually, is all written
+
+615
+00:39:35,840 --> 00:39:37,740
+ in terms of the language of probabilities
+
+616
+00:39:37,740 --> 00:39:41,200
+ and trying to say I've got an estimator and the like.
+
+617
+00:39:41,200 --> 00:39:43,120
+ But the math is the same.
+
+618
+00:39:43,120 --> 00:39:47,420
+ You're still-- there's a probabilistic interpretation
+
+619
+00:39:47,420 --> 00:39:50,800
+ of what I'm writing, but it's just a Gaussian,
+
+620
+00:39:50,800 --> 00:39:53,520
+ and the math is the same.
+
+621
+00:39:53,520 --> 00:39:56,960
+ So in the CPD paper, basically, they just
+
+622
+00:39:56,960 --> 00:39:59,600
+ say on each iteration of the algorithm,
+
+623
+00:39:59,600 --> 00:40:10,480
+ I'm going to still initial guess x hat o.
+
+624
+00:40:10,480 --> 00:40:16,840
+ And then I'm going to set cij to be basically
+
+625
+00:40:16,840 --> 00:40:18,480
+ like a soft version of the distance,
+
+626
+00:40:18,480 --> 00:40:21,640
+ like a Gaussian kernel around the points.
+
+627
+00:40:21,640 --> 00:40:23,200
+ Right?
+
+628
+00:40:23,200 --> 00:40:24,760
+ I'm going to take one of my points
+
+629
+00:40:24,760 --> 00:40:32,400
+ here and score the-- if I just have one dimension here.
+
+630
+00:40:32,400 --> 00:40:39,560
+ If this is my scene point here and my model point is here,
+
+631
+00:40:39,560 --> 00:40:42,360
+ then I'm just going to score in some Gaussian kernel
+
+632
+00:40:42,360 --> 00:40:45,920
+ the distance from the points.
+
+633
+00:40:45,920 --> 00:40:48,240
+ So there's a normalization term.
+
+634
+00:40:53,920 --> 00:40:56,360
+ And there's some parameters of that Gaussian,
+
+635
+00:40:56,360 --> 00:40:59,960
+ but roughly it's the distance we know.
+
+636
+00:40:59,960 --> 00:41:11,800
+ That's our estimated distance, right?
+
+637
+00:41:11,800 --> 00:41:15,600
+ Over some variance here.
+
+638
+00:41:15,600 --> 00:41:22,880
+ And I'm just going to use this as my distance function,
+
+639
+00:41:22,880 --> 00:41:25,480
+ my correspondence function.
+
+640
+00:41:25,480 --> 00:41:30,120
+ And there's a beautiful Bayesian interpretation of that,
+
+641
+00:41:30,120 --> 00:41:32,920
+ but you can think of it just as a distance function that's
+
+642
+00:41:32,920 --> 00:41:34,720
+ giving you these correspondences.
+
+643
+00:41:34,720 --> 00:41:42,800
+ And then on step two, you solve SPD, and then you repeat.
+
+644
+00:41:42,800 --> 00:41:52,160
+ The word on the street is that this is much more robust than--
+
+645
+00:41:52,160 --> 00:41:53,960
+ it tends to be more expensive because you're
+
+646
+00:41:53,960 --> 00:41:59,040
+ summing over a quadratic number of points
+
+647
+00:41:59,040 --> 00:42:02,560
+ instead of a linear number of points.
+
+648
+00:42:02,560 --> 00:42:03,980
+ And so some people actually choose
+
+649
+00:42:03,980 --> 00:42:06,800
+ not to use the algorithm because of that quadratic cost.
+
+650
+00:42:06,800 --> 00:42:09,280
+ When point clouds get big, that can be expensive.
+
+651
+00:42:09,280 --> 00:42:12,600
+ But it tends to be-- just the word on the street
+
+652
+00:42:12,600 --> 00:42:15,240
+ is it's more robust.
+
+653
+00:42:15,240 --> 00:42:18,480
+ I think I have the snapshot of the Stanford bunny from the--
+
+654
+00:42:18,480 --> 00:42:19,560
+ oh, this is the CPD one.
+
+655
+00:42:19,560 --> 00:42:22,520
+ But this is roughly what you see in every paper.
+
+656
+00:42:22,520 --> 00:42:24,040
+ I could have put CPD on the bottom,
+
+657
+00:42:24,040 --> 00:42:26,240
+ and it would have been a similar picture where
+
+658
+00:42:26,240 --> 00:42:28,680
+ you see the Stanford bunny, and you see it
+
+659
+00:42:28,680 --> 00:42:30,040
+ with some noise and stuff in it.
+
+660
+00:42:30,040 --> 00:42:34,680
+ And then you see my algorithm is better than their algorithm.
+
+661
+00:42:34,680 --> 00:42:37,480
+ I thought I had the CPD one in here, too.
+
+662
+00:42:37,480 --> 00:42:38,160
+ Hey, here's CPD.
+
+663
+00:42:38,160 --> 00:42:47,640
+ You see they corrupted it with Gaussian noise.
+
+664
+00:42:47,640 --> 00:42:49,480
+ It's all good.
+
+665
+00:42:49,480 --> 00:42:51,680
+ OK?
+
+666
+00:42:51,680 --> 00:42:54,680
+ But in practice, people do like CPD apart from its speed.
+
+667
+00:42:54,680 --> 00:42:55,180
+ Yes?
+
+668
+00:42:55,180 --> 00:42:57,560
+ In the SYNC robot--
+
+669
+00:42:57,560 --> 00:42:58,060
+ Yes.
+
+670
+00:42:58,060 --> 00:43:02,880
+ --is that ICP because of the quadratic [INAUDIBLE]??
+
+671
+00:43:02,880 --> 00:43:04,160
+ That's a good question.
+
+672
+00:43:04,160 --> 00:43:07,200
+ So the ICP in the SYNC-- why did we use ICP and not
+
+673
+00:43:07,200 --> 00:43:09,920
+ CPD in the original one?
+
+674
+00:43:09,920 --> 00:43:14,720
+ There are many variants of ICP also,
+
+675
+00:43:14,720 --> 00:43:17,560
+ and sometimes more mature implementations.
+
+676
+00:43:17,560 --> 00:43:19,760
+ I think probably if that had been
+
+677
+00:43:19,760 --> 00:43:22,920
+ a pain point in our pipeline, we would have explored CPD.
+
+678
+00:43:22,920 --> 00:43:25,360
+ But I think the off-the-shelf ICP implementations
+
+679
+00:43:25,360 --> 00:43:28,120
+ were good enough for that job, and we worried more about--
+
+680
+00:43:28,120 --> 00:43:31,200
+ yeah, it was about the computational cost.
+
+681
+00:43:31,200 --> 00:43:34,380
+ In fact, because ICP is local--
+
+682
+00:43:34,380 --> 00:43:36,840
+ I can tell you specifically-- because ICP is a local
+
+683
+00:43:36,840 --> 00:43:39,200
+ algorithm, it can run into minima.
+
+684
+00:43:39,200 --> 00:43:43,080
+ We would actually take a handful of initial guesses
+
+685
+00:43:43,080 --> 00:43:46,320
+ for the pose of the mug, given our original perception system,
+
+686
+00:43:46,320 --> 00:43:49,560
+ and we would be in parallel, run multiple versions of ICP,
+
+687
+00:43:49,560 --> 00:43:51,600
+ and take the one that fit the best.
+
+688
+00:43:51,600 --> 00:43:54,040
+ Go, and we optimized that pipeline,
+
+689
+00:43:54,040 --> 00:43:56,800
+ maybe before we fully thought about whether we should use a CPD
+
+690
+00:43:56,800 --> 00:43:58,400
+ or not.
+
+691
+00:43:58,400 --> 00:43:59,240
+ Yeah.
+
+692
+00:43:59,240 --> 00:44:03,200
+ We did explore, actually, a CPD-like version, too,
+
+693
+00:44:03,200 --> 00:44:05,280
+ and I think that was also viable.
+
+694
+00:44:05,280 --> 00:44:06,280
+ Yes?
+
+695
+00:44:06,280 --> 00:44:10,080
+ What did it address [INAUDIBLE]??
+
+696
+00:44:10,080 --> 00:44:11,480
+ In this algorithm?
+
+697
+00:44:11,480 --> 00:44:12,960
+ [INAUDIBLE]
+
+698
+00:44:12,960 --> 00:44:14,560
+ Yep.
+
+699
+00:44:14,560 --> 00:44:17,080
+ So we still need the initial guess
+
+700
+00:44:17,080 --> 00:44:19,400
+ to come up with some initial correspondences.
+
+701
+00:44:19,400 --> 00:44:23,960
+ The notion of distance, which sets my initial correspondences--
+
+702
+00:44:23,960 --> 00:44:26,640
+ before, we were just using it to down-select which thing
+
+703
+00:44:26,640 --> 00:44:28,080
+ to correspond with at all.
+
+704
+00:44:28,080 --> 00:44:30,200
+ Now we're setting the soft correspondence with it.
+
+705
+00:44:30,200 --> 00:44:33,080
+ But it should not be x hat?
+
+706
+00:44:33,080 --> 00:44:34,920
+ I should use x hat in this.
+
+707
+00:44:34,920 --> 00:44:35,600
+ Yes.
+
+708
+00:44:35,600 --> 00:44:36,600
+ Thank you.
+
+709
+00:44:36,600 --> 00:44:41,560
+ And soft [INAUDIBLE]
+
+710
+00:44:41,560 --> 00:44:43,080
+ I'd like one of those to be j.
+
+711
+00:44:43,080 --> 00:44:45,520
+ I wrote that whole term too quickly, clearly.
+
+712
+00:44:45,520 --> 00:44:47,040
+ Thank you.
+
+713
+00:44:47,040 --> 00:44:48,760
+ And this is also a function of i and j.
+
+714
+00:44:48,760 --> 00:44:51,160
+ I think that's right.
+
+715
+00:44:51,160 --> 00:44:53,600
+ Good catch.
+
+716
+00:44:53,600 --> 00:44:54,100
+ Yes?
+
+717
+00:44:54,100 --> 00:44:57,160
+ [INAUDIBLE]
+
+718
+00:44:57,160 --> 00:44:58,560
+ To CPD?
+
+719
+00:44:58,560 --> 00:45:01,800
+ I think I would guess that there's
+
+720
+00:45:01,800 --> 00:45:04,520
+ somebody who's put RGB into CPD.
+
+721
+00:45:04,520 --> 00:45:14,600
+ But I don't see any reason why you wouldn't.
+
+722
+00:45:14,600 --> 00:45:18,600
+ I just wouldn't think that any Euclidean distance in RGB space
+
+723
+00:45:18,600 --> 00:45:21,240
+ is going to be only good very locally.
+
+724
+00:45:21,240 --> 00:45:22,600
+ People do it for ICP also.
+
+725
+00:45:22,600 --> 00:45:24,800
+ There's an RGB version of ICP, where
+
+726
+00:45:24,800 --> 00:45:28,120
+ you put your distance across the RGB values in addition
+
+727
+00:45:28,120 --> 00:45:31,240
+ to the xyz values.
+
+728
+00:45:31,240 --> 00:45:34,120
+ I've always thought it was a little weird.
+
+729
+00:45:34,120 --> 00:45:39,520
+ There's things you can do that use descriptors, more
+
+730
+00:45:39,520 --> 00:45:43,240
+ general descriptors, to do the point matching and stuff
+
+731
+00:45:43,240 --> 00:45:43,740
+ like this.
+
+732
+00:45:43,740 --> 00:45:45,440
+ And that makes more sense to me than RGB.
+
+733
+00:45:45,440 --> 00:45:48,420
+ Great.
+
+734
+00:45:48,420 --> 00:45:57,800
+ OK, so this tends to be-- so how does this handle outliers,
+
+735
+00:45:57,800 --> 00:46:00,200
+ for instance?
+
+736
+00:46:00,200 --> 00:46:01,720
+ Compared to the ICP algorithm, what
+
+737
+00:46:01,720 --> 00:46:03,920
+ is this doing with outliers?
+
+738
+00:46:03,920 --> 00:46:05,480
+ If I had the picture I drew initially,
+
+739
+00:46:05,480 --> 00:46:08,880
+ where I had a perfect point cloud here with two points way
+
+740
+00:46:08,880 --> 00:46:09,920
+ over here, what happens?
+
+741
+00:46:09,920 --> 00:46:20,480
+ Yeah?
+
+742
+00:46:20,480 --> 00:46:26,320
+ [INAUDIBLE]
+
+743
+00:46:26,320 --> 00:46:27,280
+ Exactly, right?
+
+744
+00:46:27,280 --> 00:46:31,240
+ So this one, unlike the original one, which is even
+
+745
+00:46:31,240 --> 00:46:35,760
+ at convergence is getting pulled by those outliers,
+
+746
+00:46:35,760 --> 00:46:38,720
+ depending on which direction you put your correspondences,
+
+747
+00:46:38,720 --> 00:46:41,400
+ this one is effectively ignoring points
+
+748
+00:46:41,400 --> 00:46:44,000
+ that are a long distance away.
+
+749
+00:46:44,000 --> 00:46:47,460
+ So it handles outliers in a soft way.
+
+750
+00:46:47,460 --> 00:46:50,160
+ It also means that if you're too far away in your initial guess,
+
+751
+00:46:50,160 --> 00:46:53,720
+ you have no hope of converging.
+
+752
+00:46:53,720 --> 00:46:56,120
+ But this is intentionally introducing
+
+753
+00:46:56,120 --> 00:46:59,400
+ some notion of locality in our distance function,
+
+754
+00:46:59,400 --> 00:47:00,120
+ which is good.
+
+755
+00:47:00,120 --> 00:47:00,620
+ Yes?
+
+756
+00:47:00,620 --> 00:47:03,040
+ [INAUDIBLE]
+
+757
+00:47:03,040 --> 00:47:04,840
+ These days, you use deep learning
+
+758
+00:47:04,840 --> 00:47:06,200
+ to get an initial guess.
+
+759
+00:47:06,200 --> 00:47:08,600
+ And then maybe you use ICP, or there's
+
+760
+00:47:08,600 --> 00:47:10,720
+ even deep versions of the refinement
+
+761
+00:47:10,720 --> 00:47:12,360
+ that can work very well.
+
+762
+00:47:12,360 --> 00:47:14,720
+ But I think that's a very natural pipeline.
+
+763
+00:47:14,720 --> 00:47:18,480
+ Use a data-driven thing to take an initial shot,
+
+764
+00:47:18,480 --> 00:47:22,160
+ and then refine it with ICP.
+
+765
+00:47:22,160 --> 00:47:25,640
+ There are versions of this that we will cover--
+
+766
+00:47:25,640 --> 00:47:29,200
+ I'll mention, at least, at the end, in our last variance--
+
+767
+00:47:29,200 --> 00:47:33,460
+ that try to solve the global point correspondence problem.
+
+768
+00:47:33,460 --> 00:47:39,100
+ And they don't work great.
+
+769
+00:47:39,100 --> 00:47:40,840
+ There are some algorithms that will
+
+770
+00:47:40,840 --> 00:47:44,320
+ solve a global optimal problem, but it will take, potentially,
+
+771
+00:47:44,320 --> 00:47:46,820
+ to the age of the universe to solve.
+
+772
+00:47:46,820 --> 00:47:49,860
+ And there are other ones that are close to global,
+
+773
+00:47:49,860 --> 00:47:53,540
+ but in practice, people don't consider
+
+774
+00:47:53,540 --> 00:47:56,300
+ global point correspondence in noisy point clouds
+
+775
+00:47:56,300 --> 00:47:58,660
+ to be a solved problem.
+
+776
+00:47:58,660 --> 00:48:03,420
+ There's two important versions to think about
+
+777
+00:48:03,420 --> 00:48:05,380
+ when you're thinking about this initial guess.
+
+778
+00:48:05,380 --> 00:48:06,880
+ How do you think about this initial guess?
+
+779
+00:48:06,880 --> 00:48:08,880
+ If you have a point cloud that looks like this--
+
+780
+00:48:08,880 --> 00:48:11,960
+ it's a bunny, but it's a little furry--
+
+781
+00:48:11,960 --> 00:48:14,700
+ then, actually, it's not too hard to get an initial guess.
+
+782
+00:48:14,700 --> 00:48:17,860
+ It's not too hard to solve ICP.
+
+783
+00:48:17,860 --> 00:48:24,140
+ If you're in this setting, for instance,
+
+784
+00:48:24,140 --> 00:48:26,260
+ where there is a drill in there, for sure,
+
+785
+00:48:26,260 --> 00:48:29,440
+ but there's also every other tool and a bunch of, probably,
+
+786
+00:48:29,440 --> 00:48:31,840
+ student lunch or something like this.
+
+787
+00:48:31,840 --> 00:48:34,340
+ There's all kinds of other stuff in the point cloud,
+
+788
+00:48:34,340 --> 00:48:37,020
+ and you have to find the needle in the haystack.
+
+789
+00:48:37,020 --> 00:48:39,820
+ That's a much harder problem for initializing ICP,
+
+790
+00:48:39,820 --> 00:48:43,220
+ and we don't have strong point registration algorithms that
+
+791
+00:48:43,220 --> 00:48:45,380
+ will solve that global problem.
+
+792
+00:48:45,380 --> 00:48:49,180
+ In fact, when we did this project to try to just label,
+
+793
+00:48:49,180 --> 00:48:51,260
+ we figured, who cares if it's slow?
+
+794
+00:48:51,260 --> 00:48:54,180
+ Let's take a global point correspondence algorithm
+
+795
+00:48:54,180 --> 00:48:55,420
+ to just generate the labels.
+
+796
+00:48:55,420 --> 00:48:56,460
+ It's offline.
+
+797
+00:48:56,460 --> 00:48:58,740
+ We'll just generate a big data set, no big deal.
+
+798
+00:48:58,740 --> 00:49:02,820
+ But we couldn't get a global point correspondence method
+
+799
+00:49:02,820 --> 00:49:04,820
+ to be robust enough to do the job.
+
+800
+00:49:04,820 --> 00:49:07,960
+ So it required having a human click.
+
+801
+00:49:07,960 --> 00:49:09,580
+ But those are two very different cases.
+
+802
+00:49:09,580 --> 00:49:12,220
+ It would be the needle in the haystack versus a fuzzy bunny.
+
+803
+00:49:12,220 --> 00:49:20,740
+ So this is a soft version of rejecting outliers.
+
+804
+00:49:20,740 --> 00:49:22,660
+ But let's try to work-- let's think about how
+
+805
+00:49:22,660 --> 00:49:28,140
+ we could work a little bit more towards the rigorous sort
+
+806
+00:49:28,140 --> 00:49:34,780
+ of outlier rejection case.
+
+807
+00:49:34,780 --> 00:49:36,340
+ The problem with this is that I still
+
+808
+00:49:36,340 --> 00:49:38,060
+ had to come up with that kernel function.
+
+809
+00:49:38,060 --> 00:49:39,700
+ I chose some parameters of a Gaussian,
+
+810
+00:49:39,700 --> 00:49:41,340
+ which was sort of arbitrary.
+
+811
+00:49:41,340 --> 00:49:42,940
+ Nothing about my data told me really
+
+812
+00:49:42,940 --> 00:49:45,180
+ what those coefficients should be.
+
+813
+00:49:45,180 --> 00:49:46,300
+ I picked some kernel.
+
+814
+00:49:46,300 --> 00:49:47,260
+ I tried it.
+
+815
+00:49:47,260 --> 00:49:49,740
+ I maybe tweaked the knobs until I got
+
+816
+00:49:49,740 --> 00:49:50,860
+ something I was happy with.
+
+817
+00:49:50,860 --> 00:49:54,700
+ But really, if I could solve this jointly,
+
+818
+00:49:54,700 --> 00:49:58,260
+ saying that both c and x are decision variables,
+
+819
+00:49:58,260 --> 00:50:01,100
+ find me the best fit among any correspondences,
+
+820
+00:50:01,100 --> 00:50:02,340
+ that would be the dream.
+
+821
+00:50:02,340 --> 00:50:04,820
+ That would solve the global ICP problem.
+
+822
+00:50:04,820 --> 00:50:06,700
+ We can't do that.
+
+823
+00:50:06,700 --> 00:50:08,860
+ But we're going to do something a little bit closer.
+
+824
+00:50:08,860 --> 00:50:14,300
+ So let's talk about rejecting outliers.
+
+825
+00:50:14,900 --> 00:50:17,780
+ [WRITING ON BOARD]
+
+826
+00:50:17,780 --> 00:50:24,700
+ Basically, removing spurious correspondences.
+
+827
+00:50:24,700 --> 00:50:27,620
+ [WRITING ON BOARD]
+
+828
+00:50:41,900 --> 00:50:44,460
+ And I think there really are two cases.
+
+829
+00:50:44,460 --> 00:50:45,420
+ There's the easy case.
+
+830
+00:50:45,420 --> 00:50:52,860
+ I guess I called that the fuzzy bunny.
+
+831
+00:50:52,860 --> 00:50:53,980
+ Let's just stick with that.
+
+832
+00:50:53,980 --> 00:50:55,360
+ That's not what I called it here,
+
+833
+00:50:55,360 --> 00:50:58,060
+ but that's what I'll call it for today.
+
+834
+00:50:58,060 --> 00:51:03,100
+ The fuzzy bunny case, where we have almost our model
+
+835
+00:51:03,100 --> 00:51:07,180
+ in the data, but it's just been corrupted
+
+836
+00:51:07,180 --> 00:51:09,660
+ by a handful of outliers.
+
+837
+00:51:09,660 --> 00:51:13,700
+ So really, I guess maybe to make that more formal,
+
+838
+00:51:13,700 --> 00:51:17,420
+ you could talk about the rate, the percentage of outliers
+
+839
+00:51:17,420 --> 00:51:19,500
+ in your data set.
+
+840
+00:51:19,500 --> 00:51:25,180
+ So if you have 1,000 points in my point cloud, and 990 of them
+
+841
+00:51:25,180 --> 00:51:29,980
+ are bunny-like, and 10 of them are just spurious points,
+
+842
+00:51:29,980 --> 00:51:32,220
+ then that's sort of an easier setting.
+
+843
+00:51:32,220 --> 00:51:34,140
+ And then there's the, I've got a drill
+
+844
+00:51:34,140 --> 00:51:37,780
+ in that 100 of my points are associated with the drill,
+
+845
+00:51:37,780 --> 00:51:39,300
+ but there's another 900 associated
+
+846
+00:51:39,300 --> 00:51:41,140
+ with other things that are interesting.
+
+847
+00:51:41,140 --> 00:51:42,340
+ That would be the hard case.
+
+848
+00:51:42,340 --> 00:52:03,100
+ The easy case, there's a bunch of heuristics
+
+849
+00:52:03,100 --> 00:52:07,260
+ that I should acknowledge, but I don't want to dwell on.
+
+850
+00:52:07,260 --> 00:52:09,060
+ You can imagine heuristics, which
+
+851
+00:52:09,060 --> 00:52:14,020
+ are-- and you could sort of call this CPD approach heuristic.
+
+852
+00:52:14,020 --> 00:52:17,820
+ Or you could just say, let's say, I'll truncate distances.
+
+853
+00:52:17,820 --> 00:52:22,060
+ If I have my ICP loop, and any distance that's greater than 5,
+
+854
+00:52:22,060 --> 00:52:24,180
+ I'll just put a threshold on distance, for instance.
+
+855
+00:52:24,180 --> 00:52:26,820
+ I'll just remove those from the correspondence list,
+
+856
+00:52:26,820 --> 00:52:27,460
+ and that's fine.
+
+857
+00:52:27,460 --> 00:52:27,960
+ Right?
+
+858
+00:52:27,960 --> 00:52:39,180
+ Other thresholds that sometimes people will put in,
+
+859
+00:52:39,180 --> 00:52:42,460
+ they'll say, I'm going to look for 100 best correspondences.
+
+860
+00:52:42,460 --> 00:52:44,960
+ I'll just put an upper limit on the number of correspondences
+
+861
+00:52:44,960 --> 00:52:48,700
+ to consider, and I can just put in sort of a threshold on that.
+
+862
+00:52:48,700 --> 00:52:56,140
+ And there's a bunch of algorithms like that,
+
+863
+00:52:56,140 --> 00:52:58,060
+ which are useful.
+
+864
+00:52:58,060 --> 00:53:00,460
+ The hard case has more interesting algorithms,
+
+865
+00:53:00,460 --> 00:53:02,860
+ in my opinion.
+
+866
+00:53:02,860 --> 00:53:03,980
+ And I'll list a few.
+
+867
+00:53:03,980 --> 00:53:06,460
+ So one of them-- actually, David, you said RANSAC last time.
+
+868
+00:53:06,460 --> 00:53:06,960
+ Right?
+
+869
+00:53:06,960 --> 00:53:12,300
+ RANSAC is random sample consensus.
+
+870
+00:53:12,300 --> 00:53:24,540
+ We're going to ask you to play with that one on the homework,
+
+871
+00:53:24,540 --> 00:53:30,020
+ because it's a pretty simple algorithm to understand.
+
+872
+00:53:30,020 --> 00:53:33,620
+ In a few words, it is, I'm going to take my 1,000 points
+
+873
+00:53:33,620 --> 00:53:38,020
+ in my point cloud, and I'll try to pick 100 of them at random,
+
+874
+00:53:38,020 --> 00:53:41,380
+ and start using ICP from those 100.
+
+875
+00:53:41,380 --> 00:53:44,360
+ And maybe I can combine it with a few of these thresholds
+
+876
+00:53:44,360 --> 00:53:46,700
+ on distance, or whatever, to bring in other point clouds
+
+877
+00:53:46,700 --> 00:53:49,060
+ that are fitting.
+
+878
+00:53:49,060 --> 00:53:51,620
+ But then I'll stop, and I'll pick a different 100
+
+879
+00:53:51,620 --> 00:53:53,380
+ initial point clouds.
+
+880
+00:53:53,380 --> 00:53:55,420
+ And I'll do that a bunch of times.
+
+881
+00:53:55,420 --> 00:53:58,780
+ And when I've happened to pick-- if I do that enough times,
+
+882
+00:53:58,780 --> 00:54:00,500
+ then I will hopefully, luckily pick
+
+883
+00:54:00,500 --> 00:54:06,000
+ some subset of the point cloud where those initial subset
+
+884
+00:54:06,000 --> 00:54:10,180
+ gives me a good initial guess, and I can go from there.
+
+885
+00:54:10,180 --> 00:54:14,180
+ So it optimizes on random subsets, roughly.
+
+886
+00:54:14,180 --> 00:54:21,100
+ I'd say initialize with random subsets.
+
+887
+00:54:22,020 --> 00:54:23,980
+ [WRITING]
+
+888
+00:54:23,980 --> 00:54:38,020
+ RANSAC is useful more generally in ML kind of problems
+
+889
+00:54:38,020 --> 00:54:38,780
+ and the like.
+
+890
+00:54:38,780 --> 00:54:43,820
+ I hope the problem set will step you through that,
+
+891
+00:54:43,820 --> 00:54:46,500
+ and you'll get a basic understanding of that.
+
+892
+00:54:46,500 --> 00:54:48,900
+ I want to spend my time here talking about one
+
+893
+00:54:48,900 --> 00:54:51,340
+ that I think is much more clever.
+
+894
+00:54:51,340 --> 00:54:53,780
+ It leverages some of the geometry
+
+895
+00:54:53,780 --> 00:54:58,580
+ in the problem, which is using pairwise distances.
+
+896
+00:54:58,580 --> 00:55:13,460
+ OK, what are pairwise distances, and why is that a useful idea?
+
+897
+00:55:13,460 --> 00:55:16,220
+ So here's an observation.
+
+898
+00:55:16,220 --> 00:55:21,340
+ You remember how I said that the relative distances
+
+899
+00:55:21,340 --> 00:55:25,140
+ between points depends on the rotation?
+
+900
+00:55:25,140 --> 00:55:27,140
+ The relative positions between points
+
+901
+00:55:27,140 --> 00:55:30,500
+ depends on the position, but not the translation.
+
+902
+00:55:30,500 --> 00:55:32,180
+ We use this trick.
+
+903
+00:55:32,180 --> 00:55:34,220
+ I have a bunch of points on my point cloud.
+
+904
+00:55:34,220 --> 00:55:45,300
+ Then the relative positions, this vector here,
+
+905
+00:55:45,300 --> 00:55:47,100
+ I take any two points, right?
+
+906
+00:55:47,100 --> 00:55:55,100
+ If I do P of, let's say, mi, I'll
+
+907
+00:55:55,100 --> 00:56:02,300
+ just do m2 versus m1 in some frame,
+
+908
+00:56:02,300 --> 00:56:14,780
+ this depends on the rotation, but not translation.
+
+909
+00:56:14,780 --> 00:56:26,100
+ That's what we used to justify-- that's
+
+910
+00:56:26,100 --> 00:56:28,220
+ how we designed, actually, our SVD algorithm,
+
+911
+00:56:28,220 --> 00:56:32,620
+ because we said we actually only have to worry about rotations.
+
+912
+00:56:32,620 --> 00:56:36,220
+ Because that vector, if I slide this thing around on the board,
+
+913
+00:56:36,220 --> 00:56:42,500
+ that relative position is invariant to translation.
+
+914
+00:56:42,500 --> 00:56:52,140
+ OK, the pairwise distance-- this is the pairwise distance.
+
+915
+00:56:52,140 --> 00:57:07,340
+ --is invariant to rotations and translations.
+
+916
+00:57:07,340 --> 00:57:20,780
+ OK, so if I put this object in some completely different
+
+917
+00:57:20,780 --> 00:57:28,500
+ configuration here, the distances between these points
+
+918
+00:57:28,500 --> 00:57:30,660
+ here is the same, even though it's
+
+919
+00:57:30,660 --> 00:57:32,900
+ been under any rigid transform.
+
+920
+00:57:32,900 --> 00:57:41,700
+ If I just look at the length of the pairs, does that make sense?
+
+921
+00:57:41,700 --> 00:57:49,780
+ So if I were to go through my original model
+
+922
+00:57:49,780 --> 00:57:54,740
+ and compute all possible pairwise distances,
+
+923
+00:57:54,740 --> 00:57:56,820
+ and now I go through my scene and I
+
+924
+00:57:56,820 --> 00:57:59,860
+ compute all possible pairwise distances,
+
+925
+00:57:59,860 --> 00:58:05,300
+ if my scene has a point whose pairwise distance isn't
+
+926
+00:58:05,300 --> 00:58:09,540
+ in the model up to some noise, then one of those two points
+
+927
+00:58:09,540 --> 00:58:12,580
+ had better be an outlier.
+
+928
+00:58:12,580 --> 00:58:13,740
+ Did I say that well enough?
+
+929
+00:58:18,220 --> 00:58:21,180
+ Right?
+
+930
+00:58:21,180 --> 00:58:31,900
+ If the scene-- I'll write it like this-- s1, s2 distance
+
+931
+00:58:31,900 --> 00:58:45,340
+ is not a pairwise distance in the model,
+
+932
+00:58:45,340 --> 00:58:49,780
+ then 1 or 2 is an outlier.
+
+933
+00:58:49,780 --> 00:58:59,300
+ Now that's a little bit weird, OK?
+
+934
+00:58:59,300 --> 00:59:03,780
+ Because-- so I think that that analogy is perfect
+
+935
+00:59:03,780 --> 00:59:06,940
+ if I take an initial point cloud, if I have my model,
+
+936
+00:59:06,940 --> 00:59:09,100
+ and I think the real data is just
+
+937
+00:59:09,100 --> 00:59:11,540
+ a perfect translation of that, and then
+
+938
+00:59:11,540 --> 00:59:14,100
+ some extra things thrown in.
+
+939
+00:59:14,100 --> 00:59:15,620
+ The mustard bottle, right?
+
+940
+00:59:15,620 --> 00:59:18,860
+ In practice, I made some point cloud representation
+
+941
+00:59:18,860 --> 00:59:20,940
+ of my mustard bottle once, and I've
+
+942
+00:59:20,940 --> 00:59:23,060
+ got a different set of points that
+
+943
+00:59:23,060 --> 00:59:25,420
+ are all on the surface of the mustard bottle later.
+
+944
+00:59:25,420 --> 00:59:27,600
+ So you have to put some margins on this.
+
+945
+00:59:27,600 --> 00:59:30,740
+ You can't say that with exact equality
+
+946
+00:59:30,740 --> 00:59:33,140
+ these distances have to match.
+
+947
+00:59:33,140 --> 00:59:36,700
+ But in practice, there's a distribution
+
+948
+00:59:36,700 --> 00:59:41,260
+ of expected pairwise distances that
+
+949
+00:59:41,260 --> 00:59:45,660
+ represent your object, which you can look for in the data
+
+950
+00:59:45,660 --> 00:59:50,020
+ without having solved any pose estimation problem.
+
+951
+00:59:50,020 --> 00:59:54,500
+ If you can find a clump of points in your data,
+
+952
+00:59:54,500 --> 00:59:59,580
+ then you can actually reject a lot of outliers.
+
+953
+00:59:59,580 --> 01:00:03,100
+ So there's a nice algorithm called Teaser,
+
+954
+01:00:03,100 --> 01:00:07,100
+ which is from an MIT group.
+
+955
+01:00:07,100 --> 01:00:12,740
+ Luca Carlone and Hank was the lead author.
+
+956
+01:00:12,740 --> 01:00:18,260
+ Teaser actually had a bunch of different components of it,
+
+957
+01:00:18,260 --> 01:00:20,540
+ but one of the pieces that I'm highlighting here
+
+958
+01:00:20,540 --> 01:00:23,540
+ is this outlier rejection step.
+
+959
+01:00:23,540 --> 01:00:26,980
+ [WRITING ON BOARD]
+
+960
+01:00:26,980 --> 01:00:41,140
+ Hank wrote a bunch of papers, and I'm sure that the piece--
+
+961
+01:00:41,140 --> 01:00:43,220
+ I think he had a different name for every piece
+
+962
+01:00:43,220 --> 01:00:46,100
+ of the algorithm, so there's a better name for just this piece,
+
+963
+01:00:46,100 --> 01:00:47,700
+ but it's all under the Teaser umbrella.
+
+964
+01:00:47,700 --> 01:00:48,200
+ Yes?
+
+965
+01:00:48,200 --> 01:00:48,700
+ [INAUDIBLE]
+
+966
+01:00:48,700 --> 01:00:49,200
+ Yeah.
+
+967
+01:00:49,200 --> 01:00:49,700
+ [INAUDIBLE]
+
+968
+01:00:49,700 --> 01:01:02,980
+ OK, so you're worried about reflections.
+
+969
+01:01:02,980 --> 01:01:09,100
+ So that's true.
+
+970
+01:01:09,100 --> 01:01:11,060
+ If you had a perfectly mirrored object,
+
+971
+01:01:11,060 --> 01:01:12,680
+ you wouldn't be able to distinguish it,
+
+972
+01:01:12,680 --> 01:01:15,220
+ I think, with the pairwise distance computation.
+
+973
+01:01:15,220 --> 01:01:16,540
+ I completely agree.
+
+974
+01:01:16,540 --> 01:01:19,620
+ I think that's-- I mean, in practice,
+
+975
+01:01:19,620 --> 01:01:21,460
+ if I accidentally found the mirrored mustard,
+
+976
+01:01:21,460 --> 01:01:25,860
+ I guess maybe that's not the biggest problem.
+
+977
+01:01:25,860 --> 01:01:26,620
+ But you're right.
+
+978
+01:01:26,620 --> 01:01:28,780
+ It's exacerbated, I think, in 2D on the board.
+
+979
+01:01:28,780 --> 01:01:31,860
+ It looks like the mirror operation is very natural.
+
+980
+01:01:31,860 --> 01:01:35,500
+ But if you think about objects of interest
+
+981
+01:01:35,500 --> 01:01:37,300
+ going through any rigid transformation,
+
+982
+01:01:37,300 --> 01:01:38,920
+ the case you're worried about, I think,
+
+983
+01:01:38,920 --> 01:01:41,100
+ would be a reflection, where you're really
+
+984
+01:01:41,100 --> 01:01:42,580
+ going through some axis.
+
+985
+01:01:42,580 --> 01:01:45,820
+ And you're right, this would not distinguish that.
+
+986
+01:01:45,820 --> 01:01:49,500
+ But at the very least, it could reject a lot of outliers,
+
+987
+01:01:49,500 --> 01:01:51,140
+ maybe not all.
+
+988
+01:01:51,140 --> 01:01:51,700
+ Good question.
+
+989
+01:01:51,700 --> 01:02:00,860
+ So this Teaser algorithm by Hank and Luca
+
+990
+01:02:00,860 --> 01:02:02,860
+ made a really clever idea.
+
+991
+01:02:02,860 --> 01:02:04,780
+ They said, we've got this cluster of-- there's
+
+992
+01:02:04,780 --> 01:02:09,620
+ some distribution of possible pairwise distances.
+
+993
+01:02:09,620 --> 01:02:13,500
+ And they said, make a graph where the edges--
+
+994
+01:02:13,500 --> 01:02:15,380
+ I'm going to put the picture up that'll help.
+
+995
+01:02:15,380 --> 01:02:19,260
+ You make a graph connecting all the matching pairwise
+
+996
+01:02:19,260 --> 01:02:20,740
+ distances.
+
+997
+01:02:20,740 --> 01:02:23,180
+ And that actually, if you can find the maximal clique
+
+998
+01:02:23,180 --> 01:02:28,900
+ in the graph, that is likely your object
+
+999
+01:02:28,900 --> 01:02:30,300
+ of interest in the data.
+
+1000
+01:02:30,300 --> 01:02:33,740
+ So let me show you the picture that I
+
+1001
+01:02:33,740 --> 01:02:35,780
+ used to think about this algorithm.
+
+1002
+01:02:35,780 --> 01:02:39,980
+ So there's maximum clique in correspondence graphs.
+
+1003
+01:02:39,980 --> 01:02:42,180
+ And this is actually-- they showed it
+
+1004
+01:02:42,180 --> 01:02:47,020
+ in very complicated settings, big point clouds and the like.
+
+1005
+01:02:47,020 --> 01:02:50,220
+ I was like, Hank, just explain this to me.
+
+1006
+01:02:50,220 --> 01:02:51,020
+ I have a triangle.
+
+1007
+01:02:51,020 --> 01:02:53,420
+ It has the sides 3, 4, and 5.
+
+1008
+01:02:53,420 --> 01:02:55,300
+ Let's just work out that case first.
+
+1009
+01:02:55,300 --> 01:02:59,100
+ And I liked his answer so much that it's not in the notes.
+
+1010
+01:02:59,100 --> 01:03:01,740
+ So hopefully, this will help you guys too.
+
+1011
+01:03:01,740 --> 01:03:03,020
+ So this is the setting.
+
+1012
+01:03:03,020 --> 01:03:08,540
+ I have my same model blue and salmon scene.
+
+1013
+01:03:08,540 --> 01:03:10,380
+ And the setting I was worried about
+
+1014
+01:03:10,380 --> 01:03:14,420
+ was what if I have the object of interest, my model, my blue,
+
+1015
+01:03:14,420 --> 01:03:16,700
+ if it appears in the scene perfectly--
+
+1016
+01:03:16,700 --> 01:03:20,100
+ and a bit like what your reflections question here--
+
+1017
+01:03:20,100 --> 01:03:23,500
+ if it appears in the scene perfectly,
+
+1018
+01:03:23,500 --> 01:03:27,060
+ but there's enough similar distances that
+
+1019
+01:03:27,060 --> 01:03:28,420
+ appeared also in the scene.
+
+1020
+01:03:28,420 --> 01:03:32,740
+ So I said, imagine you have the exact triangle, the 3, 4, 5
+
+1021
+01:03:32,740 --> 01:03:37,780
+ triangle, but you also had a prism or a pyramid
+
+1022
+01:03:37,780 --> 01:03:40,180
+ there that had 3, 4, 4, 4, 3.
+
+1023
+01:03:40,180 --> 01:03:40,680
+ Right?
+
+1024
+01:03:40,680 --> 01:03:42,380
+ You see what I was trying to do?
+
+1025
+01:03:42,380 --> 01:03:44,180
+ Was make a lot of similar distances.
+
+1026
+01:03:44,180 --> 01:03:46,580
+ The distance 4 shows in my data.
+
+1027
+01:03:46,580 --> 01:03:49,340
+ The distance 4 shows more on the object on the right
+
+1028
+01:03:49,340 --> 01:03:52,040
+ than on the left, even though the left is the right answer,
+
+1029
+01:03:52,040 --> 01:03:53,060
+ correct answer.
+
+1030
+01:03:53,060 --> 01:03:57,220
+ Similarly, the number 3 shows up a lot on the right.
+
+1031
+01:03:57,220 --> 01:04:00,260
+ By counting, there's more correspondence,
+
+1032
+01:04:00,260 --> 01:04:03,140
+ pairwise distance matches on the right.
+
+1033
+01:04:03,140 --> 01:04:06,780
+ But the correct answer is on the left.
+
+1034
+01:04:06,780 --> 01:04:11,300
+ The way their algorithm works is like this.
+
+1035
+01:04:11,300 --> 01:04:17,100
+ So we're going to make a node here.
+
+1036
+01:04:17,100 --> 01:04:24,460
+ If A in the model, point A here, corresponds to A over there.
+
+1037
+01:04:24,460 --> 01:04:27,460
+ If A corresponds to B over here.
+
+1038
+01:04:27,460 --> 01:04:29,900
+ Each of these circles, each of these nodes in the graph
+
+1039
+01:04:29,900 --> 01:04:33,420
+ is one possible correspondence from model to scene.
+
+1040
+01:04:36,300 --> 01:04:43,540
+ An edge in the graph happens if the pairwise distances match.
+
+1041
+01:04:43,540 --> 01:04:46,740
+ Yes?
+
+1042
+01:04:46,740 --> 01:04:52,820
+ So if A to A and B to B here is the same distance,
+
+1043
+01:04:52,820 --> 01:04:54,280
+ then I'll put an edge in the graph.
+
+1044
+01:04:54,280 --> 01:04:56,940
+ Otherwise, I won't put an edge in the graph.
+
+1045
+01:04:56,940 --> 01:04:58,780
+ OK, so that gives you this graph structure
+
+1046
+01:04:58,780 --> 01:05:02,200
+ of possible pairwise distance correspondences.
+
+1047
+01:05:02,200 --> 01:05:07,140
+ And the claim in their paper was that the maximum clique is
+
+1048
+01:05:07,140 --> 01:05:11,220
+ likely the object of interest.
+
+1049
+01:05:11,220 --> 01:05:15,700
+ And indeed, this object here on the left
+
+1050
+01:05:15,700 --> 01:05:20,460
+ has a bigger clique of 3 than any of the pairwise comparisons
+
+1051
+01:05:20,460 --> 01:05:21,700
+ on the right.
+
+1052
+01:05:21,700 --> 01:05:25,020
+ So they defeated my counter example and won me over.
+
+1053
+01:05:25,020 --> 01:05:30,620
+ That's a very clever idea, isn't it?
+
+1054
+01:05:30,620 --> 01:05:34,680
+ That you can use this invariance without even
+
+1055
+01:05:34,680 --> 01:05:36,840
+ knowing the pose of your object at all,
+
+1056
+01:05:36,840 --> 01:05:39,240
+ the rotation nor the translation.
+
+1057
+01:05:39,240 --> 01:05:41,220
+ You can compute this quantity.
+
+1058
+01:05:41,220 --> 01:05:44,180
+ And you can look for the statistics of your object
+
+1059
+01:05:44,180 --> 01:05:47,020
+ roughly in the data.
+
+1060
+01:05:47,020 --> 01:05:49,440
+ I think it gets a lot harder when you have noise in the data
+
+1061
+01:05:49,440 --> 01:05:53,720
+ and you expect those to be almost pairwise distances.
+
+1062
+01:05:53,720 --> 01:05:57,560
+ Then you'll have probably many more edges in your graph.
+
+1063
+01:05:57,560 --> 01:06:02,860
+ And it's not as clear what the maximal clique looks like.
+
+1064
+01:06:02,860 --> 01:06:04,260
+ But it's a very clever idea.
+
+1065
+01:06:04,260 --> 01:06:08,060
+ Questions about that?
+
+1066
+01:06:08,060 --> 01:06:08,560
+ Yes?
+
+1067
+01:06:08,560 --> 01:06:09,060
+ [INAUDIBLE]
+
+1068
+01:06:09,060 --> 01:06:19,020
+ Yes, that's a great question.
+
+1069
+01:06:19,020 --> 01:06:21,060
+ So first of all, never do that with a robot.
+
+1070
+01:06:21,060 --> 01:06:23,580
+ I'm kidding.
+
+1071
+01:06:23,580 --> 01:06:27,160
+ So I actually think this is a very, very good question.
+
+1072
+01:06:27,160 --> 01:06:31,420
+ So Tom's asking, he says, what if my object is long and flat?
+
+1073
+01:06:31,420 --> 01:06:33,580
+ And I'm looking at it like this.
+
+1074
+01:06:33,580 --> 01:06:35,820
+ First of all, especially on your iPad,
+
+1075
+01:06:35,820 --> 01:06:37,620
+ you're going to get no returns on the side.
+
+1076
+01:06:37,620 --> 01:06:40,620
+ So that's just dead in the water probably.
+
+1077
+01:06:40,620 --> 01:06:45,340
+ But even, I would say, long, flat objects on tables
+
+1078
+01:06:45,340 --> 01:06:48,980
+ are a good example of how the ICP objective that we've
+
+1079
+01:06:48,980 --> 01:06:51,220
+ been writing all day is actually probably not
+
+1080
+01:06:51,220 --> 01:06:52,620
+ the right objective.
+
+1081
+01:06:52,620 --> 01:06:57,760
+ Because I could get a lot of good matches
+
+1082
+01:06:57,760 --> 01:07:01,720
+ in terms of distance, even if this is shifted by a lot.
+
+1083
+01:07:01,720 --> 01:07:05,080
+ If I'm looking at this object on the table,
+
+1084
+01:07:05,080 --> 01:07:10,200
+ I'm probably weighting the edges a lot.
+
+1085
+01:07:10,200 --> 01:07:12,160
+ Those are where all the information is.
+
+1086
+01:07:12,160 --> 01:07:14,040
+ But the density of points I'm going to get
+
+1087
+01:07:14,040 --> 01:07:16,360
+ is mostly on the top.
+
+1088
+01:07:16,360 --> 01:07:19,320
+ So my ICP objective, I think, is deficient in that case.
+
+1089
+01:07:19,320 --> 01:07:21,400
+ And you shouldn't think of this as definitely
+
+1090
+01:07:21,400 --> 01:07:22,200
+ the right objective.
+
+1091
+01:07:22,200 --> 01:07:23,440
+ That's the point I always try to make at the end,
+
+1092
+01:07:23,440 --> 01:07:26,080
+ is that it's not clear that ICP is the right objective.
+
+1093
+01:07:26,080 --> 01:07:29,160
+ And I think long, flat objects on tables, or books on tables,
+
+1094
+01:07:29,160 --> 01:07:31,760
+ is a great-- or iPads on tables is a great example of that.
+
+1095
+01:07:31,760 --> 01:07:39,440
+ OK, people understand the pairwise distance?
+
+1096
+01:07:39,440 --> 01:07:40,280
+ I mean, roughly understand?
+
+1097
+01:07:40,280 --> 01:07:42,400
+ I think you should think through that example.
+
+1098
+01:07:42,400 --> 01:07:43,600
+ It's in the notes, obviously.
+
+1099
+01:07:43,600 --> 01:07:45,640
+ And it's worth thinking through.
+
+1100
+01:07:45,640 --> 01:07:49,120
+ That one was very impressive to me.
+
+1101
+01:07:49,120 --> 01:07:49,620
+ OK.
+
+1102
+01:07:49,620 --> 01:07:56,960
+ OK, last version that I'll try to do today here,
+
+1103
+01:07:56,960 --> 01:08:04,400
+ for being robust, is trying to solve jointly
+
+1104
+01:08:04,400 --> 01:08:07,160
+ for the correspondences and the poses.
+
+1105
+01:08:07,160 --> 01:08:09,960
+ So let's try to take the slightly more interesting
+
+1106
+01:08:09,960 --> 01:08:11,720
+ version of the algorithm.
+
+1107
+01:08:11,720 --> 01:08:14,500
+ And I'm going to do that first with just a small modification
+
+1108
+01:08:14,500 --> 01:08:15,920
+ of the original algorithm.
+
+1109
+01:08:15,920 --> 01:08:18,360
+ I'll do the point-to-plane ICP.
+
+1110
+01:08:18,360 --> 01:08:22,160
+ It's going to be a window into, I think, a bigger idea here.
+
+1111
+01:08:22,160 --> 01:08:40,520
+ So the idea here is I want my model
+
+1112
+01:08:40,520 --> 01:08:42,680
+ is a triangle mesh, a triangular mesh,
+
+1113
+01:08:42,680 --> 01:08:43,960
+ instead of a bunch of points.
+
+1114
+01:08:44,960 --> 01:08:56,000
+ And I'm going to do my example here just in 2D.
+
+1115
+01:08:56,000 --> 01:09:04,920
+ OK, so let's just say I have my model looks like this,
+
+1116
+01:09:04,920 --> 01:09:05,400
+ whatever.
+
+1117
+01:09:05,400 --> 01:09:06,320
+ OK.
+
+1118
+01:09:06,320 --> 01:09:13,160
+ Rather than represent the model only as a series of points,
+
+1119
+01:09:13,160 --> 01:09:15,560
+ I'm going to model my-- in 2D, I'm
+
+1120
+01:09:15,560 --> 01:09:18,240
+ going to model it as a line segment.
+
+1121
+01:09:18,240 --> 01:09:21,000
+ These line segments are the models.
+
+1122
+01:09:21,000 --> 01:09:30,520
+ And I want to correspond points in the scene,
+
+1123
+01:09:30,520 --> 01:09:32,720
+ not necessarily just to the vertices,
+
+1124
+01:09:32,720 --> 01:09:34,560
+ but to the closest point on the face.
+
+1125
+01:09:34,560 --> 01:09:42,680
+ In 3D, this is point-to-plane.
+
+1126
+01:09:42,680 --> 01:09:44,600
+ Is that clear?
+
+1127
+01:09:44,600 --> 01:09:47,320
+ I'd like to measure not the distance from point to point,
+
+1128
+01:09:47,320 --> 01:09:48,840
+ but the distance from point to plane
+
+1129
+01:09:48,840 --> 01:09:50,840
+ and allow it to match anywhere on the plane.
+
+1130
+01:09:50,840 --> 01:09:59,760
+ OK, so how would I write this?
+
+1131
+01:09:59,760 --> 01:10:03,480
+ How do I represent these meshes, these triangular meshes?
+
+1132
+01:10:03,480 --> 01:10:04,280
+ OK.
+
+1133
+01:10:04,280 --> 01:10:12,600
+ So typically, you have a list of vertices
+
+1134
+01:10:12,600 --> 01:10:24,640
+ plus a list of faces, which are-- these are points in x, y,
+
+1135
+01:10:24,640 --> 01:10:25,240
+ z.
+
+1136
+01:10:25,240 --> 01:10:31,880
+ And these are vertex indices, i, j, k.
+
+1137
+01:10:32,880 --> 01:10:44,320
+ So this would have vertices-- I don't know-- 1, negative 1.
+
+1138
+01:10:44,320 --> 01:10:47,800
+ It's going to have another one, 1, 2.
+
+1139
+01:10:47,800 --> 01:10:49,800
+ It's going to have all these vertices listed.
+
+1140
+01:10:49,800 --> 01:10:54,960
+ And then it's going to have a face saying that vertex 1
+
+1141
+01:10:54,960 --> 01:10:56,880
+ and vertex 2 are connected.
+
+1142
+01:10:56,880 --> 01:10:58,360
+ In 3D, it would have three numbers.
+
+1143
+01:10:58,360 --> 01:11:00,480
+ But in 2D, it's got two numbers.
+
+1144
+01:11:00,480 --> 01:11:03,200
+ It's got another one that says vertex 2 and vertex 3
+
+1145
+01:11:03,200 --> 01:11:04,720
+ are connected.
+
+1146
+01:11:04,720 --> 01:11:06,120
+ This is my list of faces.
+
+1147
+01:11:06,120 --> 01:11:09,160
+ This is a perfectly reasonable on-disk--
+
+1148
+01:11:09,160 --> 01:11:13,080
+ you'll find CAD formats that are basically just this.
+
+1149
+01:11:13,080 --> 01:11:16,880
+ OBJs are basically just this.
+
+1150
+01:11:16,880 --> 01:11:19,960
+ OK, so I would like to now take a scene point
+
+1151
+01:11:19,960 --> 01:11:24,480
+ and somehow correspond it to this face.
+
+1152
+01:11:24,480 --> 01:11:26,400
+ So I want to correspond to the face
+
+1153
+01:11:26,400 --> 01:11:28,400
+ and then have the math be the closest distance
+
+1154
+01:11:28,400 --> 01:11:30,720
+ point to plane.
+
+1155
+01:11:30,720 --> 01:11:32,640
+ There's a bunch of different ways to do that.
+
+1156
+01:11:32,640 --> 01:11:41,560
+ You probably know the equation of the distance
+
+1157
+01:11:41,560 --> 01:11:44,040
+ between a point and a plane.
+
+1158
+01:11:44,040 --> 01:11:46,360
+ You can absolutely write that into your algorithm
+
+1159
+01:11:46,360 --> 01:11:49,480
+ and work from there.
+
+1160
+01:11:49,480 --> 01:11:53,000
+ I'm going to show you an optimization version of it,
+
+1161
+01:11:53,000 --> 01:11:56,240
+ which I like a little better.
+
+1162
+01:11:56,240 --> 01:11:57,360
+ So let's try this.
+
+1163
+01:11:57,360 --> 01:12:02,760
+ Before I even write the full optimization,
+
+1164
+01:12:02,760 --> 01:12:04,080
+ I'll make one point here.
+
+1165
+01:12:04,080 --> 01:12:13,720
+ Instead of saying that my point is-- I
+
+1166
+01:12:13,720 --> 01:12:17,160
+ could compute the point to plane, the normal distance.
+
+1167
+01:12:17,160 --> 01:12:20,160
+ I can write this equation for the point to plane distance.
+
+1168
+01:12:20,160 --> 01:12:23,680
+ But let me instead say I'm going to correspond this point,
+
+1169
+01:12:23,680 --> 01:12:27,580
+ this red point, with an equation that
+
+1170
+01:12:27,580 --> 01:12:31,440
+ describes all possible points on that line segment.
+
+1171
+01:12:31,440 --> 01:12:33,500
+ So let me say that carefully.
+
+1172
+01:12:33,500 --> 01:12:42,320
+ If a point on a face is the sum over alpha i of the vertices--
+
+1173
+01:12:42,320 --> 01:12:45,000
+ I've got a notation that I liked here--
+
+1174
+01:12:45,000 --> 01:12:59,960
+ bi in face f, subject to all of my alpha i's
+
+1175
+01:12:59,960 --> 01:13:07,640
+ being greater than 0 and the sum of my alpha i's equaling 1,
+
+1176
+01:13:07,640 --> 01:13:09,920
+ then a perfectly good way to describe
+
+1177
+01:13:09,920 --> 01:13:16,320
+ all points in this set, in this vertex face representation,
+
+1178
+01:13:16,320 --> 01:13:22,280
+ would be as a linear combination of the points on the vertex
+
+1179
+01:13:22,280 --> 01:13:24,120
+ that sums to 1.
+
+1180
+01:13:24,120 --> 01:13:30,400
+ That's a way to parameterize the set based on the boundary.
+
+1181
+01:13:30,400 --> 01:13:31,760
+ Did I write that clearly enough?
+
+1182
+01:13:31,760 --> 01:13:38,520
+ So if alpha is 0, it might be all on this point.
+
+1183
+01:13:38,520 --> 01:13:42,760
+ If alpha 1 is 1 and the rest are 0's,
+
+1184
+01:13:42,760 --> 01:13:43,840
+ it might be at this point.
+
+1185
+01:13:43,840 --> 01:13:45,840
+ If alpha 2 is 1 and the rest are 0's,
+
+1186
+01:13:45,840 --> 01:13:46,960
+ it might be at this point.
+
+1187
+01:13:46,960 --> 01:13:49,360
+ And if I go between them, I'll get alpha 0.5, 0.5,
+
+1188
+01:13:49,360 --> 01:13:50,800
+ somewhere in the middle.
+
+1189
+01:13:50,800 --> 01:13:53,960
+ That's a standard sort of parameterization
+
+1190
+01:13:53,960 --> 01:13:55,000
+ of any convex set.
+
+1191
+01:13:55,000 --> 01:13:58,080
+ And it works for a plane, for sure.
+
+1192
+01:13:58,080 --> 01:14:07,160
+ OK, so now let's try to write minimize
+
+1193
+01:14:07,160 --> 01:14:09,960
+ over x0 in SE3.
+
+1194
+01:14:09,960 --> 01:14:17,840
+ Going to minimize over my scene points.
+
+1195
+01:14:17,840 --> 01:14:22,560
+ This time I'm going to use the x transform the other way.
+
+1196
+01:14:22,560 --> 01:14:31,160
+ So I'm going to modify my scene points into my model
+
+1197
+01:14:31,160 --> 01:14:47,040
+ coordinates so that I can write sum over i alpha ij p vertex j
+
+1198
+01:14:47,040 --> 01:14:51,640
+ in face i squared.
+
+1199
+01:14:51,640 --> 01:14:57,000
+ OK, there's one big point you have to get here.
+
+1200
+01:14:57,000 --> 01:15:00,960
+ The details are less important to me.
+
+1201
+01:15:00,960 --> 01:15:04,000
+ The big point here is that-- so if you contrast this
+
+1202
+01:15:04,000 --> 01:15:06,920
+ to the CPD, where I had a coefficient
+
+1203
+01:15:06,920 --> 01:15:11,760
+ matrix off to the front, which was a hard optimization
+
+1204
+01:15:11,760 --> 01:15:14,320
+ because I was multiplying c times my other decision
+
+1205
+01:15:14,320 --> 01:15:16,640
+ variables.
+
+1206
+01:15:16,640 --> 01:15:22,640
+ This is a clever trick where this term on the inside
+
+1207
+01:15:22,640 --> 01:15:25,480
+ is linear in these decision variables,
+
+1208
+01:15:25,480 --> 01:15:27,800
+ and it's also linear in these decision variables.
+
+1209
+01:15:27,800 --> 01:15:31,080
+ So I'm optimizing over this, and I'm optimizing over alpha.
+
+1210
+01:15:31,080 --> 01:15:39,520
+ That's very nice.
+
+1211
+01:15:39,520 --> 01:15:41,500
+ It looks very nice.
+
+1212
+01:15:41,500 --> 01:15:51,240
+ I have to still say alpha ij for all ij alpha ij greater than 0
+
+1213
+01:15:51,240 --> 01:15:58,680
+ and sum of alpha ij over-- which one did I do it over?
+
+1214
+01:15:58,680 --> 01:16:03,520
+ Over i over the face equals 1.
+
+1215
+01:16:03,520 --> 01:16:11,240
+ That's something to work with.
+
+1216
+01:16:11,240 --> 01:16:14,400
+ Now, remember that this optimization,
+
+1217
+01:16:14,400 --> 01:16:16,400
+ if I didn't have these constraints,
+
+1218
+01:16:16,480 --> 01:16:21,360
+ this optimization still has a solution via SPD.
+
+1219
+01:16:21,360 --> 01:16:24,360
+ Unfortunately, once I put these constraints in, it does not.
+
+1220
+01:16:24,360 --> 01:16:30,880
+ So we have to open up an optimization playbook
+
+1221
+01:16:30,880 --> 01:16:33,400
+ that I've only given a few tools towards, but not
+
+1222
+01:16:33,400 --> 01:16:34,680
+ the full playbook.
+
+1223
+01:16:34,680 --> 01:16:36,400
+ But this is another form of optimization,
+
+1224
+01:16:36,400 --> 01:16:38,640
+ a more complicated form of optimization
+
+1225
+01:16:38,640 --> 01:16:42,080
+ that you can use to try to solve this harder joint problem.
+
+1226
+01:16:42,080 --> 01:16:42,580
+ OK.
+
+1227
+01:16:42,580 --> 01:16:49,160
+ It turns out-- so remember, there's also
+
+1228
+01:16:49,160 --> 01:16:51,440
+ these hard constraints hiding in here.
+
+1229
+01:16:51,440 --> 01:16:57,200
+ The RR transpose equals identity,
+
+1230
+01:16:57,200 --> 01:17:01,920
+ and the determinant of R equals positive 1.
+
+1231
+01:17:01,920 --> 01:17:09,400
+ It turns out that I don't know how
+
+1232
+01:17:09,400 --> 01:17:12,160
+ to solve this big problem well.
+
+1233
+01:17:12,160 --> 01:17:16,440
+ But if you're willing to relax this constraint to a softer
+
+1234
+01:17:16,440 --> 01:17:19,240
+ version of this constraint, then we
+
+1235
+01:17:19,240 --> 01:17:20,520
+ have nice solutions for this.
+
+1236
+01:17:20,520 --> 01:17:24,080
+ And this is actually the crux of a lot of the point cloud
+
+1237
+01:17:24,080 --> 01:17:26,360
+ algorithms that are trying to use heavy optimization
+
+1238
+01:17:26,360 --> 01:17:28,760
+ to solve this kind of problem.
+
+1239
+01:17:28,760 --> 01:17:33,360
+ And the picture, actually, I think, is very intuitive.
+
+1240
+01:17:33,360 --> 01:17:34,680
+ OK.
+
+1241
+01:17:34,680 --> 01:17:39,120
+ You remember this picture, which is my ICP objective?
+
+1242
+01:17:39,120 --> 01:17:42,680
+ The quadratic bowl is a beautiful object
+
+1243
+01:17:42,680 --> 01:17:45,240
+ for optimization, and it's still present here.
+
+1244
+01:17:45,240 --> 01:17:49,000
+ This is still a quadratic objective.
+
+1245
+01:17:49,000 --> 01:17:55,160
+ The red circle is a horrible object for optimization.
+
+1246
+01:17:55,160 --> 01:17:57,440
+ It just happened that we had a special case
+
+1247
+01:17:57,440 --> 01:18:00,840
+ that we could solve with SVD.
+
+1248
+01:18:00,840 --> 01:18:03,560
+ If I start adding other constraints on top of this
+
+1249
+01:18:03,560 --> 01:18:05,720
+ that might look like lines through this or something
+
+1250
+01:18:05,720 --> 01:18:09,800
+ else, then I don't have a solution with SVD.
+
+1251
+01:18:09,800 --> 01:18:11,680
+ The things we know how to do with optimization
+
+1252
+01:18:11,680 --> 01:18:14,960
+ are typically about convex sets.
+
+1253
+01:18:14,960 --> 01:18:17,280
+ So the standard relaxation that people
+
+1254
+01:18:17,280 --> 01:18:22,440
+ do for this sort of a constraint in the 2D case
+
+1255
+01:18:22,440 --> 01:18:27,640
+ is precisely you're changing the circle to a disk.
+
+1256
+01:18:27,640 --> 01:18:31,600
+ OK.
+
+1257
+01:18:31,600 --> 01:18:33,360
+ I'm only intending to give you the fringe.
+
+1258
+01:18:33,360 --> 01:18:37,040
+ I've got a few furrowed brows.
+
+1259
+01:18:37,040 --> 01:18:42,760
+ But the geometry of this is that the relaxation
+
+1260
+01:18:42,760 --> 01:18:45,280
+ of this hard optimization problem
+
+1261
+01:18:45,280 --> 01:18:48,440
+ turns that circle constraint into a disk.
+
+1262
+01:18:48,440 --> 01:18:53,600
+ And so when you hear people talking
+
+1263
+01:18:53,600 --> 01:18:58,120
+ about semi-definite programming relaxations of point cloud
+
+1264
+01:18:58,120 --> 01:18:59,920
+ algorithms, that's what's happening.
+
+1265
+01:18:59,920 --> 01:19:01,340
+ It's happening in high dimensions.
+
+1266
+01:19:01,340 --> 01:19:02,640
+ It's hard to think about.
+
+1267
+01:19:02,640 --> 01:19:06,600
+ But it's just turning the circle into a disk.
+
+1268
+01:19:06,600 --> 01:19:08,840
+ And I think if you're willing to say--
+
+1269
+01:19:08,840 --> 01:19:11,200
+ so remember what happened before is
+
+1270
+01:19:11,200 --> 01:19:16,520
+ I have some rotation matrices that describe my data as well
+
+1271
+01:19:16,520 --> 01:19:18,000
+ as possible.
+
+1272
+01:19:18,000 --> 01:19:21,200
+ In the simple case, they ended up just landing--
+
+1273
+01:19:21,200 --> 01:19:25,320
+ in the noise-free case, they landed directly on the circle.
+
+1274
+01:19:25,320 --> 01:19:26,040
+ OK.
+
+1275
+01:19:26,040 --> 01:19:28,620
+ With noise, they might move away from the circle a little bit.
+
+1276
+01:19:28,620 --> 01:19:31,400
+ The circle pulls them back.
+
+1277
+01:19:31,400 --> 01:19:34,240
+ If you change the circle into a disk,
+
+1278
+01:19:34,240 --> 01:19:36,400
+ then there's one type of noise you reject very well.
+
+1279
+01:19:36,400 --> 01:19:39,400
+ If you're going outside the disk,
+
+1280
+01:19:39,400 --> 01:19:42,280
+ then your relaxation is tight.
+
+1281
+01:19:42,280 --> 01:19:43,880
+ If you're inside the disk, you're
+
+1282
+01:19:43,880 --> 01:19:46,600
+ going to possibly get things wrong.
+
+1283
+01:19:46,600 --> 01:19:49,120
+ You're going to come up with rotation matrices that are not
+
+1284
+01:19:49,120 --> 01:19:50,920
+ proper rotation matrices.
+
+1285
+01:19:50,920 --> 01:19:55,560
+ The orthonormal vectors are a little too short, roughly.
+
+1286
+01:19:55,560 --> 01:19:57,560
+ OK.
+
+1287
+01:19:57,560 --> 01:19:59,960
+ So I know I haven't equipped everybody with that.
+
+1288
+01:19:59,960 --> 01:20:02,000
+ But I wanted to just make those connections.
+
+1289
+01:20:02,000 --> 01:20:03,520
+ That this picture I gave you before,
+
+1290
+01:20:03,520 --> 01:20:06,200
+ which I hope you did understand when it first came up,
+
+1291
+01:20:06,200 --> 01:20:08,480
+ actually is the lens by which you
+
+1292
+01:20:08,480 --> 01:20:10,280
+ can look at much more complicated versions
+
+1293
+01:20:10,280 --> 01:20:14,920
+ of the algorithm, where you can do things like attempt
+
+1294
+01:20:14,920 --> 01:20:22,080
+ to find correspondences at the same time as poses.
+
+1295
+01:20:22,080 --> 01:20:23,800
+ And they typically fall under the heading
+
+1296
+01:20:23,800 --> 01:20:27,760
+ of semi-definite programming type relaxations.
+
+1297
+01:20:27,760 --> 01:20:28,260
+ OK.
+
+1298
+01:20:28,260 --> 01:20:52,360
+ Of point cloud-- of point registration algorithms.
+
+1299
+01:20:52,360 --> 01:20:54,480
+ And the theory will say that they're
+
+1300
+01:20:54,480 --> 01:20:56,200
+ tight in some settings.
+
+1301
+01:20:56,200 --> 01:20:58,440
+ And that's typically the noise-free setting.
+
+1302
+01:20:58,440 --> 01:20:59,200
+ They're tight.
+
+1303
+01:20:59,200 --> 01:21:00,280
+ OK.
+
+1304
+01:21:00,280 --> 01:21:04,400
+ And when you get noise, they become loose.
+
+1305
+01:21:04,400 --> 01:21:08,720
+ So I think like 10% of you are happy with me for that.
+
+1306
+01:21:08,720 --> 01:21:10,640
+ Maybe in a couple years, you'll be like,
+
+1307
+01:21:10,640 --> 01:21:12,040
+ oh, it was worth him saying that.
+
+1308
+01:21:12,040 --> 01:21:13,120
+ But OK.
+
+1309
+01:21:13,120 --> 01:21:13,620
+ Good.
+
+1310
+01:21:13,620 --> 01:21:15,960
+ I said that.
+
+1311
+01:21:15,960 --> 01:21:16,440
+ All right.
+
+1312
+01:21:16,440 --> 01:21:19,880
+ So I think we did a pretty good job with our agenda.
+
+1313
+01:21:19,880 --> 01:21:20,760
+ Yeah?
+
+1314
+01:21:20,760 --> 01:21:23,320
+ So you guys know what ICP is?
+
+1315
+01:21:23,320 --> 01:21:27,280
+ Have some intuition about when it works, when it doesn't?
+
+1316
+01:21:27,280 --> 01:21:30,520
+ Some of the biggest sources of noise in our point clouds--
+
+1317
+01:21:30,520 --> 01:21:35,520
+ dropouts, partial views, outliers, and then
+
+1318
+01:21:35,520 --> 01:21:36,440
+ a little bit of noise.
+
+1319
+01:21:36,440 --> 01:21:39,000
+ But that's, I think, a small factor.
+
+1320
+01:21:39,000 --> 01:21:40,840
+ Hopefully, soft correspondences landed.
+
+1321
+01:21:40,840 --> 01:21:44,080
+ That was a pretty smooth transition, I guess.
+
+1322
+01:21:44,080 --> 01:21:47,480
+ And then there was a bunch of different algorithms.
+
+1323
+01:21:47,480 --> 01:21:51,480
+ The pairwise distance was a good one.
+
+1324
+01:21:51,480 --> 01:21:56,440
+ And this SDP relaxation is another powerful one.
+
+1325
+01:21:56,440 --> 01:21:57,000
+ OK.
+
+1326
+01:21:57,000 --> 01:21:59,120
+ I'll see you next time.
+
+1327
+01:21:59,120 --> 01:22:00,920
+ Good job.
+
+1328
+01:22:00,920 --> 01:22:04,280
+ [SIDE CONVERSATION]
+
+1329
+01:22:04,880 --> 01:22:08,240
+ [SIDE CONVERSATION]
+
+1330
+01:22:08,240 --> 01:22:11,600
+ [SIDE CONVERSATION]
+
+1331
+01:22:11,600 --> 01:22:14,440
+ (crowd murmuring)
+
+1332
+01:22:14,440 --> 01:22:24,440
+ [BLANK_AUDIO]
+

@@ -1,0 +1,1991 @@
+ I guess I didn't take off all the relative advertising things, but we'll have some funny
+ background.
+ Okay, good.
+ Hey, welcome everybody.
+ Thank you for coming.
+ Some of you I haven't seen, but I'm glad you're here.
+ Yes, so this is how it's going to roll.
+ I'm going to just mostly rifle through.
+ I think that'll keep us, I mean, we have a lot of great presentations to see.
+ It'll take us about the hour and a half, maybe a little bit over.
+ We have the room until five if we need it.
+ I want to leave space for questions, especially if you're here and you want to stand up real
+ quick if your video starts playing and people know that there's a chance to ask questions
+ right afterwards, we can do that.
+ But mostly I'm just going to sit and enjoy it with you.
+ So they're going to go right down the order from the spreadsheet, only the public ones,
+ as we said.
+ Please let me know if there's any audio or technical difficulties.
+ And remember to fill out your subject evaluation.
+ So okay, here we go.
+ Let the show begin.
+ Hi, everyone.
+ For my final project, I made a robot that can handwrite letters.
+ I chose this problem because handwriting is a universal skill, but it's something a lot
+ of people take for granted.
+ But having a robot that can handwrite actually increases accessibility.
+ It can save time and it can even be used in an educational setting, as we see on the right
+ here.
+ This image comes from a really interesting paper from the Georgia Institute of Technology
+ showing the usefulness of learning from demonstration.
+ For my specific implementation of this handwriting robot, I'm using the Ewa robot and the Shunk
+ Gripper hand to represent a pencil.
+ I have a cylinder in the image on the right, that's the object in yellow, and the writing
+ surface is going to be this big purple wall.
+ The pencil is actually welded to the robot's hand to simplify the problem a little bit.
+ Given this setup, the robot is presented with a string and then its task is to write that
+ string on the wall.
+ Here we have a couple pictures of the starting position.
+ The bulk of my project came with the motion planning, creating a trajectory for the robot
+ to undertake given the string.
+ I'll let this video, one example of the robot writing a string play while I talk about my
+ implementation.
+ So I actually created a list of key poses for each English letter, spaces and periods
+ that rely on the position of the previous character to determine the poses of the new
+ character.
+ I then used Drake's linear interpolation tool to create a trajectory based on these key
+ poses.
+ It might seem like curves are hard given that I'm using linear interpolation, so I actually
+ used a parametric ellipse equation and took sections of that to be able to create curves.
+ To render this text after it's written on the wall, I used matplotlib, which has a nice
+ collection of lines functions.
+ So I can check whether or not to render a line by seeing if one pose and the next pose
+ are both in sufficient contact with the wall, knowing that if they are, linear interpolation
+ would mean that the line connecting them should be rendered.
+ I can then use that to choose what to render and get these nice images on the right.
+ The bottom text is actually what the robot wrote in the video we just watched.
+ For future work, I could possibly extend my robot to be explicitly used in education,
+ perhaps waiting for a student to write a character after it demos it.
+ I could also use machine learning to switch from a static implementation of characters
+ to a new framework where the robot is able to teach itself characters.
+ Thanks for a great semester.
+ Awesome.
+ I don't see Isabella here, but I learned that I need to make it easier for you guys to get
+ rid of those stupid bins.
+ I apologize for that.
+ Everybody's got these bins that are completely irrelevant to their task and their simulation.
+ Sorry for that.
+ Yeah.
+ Yeah.
+ So, I mean, a little bit more, but it won't be as much as you think.
+ Right?
+ That's how slides.com rolls.
+ Yeah.
+ Good question.
+ Okay.
+ Here we go.
+ And somehow my auto-play is not...
+ Hi everyone.
+ My name is Sung Ho Yeon.
+ My final project is about playing piano with a robotic hand.
+ I hope you enjoy the presentation.
+ As an introduction, I want to present my result of the project first.
+ In this demonstration, the robot is playing the classic piano song, "Salute to Amour."
+ [music]
+ [music]
+ [music]
+ [music]
+ [music]
+ For the rest of the presentation, I will give you a very brief overview about the project.
+ The goal of this project is to manipulate the robot to play the piano based on the music
+ sheet input.
+ It is roughly consists of three major blocks, offline planning, dynamic simulation, and
+ sound generation.
+ While all three blocks are developed and implemented, this project has a strong emphasis on exploring
+ practical offline motion planning strategy.
+ Instead of covering all the details, I will highlight a few interesting points in this
+ project.
+ In constructing robot arm on Drake for simulation, I attached Allegro robot hand on Kuka Iwa
+ arm on Drake.
+ As a result, I got 23 degree of freedom robot arm shown in the center.
+ The virtual piano model is also constructed with a door hinge type of rotational joint
+ on Drake.
+ This is a brief summary of the offline trajectory planner.
+ Given the music sheet input, the trajectory planner generates time domain joint space
+ trajectories through finger key correspondence matching and inverse kinematics.
+ In order to find finger key correspondence, I formulate a simple heuristic optimization
+ algorithm where the correspondence is chosen by minimizing the sum of corresponding finger
+ key distance.
+ This approach is largely inspired from the point cloud key point registration approach
+ in ICP algorithm.
+ With chosen finger key correspondence, I formulated the inverse kinematics problem to find feasible
+ trajectories of the robot for pressing desired keys and moving from a chord to another chord.
+ The slide shows a simplified formulation of these inverse kinematics problems.
+ To describe an important formulation in pressing keys, I used fingers positions and orientations
+ as constraint for desired key contacts as well as palms clearance from piano for avoiding
+ undesired collision.
+ For contact mode switching, I used a simple heuristic such that I planned the contact
+ mode of each finger in offline planning phase and used that information to control the torque
+ gain of each finger depends on the desired contact state of them.
+ Through this project, what I really want to show is that even with very basic building
+ blocks of robotics, proper integration of these blocks would enable the robot to do
+ many wonderful things.
+ Thank you.
+ I don't mean to single you out, but he's right here if you want to, everybody wants to throw
+ a question at him.
+ Yeah.
+ [inaudible]
+ I'm the microphone, so I have to pass my...
+ It picks up for me when I walk, so I'm going to have to pass myself around.
+ Robust stacking of convex polytopes.
+ Robust object stacking is application in a variety of industrial settings.
+ Games such as Bandu demonstrate the human ability to perform stable stacking even with
+ challenging constraints and irregular objects.
+ Here's the static equilibrium problem formulation.
+ The main constraints are force balance, torque balance, and linear complementarity.
+ It is straightforward to set up a mathematical program to optimize most of these variables.
+ The hard part is developing a differentiable model of contact, which involves parameterizing
+ the contact points and non-penetration constraint.
+ To understand how our contact model works, let us introduce this scenario with two blocks,
+ one in free space and one above the table.
+ We treat the contact points as decision variables and initialize them inside the objects.
+ The four contact points are shown in red.
+ We also initialize separating hyperplanes.
+ We then jointly optimize over the contact points, hyperplanes, positions, and forces,
+ and show an example of the optimization process.
+ The blocks are now in static equilibrium.
+ Having written a complete set of constraints for static equilibrium, we perform the optimization
+ using the SNOPT solver and it converges.
+ We initialize the blocks in the equilibrium state and perform forward simulation.
+ The blocks fall over.
+ What went wrong?
+ Surprisingly, solving the static equilibrium problem as formulated resulted in an unstable
+ solution for nearly half of our trials, stacking just two cuboids.
+ The problem is that unstable static equilibria are admitted in our constraints.
+ When the blocks are initialized in unstable static equilibrium, numerical issues may result
+ in imperfect balance and tower collapse.
+ In practice, though, the solutions the solver finds are actually small perturbations from
+ static equilibria due to constraint relaxations.
+ These are not equilibria at all.
+ To resolve this issue, we consider the addition of an external torque robustness constraint.
+ Instead of solving for a single equilibrium, we solve for multiple instances of static
+ equilibrium problem.
+ Each instance shares object poses and hyperplanes, but has separate forces and witness points
+ to compensate for a different torque applied to each body.
+ We find that this formulation converges for 95% of two block stacking trials and all solutions
+ are stable during forward simulation.
+ This animation visualizes the witness points optimized to balance an external torque perturbation
+ of 4 Nm.
+ We apply four perturbations, one on each axis, to avoid unstable edge cases.
+ You can see the witness points spread out in a diamond around the center witness point,
+ which solves for the static case.
+ Previously, we showed results where we started close to the correct solution and solved locally
+ for equilibrium.
+ This strategy won't allow us to be able to automatically generate many novel towers because
+ we have to solve for each correct initialization by hand.
+ What if we want to automatically generate diverse towers, as seen on the right?
+ We could sample initializations uniformly.
+ However, we find that this never succeeds when there is more than one block.
+ To scale tower generation, we instead sample from smarter distributions.
+ Our strategies include sampling non-penetrating object poses and sampling contact points inside
+ the polytopes.
+ Now we show the optimization process.
+ Here are five generated structures.
+ We can see there's a reasonable amount of diversity, especially in the bottom two blocks.
+ Finally we show results for two additional convex shapes.
+ And we can see that the first two blocks didn't compute.
+ So this is a very good example of how we can optimize our model.
+ [INAUDIBLE]
+ Nice work.
+ To the people watching online, I'm sorry.
+ I will not get perfect audio from the middle of the room.
+ Yeah, it would be ridiculous.
+ For our final project, Nick and I investigated the task of uni- and bimanual use of a power
+ drill.
+ We were struck by the ability of humans to easily bimanually manipulate objects, which
+ may introduce coupled or contact instability.
+ The task of using a power drill is especially interesting, as instability may arise for
+ several different reasons.
+ Touching on a drill generates destabilizing torques.
+ Grasping the drill with both hands creates a closed kinematic chain, which may introduce
+ coupled instability.
+ And the drill itself generates destabilizing torques of its own as it rotates.
+ In this work, the task was accomplished by superimposing several controllers.
+ An impedance controller regulated the gripper translation and rotation.
+ A null space projected joint impedance controller resolved the redundancy.
+ A feedforward torque compensated for the mass of the drill after it was picked up.
+ And a torque compensated for the gravity of the EWA itself.
+ The impedances were chosen to be in a range achievable by a relatively strong human, 1,000
+ newtons per meter translationally and 100 newton meters per radian rotationally.
+ Minimum jerk trajectories smoothly moved the nominal position of the gripper between waypoints.
+ These waypoints were specified relative to the drill.
+ Using this approach, the system was able to move into stable contact with the ground and
+ generate a contact force of 32 newtons.
+ In the bi-manual case, the exact same controller was used for the first EWA.
+ After the second EWA makes contact, the Z component of its impedance was set to zero.
+ In this case, the second EWA only adds impedance to stabilize the task.
+ This is the block diagram for our simulation.
+ While it may seem overwhelming, there are a few points of interest that we would like
+ to call attention to.
+ As you can see here, we used the standard inverse dynamics controllers for our two EWAs,
+ but set the PID gains for the position control to zero, making these act as gravity compensation.
+ Part of the reason we chose to have no position control in the inverse dynamics controllers
+ was to have impedance set by our main controller to let it vary.
+ In the EWA torque controller, we run our control scheme mentioned in a previous slide.
+ The EWA torque controller output combines with the gravity compensation in the adders,
+ which are then passed to the actuation of EWA1 and EWA2.
+ We also have gripper controllers that actuate the grippers, and functions that compute the
+ rigid transform of the forward kinematics of each EWA to allow for easier computation.
+ In order to simplify the task and make the simulation faster, we chose to simplify the
+ contact geometry of the drill to a few simple shapes, instead of using the mesh.
+ On the left, you can see the visual mesh of the drill, next to the simplified collision
+ model.
+ On the right, you can see the drill and collision geometry overlaid on top of each other, showing
+ the decent but not perfect approximation of the geometry.
+ The inertia properties of the drill were also estimated.
+ To prove that we didn't simply hard code all the positions, and to prove that the null
+ space projection works, here are two videos showing the unimanual task with different
+ initial drill positions and different nominal joint configurations.
+ Good.
+ Any questions?
+ It looks like you had a little bit of the null space dance happening there, right?
+ Do you think that's just tuning, or do you think that's-- is there something missing
+ in the formulation that's letting you wiggle a little bit on the null space?
+ [INAUDIBLE]
+ Yeah.
+ Yeah, yeah.
+ [INAUDIBLE]
+ I think some of the ways that those things integrate through the system, through the
+ EWA controller that's there, I've seen those.
+ I think that's not just-- yeah.
+ I think those do pop up from some of the integration pipelines.
+ We wanted to actually keep them closed without adding null space to get the all the [INAUDIBLE]
+ I know a few people figured out that you had to turn off the stiffness of the controller
+ to do torque control.
+ And that's actually what you do on the real KUKA, too, because that's-- by default, it
+ wants to do both, and you have to just pretend that the position gains are zero to make it
+ work.
+ So that's great.
+ Great stuff.
+ OK.
+ Hi, everyone.
+ My name's Portia Gaethkel.
+ And my name is Julia Wyatt.
+ Our 6800 final project is a joint perception and manipulation system for multi-shaped peg
+ and hole tasks.
+ Our project is designed around a simple children's toy that we've all likely seen before, shown
+ on the left.
+ This is our system's representation of the same toy.
+ The task consists of recognizing differently shaped blocks and putting them together in
+ a single, single-piece.
+ The goal is to make the toy look like a toy, and to make it look like a toy.
+ So we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ And we're going to start with a simple toy.
+ >> Hi, everyone.
+ My name is Ben.
+ And I'm the lead developer for the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ And I'm going to be talking about how to use the robot.
+ So let's get started.
+ So let's get started.
+ So first we're going to start by looking at the first step.
+ We're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ And we're going to look at the first step.
+ So, this is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ This is a problem that we're going to look at.
+ >> Good morning.
+ I'm going to be talking about the first challenge.
+ The first challenge is object diversity.
+ The second challenge is partial observability.
+ The only observations are partial point clouds.
+ You must complete each scale in two seconds of simulator time.
+ The first challenge is to create a point cloud tree that updates state based on
+ incoming point cloud observations.
+ Our method processes the point cloud, uses the process point cloud to update
+ the state and behavior tree, calculates the desired joint positions using
+ inverse kinematics, and finally uses the PID controller to convert desired
+ joint positions to desired joint velocities.
+ We will now discuss how each of these steps are implemented for each scale.
+ The first challenge is to find the center point of the chair using the
+ principle components analysis.
+ We will now discuss how each of these steps are implemented for each scale.
+ The first challenge is to find the center point of the chair using the
+ principle components analysis.
+ We will now discuss how each of these steps are implemented for each scale.
+ The first challenge is to find the center point of the chair using the
+ principle components analysis.
+ We will now discuss how each of these steps are implemented for each scale.
+ We will now discuss how each of these steps are implemented for each scale.
+ Next, we discuss the details of our behavior tree for each task.
+ Next, we discuss the details of our behavior tree for each task.
+ To open the drawer, we go to the pre-grasp, grasp, and pull all the way out.
+ To open the drawer, we go to the pre-grasp, grasp, and pull all the way out.
+ We will re-grasp when the handle is lost from the gripper.
+ We will re-grasp when the handle is lost from the gripper.
+ We can do a similar thing to open the door, but the time constraint limited
+ the number of intermediate gripper poses we could select, resulting in a
+ lower overall accuracy.
+ Once we open the door enough, we will use the body of the robot to push
+ the door open.
+ To push the chair, we go to the back of the chair and push it towards the
+ To push the chair, we go to the back of the chair and push it towards the
+ target.
+ But because the dynamic of the chair is unknown, we might push it to an
+ unwanted direction.
+ We do this reactively by actively measuring the center of the chair while
+ we go and nudging it towards the center while we close.
+ We do this reactively by actively measuring the center of the chair while
+ we go and nudging it towards the center while we close.
+ For moving the bucket, we also have two strategies.
+ The first is to pick the bucket up with using two bone scrappers.
+ The other is to hug the bucket.
+ While the picking one has a much higher accuracy, it cannot pick the bucket
+ if the rim is too thick.
+ So in our behavior tree, we check how thick is the bucket and decide which
+ strategy to go.
+ Here are our results.
+ As you can see, we vastly outperformed methods that learned from
+ demonstrations.
+ Contrary to the learning methods, our method has no discrepancy between the
+ testing and training scores.
+ This is evaluated by the challenge two weeks ago.
+ This is our latest result using Drake to solve inverse kinematics.
+ The next step would be to look into the failure cases and adjust the
+ behavior tree to account for those failures.
+ We're also interested in using these controllers in a task and motion
+ planning setting to achieve complex non-horizon goals.
+ As a first step to that, we've implemented our manipulation policy on a
+ real-world mobile-based robot.
+ Thank you for listening.
+ [ Applause ]
+ >> We're going to go a little bit further.
+ We're going to go a little bit further.
+ You're going to hear a little bit more about the challenge and the
+ manipulation.
+ So how does it differ from the challenge?
+ How does it differ from the challenge?
+ How do you make it different from the challenge?
+ How do you make it different from the challenge?
+ How do you make it different from the challenge?
+ I wasn't pulling for that one, but that's good.
+ All right.
+ >> Hello.
+ This is wiping bot.
+ This is an optimization-based surface wiping approach.
+ I'm Drake.
+ >> And I'm Nishant.
+ To start off, we want to convince you that wiping is both an
+ interesting and useful manipulation problem.
+ It's useful because it's a good way to get rid of dirt that's
+ against the surface and also because of the planning problem of
+ which order to wipe various dirt locations in.
+ Wiping is also very useful because it's among the top requested
+ services by users of robots.
+ And a very important component of cleaning.
+ Okay.
+ So let's start off by talking about our simulation setup.
+ For actually wiping in this project, we choose to weld a
+ sponge directly to our EWA.
+ To simulate dirt, we leverage Drake's mesh painter functionality,
+ which lets us update the texture of one object when it comes into
+ contact with another object, namely our sponge.
+ Now, we were only able to do this for our dirt on our table.
+ And so dirt on our plates still has a simple particle-based
+ representation.
+ Okay.
+ So now that we have the simulation setup, let's talk about
+ actuating the robot.
+ For wiping, in addition to a simple IK-based position
+ controller, what we need is a hybrid force position controller.
+ Our first attempt at designing this, we did a PD controller on
+ X, Y, and Z and output zero torque on RPY.
+ But this didn't work for seemingly obvious reasons in
+ hindsight.
+ So we decided to implement a PD controller on roll, pitch, and
+ yaw.
+ However, while this did better, it still didn't work because of
+ the circular difference property of angles.
+ So this makes a naive P controller on RPY bad.
+ So we settled for a simple D controller on RPY.
+ And this produces a great trajectory that keeps constant
+ force contact with the table, just like we need for wiping.
+ Now that we have a hybrid force position controller, we need to
+ generate a trajectory for our wiping motion.
+ We took four different approaches for generating this
+ trajectory, ranging from a naive approach to where we assume
+ that the dirt locations is just our trajectory.
+ So we'll go from dirt location one to two to three, to four, to
+ so on and so forth.
+ But as you can see, this may lead to unintelligent behavior
+ with respect to the displacement of the robot.
+ So we also formulated this problem via constraint
+ optimization problem, which tries to minimize the
+ displacement of the robot while also satisfying strict
+ constraints and threshold constraints with respect to the
+ dirt location.
+ Now that we have a simulation, a hybrid force position
+ controller, and a wiping trajectory that we want to move
+ along the table, we can now talk about our overall control
+ strategy.
+ How it works is from an initial configuration of a gripper, it
+ moves to a location on the table using pure position control.
+ When it's at that location, it then switches into our hybrid
+ force position controller, which moves along our wiping
+ trajectory that is given by our optimizer, while maintaining a
+ force in the Z direction that is weak enough to allow for moving
+ along the XY direction, while also strong enough to make sure
+ that our plate doesn't move when we're doing the wiping
+ motion.
+ To conclude the project, we set up a simulation in PyDrake in
+ order to simulate the table, the plate, the gripper, and the
+ dirt.
+ We also made a controller that uses pure position control for
+ navigating and hybrid position control for wiping.
+ And we generated trajectories via different optimization
+ approaches for our controller.
+ And then finally, we evaluated our trajectories on a set of
+ experiments.
+ Thank you.
+ [ Applause ]
+ >> I think poor guy just left like a minute before I started
+ this video.
+ And I do know it's going to be four, so if people have to
+ leave, I understand.
+ But we're going to keep going.
+ >> Hi.
+ We are Alex, Pete, and Anand.
+ And we're the team that developed the first-ever
+ programmable method for certifiable collision-free
+ motion planning.
+ We introduced a system of 2D robot arms with three degrees
+ of freedom in total, depicted on the left, for which we can
+ visualize the configuration space.
+ The system consists of a one-link serial manipulator in
+ green and a two-link serial manipulator in red and blue,
+ surrounded by a bounding box.
+ On the right, you can see a rational parametrization of the
+ configuration space, where the red region contains all
+ configurations that are not in collision.
+ When we change the joint angles of the robot arms, the green
+ sphere moves to the corresponding location in
+ configuration space and changes its color to yellow when the
+ arms are in collision.
+ While sampling-based methods, like the rapidly exploring
+ random tree on the left and the probabilistic roadmap on the
+ right converge quickly for this example, the paths are
+ typically jerky and require post-processing.
+ More importantly, these methods require significantly more
+ samples and a non-trivial amount of parameter tuning when
+ scaling up to higher dimensions.
+ To get smooth paths, like from trajectory optimization, while
+ keeping probabilistic coverage, we focus our attention on
+ set-based methods instead of point-based methods.
+ The idea in the set-wise decomposition approach is to
+ clear entire regions as collision-free instead of only
+ individual samples and edges.
+ In our project, we use the Iris algorithm adopted for
+ configuration space to decompose the collision-free space into
+ convex polytopes.
+ In broad strokes, the algorithm starts off with a chosen seed
+ location and tries to grow the largest possible collision-free
+ polytope where its size is measured by the volume of the
+ maximal inscribed ellipse.
+ It does this using nonlinear programming.
+ This can be repeated for multiple seed points and the
+ resulting regions can then be used for collision-free motion
+ planning by solving a shortest path through graph of convex
+ sets problem.
+ There's a renewed interest in this formulation in the robot
+ locomotion group at MIT because of a recent breakthrough.
+ They had in solving these kinds of problems.
+ They kindly provided us with example implementations of both
+ Iris and the shortest path problem.
+ But due to the fact that we are using nonlinear programming
+ and the resulting formulation only provides locally separating
+ hyperplanes, not all generated regions are collision-free.
+ This in return can be exploited by the shortest path program,
+ which can lead to collisions.
+ We therefore need a method for identifying, violating, and
+ we now present the problem formulation we use in order to
+ certify when Iris regions are collision-free.
+ First, recall that two convex bodies are collision-free if and
+ only if there exists a separating hyperplane between them.
+ If we suppose that all of the collision bodies are convex
+ polytopes, we can pose the search for this hyperplane as an
+ SVM problem using quadratic programming.
+ However, we want to find a plane for all configurations in a
+ given region.
+ To do this, we start by constructing a plane for all
+ configurations in a given region.
+ To do this, we start by converting the trigonometric
+ functions defining the positions of each vertex into a rational
+ function using the stereographic projection.
+ We introduce two polynomials, a(t) and b(t), which will give
+ hyperplanes for different values of the configuration.
+ Therefore, we want to search for polynomials a(t) and b(t),
+ which satisfy these two inequalities for all t in the
+ Iris region c(t) less than or equal to d.
+ How does one do this?
+ The answer comes from Putner's positive Stellensatz, which
+ states that a polynomial p is positive on a set if and only
+ if it can be decomposed into polynomials s, which are all
+ sum of squares, summed with the set itself.
+ These polynomials are called multiplier polynomials.
+ This theorem gives the following program, which is a
+ sum of squares program.
+ SOS programs can be solved in polynomial time, and we exploit
+ this to search for the polytopes.
+ If the program finds a violation of the region, it is
+ not always obvious that we wish to discard it.
+ Violations can be fairly minor, and so we consider
+ slightly tightening the constraints, which corresponds
+ to shrinking the regions.
+ This minor adjustment to the previous program finds the
+ smallest tightening, which certifies the region.
+ Unfortunately, there's a bilinear between the
+ multipliers and epsilon, and so it is non-convex.
+ Therefore, we suggest alternating between searching
+ for the planes and multipliers and tightening the constraints.
+ Using this program on our simple example as before, we
+ have allowed our program to edit the original iris regions
+ to be guaranteed to be collision-free.
+ We show the separating hyperplanes between the active
+ links in this example.
+ The red plane separates the blue and the green links,
+ while the green plane separates the red and the green links.
+ While all these methods can be scaled up to realistic
+ examples, we note that planning through iris regions has the
+ advantage of generating smooth trajectories natively.
+ These trajectories are guaranteed to be collision-free
+ along the whole trajectory, rather than just the sample points.
+ Additionally, it requires less tuning of hyperparameters.
+ However, we note that this technique is not a cure-all,
+ as iris and the shortest path formulations are sensitive
+ to the seed points and the connectivity of the resulting regions.
+ Additionally, our current implementation of the certifier
+ is quite slow, limiting scaling, though we are confident
+ this can be fixed.
+ [applause]
+ We have to do quick questions at this point, but these guys are here.
+ Anybody have a quick question?
+ I have tons of questions, so I'm going to save mine until after.
+ [laughter]
+ Okay, I'm going to keep going.
+ Hi, I'm Andy Wing, and today I'll be presenting
+ the stacking plot.
+ Let's set the scene.
+ So I was thinking about what project to do, and I sort of
+ saw a p-set lying there, and I was like, well, wouldn't it be cool
+ if a robot could do a p-set for me?
+ I saw the door-opening p-set, and thought about it, and I was like,
+ well, that's not really possible.
+ So if we can't make something that college students can do,
+ what if we made something that babies can do?
+ Well, what do babies do?
+ They crawl around, they call, they cry out quite a bit,
+ they eat Legos.
+ So I went, okay, what if we made a robot that can build Legos,
+ that can assemble Lego structures?
+ Now the challenge was really just, how am I going to turn that thing
+ on the left, the stack of Legos, into an actual structure?
+ Let's set the problem.
+ So first, robots don't really have the creativity to build
+ Lego structures.
+ So this creativity is going to be brought in by a human,
+ and it's going to be brought in via the form of a Lego blueprint.
+ So if you look at the bottom left, this blueprint is going to be
+ provided to the stacking bot, and it's also given sort of
+ a list of what pieces to put first, so an assembly order.
+ And the reason for this assembly order is to prevent some really
+ difficult situations where like pieces that are placed
+ don't have bases yet.
+ Second, we're using modified Legos, so the pegs have been reduced
+ from 0.0048 meters to 0.004 meters,
+ and this allows for easier attachment.
+ And finally, we're only considering simple structures,
+ where we're only considering things on the top right
+ with the stable attachments.
+ We're not considering the other two cases.
+ Now, for implementation, the actual Lego placement needs
+ to be extremely precise.
+ So initially, I wanted to try using forward kinematics.
+ This actually failed, and instead I decided to use inverse
+ kinematics for greater precision.
+ Here, we use a quadratic cost on the distance from the
+ comfort position.
+ This was inspired by the door opening problem, and similarly,
+ we're going to box the gripper position within a desired
+ position bounding box, and this allows us to ensure that
+ the gripper position is where we want it to be.
+ For a general motion plan, we can't sort of just like tell the
+ arm to go to the Lego and then close it and then bring it
+ to the desired position.
+ We actually need a more divided plan, where we move above
+ the Lego, descend, grab the Lego, raise it, and repeat the process
+ to set it down in the desired position.
+ Now, for the main challenge.
+ So when I actually tried to use inverse kinematics on sort
+ of like the eight positions shown here, it caused a lot
+ of wild movements and instability.
+ So, for example, it would sort of create these really wild
+ joint movements between different positions, and as a result,
+ it'd sort of get tangled up and it'd be really difficult
+ to progress to other positions, also collide with a lot
+ of other Legos.
+ So I, taking inspiration from the door opening problem
+ once again, decided to divide this up into a lot
+ of intermediate positions that you can sort of see
+ on the top right here, where for maybe like a lower action,
+ it's split into five or 10 different intermediate positions
+ that it travels to, which allows for these minimal joint
+ movements in between each position.
+ Finally, with this established, it's really hard to move
+ through the center of the arm.
+ So if you consider moving from the one position
+ to another, sometimes that's going to cross the central
+ axis of the arm, and this actually is very difficult
+ to do and it gets the joints tangled up.
+ So instead, I decided to move to a designated reference
+ point, rotate to another designated reference point,
+ then move from there to the final position.
+ And you can sort of see that arc motion occurring
+ on the top right.
+ And finally, I decided to have a variable bounding box
+ so that when it lowers, you can see it's really precise
+ and close to the pose that it's meant to be in.
+ But when it's moving, it doesn't need to be so precise.
+ So you can see it's not fully following the pose
+ that it's been provided.
+ So just for a quick demo of what ended up happening,
+ this is arranging the pyramid that I showed at the very start,
+ and this has been sped up like maybe 10 times.
+ You can see it's just putting each block,
+ and you can see it's following the arc motion described
+ to prevent the joints from being caught up.
+ It's a little hard to tell because of the low resolution,
+ but it's sort of stacking each block pretty well.
+ And finally, as it places the last block,
+ the pyramid is complete.
+ For some future works, I originally
+ wanted to use reinforced--
+ OK, and we got apparently a room booking thing
+ happening here, so there's a small chance we'll
+ pick up and move next door, but hopefully not.
+ So let me keep going and be optimistic.
+ Hello, everyone.
+ Our project is titled Fast Online Search and Retrieve
+ Using Learned Spatial Arrangements of Common Objects.
+ So let's break that down.
+ Imagine a messy but structured environment,
+ such as a kitchen.
+ In your kitchen, you have your shelves, your cupboards,
+ and your counters, and oftentimes, people
+ will store the items in their kitchen in an organized way.
+ For example, I might like to have my condiments
+ on my shelves and my cups on my counters.
+ So maybe this information could be useful for us.
+ Imagine the following situation.
+ It's Kevin's turn to make dinner again,
+ and his food is awfully unseasoned.
+ So maybe my robot can help me find my hot sauce.
+ So the robot might know from past experience
+ that the hot sauce is usually on the shelf, which
+ is usually above the sink, and can use these associations
+ to search for and retrieve my hot sauce.
+ The robot doesn't know where the sink or the hot sauce
+ or any of the items are just yet,
+ but it knows that if it sees the sink or the shelf,
+ it must be close to the hot sauce,
+ and will guide the search in that direction.
+ OK, so let's talk a little bit about our approach.
+ So given that we have associations between objects,
+ but we don't initially know the locations of any
+ of the objects in the scene, the question
+ is, how might we search for a target object?
+ And so the first thing that we can do
+ is we can partition our space into a 3D grid of cells,
+ and then from here, we can run a few standard algorithms.
+ So for example, one of our initial ideas
+ was to formulate a graph search problem, where
+ basically each of the grid cells is a node in the graph,
+ and we could use an algorithm like A* to search over the space
+ and use our associations as a heuristic to guide the search.
+ However, we decided not to pursue this algorithm,
+ because in order to explore the nodes in the graph,
+ the robot needs to physically visit
+ the corresponding locations in 3D space, which
+ can be quite expensive.
+ And so instead, we decided to go for a grid search algorithm.
+ So the way that the algorithm works
+ is that we essentially define a belief, which
+ is a probability value which we associate
+ with every cell in the grid, and it defines the probability,
+ given the robot's current knowledge of the scene,
+ the probability that the target object
+ is located in that grid cell.
+ And so what our robot does is, until the target is found,
+ it will choose a cell to move to and observe using IK and RRT,
+ and then it will make an observation
+ and then update the belief.
+ So for example, if the robot sees an associated object,
+ it will increase the belief values,
+ and if the robot sees an object that is unassociated
+ or it sees empty cells, it will decrease the belief values
+ at those locations.
+ So how do we actually solve for these associations?
+ Well, in our project, we consider them to be 0, 1 values
+ for every--
+ values ranging from 0 to 1 for every pair
+ of objects in the scene.
+ And so for example, at a high level,
+ the way we collect this data is we simply
+ sample a bunch of views, and we basically
+ collect the data as to which objects
+ are located near each other.
+ Our experiments are as follows.
+ We run our search in a complex environment
+ with many bins and shelves where certain items can
+ be located randomly with high or low probability.
+ Additionally, there are some walls that obstruct the views.
+ We compare our approach with random search,
+ as well as grid-space search without associations.
+ But it also collects information about the scene
+ but cannot leverage associations to guide the search.
+ All right.
+ So here's our setup in action.
+ A robot tries to find a can of tomato soup
+ among all the clutter, and the only perception it has
+ is a camera attached to its end effector.
+ Before we arrived at our cool solution with associations,
+ we tried both random search and grid search
+ without associations.
+ As you can see, random search fails
+ to converge on a good strategy and essentially
+ makes arbitrary movements.
+ And the grid search without associations,
+ while it does better, it doesn't have any knowledge
+ about the spatial arrangement of objects.
+ So we have to expect it to search the entire space
+ before it can find the solution.
+ By contrast, here's our method with grid search
+ and associations.
+ On the left, you can see visualizations
+ of our goalie space as 3D plots.
+ And if we play the video, you can see the robot first
+ move into a neutral position before looking
+ to the top of the scene, where it catches
+ a glimpse of the cupboard, which is tightly associated
+ with the tomato soup.
+ So it goes to investigate the cupboard.
+ It performs a few other actions before finally realizing
+ that the tomato soup is at the bottom of the cupboard,
+ where it currently finds the solution.
+ Along the way, we encountered several unexpected
+ tactical challenges.
+ For example, IK's gaze constraint
+ did not come out of the box accounting for occlusion.
+ So we had to attach a cylinder to the end of the end effector
+ to ensure we have direct line of sight with our target.
+ Regarding the algorithm, we observed several problems
+ in the initial stages of testing that we tried to address
+ using the following three measures.
+ First, to account for the trade-off between runtime
+ and resolution, we adjusted the grid size,
+ the barcodes for titation.
+ To avoid nonsensical actions, we adjusted the goalie space
+ prior, and to prevent weak association propagation,
+ to avoid having our goalies explode and vanish,
+ we had to modify our update rule.
+ To make such a system more useful in the real world,
+ we'd first like to investigate moving occluding objects out
+ of the way by some kind of online interaction,
+ and of course, to make sure to test and learn
+ over more environments.
+ That wraps up our presentation.
+ Thank you for watching.
+ Super good.
+ I have to power forward, but that was super impressive
+ and probably the most objects I've ever seen in Metcalfe.
+ Today, we are going to teach you how you can throw
+ like you catch.
+ For that, we have developed an end-to-end robotic throwing
+ and catching system.
+ Robots have started to improve efficiency,
+ increase productivity, and enhance human experiences.
+ Warehouses and manufacturing is a prominent application
+ that we've identified to move objects around
+ and more efficiently and safely than humans.
+ Enabling robots to both throw and catch with one another
+ would expedite the process of obtaining particular packages
+ or materials and moving them from one location to another,
+ as shown on the left, versus our system on the right.
+ Our catching method has four main components.
+ The first is pose filtering, then KUKA arm trajectory
+ planning, KUKA arm closed loop control,
+ and then the gripper trajectory planning and control.
+ The first step is pose filtering.
+ We assume that we have perfect knowledge of the ball's
+ trajectory from when it's launched to when it hits the
+ ground.
+ We then take these poses and filter them based on the ones
+ that are reachable by the KUKA based on joint position
+ and velocity constraints.
+ And then we reorient these poses so that their z-axis
+ aligns with the velocity vector of the ball.
+ We then take the longest segment of reachable poses
+ and use this as the region of poses where we catch the ball.
+ Once we've determined this catching region,
+ we re-sample time steps such that the arm arrives at the
+ ball's positions before the ball gets there.
+ Eventually we converge such that the ball and the gripper
+ coincide at the same time at the same locations.
+ It's during this matching period when we are able to close
+ the gripper and catch the ball.
+ And after that, we decelerate and come to a pause.
+ Even though we have now re-sampled the times,
+ we are still asking a lot from our system.
+ Because, I mean, after all, our robot arm is trying to
+ catch, like someone is using chopsticks, a sphere.
+ That is really hard.
+ So we have to get the most out of our system.
+ For that, we have figured that we don't only need the desired
+ state, like the joint positions and velocities,
+ but also the desired acceleration to get the most out
+ of the EWA inverse dynamics controller.
+ For that, we have chosen to use a differential IK system
+ that outputs the desired joint velocity so that whenever we
+ integrate that or take the discrete derivatives,
+ we get nice and smooth integrals and derivatives.
+ To make this even better, we are making this closed loop
+ so that we feed in the measured joint positions back into
+ the differential IK system.
+ The final component is defining the gripper controller
+ and trajectory.
+ We can then make the gripper start closing the ball once it
+ matches its position and close before the arm reaches the ground.
+ This, however, wasn't sufficient.
+ We noticed that the gripper would sometimes close at the
+ right time, but still wasn't able to catch.
+ To fix this, we actually increased the KP gain to the
+ upper limit so that it was able to grasp the ball much harder.
+ On the next slide, I'll show the video of the gripper
+ actually catching the ball in slow motion.
+ Here we can see that the arm gets to its initial position
+ and waits for the ball to fall a little bit more.
+ Now it starts to follow and match the ball as it catches.
+ On the next slide, you'll see a couple more examples in
+ normal speed.
+ On the left, you can see that the gripper seamlessly
+ catches the ball.
+ On the right, you can see the initial condition of the ball
+ is far on the left, but it's still able to catch it on the
+ right.
+ >> So now that we have figured out how to catch very
+ reliably and we have developed a nice stack to generalize
+ that to a set of many different initial conditions, we're
+ wondering how to throw.
+ Whenever we played our video backwards, we noticed, huh,
+ this kind of looks like throwing, right, even though we're
+ doing catching.
+ So we figured, hey, can't we just, you know, give our
+ system a desired position and velocity where we want to
+ throw to?
+ Just reverse the velocity and plan for catching and then
+ take that plan and reverse the poses and, you know, the
+ times and just throw it along the trajectory.
+ The answer is, yes, we can do that.
+ Look at that throwback.
+ And that also enables us now that we can do throwing and
+ catching that we can pass the ball and throw it back and
+ forth between two robots.
+ >> One of the main limitations of our system is that we
+ assume we have perfect pose and velocity estimation of the
+ ball, which isn't feasible in real time.
+ So in order to make this work in the real world, one of the
+ things we'd have to do is build a perception module which
+ does pose and velocity estimation and creates a closed
+ loop trajectory update system.
+ So now we are only able to catch uniform spheres and we'd
+ like to increase our system to be able to catch any
+ geometric shape with non-uniform densities as well.
+ >> Further for the throwing, it is more relevant that we
+ also take an account for non-linear dynamics.
+ Like the contact force doesn't drag so that whenever we
+ throw it back, we actually get it to the position where we
+ want it to.
+ Thank you.
+ [ Applause ]
+ >> Super good.
+ Ria and David are here, I see.
+ I love the drag, little aerodynamics coming in from the
+ aero-astro.
+ We're on borrowed time.
+ We have a room overbooked so I'm going to power through.
+ But please ask them if you -- this one, Brandon is not here
+ so I'm going to advance.
+ >> Hi, I'm Michael Fernandez.
+ This is my final project, a robotic pipeline for the
+ box and blocks test to be used in the evaluation of advanced
+ robotic prosthetic arms.
+ Mobility impairments significantly decrease someone's
+ quality of life.
+ They hamper their ability to do activities of daily living
+ and lessen their independence.
+ Amputees are one group of people who have mobility
+ impairments.
+ To analyze the severity of someone's impairment, various
+ dexterity tests are used.
+ One common test is the box and blocks test, which I will
+ demonstrate here.
+ In the box and blocks test, there are a number of blocks on
+ one side of a barrier and then there's a goal region on the
+ other side of the barrier.
+ The objective of the person completing the task is to move
+ the blocks one at a time from one side of the barrier to the
+ other.
+ Completing this task requires a high degree of dexterity and
+ also a high cognitive load in planning how to move the blocks.
+ So I decided to implement the box and blocks test in an
+ automated fashion in Drake for the robotic manipulation final
+ project.
+ Now I will discuss how it went.
+ The project consists of four modules, the simulation setup,
+ the perception pipeline, a motion planner, and then the
+ actual arm controller.
+ Here we see the simulation setup.
+ On the left is the random block positions above the starting
+ region and on the right are the settled blocks with the
+ prosthetic arm and the camera loaded in frame.
+ This is the perception pipeline.
+ We start with a depth image, which is masked to get the
+ pixels the appropriate distance from the camera, then eroded to
+ separate any blocks that might be touching before flood fill
+ segmentation is used to identify each block uniquely.
+ After segmentation, the center of mass of each block and the
+ corners are found, which will be used in pose estimation.
+ The key points and the depth camera intrinsics are used to
+ project the positions of the blocks from the camera frame
+ into poses in the world frame.
+ The results at the end of the perception pipeline are shown
+ as mesh cat triads in the image here.
+ The block pose is used as a key frame for motion planning.
+ The other frames include a starting position, pre and post
+ pick and a drop location.
+ The full trajectory is calculated using linear interpolation
+ and quaternion slurp.
+ The output of the motion planner is visualized here in 3D.
+ Finally, we attempt to execute the motion plan using a joint
+ level PID controller, such as is found on the Luke arm hardware.
+ This part of the project did not work very well because the PID
+ games are very difficult to tune.
+ With more time, an inverse dynamics controller may have
+ been deployed, but this would not be as accurate of a
+ representation of the hardware in simulation.
+ In this image, we see someone who uses the Luke arm in his
+ day-to-day life.
+ I hope that this simulation pipeline can increase the pace
+ of research in prosthetic control to help us grant more
+ independence to amputees.
+ Thank you for listening.
+ [Applause]
+ >> I hope so, too.
+ That's awesome.
+ >> Good, good, good.
+ You're hiding.
+ >> Hi.
+ I'm Miana Smith.
+ I'm working on robotic assemblers for discrete lattice
+ structures.
+ To automate the construction of larger scale voxel structures,
+ we want to use swarms of relatively simple robots that are
+ able to traverse the structure and place new blocks of
+ material.
+ I wanted to use this class project as an opportunity to
+ explore some variations of this type of system and methods for
+ having robots collaboratively manipulate objects.
+ I have a set of three modules, a wrist-style actuator, an
+ elbow-style actuator, and an unactuated voxel.
+ These can be assembled in Drake to form a variety of different
+ robot configurations.
+ I am using this five degree of freedom assembly as the basic
+ robot.
+ In the actual physical robotic system, the connection between
+ the robot and the voxel structure will be made with some
+ sort of on/off system.
+ For this project, I am modeling these connections as welded
+ joints in Drake.
+ This means that the condition for a successful grab is just
+ that the gripper face of the robot makes contact with the
+ target gripping face.
+ Let's look at a motivating scenario where the robot needs to
+ collaborate to achieve the desired goal.
+ I have two identical robots and a 1x2 voxel stack.
+ The robots need to move the voxel stack to the other side of
+ the divide, which is a wider gap than they can individually
+ traverse.
+ To do this, Robot 1 picks up the voxel and passes it to Robot
+ 2.
+ They readjust their position so that Robot 1 can grab the
+ opposite face of the voxel.
+ Robot 2 releases from the ground and is swung to the other
+ side of the divide.
+ Robot 1 lets go of the voxel stack, and Robot 2 places it on
+ the ground.
+ The robots then reattach to each other, and Robot 1 swings
+ Robot 2 back onto the original platform.
+ In the course of the overall trajectory, joints are welded
+ and un-welded a lot.
+ To accommodate this, I split the overall motion of the robot
+ into many subsections that are structured fairly similarly.
+ Let's look at the first handoff as an example workflow.
+ The multibody plant consists of the robots, which are welded
+ to the floor, and the voxel stack that is welded to Robot
+ 1.
+ The initial positions are set using the final positions from
+ the simulation of the prior segment.
+ Drake's inverse kinematics method is used to solve for the
+ joint configuration that satisfies the given constraints
+ and costs.
+ This process for generating the initial and final positions is
+ used for every motion segment, with occasional changes in
+ formulation, usually in terms of using costs versus
+ constraints.
+ Next, I find a trajectory between these points.
+ I tried out a few different strategies for this, but here I
+ use direct collocation with the collision-free versions of
+ the geometry, and enforce the initial and final states as
+ constraints as well as joint limits, and use proxies for no
+ collision constraints.
+ I take the state trajectory from this, and feed it into the
+ inverse dynamics PID controller, and then run the simulation
+ forward.
+ From there, we advance onto the next segment of the motion.
+ Another formulation I used for creating the trajectory is
+ running inverse kinematics on offset points from the target
+ set of keyframes the robot then advances through.
+ I would like to be able to adapt this project so that I can use
+ it as a tool for generating trajectories in joint space that
+ I can then run on a hardware version.
+ Thank you for watching, and thanks to the course staff for
+ a great semester.
+ [Applause]
+ >> That was super good.
+ So much came together.
+ That's awesome.
+ Congratulations.
+ That's great.
+ >> Hi, my name is Daniel, and for this project, my colleague
+ and I were exploring the idea of blind grasping using a low
+ inertia arm.
+ The main motivation being that excessive information can
+ quickly become unreliable due to occlusion, particularly in
+ clutter environments and poor lighting conditions.
+ Additionally, forced torque sensors usually only work well
+ in the quasi-static regime.
+ So the main idea was what if we can use purpose of the
+ information from a low inertia arm to find objects when these
+ other sensor modalities are unreliable.
+ On the system side, we create a robot model of the low inertia
+ arm that we plan on using on our custom simulator, which models
+ the dynamics for our system and visualizes the robot.
+ Then we build a simple Cartesian space trajectory follower.
+ However, since integration with hardware still requires a lot
+ of engineering efforts, we instead output the joint
+ trajectories directly into the hardware and add gravity
+ compensation and track them online.
+ Then we do some simple contact detection using the purpose of
+ the information.
+ We use a 6 degree freedom robotic arm with a simple 1 degree
+ freedom gripper, which all uses low gear ratio actuators.
+ And the arm in general is very light and most of the mass is
+ concentrated at the base, making it very suitable for high impact
+ and contact-rich situations.
+ We built a simple trajectory tracker using the pseudo-inverse
+ velocity controller that we learned in class, where we
+ receive a list of waypoints, and we calculate the velocity in
+ the world frame to reach the next waypoint, and then we do
+ some low-level joint velocity control.
+ Then we built a simple finite state machine in which we go to
+ an arbitrary set of waypoints.
+ We probe the environment with our gripper, and if contact is
+ detected, which we only check in the hardware, then we execute
+ a pre-computed local trajectory to try and grab that object.
+ So now moving on to the hardware.
+ On the left, you can see there's no gravity compensation.
+ So the mass of the arm overcomes the friction of the actuator
+ and falls to the ground when I let go.
+ On the right, you see where gravity compensation is
+ implemented.
+ The motors are exerting a torque to make it seem like the arms
+ are massless.
+ This is helpful for demonstration purposes and for better
+ trajectory following and position control.
+ Now we are going to incorporate everything to run the trajectory
+ output of the pseudo-inverse simulation.
+ So on the right, we can see the robot, instead of snapping to
+ the initial pose like it did in simulation, it takes a more
+ conservative and safe trajectory.
+ Then only after when it gets to that initial pose, it begins to
+ start following the horizontal velocity across the workspace
+ like you see in the simulation.
+ For contact detection, the benefit of using low inertia
+ actuator is the access to clean and sensitive current feedback
+ in the environment.
+ On the left, the gripper hits the 200-gram weight without
+ stopping and knocks it over.
+ On the right, by monitoring spikes in the current, we are
+ able to detect and stop before knocking the same 200-gram weight
+ over.
+ Now it does the same for the 100-gram weight.
+ However, it reaches its limit when it can only detect but ends
+ up knocking over the 20-gram weight.
+ Another feature that will be useful in the future is
+ playback of human guided trajectories.
+ On the right, we can see the robot does a great trajectory
+ following of the human demonstration on the left.
+ This could be very useful for authoring complex behaviors and
+ learning from demonstrations.
+ So we weren't able to fully integrate the contact detection
+ into our pipeline because of many hardware bugs and having to
+ build the pipelines from scratch.
+ We do plan on exploring ideas like rapid pick and place,
+ contact detection and clutter, and human robot safety.
+ That's all for the presentation.
+ Thank you, Russ, and all the TAs for an amazing class and
+ amazing semester.
+ [end]
+ [end]
+ [end]
+ [end]
+ [end]
+ [end]
+ [BLANK_AUDIO]

@@ -1,0 +1,1323 @@
+ OK.
+ Welcome back, everybody.
+ Let me apologize one more time about last Thursday.
+ I promised I wanted to be here, but thank you
+ for being flexible with me on that.
+ So today, we're going to do the plan from last Thursday.
+ And we're going to talk about a basic--
+ how do you get the robot moving to do some basic task,
+ moving a block from point 1 to point 2.
+ Just on the administrative side of things,
+ I hope everybody got the note that we
+ shifted the PSET schedule because of the PSET that
+ would be due Wednesday recovers material from here.
+ So there's no PSET due this Wednesday.
+ They'll both be due next Wednesday,
+ and the next one will be a little lighter.
+ The other quick administrative announcement
+ is that-- or for those of you in 6800, I hope most of you
+ went to the recitation last Friday,
+ and you'll be doing the journal clubs in the next recitations
+ this week.
+ I thought it was awesome.
+ Listening to the breakdown of how
+ CLIP organized their argument, and CLIP
+ being the research paper that we analyzed last week.
+ Even if people are in 843 and they
+ want to join for the next few weeks, you're welcome to come.
+ We've picked out a bunch of manipulation research papers.
+ We're going to do a journal club in the next two
+ sessions of the recitation.
+ It will be a bit on the manipulation content,
+ a bit on the rhetorical analysis of how--
+ is it a good paper?
+ Did they structure their argument?
+ I honestly got a lot out of thinking about how
+ I'm structuring my arguments.
+ Anyways, so that's all going on, and I hope it's working well.
+ And I'm actually very eager to hear your feedback
+ as you go through that.
+ So let me give you the basic story
+ for the next couple of lectures here.
+ So the goals are somehow modest.
+ We've got our KUKA.
+ We had it here last time, and I've got my little red brick
+ again today.
+ And all I'd like to do is help you guys plot a trajectory,
+ write the basic controller.
+ Thank you so much.
+ That's perfect.
+ Thank you.
+ So you can drive that KUKA to pick up a red brick,
+ grasp it, set it down on the other side.
+ It's going to touch, actually, a lot of pieces,
+ and it's going to lay the foundation for things
+ that we're going to use for a long time going forward.
+ In particular, I want to introduce you
+ to the idea of the spatial algebra.
+ So people-- I know lots of people
+ who I would consider to be excellent roboticists
+ who have a basic sense of kinematics.
+ But here's how it goes, roughly, is
+ that you'll be working on some kinematics problem.
+ Then they're everywhere.
+ Even if you're doing deep neural networks
+ for a posed estimation, you're going
+ to have a kinematics problem at some point.
+ And you're going to have a bug, and your vectors
+ are pointing the wrong way, or your robot's walking backwards,
+ or something's going wrong.
+ And you're just going to start flipping signs,
+ and taking your matrices, and putting them just like this.
+ And maybe if I multiply by that, or inverse that,
+ it happens to the best of us.
+ But there's-- well, not all of us.
+ So there are people out there who actually don't do that.
+ And they're like my dynamics friends.
+ I have some really good dynamics friends.
+ And these are the people that you call when
+ you're flipping matrices.
+ And they'll say, no, no, the answer is this.
+ And they get it right every time, every time.
+ So how do they do that?
+ So it could be that they spent years--
+ like they started off reading Euclid,
+ and then they went up to--
+ and they spent years with Goldstein, and whatever.
+ Maybe they did, but they didn't need to do that.
+ In fact, I don't think it would have helped them actually
+ get the bugs out.
+ What they have that most people don't have
+ is really good notation.
+ I swear, that's all it takes.
+ If you do a little bit of work and commit to the notation
+ early, then the notation will save you
+ from all of these problems down the line.
+ And the only thing that those dynamics friends are doing when
+ you come there with your mixed up signs and whatever
+ is that they rename your variables,
+ and they line them up, and the variables match,
+ and everything's good.
+ And then the spatial algebra will protect you.
+ So I swear, a little bit of work today
+ and embracing the basic concept will
+ save you down the line.
+ It will save you these late night,
+ my robot's not quite working, let's slip some signs,
+ which we've all done.
+ So we're going to introduce that in the context of moving
+ a brick around.
+ And it's going to go in a couple of pieces.
+ So first, we're going to think about just the notion of what
+ is a frame, what is an orientation, what
+ is a position in space.
+ There'll be many important frames on a robot.
+ I'm going to try to point on here instead of walking up.
+ There'll be many important frames on a robot.
+ In particular, we'll have a gripper and a gripper frame.
+ We'll have an object and an object frame.
+ And we'll think about grasping as getting the gripper
+ frame in the right relative orientation and position
+ to the object frame.
+ And then we're going to compose the bigger, richer behavior
+ by taking a bunch of those different position
+ relative frames of a gripper and just move it through.
+ At first, first pass here is just an open loop trajectory.
+ So it's just a trajectory that plays out in time
+ like a tape recorder that will move the hand
+ through some series of frames, basically, of moving frames
+ in order to pick up and drop off the block
+ at the desired location.
+ And then we're going to wire it all up to the arm
+ to turn that gripper plan sketch into a controller that's
+ going to move your robot around.
+ So that's our first pass at moving the robot.
+ So let's start off understanding some frames
+ and the spatial algebra.
+ So the basic notions we're working with here are very--
+ they're geometric, and they live in 3D, typically.
+ So the simplest concept is just a point
+ in some three-dimensional space.
+ Let's say P will be the position of some point of interest.
+ Let's have a frame of interest here.
+ A is some frame of interest or a point of interest.
+ And this P is the position of A.
+ Now, here's where-- so this is a superscript notation
+ I've used here.
+ Positions have to be written in some--
+ relative to something.
+ If I want to specify a position in space,
+ this is where the notation starts.
+ I want to say, what's the position of A
+ relative to some other point, B?
+ So the notation we're going to use for this
+ looks a little weird, but I'm going
+ to put a superscript that needs the character,
+ and then another superscript here, which is now
+ position of A relative to B.
+ So if I have two points, A and B,
+ then P is just the vector between them.
+ And this concept, for us, is going
+ to live almost exclusively as a three-dimensional vector.
+ It just lives in R3.
+ It means it's the real numbers, three of them in a vector,
+ so a three-by-one vector, if you will.
+ Now, there's one more bit of notation that we'll use here,
+ and this will be most of it, but we'll carry it
+ through for orientations also.
+ So I want to be able to describe the position of A
+ relative to B in an arbitrary reference frame.
+ So your position next to you is some vector,
+ but if I turn my reference frame here,
+ the vector is still the same length,
+ but the three numbers are different.
+ So I'm going to put relative to some other reference frame.
+ This would be, let's say, w would be--
+ I'll just say c, maybe, for now.
+ But so-- now, when you see all these weird lines
+ on the plots, that's me drawing the reference frame.
+ So the point-- a reference frame has a point at its center,
+ but it also has an orientation.
+ And the orientation is typically drawn
+ by drawing the x-axis, the y-axis, and the z-axis.
+ We always use a right-hand notation.
+ It's vehicle coordinates, if those of you
+ think about that.
+ And it's always that the x-axis is red.
+ So x, y, z goes to RGB, red, green, blue.
+ Simple.
+ So x, green, y, z.
+ So when you see those flying around,
+ that's telling you what the orientation of the frame
+ is in addition to the position of the frame.
+ The center-- the origin of the axis, of course,
+ is the position of that frame and the orientation.
+ There's a number of ways to represent it,
+ but it's visually drawn with these three axes.
+ Now, here's where we start to develop the basic algebra.
+ We can do it already with positions.
+ And the basic idea here is that positions
+ add if the frames match.
+ So if I can write-- so the standard sort of vector
+ addition here of having B going to A
+ and having another notion of A going to E,
+ that basic vector addition is allowed, is sound,
+ it works if the letters match.
+ And we're going to be throwing frames around like crazy.
+ And the name of the game is going
+ to be, how do I transform some position in my gripper frame
+ or my elbow frame or something into some other position
+ and the trick is I'm going to do algebra
+ to make the frames match.
+ Once the frames match, it just becomes trivial.
+ So this is sort of the basic addition operation is defined.
+ The algebraic inverse is defined.
+ If those of you that think about--
+ they have taken a class in analysis or even in algebra,
+ meaning modern algebra, you'll know
+ that you can make a basic set of rules that
+ define all the operations that form a complete algebra
+ on these quantities.
+ So the additive inverse is perfectly well defined.
+ The negative of that flips the signs.
+ OK.
+ Positions are the easy case.
+ Orientations are where everything gets more dodgy.
+ Again, hopefully the notation will save you
+ from flipping signs and the like.
+ OK.
+ There's a number of ways to represent orientation.
+ Let me name a few.
+ OK.
+ You can represent a relative orientation
+ with a rotation matrix.
+ You can do it with Euler angles, of which there are many.
+ But the familiar roll pitch yaw that you might have seen
+ or you've piloted an aircraft or something,
+ you know roll pitch yaw.
+ Quaternions.
+ OK.
+ In general, we're going to allow you to--
+ there's functions that will just let you go back and forth
+ in between them.
+ And you should use whichever is the right one
+ for your particular use case.
+ Unfortunately, there's no one representation to rule them all.
+ Different parts of the stack will
+ use different of these notations,
+ different representations.
+ But in the spatial algebra, we're
+ just going to call the whole thing R.
+ We'll say that the orientation of R relative to B--
+ of A relative to B, we'll call it R.
+ So this is just an orientation now.
+ You could choose to represent it on disk
+ in any of those formats.
+ I'm still going to call it R for the actual purposes
+ of the algebra.
+ And we don't define the addition operator here.
+ We define the multiplication operator here.
+ Operators, rotations, orientations multiply.
+ So orientations don't have an expressed-in frame.
+ You don't need it.
+ You'll come to appreciate that, I guess.
+ But I can tell you that the only thing--
+ A relative to B, you can turn your head around.
+ However you want, you can change your current frame.
+ And the rotations of A relative to B are the same.
+ So you don't need to worry about the expressed-in frame.
+ Just like we had an additive inverse for addition,
+ we have a multiplicative inverse for rotations,
+ for orientations.
+ I'll write it with an inverse like this.
+ Now, if you want to think about R as a rotation matrix,
+ then the inverse is really just the matrix inverse.
+ And life is good.
+ But again, I'm perfectly happy to define
+ the inverse for any representation of orientations.
+ We've abstracted a little bit away
+ from the underlying numerical representation.
+ We're just talking about the ability
+ to go back and forth between these rotations.
+ It happens that if you have a rotation matrix, a 3
+ by 3 matrix representing it, then actually,
+ because rotation matrices are orthonormal,
+ you can actually just take a transpose too.
+ But it's still equivalent to the inverse.
+ So the frame, all together, has a position and an orientation.
+ Together, we're going to call it the pose of the frame.
+ And we're going to use x, big X, as the pose of A relative
+ to B.
+ Now, there's another word that people
+ use a lot for this, which is transform.
+ I try to use--
+ and throughout, actually, Drake, we
+ try to use pose as the noun and transform as the verb.
+ English is a little--
+ you could use transform as a noun and whatever.
+ But we've made the decision that we're
+ going to try to be clean about it.
+ Pose is a noun.
+ Transform is a verb.
+ So again, inside here, we have the ability
+ to represent this on disk in a number of ways.
+ But we'll still be able to define some basic operations.
+ We can say, for instance, if I want to transform the verb,
+ I can put some points from one frame to another.
+ Let me be a little bit careful about this.
+ Let me just say one more bit of shorthand
+ before I start leaving off symbols and confuse something.
+ So there is one important frame out there,
+ which is the world frame.
+ So we'll define everything in the context
+ of some canonical frame, which actually always,
+ in my visualizations, you'll see very small red, green, blue
+ axes at the origin.
+ That's defining the world axis.
+ So we'll use a shorthand, which is basically,
+ if I write P of A and I leave off
+ the relative to or the expressed in frame,
+ then that will be shorthand for any time I've left it off.
+ The implication is that it's relative to some world frame.
+ Yeah?
+ [INAUDIBLE]
+ Thank you.
+ So the question is, what are A and B in this notation here?
+ A and B are both frames in this case.
+ So it's really the position and orientation
+ of A relative to the position orientation of B.
+ If it was just a point, then it doesn't make as much sense.
+ The pose is the difference of the frames.
+ [INAUDIBLE]
+ No.
+ So good.
+ So positions get expressed in.
+ But this similarly is safe.
+ Let me check that, actually.
+ I've got it here coming up.
+ I want to say the wrong thing.
+ [INAUDIBLE]
+ I've got it.
+ Well, we're going to get in a second.
+ Is there ever a case where you need the expressed in for frame?
+ I guess you do actually need the expressed in for frame.
+ Because the position can change.
+ I think you do need the expressed in for frame
+ for pose.
+ We'll see it exactly in the examples in a second.
+ OK.
+ So I can multiply.
+ I define a multiplication operator.
+ It takes my transform times a position.
+ And we'll transform the position from one frame
+ to the other frame.
+ I will write it more carefully.
+ Make sure I get it right.
+ This is a composition of the position encoded in that pose
+ plus the rotations encoded in that pose.
+ [WRITING]
+ So when I do a multiplication here,
+ it implies transforming both through the position
+ and the orientation.
+ Now, these poses also have a multiplicative inverse.
+ [WRITING]
+ But this time, the pose on disk is like--
+ you can represent it a handful of different ways.
+ But typically, it's not the matrix inverse.
+ So this is really just my notation for taking an inverse.
+ But the operation, although it's simple,
+ it's still a simple function of the elements of a matrix
+ representation of this, it's not just the matrix inverse.
+ A lot of times, we can represent this as a 3 by 4 matrix,
+ for instance.
+ Poses are also called rigid transforms.
+ So compared to the full--
+ if you've heard of homogenous transforms,
+ homogenous transforms also allow shear and scaling
+ and things like this.
+ But a rigid transform, which is just
+ changing between frames in the kinematics,
+ is only positions and rotations, no scaling or shearing.
+ OK, so we're going to use this stuff a lot.
+ It happens all the time.
+ Whether you're a perception person, a controls person,
+ a planning person, these things are core to manipulation.
+ One example, for instance, would be if you've got a camera,
+ like we did-- you saw the couple cameras were mounted around
+ our KUKA, right?
+ And each of those cameras are taking,
+ let's say, some depth measurements,
+ trying to find out where things are in the scene.
+ You have a camera in some frame.
+ The data coming into that camera are
+ going to be in the camera frame, naturally.
+ You've got multiple cameras in different frames.
+ If you want to coordinate all that data
+ into a common representation, then the core operation
+ is just going to be converting to some common frame, typically
+ a world frame.
+ You'll take all your data coming into this camera,
+ all the data coming in this camera,
+ multiply it by x, basically, to get it
+ into some common coordinate frame.
+ And you can put them together if the frames match.
+ You could do it in a gripper frame.
+ You could do it in a world frame.
+ The frames matching is what is going
+ to make everything stay OK.
+ Poses also multiply with the other poses, right?
+ All of these things connect.
+ And in the sense of--
+ I guess I went out of order here.
+ But in the sense of an algebra in the notes,
+ you'll see that I wrote out, really,
+ like this is the inverse--
+ this is the addition operator.
+ This is the additive inverse.
+ This is the multiplication operator.
+ There's this sort of n rules you need, which is not--
+ n is not large.
+ That will sort of completely define that algebra.
+ I find myself even looking back at the couple of bullets
+ in the notes as a very useful way to compose these things
+ to make sure you get it right.
+ Mm-hmm?
+ [INAUDIBLE]
+ Yes, so I did the shorthand here,
+ keeping them both in the world frame.
+ Everything's in the world frame.
+ But absolutely, the way that you change frames here,
+ you actually, with a rotation matrix,
+ use rotation matrices to express yourself in a different frame.
+ Yeah?
+ [INAUDIBLE]
+ Right, so if they were not in the world frame--
+ so if I had, yeah, c, d, and e, this
+ would not be a valid equation.
+ You would have to transform these things into the same
+ thing expressed in frame.
+ You can transform this through a rotation matrix, which--
+ that is, the basic operation is that rotations
+ will take one position and change it expressed in frame.
+ OK, so just get your thinking here.
+ So if you're in the gripper frame here,
+ g is the gripper frame, o is the object frame, which of those
+ is the possible value for o expressed--
+ relative to g expressed in w?
+ Right?
+ You know what?
+ I lied.
+ I made a very silly mistake here.
+ There's one other shorthand here that I want to make sure--
+ I jumped straight to the w.
+ There's one slightly different thing.
+ When I write that, actually, and I don't fill in this,
+ then I don't assume w.
+ If I put relative to g, then I actually
+ will assume that this is a g and only assume w if w is not here.
+ I really apologize for not getting
+ that right the first time.
+ So when I write that, I really want p o g g.
+ This one?
+ Yeah.
+ Yes, exactly.
+ Right.
+ So this one is implied that it's f.
+ So this would have to be an f.
+ And this actually, because it has
+ the position and the rotation, changes it to g.
+ The rotation that's inside this changes the expressed entry.
+ Good call.
+ OK, so you're in the gripper frame.
+ You're expressed in the gripper frame,
+ and you want the location of o relative to the gripper frame.
+ Yeah.
+ And x, y, z is RGB.
+ Yeah, two.
+ OK, anybody else?
+ Everybody says it's b.
+ OK.
+ If I change that and put the w there,
+ which I did exactly to remind myself to make sure
+ not to make that mistake, then what's the new answer?
+ I want to describe the vector from g to the object,
+ but in the world frame.
+ Robotics has spent a lot of time going like this.
+ I have some drinking straws that I tie together
+ to make something like this.
+ OK?
+ All right.
+ Getting that notation right, as I
+ proved by flubbing it a little bit, makes a big difference.
+ Yeah?
+ Yeah.
+ [INAUDIBLE]
+ Yep.
+ [INAUDIBLE]
+ Ha ha.
+ Good call.
+ I didn't make them big enough in this picture,
+ but they line up with the object frame.
+ Yeah.
+ There's a red line right there, and a green line right there,
+ and a blue line right there.
+ Can you see it just barely?
+ Yeah.
+ I should make those more visible.
+ Before I did a screenshot, they looked great.
+ Good call.
+ OK.
+ This is just the point that I hope you'll look at.
+ Really, there's just a list of positions
+ they had added at inverse.
+ Multiplications are defined.
+ Multiplications-- you can multiply two rotation matrices.
+ You can take the rotation inverse.
+ These are just all the rules of the game here.
+ I hope they will protect you.
+ So how would we-- by the way, if we
+ wanted to just go between those two frames--
+ so we saw there was a different answer for the two
+ different frames.
+ Is it OK to go over here?
+ Yeah.
+ OK.
+ If I have POG, and I want to go to PWOG in that picture,
+ for instance, then what do I have to do?
+ So I've got some vector between Charles and Rachel.
+ And I want to express it in some different frame.
+ You have to convince yourself that the positions don't
+ matter at all, actually.
+ But the same way that I can add vectors in any frame,
+ positions are invariant to the frame.
+ All I need to do is multiply the rotation, which
+ changes that relative frame.
+ That's one of the rules on the screen there.
+ And I did it the opposite way in my--
+ no, it's just fine.
+ But I could have taken inverse.
+ But let's just do the same thing so I don't catch myself
+ in a minute.
+ I'll write the G here to be careful.
+ And on that screen, the way that we could compute R,
+ you could think about building R as even
+ a handful of simpler rotations.
+ So if you were to look back at that example--
+ let me put it back up--
+ then you could actually think about this as the composition
+ of some simpler rotation about the z-axis by pi over 2
+ times some rotation about the x-axis of pi over 4.
+ These are approximate.
+ That's just an eyeball.
+ But if you think about taking my point in G,
+ how do I get it to be in the other frame?
+ Well, I've got to rotate the frames
+ to make the orientations of the frames match.
+ And you can do that by taking this and just working it
+ through these rotations.
+ The reason that's important is that if you need to somehow
+ write--
+ if you need to choose, let's say,
+ an approach for your gripper to that object,
+ then you're going to find yourself trying to define
+ a basic frame by, let's say, oh, I
+ want to maybe back off a little bit.
+ I'm going to rotate a little bit.
+ So you're going to be composing these rotations
+ with simpler elements.
+ So let's start putting that together into a plan.
+ That's enough with just thinking about frames
+ and how they relate to each other.
+ That's enough for us to start putting together
+ our basic plan sketch.
+ OK.
+ So there's going to be a bunch of useful frames
+ if we want to pick up the object.
+ So you can call them key.
+ They're important for-- let me just call them important frames
+ to not sound like that.
+ So there's going to be some object frame.
+ But I'm going to distinguish between the initial object
+ frame and the desired object frame, or let's say,
+ the goal object frame.
+ I've got a gripper frame.
+ I'll call it big G. I've got the initial one.
+ I've got maybe the orientation or the frame
+ that I want that is, let's say, the right grip to pick it up.
+ So let me call it G pick.
+ The frame my hand is when I'm actually grabbing the object.
+ But in fact, it becomes extremely common
+ and extremely useful to not just go--
+ if you want to somehow interpolate
+ from some initial position of your hand
+ to the place where you're picking up the object,
+ almost always we think about a pre-pick frame that
+ gets us sort of close but a little bit backed off
+ from the object.
+ And then we do a simpler approach.
+ That way you're not somehow interpolating all the way
+ from some different position into this frame,
+ possibly going through collisions as you do that.
+ So almost always we'll think about a pre-pick frame that
+ allows me to go--
+ when I transition from pre-pick to pick,
+ I can sort of guarantee I'm not going to slam into anything.
+ And similarly, I might back off, lift off the table
+ before I move away.
+ So I'll do it.
+ I'll have a G post-pick.
+ OK?
+ I'll have a G for where I'm going to place the object down.
+ And similarly, I'll have a pre and a post for that.
+ OK?
+ And that gets you most of the way there.
+ OK?
+ It's just sort of diagramming out a bunch of frames
+ through the space where we want our hand to end up.
+ I believe that I've done that on the next slide here.
+ So we're going to just move our hand
+ through a series of frames.
+ The way that we do that is by building up
+ just this set of possible frames.
+ OK?
+ Which I guess I didn't insert.
+ OK.
+ Comically, if you only do this, which
+ I did the first time I did it-- and I'll show the video
+ in a second here--
+ then there's one more thing that you need.
+ Anybody already see the problem with this that I missed?
+ I guess you can't.
+ But typically, I've got the object here.
+ I'll lift up a little bit to approach.
+ So my pre-pick will be just above my pick.
+ OK?
+ Same with the post.
+ I put this all together.
+ I ran my simulation.
+ And hilarity ensued.
+ What did I forget?
+ Yeah.
+ Clearance, right?
+ I went smash right into the side of the bin.
+ The fingers bent a little bit.
+ And then the brick went flying.
+ Right?
+ So maybe g for clearance is a good idea also.
+ OK?
+ Now, these are conceptually the frames.
+ I never represent o initial--
+ o is a frame.
+ So how do I represent o initial on disk?
+ I represent its pose, right?
+ So what I actually have is some pose of x initial--
+ of o initial-- x of o initial on disk, often in the world
+ frame, for instance.
+ OK?
+ So in the hand coordinates, a reasonable thing to do--
+ so if you looked at the hand coordinates--
+ let me put that picture back up.
+ OK, so you see the hands coordinate system
+ is centered right in the middle of the body.
+ Yeah, yeah.
+ Sure.
+ What would you say on disk?
+ I'm being a programmer, I guess.
+ Right?
+ So there's a slight gap between going from the math, right,
+ to what numbers am I going to use to represent that?
+ When I-- I'm being silly when I say on disk.
+ That's not common notation in the world,
+ or in robotics, or anything.
+ I'm just saying that if I wanted to actually implement this,
+ I need to choose a representation,
+ a numerical representation.
+ So o is a conceptual frame.
+ It can be represented in my--
+ on paper, or on disk, in my code with those numbers that
+ represent the orientation.
+ Thank you for asking.
+ [INAUDIBLE]
+ I mean, I think the pose, in some sense,
+ captures what o initial is.
+ But we think of o as being a frame which
+ defines the semantics of whether you can connect
+ two poses and the like.
+ But it's the pose x is the manifestation
+ that holds the position and orientation of that frame
+ relative to something else.
+ O, in some sense, is absolute, if you will,
+ but can't be represented because you have to somehow make
+ a pose relative to something else.
+ Yes?
+ [INAUDIBLE]
+ Basically, I have some bins.
+ And I'm going to-- instead of going straight from the pick,
+ straight across, I need to make sure I go nice and up and down
+ to clear the bins.
+ Otherwise, I'm going to smash into the bins on the way there.
+ So what is a reasonable--
+ you have to think about, given the language we have,
+ I want to somehow choose the position of the gripper that
+ would be a good choice for picking up the object.
+ There are lots of frames flying around in the world.
+ The natural one to write would be to say,
+ I either want to say the position of the--
+ or the pose of the gripper relative to the object,
+ instead of saying, come up with the pose in the world--
+ of the gripper in the world and the object of the world.
+ Why not do the relative frame, directly
+ from the hand to the object?
+ That's the simple place and the robust place
+ to write my objective.
+ [SIDE CONVERSATION]
+ [VIDEO PLAYBACK]
+ [SIDE CONVERSATION]
+ So if I have the position of the object initially,
+ and I want to figure out--
+ I want to somehow define my picking grasp,
+ I could choose whichever one's easier for me to think about.
+ I could think about writing in either direction.
+ But in this one, where I want to have the object initial
+ relative to the grasp, to the gripper,
+ then you can see the y-axis is the green axis.
+ I want it to be square in the middle of my fingers.
+ I want the object's center to be something
+ like a positive y value.
+ And x0, z0 seems totally reasonable.
+ So it turns out that choosing this to be something like,
+ I don't know, 12 centimeters is what we use in the code.
+ Puts it squarely right in my finger,
+ that the center of the square-- of the object
+ gets right into the center of my fingers.
+ Similarly, I need to come up with the orientation.
+ And the gripper frame is kind of annoying.
+ It's in this weird frame.
+ But if you want to be coming down from on top,
+ then a series of transformations and knowing
+ that the object is in a particular orientation,
+ the cube--
+ knowing that we have a canonical orientation for a little red
+ cube is something you will never get from perception,
+ because that's symmetric and the like.
+ But if we knew this, then for our simplicity for today,
+ we can define a relative orientation
+ so that the hand comes directly down on top,
+ with a handful of just simple rotations.
+ And you'll see that in the code.
+ So this together defines my pose.
+ I can, again, in the relative frames,
+ say that in order-- right before I do it,
+ I'm going to just back off directly in the gripper frame.
+ I'll do, let's say, negative y to define my pre-pick.
+ Maybe the same one works for post-pick.
+ You see?
+ And by just having that extra frame,
+ that shows that no matter where I'm coming from, I stop here.
+ And then that last little segment
+ is sort of simple and doesn't collide with the object.
+ My fingers don't go through the brick as I go.
+ So this pre-pick planning is very, very common.
+ People will do lots of interesting, complicated
+ algorithms to figure out how to move through space.
+ And then they'll just hand code the last thing often.
+ So that's a pretty cool--
+ you get pretty far with a little bit of notation
+ and the software that will let you go back and forth
+ between them without making mistakes.
+ Yeah?
+ [INAUDIBLE]
+ You see the-- yes, the question is, why did I put 0.12--
+ the 12 centimeters here?
+ My units are always metric in meters.
+ Why did I choose 12 centimeters and y-axis here?
+ So in the frame of the gripper, which
+ is the red, green, blue on the hand there,
+ if I want it to be in the middle of the fingers,
+ I've measured the fingers.
+ And I know that 12 centimeters is
+ from the center of the hand to the--
+ will put me in the middle of the fingers.
+ So that would be a point like here, roughly,
+ on that green line.
+ So I say, I want the center of the object
+ to be in the middle of the fingers there.
+ And similarly, I will make sure I'm
+ coming from the top with my choice of rotations.
+ OK, so the code attempts to make this easy.
+ You really just-- we take that same notation
+ we put on the board, and we turn this in code.
+ If I have P, B, A, C, I'm on the board.
+ I mean, I will write this with a subscript notation, B, A, C,
+ like this.
+ That's the way you take this superscript notation
+ and choose a symbol.
+ And this will, again, allow you to read the code
+ and see that I can only add positions if things match.
+ I can only multiply if things match.
+ I've seen robot software that demands
+ that every time you specify any point or any vector,
+ you also specify the frame.
+ And it programmatically enforces that you can never
+ add things that are in the wrong frames.
+ I think that can be super good.
+ But the burden, then, of every time you do anything simple,
+ you have to express your frame.
+ And then you've got two different concepts coming
+ from two different places.
+ And they-- oh, I didn't tell them the same frame name.
+ It tends to be a pain.
+ So in our world, we've chosen to have the code author make it
+ readable.
+ And we programmatically check sizes and other things.
+ But you have to not shoot yourself in the foot.
+ And then you can just assemble these.
+ The pre-grasp is, like I said, the rotation
+ I can make out of simple primitives.
+ And then I can just start building up my pick,
+ pre-pick, place, pre-place, and even my clearance.
+ The next step of that is to go ahead and specify the timing.
+ So I've now decided a bunch of important frames
+ that I'm going to move through, even key frames, if you like.
+ And I just need to say, how long is
+ it going to take me to go back and forth between them?
+ And that's simple enough.
+ I just listed out a bunch of times
+ for the different segments.
+ Sometimes they're just absolute times.
+ Sometimes, just for the initial one,
+ since I wanted my code to be robust so that it could go
+ from any initial pose to here, I just
+ scaled it based on the total distance between those two
+ frames so that I didn't make that somehow always happen
+ in two seconds.
+ Depending on how far I have to go,
+ I might go slower or faster.
+ This is what happens if you forget the clearance
+ constraint.
+ Beautiful plan from pick up, post pick up,
+ start moving across, boom, full physics simulator,
+ hands not happy, brick fell out.
+ It's going to keep trying because I'm doing an open loop
+ position trajectory.
+ And this is why we want you to prove in simulation
+ that things work before we let it go in the real robot
+ because that would either power down the robot or blow a fuse
+ or something like that.
+ And it happens often.
+ So it's interesting actually to ask
+ how do I interpolate between the different poses.
+ So positions, if I just say in time, I've got time of pick,
+ time of place, all my intermediate frames
+ specified in time.
+ And I have my position of my gripper,
+ let's say, figured out that I can--
+ through my math, I can put them all in the world frame.
+ I can figure out where my gripper needs
+ to be at all times.
+ And it's a three element vector.
+ Let me just plot the x component.
+ So the x component of this.
+ Maybe I've got a sequence like this.
+ How do I interpolate between them?
+ There's lots of ways to choose.
+ We're just going to do the simplest straight line
+ interpolation, which would be called a first order hold.
+ Sort of one of the simplest forms of interpolation.
+ First order, it's got one degree of freedom for this line,
+ the slope of the line.
+ Zero order would be--
+ you guys know the zero order hold
+ would be if I just went like this.
+ I just didn't interpolate with the line,
+ but I did some staircase.
+ I don't want you to run that on the robot.
+ That's not so good.
+ You can do higher order interpolations
+ to get nice curves through there.
+ The reason we're only going to do first order for positions
+ here is actually more because interpolating orientations
+ gets subtle.
+ So we're going to do first order for positions, which
+ we know how to do trivially, and first order
+ for orientations, which requires a little bit more care.
+ So how do you interpolate orientations?
+ Now, this is one case where your choice of representation
+ can make a big difference.
+ So some of those representations are easier
+ to interpolate than others.
+ Some of them look simple to interpolate,
+ but then would blow up, could potentially
+ go through bad states in the middle.
+ So just as an example, let's say the rotation matrix.
+ Probably you've all seen rotation matrices in 2D.
+ The sort of simplest cases, a 2D example,
+ would be if I want to write a 2D rotation
+ as a function of some angle theta,
+ that would be a 2 by 2 matrix.
+ [WRITING ON BOARD]
+ Are people familiar with that sort of mechanics?
+ And I can take a 2 by 1 vector, and this
+ will rotate that vector by theta degrees.
+ So just to sort of make the point, if theta equals 0,
+ what do I get?
+ I get 1, 0, 0, 1, identity matrix.
+ That's what you want.
+ If theta equals pi over 4, let's say, or pi over 2 even,
+ then I can get 0, negative 1, 1, 0.
+ That would be, if I've rotated by pi over 2,
+ I would take my original axes and put my x-axis here
+ and my y-axis here.
+ That would be a rotation by 90 degrees.
+ But absolutely linearly interpolating between those two
+ is not going to give me a rotation in 45 degrees.
+ It's going to give me 1 over root 2, which is not half.
+ These things don't-- you can't just interpolate orientations
+ like that.
+ Roll pitch yaw, you think you might be able to interpolate.
+ You can get yourself into trouble with things exploding.
+ So the way people typically interpolate these
+ is with a quaternion representation.
+ And they do something called SLURP,
+ which is spherical linear interpolation.
+ [WRITING]
+ And it's a safe way to get a smooth--
+ a first-order interpolation in orientations.
+ We're toying with a problem that you might do on your problem
+ set that just make you understand SLURP a little
+ better.
+ But that's the basic mechanics, is
+ that we can almost do this simple picture of first-order
+ interpolations.
+ But you need to do it in the quaternion representation,
+ and you need to use this spherical interpolation.
+ Yes?
+ [INAUDIBLE]
+ So what do I mean by explode when you use roll pitch yaws?
+ So there are roll pitch yaw values
+ that represent very similar orientations that
+ are actually very far in the values of our roll pitch yaw.
+ So trying to go between one and another representation
+ of roll pitch yaw might take you through extremely large numbers
+ for roll pitch yaw.
+ And this goes along with gimbal lock.
+ And the quaternions are the way to get around gimbal lock.
+ [INAUDIBLE]
+ I mean, grinding noises often happen
+ when you're chattering or something like that.
+ This would probably be a velocity command
+ that your robot refuses to execute
+ and then goes into a safety mode, and the lights turn on,
+ I hope.
+ If you built the robot yourself, you
+ might throw it across the room.
+ Done that, too.
+ [INAUDIBLE]
+ OK.
+ So now the next part of the game is
+ how do I get from the end effector coordinates
+ back to my joint commands?
+ Remember the manipulation station, the whole package
+ that we made a diagram for?
+ The controller takes joint positions as input.
+ So somehow I've got this beautiful plan.
+ It tells me what the pose of the gripper
+ now should be over time.
+ How do I get to joint commands?
+ How do I execute that?
+ OK.
+ So the mapping from joint angles to poses
+ is called forward kinematics problem.
+ In particular, we're doing the forward kinematics.
+ And you can think of it, and you can see already here,
+ that if I have joint angles theta,
+ and I want to turn that into a rotation or a pose,
+ then that's going to be potentially a nonlinear,
+ almost always nonlinear map from f into these poses.
+ This is maybe the simplest version of it.
+ But the math is actually pretty simple,
+ because each individual joint is just
+ describing a small operation, a rotation matrix
+ kind of operation, on a relative transform
+ from right before the robot's joint
+ and right till right after the robot's joint.
+ And the operation of doing forward kinematics
+ is almost exactly what we did already,
+ which is I wanted to compute the pose of my end effector.
+ I do that by computing the pose of my wrist
+ relative to that end effector.
+ I do a rotation matrix type thing for the rotation joint
+ here, which is just a relative pose.
+ And then I just keep chaining them backwards
+ and can get all the way back to the world coordinates.
+ That's exactly how robots are specified.
+ Like if you look at the robot description files,
+ then pose relative to pose, six numbers right here,
+ which is x, y, z, roll pitch, yaw.
+ When you type in your basic robot kinematics
+ in the robot description files, it's
+ just telling you relative poses of each link.
+ And the joints are just operations
+ that will, again, make a transformation
+ from the pre-joint frame to the post-joint frame.
+ So when I write this vector, this idea of x of my,
+ let's say, gripper is some function of my gripper,
+ my kinematics function of q, then you could ask, what is q?
+ What is q going to actually be?
+ So for the IWA, it's a total of seven--
+ it's a 7 by 1 vector of joint angles,
+ all rotational joint angles.
+ They're called revolute joints in the code.
+ And each of them just defines a rotation
+ that happens based on that joint angle.
+ It happens in the 3D.
+ And it could potentially change the positions, too,
+ but a fixed change of positions.
+ And it's just going from a vector,
+ one element of that vector, into one rotation matrix
+ for one joint, and then the next one.
+ And I can compose this through a series of frame transformations
+ into my full kinematics.
+ But it's a little bit more subtle than that.
+ So do you remember the Allegro hand I showed before?
+ My network is not working well.
+ That's what I was afraid of.
+ A lot of my graphics are just refusing to show.
+ There's a beautiful SVG here.
+ Imagine it in your head.
+ I don't know why that could possibly have failed.
+ But the Allegro hand has many links.
+ It also potentially has a location in the world.
+ The base of that Allegro hand has some location in the world.
+ So if I had--
+ I have a little URDF here that had the Allegro hand
+ and the red brick in it.
+ So the question is, how big is Q for a floating Allegro
+ hand and a floating brick?
+ How many numbers do I need to represent
+ the total configuration of that system?
+ So I can tell you the Allegro hand had
+ four degrees of freedom and the beautiful kinematic tree
+ that you would see, hopefully, some people who
+ are looking at it on their computers
+ with better internet see.
+ It came up for you?
+ Awesome.
+ I'm going to make it disappear and come up,
+ but maybe in the hopes--
+ ah, OK.
+ Four links per finger.
+ They actually-- I don't know if anybody's noticed,
+ but I actually have the same number of fingers
+ as the Allegro hand.
+ So I favor the three fingered hands.
+ That's just a weird coincidence.
+ And then there's some number of elements
+ required to move the robot in space.
+ So the total number of joint angles for my Allegro hand
+ is four times four fingers, 16, and then
+ some number of elements for the position in space.
+ How many elements do you think I tend to have
+ to position in space?
+ Six is a great answer.
+ We almost always use seven, because we
+ choose to use quaternions in the coordinate representation
+ instead of x, y, z, roll, pitch, yaw to avoid
+ gimbal locks and singularities.
+ So for the Allegro with a floating base,
+ we get four fingers times four joints plus seven
+ for a quaternion for the floating joint,
+ for a total of what?
+ 23.
+ And if I add the brick in, I get another seven.
+ So I get a total of 30 in my diagram.
+ And the kinematics problem then becomes
+ going from those 30 numbers to a pose, some pose
+ that I'm computing in the system, the pose of the brick,
+ the pose of the hand.
+ Of course, we have methods in any robot software,
+ certainly in Drake, to do the kinematics for you here.
+ We just ask you to give which frame
+ you're asking for the kinematics relative to.
+ And we can, in general, go from any frame to any frame.
+ You can do an expressed in frame.
+ You can do all the things we talked about.
+ You can give all of these.
+ But by default, you can just say, for instance,
+ from some body frame to the world,
+ and it will just give out this pose.
+ We don't actually take q as an argument.
+ We take the context as the argument
+ because we actually have the kinematics that could be,
+ for instance, parameterized.
+ If you wanted to design your robot while you're
+ computing your kinematics, and maybe the length
+ could be something that you want to optimize,
+ let's say optimize the link lengths of my robot,
+ for instance, then you'd like this kinematics
+ to also be a function of your link lengths,
+ or some other quantities.
+ So we actually take in the full context.
+ Remember, I talked about the context is just
+ the state plus the parameters plus time,
+ or it's just the structure that wraps that.
+ I'm totally bummed that this isn't working
+ because I had big plans for the next step, which
+ is I'm actually running a notebook in the sky
+ right now, right on deep node, and was
+ hoping that you could all jointly
+ control the robot simultaneously and chaos would ensue.
+ But I think we now have the ability,
+ if I get a better internet connection in here,
+ to have a single robot that everybody can control,
+ and we can watch the kinematics evolve
+ and watch the Jacobians, which I'll talk about next.
+ I was going to have fun with that,
+ but I guess it's not going to happen.
+ One more piece that I want to land today,
+ and then you've got most of what you need
+ to move the robot around.
+ So kinematic frames, I think we're good.
+ The ability to put them together with some simple trajectory
+ based interpolation.
+ I think the concept, I hope, is somehow OK.
+ And I think the code--
+ we're going to ask you to understand SLURP,
+ but the code makes that simple.
+ If you give me a bunch of key frames,
+ you can take different interpolation schemes
+ to do that.
+ Yes?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ Yeah, no, that is a central question, which I will repeat.
+ Thank you.
+ Yeah, so how do I know that when I've taken my gripper plan
+ and given something that looks reasonable in gripper
+ coordinates, I don't have something crazy happening
+ in my joint coordinates in order to execute that?
+ All we've done so far is chosen reasonable smooth--
+ continuous, let's say-- not smooth,
+ but continuous trajectories for the hand
+ and had them move at a low velocity
+ right now in the hopes that whatever
+ I do to transform the gripper coordinates
+ to the joint coordinates maintains that smoothness.
+ Getting that right is one of the next topics,
+ because there are ways you can mess that up for sure.
+ [INAUDIBLE]
+ It is also not always true that it's possible.
+ You could-- yeah, so there's a notion
+ of kinematic singularities, I think,
+ is what you're getting at.
+ And we'll make sure we understand that.
+ I've got some cool graphics.
+ Yes, so we're just--
+ we're trying to be reasonable here,
+ but this is actually a great lead-in to the next thing.
+ So one thing you might want to do
+ is to say, if I've got a bunch of these frames
+ and I want to figure out command for positions,
+ then what I could just do is somehow do--
+ take an inverse of this function.
+ This is a nonlinear, complicated function,
+ but if I could somehow define an inverse,
+ then that would be--
+ looks like a very reasonable operation.
+ And that is a well-defined operation in robotics
+ called inverse kinematics.
+ But it is-- you have to do it very carefully,
+ because while this direction is always well-posed,
+ you can always go from a good Q to a valid pose.
+ It tends to be smooth.
+ It tends to-- all these nice behaviors going this way.
+ There are many cases where there are, for instance,
+ multiple solutions, no solutions, going this way.
+ So you have to be-- if you're willing to--
+ sometimes we do actually use the inverse kinematics directly,
+ but oftentimes we do not, because if your inverse
+ kinematics engine gives you slightly different answers
+ for very similar poses, then you might--
+ it might involve crazier movements to do it.
+ An example of a case where you'd have multiple solutions
+ would be if I had enough degrees of freedom in my arm,
+ it could be that I can--
+ I can't keep my wrist very still,
+ but if I could move my elbow, for instance,
+ relative to my arm, it might be that there's many Qs that give
+ me the same hand position.
+ If my inverse kinematics engine told me to take this one
+ at time 1, this one at time 1.111, or 1.1001,
+ then that would cause a huge--
+ so we don't-- when we specify inverse kinematics,
+ we are-- we don't only ask for the inverse.
+ We also put in some additional requirements for continuity,
+ or smoothness, or centering, or something like this.
+ OK.
+ So I want to just introduce the concept of what
+ we are going to do, but we'll go through the richer
+ form of it next time.
+ So in order to sort of encourage this sort of smoothness,
+ instead of looking at inverse kinematics,
+ we're going to look at differential kinematics.
+ So we're going to examine exactly how
+ an incremental change in Q makes an incremental change in X.
+ OK?
+ [WRITING]
+ Roughly, intuitively, what I'd like you to think about
+ is I want an incremental change in my poses, which
+ is some incremental change in my joint angles.
+ OK?
+ And we're going to call this thing,
+ as people do in all kinds of fields,
+ we call that the Jacobian.
+ It's a function of the current--
+ whatever the current joint angles are.
+ OK?
+ Now, in order to start talking about differential quantities,
+ and ultimately we're going to want dQ dt,
+ so the velocities, joint velocities, OK,
+ and some pose velocity, if you will,
+ we need to understand how to represent this pose velocity.
+ OK?
+ So just like we have a spatial algebra for positions
+ and orientations, we have it for velocities,
+ the spatial velocity, which has a translation component
+ and an orientation component.
+ OK, so this is going to be a 6 by 1 vector,
+ where these are angular velocities.
+ These are translational velocities.
+ OK?
+ Now, here's something funny, right?
+ In pose, there's all kinds of problems
+ that come with your choice of representation
+ for orientations, whether it's Euler angles,
+ Rolfe-Jarre, or quaternions, or rotation matrices.
+ There's no canonical choice for the orientation.
+ There is a canonical choice for angular velocity.
+ So you can, with three numbers, have no degenerate--
+ no problems with degeneracy or anything like this.
+ You have a perfectly reasonable--
+ everybody chooses it, everybody agrees
+ that angular velocities shall be three numbers, which
+ are the rotations around the major axes.
+ OK?
+ So this notion of angular velocity
+ simplifies everything.
+ Once you get the velocities and spatial accelerations
+ and the like, you've got to 6 by 1 numbers.
+ Everybody's happy, everybody's good.
+ The representation's collapsed.
+ The problem is that because we have so many different choices
+ for q and even for x, we have many different possible
+ Jacobians to determine how we're going
+ to go from some velocity in joint angles
+ to some velocity in some spatial velocity, for instance.
+ OK?
+ So we define the one that goes--
+ it's typically called a geometric Jacobian, which
+ takes joint velocities and maps that to spatial velocity
+ vectors.
+ It's not quite-- because of this extra change of representation,
+ it's not quite partial f, partial q.
+ But it's that plus a change of coordinates
+ into the spatial vectors.
+ The analytic Jacobian, if you care,
+ is the true partial derivative.
+ But we don't use that.
+ We don't recommend that as much.
+ There's cases where you might want that.
+ But almost always, we recommend working
+ with the spatial velocities.
+ OK, and so there's still more choices.
+ Like, there are still multiple geometric Jacobians.
+ Because while the geometric Jacobian always
+ is a function of q, how do you represent q dot?
+ OK, well, there's a couple of different choices
+ that you've made here in your vector of positions.
+ OK, you've made-- we said we had 30 numbers in our Allegro
+ hand plus red brick.
+ OK, but it turns out, because I had--
+ some of those were extra.
+ They were the Gratonian dimensions,
+ which took seven numbers.
+ I know I have spatial velocities that
+ could take only six numbers.
+ Oftentimes, the velocity vector, the joint velocity vector,
+ is smaller than the joint position vector.
+ And it might not equal dq dt.
+ OK, you can map between them.
+ But in particular, for the Allegro hand floating,
+ or even the red brick, or something like this,
+ I had 23 for just the Allegro hand floating.
+ 23 positions, but only 22 velocities.
+ When I write this big vector that
+ keeps track of what's going on in the robot,
+ I use 23 numbers to keep track of the positions,
+ and 22 for velocities.
+ So there's options.
+ There's many Jacobians.
+ Some of them can map from q dot, which
+ is the 23 numbers on the right.
+ Some of them can map from v, which
+ is the 22 numbers on the right.
+ They're all available in code.
+ So the basic strategy that we'll explore next time
+ is that we can, for instance, try
+ to say I've got my x gripper as a function of time
+ that I've designed with my trajectories.
+ And I want to go to some q as a function of time.
+ It's reasonable to start with q0,
+ and then integrate forward a velocity command that
+ is approximately the inverse of this Jacobian times
+ my spatial velocity.
+ Let me shorthand it with--
+ I'll just use the proper v--
+ spatial velocity of the gripper as a function of time.
+ The only catch is that we want to be careful,
+ because we have to guarantee that that matrix is invertible
+ or address it with more sophisticated methods.
+ But intuitively, we're going to design controllers
+ that use the derivative of the kinematics
+ to get this smoothness.

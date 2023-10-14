@@ -1,0 +1,4444 @@
+1
+00:00:00,000 --> 00:00:04,000
+ Okay, sorry for that.
+
+2
+00:00:04,000 --> 00:00:05,000
+ Little internet problem.
+
+3
+00:00:05,000 --> 00:00:12,000
+ I was about this close to running slides.com off my phone, but he saved me with the ethernet
+
+4
+00:00:12,000 --> 00:00:13,000
+ cable.
+
+5
+00:00:13,000 --> 00:00:17,200
+ A couple quick announcements.
+
+6
+00:00:17,200 --> 00:00:22,600
+ One thing I want to make sure you know is that the p-set this week is a little bit longer
+
+7
+00:00:22,600 --> 00:00:25,760
+ than last week, but it's awesome.
+
+8
+00:00:25,760 --> 00:00:28,920
+ It's really good.
+
+9
+00:00:28,920 --> 00:00:34,240
+ It has you building full robots, doing things, and a lot of people build off this problem
+
+10
+00:00:34,240 --> 00:00:37,340
+ set for their project.
+
+11
+00:00:37,340 --> 00:00:39,960
+ We decided to not make it shorter and keep it.
+
+12
+00:00:39,960 --> 00:00:42,880
+ I think it's pretty good.
+
+13
+00:00:42,880 --> 00:00:44,360
+ I have a random question.
+
+14
+00:00:44,360 --> 00:00:45,940
+ Just quick show of hands.
+
+15
+00:00:45,940 --> 00:00:49,960
+ How many people have thought about the Roman Empire this week?
+
+16
+00:00:49,960 --> 00:00:55,120
+ Okay, so that was ... I know who watches TikTok.
+
+17
+00:00:55,120 --> 00:00:56,120
+ That's good.
+
+18
+00:00:56,120 --> 00:00:57,120
+ My daughter made me ask that.
+
+19
+00:00:57,120 --> 00:01:00,040
+ She's going to be happy that I went through with it.
+
+20
+00:01:00,040 --> 00:01:03,720
+ If you didn't get it, you're better off.
+
+21
+00:01:03,720 --> 00:01:11,080
+ Okay, so I want to continue on our conversation about kinematics.
+
+22
+00:01:11,080 --> 00:01:16,760
+ In particular, you remember our plan here was to do basic pick and place.
+
+23
+00:01:16,760 --> 00:01:17,880
+ Just very simple.
+
+24
+00:01:17,880 --> 00:01:19,080
+ We've got a robot.
+
+25
+00:01:19,080 --> 00:01:20,440
+ We've got a red brick.
+
+26
+00:01:20,440 --> 00:01:27,440
+ We want to move the red brick from one bin to the second bin.
+
+27
+00:01:27,440 --> 00:01:34,440
+ Our plan for that was to go through some of the mechanics of geometry, of kinematics,
+
+28
+00:01:34,440 --> 00:01:35,640
+ of spatial algebra.
+
+29
+00:01:35,640 --> 00:01:40,760
+ I tried to lift it a little bit above sine and cosine and talk about the algebra involved
+
+30
+00:01:40,760 --> 00:01:43,920
+ in spatial geometries.
+
+31
+00:01:43,920 --> 00:01:49,120
+ Then to actually write the code, the first step we do is we just forget about the robot
+
+32
+00:01:49,120 --> 00:01:56,640
+ entirely and just imagine in the land of transforms what's the ideal place for my gripper to be.
+
+33
+00:01:56,640 --> 00:02:01,560
+ We made some key frames for picking up, for clearing, for setting down.
+
+34
+00:02:01,560 --> 00:02:04,600
+ Then we tried to compose that into a trajectory.
+
+35
+00:02:04,600 --> 00:02:09,560
+ We were a little careful to try to interpolate that trajectory nicely, even in the rotations.
+
+36
+00:02:09,560 --> 00:02:16,680
+ We had to use a proper slurp interpolation for that.
+
+37
+00:02:16,680 --> 00:02:20,480
+ But then the problem, of course, is that that's in the gripper trajectory and ultimately what
+
+38
+00:02:20,480 --> 00:02:24,880
+ we need to do is send position commands to the robot.
+
+39
+00:02:24,880 --> 00:02:29,720
+ We started talking about kinematics, which is the mapping from joint angles on the robot
+
+40
+00:02:29,720 --> 00:02:34,940
+ to, for instance, gripper end effector position.
+
+41
+00:02:34,940 --> 00:02:39,800
+ We did that by just more kinematics, more spatial transforms.
+
+42
+00:02:39,800 --> 00:02:42,480
+ We have a frame for every link.
+
+43
+00:02:42,480 --> 00:02:49,720
+ The transforms between those frames are given as a function of the local joint angle and
+
+44
+00:02:49,720 --> 00:02:55,000
+ you can just compose those transforms to go all the way up to the end effector.
+
+45
+00:02:55,000 --> 00:02:59,960
+ The last step, which is the goal for today, is to actually take that all the way through
+
+46
+00:02:59,960 --> 00:03:01,680
+ to the robot commands.
+
+47
+00:03:01,680 --> 00:03:05,680
+ We're going to do that with differential inverse kinematics.
+
+48
+00:03:05,680 --> 00:03:10,000
+ So let me say it even a slightly different way.
+
+49
+00:03:10,000 --> 00:03:14,920
+ You'll understand why, I think, in some detail by the end of the class here.
+
+50
+00:03:14,920 --> 00:03:27,880
+ But we have, from our previous work, x is the pose of the gripper in the world frame.
+
+51
+00:03:27,880 --> 00:03:30,120
+ And we have a trajectory for it.
+
+52
+00:03:30,120 --> 00:03:37,160
+ So we have it defined from 0 to 30 seconds or something like that.
+
+53
+00:03:37,160 --> 00:03:43,160
+ And we need q as a function of time.
+
+54
+00:03:43,160 --> 00:03:48,600
+ And really what we need is the desired q as a function of time, because that's what our
+
+55
+00:03:48,600 --> 00:03:58,080
+ abstraction on the robot takes in, this iwa position command.
+
+56
+00:03:58,080 --> 00:04:01,200
+ There's software running on the robot that's waiting for that message to arrive, which
+
+57
+00:04:01,200 --> 00:04:04,200
+ tells me what's the desired position.
+
+58
+00:04:04,200 --> 00:04:08,280
+ And I've mocked that with the hardware station.
+
+59
+00:04:08,280 --> 00:04:14,360
+ So inside here is the plant, the geometry engine, but also the low-level controller
+
+60
+00:04:14,360 --> 00:04:18,440
+ simulation, which is waiting for the same iwa position.
+
+61
+00:04:18,440 --> 00:04:22,480
+ And even though it's spelled out here, we're just thinking of that as q desired.
+
+62
+00:04:22,480 --> 00:04:28,640
+ That's the commanded position of the arm.
+
+63
+00:04:28,640 --> 00:04:35,640
+ So we need to somehow go from the end effector pose to the joint angles in the arm.
+
+64
+00:04:35,640 --> 00:04:38,520
+ And last time, we talked about the relationship between those two.
+
+65
+00:04:38,520 --> 00:04:53,360
+ We talked about forward kinematics, which was the mapping to the gripper as a function.
+
+66
+00:04:53,360 --> 00:04:56,720
+ We called it-- we annotated the function with the frame it was working on.
+
+67
+00:04:56,720 --> 00:05:02,520
+ We called it the kinematics function here, which took the joint angles of the arm and
+
+68
+00:05:02,520 --> 00:05:09,600
+ did that series of calculations to get to the end.
+
+69
+00:05:09,600 --> 00:05:14,560
+ So to go the other way, what we need somehow is the inverse kinematics.
+
+70
+00:05:14,560 --> 00:05:24,320
+ We need to somehow go from x through something like f inverse to get back to q.
+
+71
+00:05:24,320 --> 00:05:27,280
+ Inverse kinematics is hard.
+
+72
+00:05:27,280 --> 00:05:30,480
+ In general, it's very hard.
+
+73
+00:05:30,480 --> 00:05:32,160
+ Often there are many solutions.
+
+74
+00:05:32,160 --> 00:05:34,440
+ Sometimes there's no solutions.
+
+75
+00:05:34,440 --> 00:05:38,960
+ The equations in here, even though they're a simple series of transforms, they have a
+
+76
+00:05:38,960 --> 00:05:41,480
+ lot of nonlinear equations going on inside here.
+
+77
+00:05:41,480 --> 00:05:46,960
+ It's a pretty nonlinear, non-trivial function of q.
+
+78
+00:05:46,960 --> 00:05:52,560
+ So what we're going to do today, though, is solve that problem, but in a slightly roundabout
+
+79
+00:05:52,560 --> 00:05:53,720
+ way.
+
+80
+00:05:53,720 --> 00:05:56,880
+ We're going to do it on the differential kinematics.
+
+81
+00:05:56,880 --> 00:06:01,080
+ So this is a complicated mapping, and we'll solve it nicely with stronger optimization
+
+82
+00:06:01,080 --> 00:06:05,200
+ tools when we have them a little later in the class.
+
+83
+00:06:05,200 --> 00:06:08,400
+ But for today, we don't need to solve the harder problem.
+
+84
+00:06:08,400 --> 00:06:14,360
+ We can actually make it easy again by going into the differential kinematics.
+
+85
+00:06:14,360 --> 00:06:27,280
+ So I'm going to write it at the high level, and we'll go through it in detail.
+
+86
+00:06:27,280 --> 00:06:44,280
+ But roughly, vg is our spatial velocities, which is like the derivative of the poses.
+
+87
+00:06:44,280 --> 00:06:55,240
+ This is related, as it says on the board there, through a simple relationship with-- well,
+
+88
+00:06:55,240 --> 00:07:05,320
+ it's a non-trivial relationship to the joint positions, but it's a simple linear relationship
+
+89
+00:07:05,320 --> 00:07:14,260
+ to the joint velocities.
+
+90
+00:07:14,260 --> 00:07:21,160
+ So if I know instantaneously where the robot is, that's what q is, then this just becomes
+
+91
+00:07:21,160 --> 00:07:23,680
+ a matrix.
+
+92
+00:07:23,680 --> 00:07:26,520
+ And the relationship between vg and v is simple.
+
+93
+00:07:26,520 --> 00:07:32,120
+ So I can instantaneously, if I know where the robot is, I can command a change in joint
+
+94
+00:07:32,120 --> 00:07:36,360
+ angles that would cause the right change in joint velocity.
+
+95
+00:07:36,360 --> 00:07:41,320
+ And it's not surprising that even though the map, the full kinematic map, is hard, the
+
+96
+00:07:41,320 --> 00:07:44,780
+ differential kinematic map is easy.
+
+97
+00:07:44,780 --> 00:07:48,900
+ Small changes here relate to small changes here, and you just have to know the derivatives,
+
+98
+00:07:48,900 --> 00:07:52,220
+ basically, to make that work.
+
+99
+00:07:52,220 --> 00:07:57,240
+ Now this is something we're going to work with easily.
+
+100
+00:07:57,240 --> 00:07:59,180
+ And it's not perfect.
+
+101
+00:07:59,180 --> 00:08:00,980
+ It has limitations.
+
+102
+00:08:00,980 --> 00:08:06,620
+ But the limitations are clear because they come from linear algebra.
+
+103
+00:08:06,620 --> 00:08:11,100
+ Yeah?
+
+104
+00:08:11,100 --> 00:08:13,720
+ We're going to do it through as a dynamical system.
+
+105
+00:08:13,720 --> 00:08:17,460
+ We're going to do it by incrementally, I would say.
+
+106
+00:08:17,460 --> 00:08:20,900
+ And we will, of course, do it numerically, but incrementally maybe is the better view.
+
+107
+00:08:20,900 --> 00:08:29,000
+ So our plan here is to go from xg as a trajectory to vg as a trajectory.
+
+108
+00:08:29,000 --> 00:08:35,840
+ We're going to send this into a system that we'll call DiffIK.
+
+109
+00:08:35,840 --> 00:08:40,820
+ You'll hear that a lot, the differential inverse kinematics.
+
+110
+00:08:40,820 --> 00:08:45,340
+ And this is going to give us v, which is the joint velocities.
+
+111
+00:08:45,340 --> 00:08:55,860
+ And then we're going to actually integrate that back, integrator, and get q.
+
+112
+00:08:55,860 --> 00:09:03,180
+ So it seems a little roundabout, but it's going to be the way that I think sheds the
+
+113
+00:09:03,180 --> 00:09:04,180
+ most insight.
+
+114
+00:09:04,180 --> 00:09:05,860
+ And people do this in practice.
+
+115
+00:09:05,860 --> 00:09:09,180
+ For many reasons, it's a very nice formulation.
+
+116
+00:09:09,180 --> 00:09:15,260
+ It's a workhorse in robotics.
+
+117
+00:09:15,260 --> 00:09:21,740
+ And again, the immediate reason, just to say it-- so this is a big nonlinear function,
+
+118
+00:09:21,740 --> 00:09:24,340
+ hard to analyze, hard to invert in closed form.
+
+119
+00:09:24,340 --> 00:09:28,660
+ There's some cases where you can, but oftentimes you cannot.
+
+120
+00:09:28,660 --> 00:09:30,300
+ Once q is known, this is a linear map.
+
+121
+00:09:30,300 --> 00:09:35,500
+ We know everything about it in linear algebra.
+
+122
+00:09:35,500 --> 00:09:40,260
+ So to do this well and to understand all the details, we're going to-- because all the
+
+123
+00:09:40,260 --> 00:09:46,920
+ details come up because of the complexity of 3D rotations, I promised you last time
+
+124
+00:09:46,920 --> 00:09:51,220
+ that I'd say a few more words about 3D rotations and the different representations.
+
+125
+00:09:51,220 --> 00:09:58,020
+ You guys were asking some good questions about it.
+
+126
+00:09:58,020 --> 00:10:04,020
+ Let's just talk a little bit more about 3D rotations.
+
+127
+00:10:04,020 --> 00:10:08,420
+ So there's a lot of ways to represent 3D rotations.
+
+128
+00:10:08,420 --> 00:10:16,500
+ One of them is rotation matrices.
+
+129
+00:10:16,500 --> 00:10:22,620
+ In the 3D case, that would be a 3 by 3 matrix.
+
+130
+00:10:22,620 --> 00:10:29,300
+ Nine total numbers.
+
+131
+00:10:29,300 --> 00:10:33,980
+ It's a very efficient representation because GPUs made it great.
+
+132
+00:10:33,980 --> 00:10:41,980
+ You can transform-- you can push things through rotation matrices very fast.
+
+133
+00:10:41,980 --> 00:10:45,180
+ But it's over-parameterized in some sense.
+
+134
+00:10:45,180 --> 00:10:50,100
+ So we don't need nine numbers to describe a 3D rotation.
+
+135
+00:10:50,100 --> 00:10:52,060
+ This is extra.
+
+136
+00:10:52,060 --> 00:10:55,520
+ And in fact, not all nine numbers will work.
+
+137
+00:10:55,520 --> 00:11:00,380
+ There are constraints on the nine numbers that make a valid rotation matrix.
+
+138
+00:11:00,380 --> 00:11:05,700
+ In particular, if I call the rotation matrix R, then R needs to be orthonormal.
+
+139
+00:11:05,700 --> 00:11:08,180
+ The rotation matrix needs to be orthonormal.
+
+140
+00:11:08,180 --> 00:11:15,340
+ The simplest way to write that would be to say if I have a matrix R, then R R transpose
+
+141
+00:11:15,340 --> 00:11:16,340
+ needs to be the identity.
+
+142
+00:11:16,340 --> 00:11:21,660
+ This is all 3 by 3.
+
+143
+00:11:21,660 --> 00:11:26,820
+ There's even one other constraint that comes in.
+
+144
+00:11:26,820 --> 00:11:27,820
+ You want a regular rotation.
+
+145
+00:11:27,820 --> 00:11:30,180
+ You want the determinant of R to be 1.
+
+146
+00:11:30,180 --> 00:11:32,580
+ You don't have to know that.
+
+147
+00:11:32,580 --> 00:11:38,840
+ But what's important is that if you just give me nine random numbers or you try to write
+
+148
+00:11:38,840 --> 00:11:43,980
+ a program that's combing over-- searching over nine numbers, not all nine numbers are
+
+149
+00:11:43,980 --> 00:11:44,980
+ sufficient.
+
+150
+00:11:44,980 --> 00:11:48,460
+ They have to also satisfy some extra constraints to be valid rotation matrix.
+
+151
+00:11:48,460 --> 00:11:51,700
+ So that's a burden to carry that around.
+
+152
+00:11:51,700 --> 00:11:56,180
+ And if you're doing, let's say, even numerical integration of rotation matrices, if you're
+
+153
+00:11:56,180 --> 00:12:03,300
+ not projecting back-- small numerical errors can leave these constraints behind.
+
+154
+00:12:03,300 --> 00:12:08,140
+ You have to do projected methods and the like.
+
+155
+00:12:08,140 --> 00:12:14,980
+ Let's contrast that with Euler angles.
+
+156
+00:12:14,980 --> 00:12:21,460
+ And there's many-- you can write any permutation of rolls and pitches and yaws if you want.
+
+157
+00:12:21,460 --> 00:12:28,820
+ But we always do the extrinsic roll, pitch, yaw when I talk about it.
+
+158
+00:12:28,820 --> 00:12:31,520
+ It's one of the choices.
+
+159
+00:12:31,520 --> 00:12:36,860
+ It is actually three numbers-- roll, which is rotation around x; pitch, which is rotation
+
+160
+00:12:36,860 --> 00:12:39,660
+ around y; yaw, which is rotation around z.
+
+161
+00:12:39,660 --> 00:12:40,660
+ This is great.
+
+162
+00:12:40,660 --> 00:12:55,140
+ It's three numbers, no constraints.
+
+163
+00:12:55,140 --> 00:12:56,660
+ So that seems smaller.
+
+164
+00:12:56,660 --> 00:13:00,100
+ It's only better.
+
+165
+00:13:00,100 --> 00:13:02,320
+ No constraints, that's better.
+
+166
+00:13:02,320 --> 00:13:05,180
+ But there's a gotcha.
+
+167
+00:13:05,180 --> 00:13:12,820
+ It's places where that rotation becomes-- that set of three numbers becomes degenerate.
+
+168
+00:13:12,820 --> 00:13:18,500
+ And the way that people-- the best way to see this-- by the way, I've written this up
+
+169
+00:13:18,500 --> 00:13:22,220
+ with links to more references and stuff in the notes.
+
+170
+00:13:22,220 --> 00:13:28,060
+ But the classic example is gimbal lock.
+
+171
+00:13:28,060 --> 00:13:33,740
+ I got about halfway through making a mustard bottle in Meshcat do all this.
+
+172
+00:13:33,740 --> 00:13:34,740
+ And I was like, screw it.
+
+173
+00:13:34,740 --> 00:13:36,420
+ There's so many good visualizations online.
+
+174
+00:13:36,420 --> 00:13:40,620
+ And mine wasn't-- the mustard bottle was in the wrong frame, and nobody knows what the
+
+175
+00:13:40,620 --> 00:13:42,460
+ x-axis of the mustard bottle is.
+
+176
+00:13:42,460 --> 00:13:47,020
+ So I just picked up this website real quick.
+
+177
+00:13:47,020 --> 00:13:48,020
+ This is pretty good.
+
+178
+00:13:48,020 --> 00:13:53,040
+ So this is a spaceship, I guess.
+
+179
+00:13:53,040 --> 00:13:56,380
+ So this is roll.
+
+180
+00:13:56,380 --> 00:13:57,380
+ This is pitch.
+
+181
+00:13:57,380 --> 00:14:02,780
+ Put it back to zero so pitch is clean.
+
+182
+00:14:02,780 --> 00:14:06,340
+ Pitch is nose up, nose down, for instance.
+
+183
+00:14:06,340 --> 00:14:09,660
+ And yaw is rotation around z, the nominal thing.
+
+184
+00:14:09,660 --> 00:14:15,180
+ But because these transformations are chained, then things get more complicated when you
+
+185
+00:14:15,180 --> 00:14:16,740
+ do them in series.
+
+186
+00:14:16,740 --> 00:14:24,460
+ In particular, the weird case is when I pitch to 90.
+
+187
+00:14:24,460 --> 00:14:27,900
+ Then you can see it with the visualization already.
+
+188
+00:14:27,900 --> 00:14:33,700
+ But rolling does this.
+
+189
+00:14:33,700 --> 00:14:37,700
+ Yawing also does that.
+
+190
+00:14:37,700 --> 00:14:44,900
+ Because in that configuration, rolling and yawing do the same thing.
+
+191
+00:14:44,900 --> 00:14:45,980
+ They cannot be distinguished.
+
+192
+00:14:45,980 --> 00:14:50,060
+ But that also means there's some direction where you cannot move instantaneously.
+
+193
+00:14:50,060 --> 00:14:55,940
+ There's a singularity in the translation between those numbers and a full rotation matrix--
+
+194
+00:14:55,940 --> 00:14:59,580
+ from a full rotation back to those numbers.
+
+195
+00:14:59,580 --> 00:15:00,580
+ You're kind of stuck.
+
+196
+00:15:00,580 --> 00:15:02,660
+ The coordinate system becomes degenerate in that case.
+
+197
+00:15:02,660 --> 00:15:06,060
+ Two of the numbers are representing the same rotation.
+
+198
+00:15:06,060 --> 00:15:11,460
+ And therefore, there's no number representing one of the important rotations.
+
+199
+00:15:11,460 --> 00:15:16,620
+ And there's theorems saying that you cannot perfectly represent in a singularity-free
+
+200
+00:15:16,620 --> 00:15:20,420
+ way the 3D rotations with just three numbers.
+
+201
+00:15:20,420 --> 00:15:25,660
+ You need four numbers to do it.
+
+202
+00:15:25,660 --> 00:15:27,180
+ OK.
+
+203
+00:15:27,180 --> 00:15:33,100
+ Another one that is super useful but also degenerate in this particular way-- in these
+
+204
+00:15:33,100 --> 00:15:35,700
+ kind of ways-- is axis angle.
+
+205
+00:15:35,700 --> 00:15:41,500
+ It's also three numbers.
+
+206
+00:15:41,500 --> 00:15:48,780
+ No constraints, but degenerate in some setting.
+
+207
+00:15:48,780 --> 00:16:01,900
+ And this is an x, y, z that we normally would write.
+
+208
+00:16:01,900 --> 00:16:12,060
+ It's a three-dimensional quantity where the direction of x, y, z is the instantaneous
+
+209
+00:16:12,060 --> 00:16:13,700
+ direction of rotation.
+
+210
+00:16:13,700 --> 00:16:15,980
+ So that's the axis I'm rotating around.
+
+211
+00:16:15,980 --> 00:16:20,300
+ And the magnitude of the vector is the magnitude of the rotation.
+
+212
+00:16:20,300 --> 00:16:26,360
+ You can imagine if I want to just rotate from here to here, I can pick-- for any rotations,
+
+213
+00:16:26,360 --> 00:16:31,300
+ you can pick up some single axis and rotate a scalar quantity around that axis to represent
+
+214
+00:16:31,300 --> 00:16:32,300
+ those rotations.
+
+215
+00:16:32,300 --> 00:16:33,300
+ OK?
+
+216
+00:16:33,300 --> 00:16:34,300
+ Yeah.
+
+217
+00:16:34,300 --> 00:16:40,580
+ Zero vectors is a good example of it.
+
+218
+00:16:40,580 --> 00:16:42,820
+ We're actually-- we're going to ask you that one on the problem set.
+
+219
+00:16:42,820 --> 00:16:43,820
+ Yes?
+
+220
+00:16:43,820 --> 00:16:47,260
+ [INAUDIBLE]
+
+221
+00:16:47,260 --> 00:16:49,060
+ They're all very closely related.
+
+222
+00:16:49,060 --> 00:16:53,140
+ The screw theory is more closely related to the angular velocity, which is extremely
+
+223
+00:16:53,140 --> 00:16:56,180
+ closely related to this.
+
+224
+00:16:56,180 --> 00:16:58,180
+ Yep.
+
+225
+00:16:58,180 --> 00:17:00,220
+ OK.
+
+226
+00:17:00,220 --> 00:17:01,660
+ Very tempting three numbers.
+
+227
+00:17:01,660 --> 00:17:20,460
+ So the direction is axis of rotation, and magnitude is the angle.
+
+228
+00:17:20,460 --> 00:17:32,900
+ And the last one that we use all the time here is the unit quaternions.
+
+229
+00:17:32,900 --> 00:17:36,620
+ There's a quaternion algebra that I will not lecture about.
+
+230
+00:17:36,620 --> 00:17:42,420
+ You don't need to-- I mean, you can just call methods in the software, and it'll just do
+
+231
+00:17:42,420 --> 00:17:43,420
+ the right thing.
+
+232
+00:17:43,420 --> 00:17:45,380
+ You don't have to know the quaternion algebra for this class.
+
+233
+00:17:45,380 --> 00:17:46,380
+ OK.
+
+234
+00:17:46,380 --> 00:17:58,980
+ So we have four numbers plus one constraint, which is that the four numbers are unit length
+
+235
+00:17:58,980 --> 00:17:59,980
+ in total.
+
+236
+00:17:59,980 --> 00:18:09,500
+ So we call them q, x, y, z-- sorry, w, x, y, z.
+
+237
+00:18:09,500 --> 00:18:14,140
+ And I'll sometimes write q in front of them to remember it's a quaternion.
+
+238
+00:18:14,140 --> 00:18:15,140
+ OK?
+
+239
+00:18:15,140 --> 00:18:17,140
+ So I'll write that bigger and with less mistakes.
+
+240
+00:18:17,140 --> 00:18:22,140
+ Hold on a second.
+
+241
+00:18:22,140 --> 00:18:29,700
+ I'll just-- for now, I'll just say w, x, y, z.
+
+242
+00:18:29,700 --> 00:18:30,860
+ OK?
+
+243
+00:18:30,860 --> 00:18:34,180
+ And the one constraint is that the vector be unit length.
+
+244
+00:18:34,180 --> 00:18:45,440
+ So w squared plus x squared plus y squared plus z squared has to equal 1.
+
+245
+00:18:45,440 --> 00:18:51,780
+ That is the minimal representation that we have-- four numbers, one constraint-- that
+
+246
+00:18:51,780 --> 00:18:54,060
+ is singularity-free.
+
+247
+00:18:54,060 --> 00:18:56,700
+ It still has some quirks.
+
+248
+00:18:56,700 --> 00:19:02,820
+ Like you can just flip your unit quaternion inside, and you get the same rotation.
+
+249
+00:19:02,820 --> 00:19:05,420
+ That's not too bad.
+
+250
+00:19:05,420 --> 00:19:12,300
+ So I'll tell you the most common things we're going to see when we want a vector representation
+
+251
+00:19:12,300 --> 00:19:14,660
+ of our rotations.
+
+252
+00:19:14,660 --> 00:19:18,620
+ We're going to choose these four numbers almost always.
+
+253
+00:19:18,620 --> 00:19:19,620
+ That's the most compact.
+
+254
+00:19:19,620 --> 00:19:20,620
+ OK?
+
+255
+00:19:20,620 --> 00:19:23,500
+ But when we're just thinking about kinematics and multiplying, transforming, boom, boom,
+
+256
+00:19:23,500 --> 00:19:27,700
+ boom, as soon as we get into that kind of space, we're going to go with the 3 by 3 and
+
+257
+00:19:27,700 --> 00:19:29,180
+ not worry about efficiency as much.
+
+258
+00:19:29,180 --> 00:19:33,820
+ We're going to just be able to just multiply these quickly.
+
+259
+00:19:33,820 --> 00:19:38,580
+ The Euler angle and the axis angle are super useful to know about.
+
+260
+00:19:38,580 --> 00:19:40,420
+ We used them already when we were doing the transform.
+
+261
+00:19:40,420 --> 00:19:45,100
+ If you look in the code, we used both axis angle and Euler angle because it was convenient
+
+262
+00:19:45,100 --> 00:19:50,140
+ to interpolate between these two with axis angle, and it was convenient to write some
+
+263
+00:19:50,140 --> 00:19:52,500
+ of the other things in roll pitch yaw.
+
+264
+00:19:52,500 --> 00:19:56,500
+ And the robot description formats tend to just ask for things in roll pitch yaw.
+
+265
+00:19:56,500 --> 00:19:59,000
+ So it's good to know about them.
+
+266
+00:19:59,000 --> 00:20:01,820
+ But the most important thing to know about them is that you can flip back and forth between
+
+267
+00:20:01,820 --> 00:20:02,820
+ them.
+
+268
+00:20:02,820 --> 00:20:03,820
+ OK?
+
+269
+00:20:03,820 --> 00:20:14,820
+ They're mostly equivalent until you're in some singular sort of configuration.
+
+270
+00:20:14,820 --> 00:20:18,140
+ OK.
+
+271
+00:20:18,140 --> 00:20:19,140
+ So with that-- oh, yeah, please.
+
+272
+00:20:19,140 --> 00:20:20,140
+ [INAUDIBLE]
+
+273
+00:20:20,140 --> 00:20:21,140
+ Yeah.
+
+274
+00:20:21,140 --> 00:20:22,140
+ [INAUDIBLE]
+
+275
+00:20:22,140 --> 00:20:41,040
+ So you can uniquely define a rotation.
+
+276
+00:20:41,040 --> 00:20:45,560
+ So every rotation has a rotation matrix.
+
+277
+00:20:45,560 --> 00:20:46,560
+ That's OK.
+
+278
+00:20:46,560 --> 00:20:47,560
+ Yeah.
+
+279
+00:20:47,560 --> 00:20:50,000
+ This one is the one that's degenerate in some places.
+
+280
+00:20:50,000 --> 00:20:51,000
+ Yeah.
+
+281
+00:20:51,000 --> 00:20:52,000
+ And this is degenerate.
+
+282
+00:20:52,000 --> 00:20:56,200
+ But all of these, I think, are complete-- those two are complete in some sense.
+
+283
+00:20:56,200 --> 00:21:00,720
+ Like every rotation you can write as a rotation matrix or as a unit quaternion.
+
+284
+00:21:00,720 --> 00:21:08,480
+ That is also true of Euler angles, but it's just that the maps between them can get singular.
+
+285
+00:21:08,480 --> 00:21:10,560
+ [INAUDIBLE]
+
+286
+00:21:10,560 --> 00:21:12,560
+ Yep.
+
+287
+00:21:12,560 --> 00:21:14,560
+ Yep.
+
+288
+00:21:14,560 --> 00:21:20,720
+ So every-- yes, every rotation can-- has it-- well, you can have a unique choice of the
+
+289
+00:21:20,720 --> 00:21:25,400
+ rotation matrix, yes.
+
+290
+00:21:25,400 --> 00:21:27,400
+ Yeah.
+
+291
+00:21:27,400 --> 00:21:29,400
+ [INAUDIBLE]
+
+292
+00:21:29,400 --> 00:21:31,400
+ Yes.
+
+293
+00:21:31,400 --> 00:21:33,400
+ [INAUDIBLE]
+
+294
+00:21:33,400 --> 00:21:35,400
+ Yes.
+
+295
+00:21:35,400 --> 00:21:37,400
+ [INAUDIBLE]
+
+296
+00:21:37,400 --> 00:21:46,560
+ There's always patterns where things are equivalent.
+
+297
+00:21:46,560 --> 00:21:47,560
+ But in general, no.
+
+298
+00:21:47,560 --> 00:21:49,600
+ As I say, in general, no.
+
+299
+00:21:49,600 --> 00:21:52,720
+ So the order of the rotations matters.
+
+300
+00:21:52,720 --> 00:21:58,600
+ And even there's-- people will talk about extrinsic roll pitch yaw versus intrinsic
+
+301
+00:21:58,600 --> 00:22:03,120
+ roll pitch yaw, which measures if you apply roll first or yaw first.
+
+302
+00:22:03,120 --> 00:22:04,660
+ They're all different representations.
+
+303
+00:22:04,660 --> 00:22:08,760
+ They're all equivalent, but they-- you have to be careful converting back and forth between
+
+304
+00:22:08,760 --> 00:22:09,760
+ them.
+
+305
+00:22:09,760 --> 00:22:10,760
+ Yeah.
+
+306
+00:22:10,760 --> 00:22:11,760
+ [INAUDIBLE]
+
+307
+00:22:11,760 --> 00:22:12,760
+ Ah.
+
+308
+00:22:12,760 --> 00:22:19,800
+ It's actually-- I didn't explain them.
+
+309
+00:22:19,800 --> 00:22:23,160
+ And in some sense, they're like complex numbers.
+
+310
+00:22:23,160 --> 00:22:27,120
+ They are actually the four-dimensional generalization of complex numbers.
+
+311
+00:22:27,120 --> 00:22:33,080
+ So asking me to explain complex numbers quickly is kind of hard.
+
+312
+00:22:33,080 --> 00:22:36,680
+ It's sort of magical algebraic properties that make them useful.
+
+313
+00:22:36,680 --> 00:22:43,480
+ So it turns out that with those four numbers, you can define an entire algebra that captures
+
+314
+00:22:43,480 --> 00:22:44,840
+ all the rotation.
+
+315
+00:22:44,840 --> 00:22:49,800
+ Intuitively, you can think of this almost like axis angle, where this is a direction
+
+316
+00:22:49,800 --> 00:22:57,480
+ and this is a magnitude, except that the whole thing is scaled very cleverly so that it avoids
+
+317
+00:22:57,480 --> 00:22:58,480
+ those singularities.
+
+318
+00:22:58,480 --> 00:22:59,480
+ Yeah.
+
+319
+00:22:59,480 --> 00:23:05,520
+ I would say, when you're trying to initialize quaternions, set w to 1 and then set those
+
+320
+00:23:05,520 --> 00:23:10,880
+ to be your direction of interest, and you'll be pretty good.
+
+321
+00:23:10,880 --> 00:23:13,280
+ Or use Rolfe-Jaw and then convert to quaternion.
+
+322
+00:23:13,280 --> 00:23:15,080
+ That's way better.
+
+323
+00:23:15,080 --> 00:23:18,080
+ This one's less intuitive, I'd say.
+
+324
+00:23:18,080 --> 00:23:19,080
+ Yes.
+
+325
+00:23:19,080 --> 00:23:20,080
+ [INAUDIBLE]
+
+326
+00:23:20,080 --> 00:23:23,240
+ Yes, real-- yeah.
+
+327
+00:23:23,240 --> 00:23:26,760
+ The interpretation as complex numbers, which actually, my favorite notes about that are
+
+328
+00:23:26,760 --> 00:23:30,000
+ linked in the notes, if you like it.
+
+329
+00:23:30,000 --> 00:23:31,000
+ Yeah.
+
+330
+00:23:31,000 --> 00:23:39,120
+ So you would introduce complex numbers in order to understand it through that lens.
+
+331
+00:23:39,120 --> 00:23:40,120
+ Yeah.
+
+332
+00:23:40,120 --> 00:23:41,120
+ [INAUDIBLE]
+
+333
+00:23:41,120 --> 00:23:50,720
+ Because w is implied.
+
+334
+00:23:50,720 --> 00:23:58,840
+ I'd be happy to write it everywhere, but if I'd leave it off, then my shorthand is that
+
+335
+00:23:58,840 --> 00:24:02,200
+ if I didn't write a superscript, then the relative frame is the world.
+
+336
+00:24:02,200 --> 00:24:03,200
+ That's great.
+
+337
+00:24:03,200 --> 00:24:06,200
+ Good to catch me on that.
+
+338
+00:24:06,200 --> 00:24:07,200
+ Yes.
+
+339
+00:24:07,200 --> 00:24:08,200
+ [INAUDIBLE]
+
+340
+00:24:08,200 --> 00:24:11,200
+ That's true.
+
+341
+00:24:11,200 --> 00:24:13,200
+ Yeah.
+
+342
+00:24:13,200 --> 00:24:20,200
+ So some software uses x, y, z, w.
+
+343
+00:24:20,200 --> 00:24:24,640
+ I mean, I learned the alphabet a long time ago, and I don't like that.
+
+344
+00:24:24,640 --> 00:24:26,920
+ I think w, x, y, z is always better.
+
+345
+00:24:26,920 --> 00:24:28,600
+ I'm sorry if you-- yeah.
+
+346
+00:24:28,600 --> 00:24:30,800
+ But yeah, no.
+
+347
+00:24:30,800 --> 00:24:36,700
+ Even inside, we use Eigen as a library in C++, and they put that in the last one.
+
+348
+00:24:36,700 --> 00:24:40,080
+ But we do everything we can to hide that from you.
+
+349
+00:24:40,080 --> 00:24:42,480
+ So it's always w, x, y, z for us.
+
+350
+00:24:42,480 --> 00:24:45,480
+ It just makes more sense, right?
+
+351
+00:24:45,480 --> 00:24:46,480
+ Yeah.
+
+352
+00:24:46,480 --> 00:24:47,480
+ [INAUDIBLE]
+
+353
+00:24:47,480 --> 00:24:58,120
+ Why do they get the name?
+
+354
+00:24:58,120 --> 00:25:00,640
+ I mean, so that is mostly true.
+
+355
+00:25:00,640 --> 00:25:03,840
+ I think that's the right way to understand it.
+
+356
+00:25:03,840 --> 00:25:12,040
+ But really, they're also elements from a four-dimensional space that live on this sphere in four numbers.
+
+357
+00:25:12,040 --> 00:25:14,080
+ So yeah.
+
+358
+00:25:14,080 --> 00:25:15,080
+ Where did w come from?
+
+359
+00:25:15,080 --> 00:25:16,080
+ I don't know.
+
+360
+00:25:16,080 --> 00:25:17,080
+ I don't know.
+
+361
+00:25:17,080 --> 00:25:23,080
+ I bet that reference I linked would give you the history of it.
+
+362
+00:25:23,080 --> 00:25:26,080
+ Yeah.
+
+363
+00:25:26,080 --> 00:25:32,200
+ So this is where we care about being efficient, especially if we want to put it in a vector.
+
+364
+00:25:32,200 --> 00:25:34,320
+ In fact, this is a great lead-in.
+
+365
+00:25:34,320 --> 00:25:40,320
+ So for instance, if I'm listing the-- when I list the joint angles of my robot in my
+
+366
+00:25:40,320 --> 00:25:45,080
+ Q vector-- I think I even have a slide for this.
+
+367
+00:25:45,080 --> 00:25:46,080
+ Yeah.
+
+368
+00:25:46,080 --> 00:25:47,080
+ OK.
+
+369
+00:25:47,080 --> 00:25:52,440
+ So if I have the Q vector for ewa-- let me just-- before I even use that slide.
+
+370
+00:25:52,440 --> 00:26:00,840
+ If the robot is ewa, then the Q vector is just the list of joint angles.
+
+371
+00:26:00,840 --> 00:26:02,080
+ So it's going to be seven numbers.
+
+372
+00:26:02,080 --> 00:26:05,520
+ It's a 7 by 1 vector.
+
+373
+00:26:05,520 --> 00:26:16,560
+ So if you have a Q vector for a system that is just a single brick floating in space,
+
+374
+00:26:16,560 --> 00:26:21,240
+ then the positions that define that are just the 3D rotation.
+
+375
+00:26:21,240 --> 00:26:29,800
+ So if you ask for what is Q, and you ask for-- if you ask for what is Q for that, Q for the
+
+376
+00:26:29,800 --> 00:26:37,000
+ brick, you'll also find out that it gets a 7 by 1 vector.
+
+377
+00:26:37,000 --> 00:26:50,840
+ But that 7 by 1 is going to be x, y, z, Qw, Qx, Qy, Qz.
+
+378
+00:26:50,840 --> 00:26:57,320
+ Positions and orientations in quaternion form is the way we choose to represent the
+
+379
+00:26:57,320 --> 00:26:59,880
+ generalized positions of our robot.
+
+380
+00:26:59,880 --> 00:27:06,400
+ So when we choose a vector notation, this is our favorite vector notation, as opposed
+
+381
+00:27:06,400 --> 00:27:14,320
+ to sticking nine numbers and unrolling them, or picking one that could potentially be degenerate.
+
+382
+00:27:14,320 --> 00:27:21,920
+ Now if you take and compute the transform, if you ask for the kinematics call-- so valve
+
+383
+00:27:21,920 --> 00:27:26,840
+ body pose in world is sort of the how do you evaluate the kinematics given the context--
+
+384
+00:27:26,840 --> 00:27:30,560
+ it's going to give you this back in 3 by 3 matrix.
+
+385
+00:27:30,560 --> 00:27:36,080
+ What's actually the 3 by 4 matrix, which is the rigid transform, the 3 by 3 matrix plus
+
+386
+00:27:36,080 --> 00:27:37,080
+ the vectors.
+
+387
+00:27:37,080 --> 00:27:41,800
+ So in those two places right next to each other in the code, we choose quaternions for
+
+388
+00:27:41,800 --> 00:27:45,920
+ this and rotation matrices for that.
+
+389
+00:27:45,920 --> 00:27:46,920
+ Yeah?
+
+390
+00:27:46,920 --> 00:27:47,920
+ [INAUDIBLE]
+
+391
+00:27:47,920 --> 00:28:00,360
+ Quaternions have their algebra that, yes, they compose nicely.
+
+392
+00:28:00,360 --> 00:28:01,360
+ You have to learn that.
+
+393
+00:28:01,360 --> 00:28:08,520
+ It's kind of its own algebra, but it does have the nice rules of composition.
+
+394
+00:28:08,520 --> 00:28:13,720
+ So in this particular case, if you're calling the kinematics function, which is a valve
+
+395
+00:28:13,720 --> 00:28:19,600
+ body pose in world, for a thing that just is a brick, then that function is actually
+
+396
+00:28:19,600 --> 00:28:29,080
+ just implementing the change of rotations from a vector q into the 3 by 3 matrix.
+
+397
+00:28:29,080 --> 00:28:31,360
+ That's the only work it's doing.
+
+398
+00:28:31,360 --> 00:28:33,320
+ It doesn't have to do composition of frames.
+
+399
+00:28:33,320 --> 00:28:34,920
+ It's just one frame.
+
+400
+00:28:34,920 --> 00:28:38,800
+ But it still has to convert representation.
+
+401
+00:28:38,800 --> 00:28:40,800
+ Yeah?
+
+402
+00:28:40,800 --> 00:28:42,800
+ [INAUDIBLE]
+
+403
+00:28:42,800 --> 00:28:44,720
+ OK.
+
+404
+00:28:44,720 --> 00:28:51,240
+ So the differential kinematics, then-- so you see why this is starting to get subtle
+
+405
+00:28:51,240 --> 00:28:56,640
+ is that this is potentially like a 3 by 3 matrix or a 3 by 4 matrix, for instance.
+
+406
+00:28:56,640 --> 00:28:59,880
+ And this is potentially a 7 by 1 vector.
+
+407
+00:28:59,880 --> 00:29:03,400
+ And so if we're thinking about the kinematics like that and we start thinking about the
+
+408
+00:29:03,400 --> 00:29:10,400
+ gradients of that, then we have to be careful about the different representations.
+
+409
+00:29:10,400 --> 00:29:16,400
+ So the differential kinematics are roughly just taking the partial derivative of that
+
+410
+00:29:16,400 --> 00:29:18,080
+ kinematics function.
+
+411
+00:29:18,080 --> 00:29:20,320
+ That's the object we want to think about.
+
+412
+00:29:20,320 --> 00:29:26,040
+ But all the details of how you represent that-- by the way, we almost always call it the Jacobian,
+
+413
+00:29:26,040 --> 00:29:27,040
+ kinematic Jacobian.
+
+414
+00:29:28,040 --> 00:29:36,120
+ Well, the Jacobian-- any partial derivative in any discipline could be called a Jacobian.
+
+415
+00:29:36,120 --> 00:29:40,880
+ But I guess in robotics, we just always call it-- when we say Jacobian with no other context,
+
+416
+00:29:40,880 --> 00:29:45,360
+ it's almost always the kinematic Jacobian.
+
+417
+00:29:45,360 --> 00:29:50,680
+ But all the details about this are about how did you represent Q and how did you represent
+
+418
+00:29:50,680 --> 00:29:52,920
+ pose.
+
+419
+00:29:52,920 --> 00:29:55,560
+ And there's details there that matter.
+
+420
+00:29:55,560 --> 00:29:58,640
+ So in order to understand those details, we have one more thing to do, which is we have
+
+421
+00:29:58,640 --> 00:30:06,600
+ to understand what are convenient ways to write the derivatives of rotation.
+
+422
+00:30:06,600 --> 00:30:12,040
+ So you could imagine that I could write the time derivative of a rotation matrix.
+
+423
+00:30:12,040 --> 00:30:14,080
+ That's a perfectly well-defined object.
+
+424
+00:30:14,080 --> 00:30:18,760
+ I could have the nine values all changing with time.
+
+425
+00:30:18,760 --> 00:30:22,520
+ And I could have the roll pitch yaw, roll dot, pitch dot, yaw dot, all changing with
+
+426
+00:30:22,520 --> 00:30:23,520
+ time.
+
+427
+00:30:23,520 --> 00:30:25,000
+ Those are all totally valid.
+
+428
+00:30:25,000 --> 00:30:31,920
+ But in the case of derivatives of rotations, there is a canonical choice.
+
+429
+00:30:31,920 --> 00:30:34,320
+ You can use three numbers.
+
+430
+00:30:34,320 --> 00:30:38,960
+ And without any limitations, there's a uniquely good choice.
+
+431
+00:30:38,960 --> 00:30:41,080
+ And we always use it.
+
+432
+00:30:41,080 --> 00:30:44,360
+ And it's most similar to the axis angle.
+
+433
+00:30:44,360 --> 00:30:46,400
+ And that's the spatial velocity.
+
+434
+00:30:46,400 --> 00:30:53,400
+ It's approximately the time derivative of-- it is the time derivative of the notion of
+
+435
+00:30:53,400 --> 00:31:00,720
+ rotation, but it's not the time derivative of the 3 by 4 matrix.
+
+436
+00:31:00,720 --> 00:31:07,640
+ It's defined to be a 6 by 1 vector.
+
+437
+00:31:07,640 --> 00:31:16,240
+ V of the gripper is the angular velocity.
+
+438
+00:31:16,240 --> 00:31:28,880
+ And the translational velocity is a 6 by 1 vector with the angular velocity and the translational
+
+439
+00:31:28,880 --> 00:31:29,880
+ velocity.
+
+440
+00:31:29,880 --> 00:31:34,160
+ The angular velocity is always three numbers.
+
+441
+00:31:34,160 --> 00:31:38,720
+ And you can represent it without any of the quirks.
+
+442
+00:31:38,720 --> 00:31:43,760
+ And the people who think about geometry a lot or differential geometry a lot, that's
+
+443
+00:31:43,760 --> 00:31:47,160
+ natural and obvious, but it's slightly non-trivial.
+
+444
+00:31:47,160 --> 00:31:50,760
+ But basically, there's a couple of different ways to say it.
+
+445
+00:31:50,760 --> 00:31:53,880
+ Actually, Tommy and I were arguing earlier today about what's the best way to say it.
+
+446
+00:31:53,880 --> 00:31:58,320
+ But because Tommy loves differential geometry, if you haven't gone to his office hours and
+
+447
+00:31:58,320 --> 00:32:01,720
+ asked him about differential geometry, you should.
+
+448
+00:32:01,720 --> 00:32:08,440
+ So maybe the simplest thing to say is that you could think about angles actually wrap
+
+449
+00:32:08,440 --> 00:32:09,800
+ around.
+
+450
+00:32:09,800 --> 00:32:13,480
+ So they have a periodicity involved.
+
+451
+00:32:13,480 --> 00:32:18,080
+ So if I rotate by 2 pi more, then I get back to the same angle.
+
+452
+00:32:18,080 --> 00:32:19,960
+ So there's some quirks that come with that.
+
+453
+00:32:19,960 --> 00:32:23,480
+ And that's like the pitch rolling in and out itself and everything like that.
+
+454
+00:32:23,480 --> 00:32:26,320
+ Angular velocities can be unbounded.
+
+455
+00:32:26,320 --> 00:32:28,320
+ More velocity means I'm going more that way.
+
+456
+00:32:28,320 --> 00:32:30,920
+ There's no wraparound effects or anything like that.
+
+457
+00:32:30,920 --> 00:32:35,520
+ That's maybe one of the simplest ways to see why the geometry of that object is different.
+
+458
+00:32:35,520 --> 00:32:39,520
+ And it turns out that these three numbers, which have the interpretation-- the angular
+
+459
+00:32:39,520 --> 00:32:44,280
+ velocity has the interpretation where the three numbers, the direction, is again the
+
+460
+00:32:44,280 --> 00:32:47,040
+ instantaneous axis of rotation.
+
+461
+00:32:47,040 --> 00:32:50,400
+ And the magnitude is the rate of rotation around that axis.
+
+462
+00:32:50,400 --> 00:32:54,080
+ That's why it's most similar to the axis angle.
+
+463
+00:32:54,080 --> 00:32:55,080
+ Yeah?
+
+464
+00:32:55,080 --> 00:32:56,080
+ [INAUDIBLE]
+
+465
+00:32:56,080 --> 00:33:04,080
+ That's what Drake follows.
+
+466
+00:33:04,080 --> 00:33:07,000
+ I don't know if it's everybody.
+
+467
+00:33:07,000 --> 00:33:09,400
+ I think people choose.
+
+468
+00:33:09,400 --> 00:33:18,400
+ But we've tried to be-- everywhere you see it in this class, we've tried to be very consistent.
+
+469
+00:33:18,400 --> 00:33:22,160
+ So here, three numbers are sufficient and efficient everywhere.
+
+470
+00:33:22,160 --> 00:33:29,840
+ So you'll always see us using the angular velocity specifically.
+
+471
+00:33:29,840 --> 00:33:36,960
+ Now angular velocities-- yeah, please.
+
+472
+00:33:36,960 --> 00:33:39,920
+ [INAUDIBLE]
+
+473
+00:33:39,920 --> 00:33:42,920
+ Correct.
+
+474
+00:33:42,920 --> 00:33:45,920
+ [INAUDIBLE]
+
+475
+00:33:45,920 --> 00:33:48,920
+ OK.
+
+476
+00:33:48,920 --> 00:34:05,480
+ Well, so if you think about some of the constrained representations, let's say the unit quaternion
+
+477
+00:34:05,480 --> 00:34:08,200
+ has to live on the surface of a sphere.
+
+478
+00:34:08,200 --> 00:34:13,200
+ So the geometry behind that-- you think about this as the tangent surface of the sphere--
+
+479
+00:34:13,200 --> 00:34:15,480
+ is where the velocities live on.
+
+480
+00:34:15,480 --> 00:34:21,440
+ And that is a well-defined object that is unbounded and perfectly well-defined.
+
+481
+00:34:21,440 --> 00:34:24,200
+ So it's not-- I didn't pull a rabbit out of a hat.
+
+482
+00:34:24,200 --> 00:34:48,240
+ It's actually the tangent bundle of these geometric quantities.
+
+483
+00:34:48,240 --> 00:34:49,240
+ Very good.
+
+484
+00:34:49,240 --> 00:34:50,240
+ Yeah.
+
+485
+00:34:50,240 --> 00:34:51,240
+ [INAUDIBLE]
+
+486
+00:34:51,240 --> 00:34:52,240
+ Yes.
+
+487
+00:34:52,240 --> 00:34:54,680
+ So you're absolutely right.
+
+488
+00:34:54,680 --> 00:34:57,280
+ So the point here is it's a little weird.
+
+489
+00:34:57,280 --> 00:35:07,920
+ So in fact, if I take q ewa, and I have seven numbers, and then I say, what's the generalized
+
+490
+00:35:07,920 --> 00:35:12,200
+ velocity, v-- by the way, so I said, watch my notation.
+
+491
+00:35:12,200 --> 00:35:17,760
+ So capital V with this script is spatial velocity.
+
+492
+00:35:17,760 --> 00:35:21,640
+ Lowercase v in the same font is translational velocity.
+
+493
+00:35:21,640 --> 00:35:26,240
+ The times v, times Roman, v is the generalized velocity.
+
+494
+00:35:26,240 --> 00:35:27,760
+ There's three of them flying around.
+
+495
+00:35:27,760 --> 00:35:30,280
+ It's almost always clear from the context.
+
+496
+00:35:30,280 --> 00:35:32,840
+ But there are three v's flying around.
+
+497
+00:35:32,840 --> 00:35:37,800
+ This is the one that corresponds to-- when I say generalized velocity or generalized,
+
+498
+00:35:37,800 --> 00:35:39,480
+ that's like the joint angles.
+
+499
+00:35:39,480 --> 00:35:45,120
+ And if you have to pack a free body into the joint angles, then you use quaternions.
+
+500
+00:35:45,120 --> 00:35:50,660
+ And for velocities, you get a 6 by 1 list of numbers.
+
+501
+00:35:50,660 --> 00:35:51,920
+ And so you're absolutely right.
+
+502
+00:35:51,920 --> 00:35:59,400
+ It's a little weird that q dot would be seven numbers, but v is six numbers.
+
+503
+00:35:59,400 --> 00:36:04,600
+ And so you have to watch that and treat that carefully.
+
+504
+00:36:04,600 --> 00:36:09,800
+ So for the ewa, it'd be just 7 and 7.
+
+505
+00:36:09,800 --> 00:36:10,800
+ But I'm sorry.
+
+506
+00:36:10,800 --> 00:36:12,800
+ I wrote this completely wrong.
+
+507
+00:36:12,800 --> 00:36:15,160
+ V ewa is 7 by 1.
+
+508
+00:36:15,160 --> 00:36:18,160
+ It's v brick that's 6 by 1.
+
+509
+00:36:18,160 --> 00:36:23,120
+ That was the whole point of writing that on the board, so I get that right.
+
+510
+00:36:23,120 --> 00:36:24,880
+ 6 by 1.
+
+511
+00:36:24,880 --> 00:36:25,880
+ OK?
+
+512
+00:36:25,880 --> 00:36:30,480
+ So this one, since these are all rotations, simple pin joints, all of their velocities
+
+513
+00:36:30,480 --> 00:36:31,480
+ are still a scalar.
+
+514
+00:36:31,480 --> 00:36:33,100
+ And I get seven numbers.
+
+515
+00:36:33,100 --> 00:36:37,920
+ But since this one's using a quaternion representation, I only need six numbers to represent its time
+
+516
+00:36:37,920 --> 00:36:38,920
+ derivative.
+
+517
+00:36:38,920 --> 00:36:39,920
+ Yeah?
+
+518
+00:36:39,920 --> 00:36:54,160
+ [INAUDIBLE]
+
+519
+00:36:54,160 --> 00:36:55,160
+ Correct.
+
+520
+00:36:55,160 --> 00:36:56,160
+ Exactly.
+
+521
+00:36:56,160 --> 00:36:57,160
+ Exactly right.
+
+522
+00:36:57,160 --> 00:37:00,280
+ So just to say it out loud, since I'm on the mic here.
+
+523
+00:37:00,280 --> 00:37:01,280
+ So yeah.
+
+524
+00:37:01,280 --> 00:37:03,960
+ So in the six numbers, there are six numbers.
+
+525
+00:37:03,960 --> 00:37:09,720
+ No constraints, no degeneracies.
+
+526
+00:37:09,720 --> 00:37:14,480
+ It's three numbers, which is wx, wy, wz.
+
+527
+00:37:14,480 --> 00:37:15,480
+ Whoops.
+
+528
+00:37:15,480 --> 00:37:18,920
+ That's a z.
+
+529
+00:37:18,920 --> 00:37:22,600
+ And that's the direction of instantaneous rotation.
+
+530
+00:37:22,600 --> 00:37:33,400
+ And the magnitude of the vector is the rate of rotation around that vector.
+
+531
+00:37:33,400 --> 00:37:38,920
+ It's actually-- it's interesting that any derivative of rotation can be represented
+
+532
+00:37:38,920 --> 00:37:39,920
+ that way.
+
+533
+00:37:39,920 --> 00:37:44,600
+ But you can always pick an instantaneous direction of rotation and a magnitude.
+
+534
+00:37:44,600 --> 00:37:51,200
+ And even more so, which is actually what I was putting up here, it has nicely magical
+
+535
+00:37:51,200 --> 00:37:52,200
+ properties.
+
+536
+00:37:52,200 --> 00:37:55,960
+ So it has the same sort of algebra.
+
+537
+00:37:55,960 --> 00:38:05,160
+ Addition in angular velocity has the same-- it works when the frames match.
+
+538
+00:38:05,160 --> 00:38:08,520
+ Which is totally weird to think about, I've got a direction.
+
+539
+00:38:08,520 --> 00:38:11,000
+ I've got instantaneous rotation around this.
+
+540
+00:38:11,000 --> 00:38:12,040
+ I've got another direction.
+
+541
+00:38:12,040 --> 00:38:13,880
+ I can just add them.
+
+542
+00:38:13,880 --> 00:38:18,400
+ So that's non-trivial, but it works.
+
+543
+00:38:18,400 --> 00:38:21,720
+ The additive inverse works.
+
+544
+00:38:21,720 --> 00:38:23,680
+ So we have the same sort of algebra.
+
+545
+00:38:23,680 --> 00:38:25,440
+ They're slightly more complicated.
+
+546
+00:38:25,440 --> 00:38:28,920
+ There's some cross product terms that come in.
+
+547
+00:38:28,920 --> 00:38:29,920
+ But it works.
+
+548
+00:38:29,920 --> 00:38:30,920
+ Yes?
+
+549
+00:38:30,920 --> 00:38:40,360
+ [INAUDIBLE]
+
+550
+00:38:40,360 --> 00:38:40,860
+ Good.
+
+551
+00:38:40,860 --> 00:38:45,920
+ So the question is then, so when I call-- you guys are awesome.
+
+552
+00:38:45,920 --> 00:38:50,160
+ You're leading all of my slides here by a little bit here.
+
+553
+00:38:50,160 --> 00:38:53,920
+ So this is your question from a minute ago, which is that actually there is a simple matrix
+
+554
+00:38:53,920 --> 00:38:55,320
+ that transitions between the two.
+
+555
+00:38:55,320 --> 00:38:59,160
+ So the fact that Q and V are not the same.
+
+556
+00:38:59,160 --> 00:39:03,760
+ But there's a simple transformation that you can use that goes back and forth between them.
+
+557
+00:39:03,760 --> 00:39:07,160
+ You can call map Q dot to velocity or vice versa.
+
+558
+00:39:07,160 --> 00:39:09,920
+ And it's done efficiently and everything.
+
+559
+00:39:09,920 --> 00:39:17,760
+ And then for your question, OK, so if I want to get a Jacobian in software, then the decisions
+
+560
+00:39:17,760 --> 00:39:25,840
+ I have to make are, do I want the right-hand side of that to be multiplied by Q dot?
+
+561
+00:39:25,840 --> 00:39:28,400
+ Or do I want to be multiplying it by V?
+
+562
+00:39:28,400 --> 00:39:33,080
+ And you can actually just pick Jacobian with respect to variable.
+
+563
+00:39:33,080 --> 00:39:37,680
+ And it's either Q dot or V. You can ask for either Jacobian.
+
+564
+00:39:37,680 --> 00:39:42,600
+ And it depends on the application which one you want.
+
+565
+00:39:42,600 --> 00:39:49,680
+ On the right-hand side, you can ask, do I want the Q dot kind of thing?
+
+566
+00:39:49,680 --> 00:39:54,160
+ Or do I want the angular velocity?
+
+567
+00:39:54,160 --> 00:39:57,680
+ And almost always, we were going to give you this-- that's why this one's called calc
+
+568
+00:39:57,680 --> 00:39:59,600
+ Jacobian spatial velocity.
+
+569
+00:39:59,600 --> 00:40:06,720
+ That means the left-hand side is going to be written in terms of spatial velocities.
+
+570
+00:40:06,720 --> 00:40:12,920
+ If you hear the term geometric Jacobian versus analytic Jacobian, the geometric Jacobian
+
+571
+00:40:12,920 --> 00:40:16,080
+ fits out spatial velocities.
+
+572
+00:40:16,080 --> 00:40:21,600
+ Analytic Jacobian is more literally d forward kinematics dt.
+
+573
+00:40:21,600 --> 00:40:24,480
+ But we rarely use that one.
+
+574
+00:40:24,480 --> 00:40:30,800
+ It's almost always spatial velocity, because we always work in spatial velocities for velocity.
+
+575
+00:40:30,800 --> 00:40:36,760
+ You can also notice just quickly with this up here, we really do lean into the monogram
+
+576
+00:40:36,760 --> 00:40:38,360
+ notation for everything.
+
+577
+00:40:38,360 --> 00:40:44,400
+ So it's a little annoying the first time you do it, but it keeps everything clean.
+
+578
+00:40:44,400 --> 00:40:52,400
+ And the equations are correct.
+
+579
+00:40:52,400 --> 00:40:54,480
+ That's good.
+
+580
+00:40:54,480 --> 00:40:58,000
+ I have a couple like, check yourself, but I think you guys have checked yourself mostly.
+
+581
+00:40:58,000 --> 00:41:01,600
+ So yeah, that makes sense.
+
+582
+00:41:01,600 --> 00:41:06,640
+ There's an outlier here, but I think we all understand it.
+
+583
+00:41:06,640 --> 00:41:07,640
+ Yeah?
+
+584
+00:41:07,640 --> 00:41:08,640
+ [INAUDIBLE]
+
+585
+00:41:08,640 --> 00:41:17,040
+ This would be-- in this case, it's just seven joint angles, rotation, rotation, rotation.
+
+586
+00:41:17,040 --> 00:41:21,880
+ So the pin joints, so it's the angle of each of those joints, which is relative angles.
+
+587
+00:41:21,880 --> 00:41:25,480
+ And this is the time derivative of those.
+
+588
+00:41:25,480 --> 00:41:31,680
+ This is translation plus quaternion, translation velocity plus-- this is the spatial velocity
+
+589
+00:41:31,680 --> 00:41:36,520
+ inside there.
+
+590
+00:41:36,520 --> 00:41:46,360
+ OK, so we have a couple of different ways to get J. And again, all of the details.
+
+591
+00:41:46,360 --> 00:41:50,680
+ The reason it's not just a simple time derivative is because of these rotation things.
+
+592
+00:41:50,680 --> 00:41:53,440
+ In 2D, everything's just clean.
+
+593
+00:41:53,440 --> 00:41:54,440
+ You just use beta.
+
+594
+00:41:54,440 --> 00:41:59,240
+ None of this three numbers stuff, four numbers stuff.
+
+595
+00:41:59,240 --> 00:42:00,680
+ Beta does everything you need.
+
+596
+00:42:00,680 --> 00:42:04,400
+ And then rotation matrices are two by two.
+
+597
+00:42:04,400 --> 00:42:05,400
+ They're simple.
+
+598
+00:42:05,400 --> 00:42:08,120
+ There's a canonical choice for Jacobians.
+
+599
+00:42:08,120 --> 00:42:10,800
+ It's just a little bit more work here.
+
+600
+00:42:10,800 --> 00:42:12,800
+ All right.
+
+601
+00:42:12,800 --> 00:42:22,360
+ So the rough idea for differential IK is to basically take J inverse.
+
+602
+00:42:22,360 --> 00:42:39,520
+ So nominally, I want, say, my V desired, my generalized velocities, let's even call it
+
+603
+00:42:39,520 --> 00:42:50,360
+ joint velocities, of my gripper here.
+
+604
+00:42:50,360 --> 00:43:02,120
+ I'll take an inverse of that times my desired gripper spatial velocity.
+
+605
+00:43:02,120 --> 00:43:07,200
+ This is the idea behind diff IK.
+
+606
+00:43:07,200 --> 00:43:08,400
+ But let's be a little careful.
+
+607
+00:43:08,400 --> 00:43:11,680
+ Every time you write an inverse, you've got to think about, am I allowed to take an inverse
+
+608
+00:43:11,680 --> 00:43:12,680
+ of this?
+
+609
+00:43:12,680 --> 00:43:16,360
+ Is that matrix invertible?
+
+610
+00:43:16,360 --> 00:43:18,840
+ So what's the answer in this case?
+
+611
+00:43:18,840 --> 00:43:25,920
+ So let's take for the EWA.
+
+612
+00:43:25,920 --> 00:43:28,120
+ And I've got the gripper frame.
+
+613
+00:43:28,120 --> 00:43:29,120
+ How big is this?
+
+614
+00:43:29,120 --> 00:43:30,120
+ 6, 7.
+
+615
+00:43:30,120 --> 00:43:35,500
+ So that's not even a square matrix there.
+
+616
+00:43:35,500 --> 00:43:41,240
+ So it doesn't have an inverse.
+
+617
+00:43:41,240 --> 00:43:43,720
+ That's bad, and I shouldn't have ever written that on the board.
+
+618
+00:43:43,720 --> 00:43:49,440
+ But we can do a little bit better by, if I just change that into a symbol of your choice,
+
+619
+00:43:49,440 --> 00:43:53,240
+ I normally use the number sign, or the plus.
+
+620
+00:43:53,240 --> 00:43:55,440
+ Sometimes I use plus, actually.
+
+621
+00:43:55,440 --> 00:43:57,440
+ But what do I use?
+
+622
+00:43:57,440 --> 00:43:58,440
+ Plus.
+
+623
+00:43:58,440 --> 00:43:59,440
+ Let's go with plus.
+
+624
+00:43:59,440 --> 00:44:01,440
+ Depends on the day.
+
+625
+00:44:01,440 --> 00:44:04,080
+ But plus.
+
+626
+00:44:04,080 --> 00:44:05,080
+ That's a pseudo-inverse.
+
+627
+00:44:05,080 --> 00:44:06,080
+ Yep, Mohr-Penrose pseudo-inverse.
+
+628
+00:44:06,080 --> 00:44:22,320
+ So if you call p-inv in MATLAB or in Python or something like this, that's going to give
+
+629
+00:44:22,320 --> 00:44:23,320
+ you the Mohr-Penrose pseudo-inverse.
+
+630
+00:44:23,320 --> 00:44:24,320
+ Yeah?
+
+631
+00:44:24,320 --> 00:44:35,080
+ [INAUDIBLE]
+
+632
+00:44:35,080 --> 00:44:38,880
+ In this particular case, so it would still have the same problems?
+
+633
+00:44:38,880 --> 00:44:41,480
+ That's a good question.
+
+634
+00:44:41,480 --> 00:44:45,000
+ So are there parts of the space where that would still work?
+
+635
+00:44:45,000 --> 00:44:47,280
+ There's still redundancy, so I don't think it could.
+
+636
+00:44:47,280 --> 00:44:48,280
+ I don't think it could.
+
+637
+00:44:48,280 --> 00:44:51,000
+ It's just more hidden in that case.
+
+638
+00:44:51,000 --> 00:44:52,000
+ The matrix would have to be--
+
+639
+00:44:52,000 --> 00:44:53,000
+ [INAUDIBLE]
+
+640
+00:44:53,000 --> 00:44:54,000
+ Right.
+
+641
+00:44:54,000 --> 00:45:03,000
+ Because, in fact, a way to see it is that it's going to be this j times this n.
+
+642
+00:45:03,000 --> 00:45:06,360
+ So it's going to be a low-rank matrix times this n.
+
+643
+00:45:06,360 --> 00:45:08,840
+ So it won't be full rank.
+
+644
+00:45:08,840 --> 00:45:11,840
+ It's a great question, though.
+
+645
+00:45:11,840 --> 00:45:12,840
+ Yes?
+
+646
+00:45:12,840 --> 00:45:13,840
+ [INAUDIBLE]
+
+647
+00:45:13,840 --> 00:45:14,840
+ Yeah?
+
+648
+00:45:14,840 --> 00:45:15,840
+ [INAUDIBLE]
+
+649
+00:45:15,840 --> 00:45:23,600
+ The simple answer-- so the question is, what about a 6-degree of freedom robot?
+
+650
+00:45:23,600 --> 00:45:29,320
+ The simple answer is yes, but it depends exactly on-- most of the robots that you can buy today,
+
+651
+00:45:29,320 --> 00:45:33,760
+ if they have six joints, then you can actually-- that'll be full rank.
+
+652
+00:45:33,760 --> 00:45:37,840
+ You can still get them into singular configurations.
+
+653
+00:45:37,840 --> 00:45:40,760
+ If you were to-- you can't just take a random six links.
+
+654
+00:45:40,760 --> 00:45:45,320
+ And for instance, if I just gave you a bunch of prismatic joints and then asked you to
+
+655
+00:45:45,320 --> 00:45:48,320
+ control orientation at the end, that's not going to work.
+
+656
+00:45:48,320 --> 00:45:54,080
+ But the standard revolute, 6-revolute, or the variations you see, yes.
+
+657
+00:45:54,080 --> 00:45:59,000
+ And that's actually-- when you hear people talking about analytic IK, they're typically
+
+658
+00:45:59,000 --> 00:46:04,200
+ exploiting the fact that 6 degrees of freedom can be controlled by six joints on a robot.
+
+659
+00:46:04,200 --> 00:46:05,200
+ Yeah.
+
+660
+00:46:05,200 --> 00:46:06,200
+ OK.
+
+661
+00:46:06,200 --> 00:46:11,000
+ The pseudo-inverse-- how many people have seen-- used the pseudo-inverse before?
+
+662
+00:46:11,000 --> 00:46:12,000
+ Yeah?
+
+663
+00:46:12,000 --> 00:46:14,960
+ Do you know how awesome it is?
+
+664
+00:46:14,960 --> 00:46:16,240
+ It's extremely good.
+
+665
+00:46:16,240 --> 00:46:18,240
+ It's like a very-- I mean, you just called P-inverse.
+
+666
+00:46:18,240 --> 00:46:20,400
+ It's a P-in, but you don't think about it.
+
+667
+00:46:20,400 --> 00:46:23,040
+ But it's really smart.
+
+668
+00:46:23,040 --> 00:46:28,640
+ So what can happen when you're taking a matrix and it's not square, and you're trying to
+
+669
+00:46:28,640 --> 00:46:29,640
+ invert it?
+
+670
+00:46:29,640 --> 00:46:32,800
+ I mean, basically, there's three possible situations.
+
+671
+00:46:32,800 --> 00:46:34,840
+ You could have no solutions.
+
+672
+00:46:34,840 --> 00:46:39,720
+ You could have-- I mean, if it's square, then you could have one solution.
+
+673
+00:46:39,720 --> 00:46:42,840
+ Or you can have infinite solutions.
+
+674
+00:46:42,840 --> 00:46:48,160
+ So the pseudo-inverse sort of does the best possible thing it could do in every situation.
+
+675
+00:46:48,160 --> 00:46:54,360
+ If you have infinite solutions, it's going to give you one that satisfies it perfectly.
+
+676
+00:46:54,360 --> 00:46:59,360
+ But in the null space of that, it's going to pick the smallest solution, the minimum
+
+677
+00:46:59,360 --> 00:47:02,160
+ norm solution.
+
+678
+00:47:02,160 --> 00:47:05,760
+ If there's a unique solution, it will return the unique solution.
+
+679
+00:47:05,760 --> 00:47:09,720
+ It's just as good-- it's a little more expensive than calling inverse, but it's going to give
+
+680
+00:47:09,720 --> 00:47:13,720
+ you the same numbers as calling inverse, up to numerical.
+
+681
+00:47:13,720 --> 00:47:19,200
+ If there's no solutions, then it's going to give you a best effort solution.
+
+682
+00:47:19,200 --> 00:47:22,400
+ It's going to get as close as possible in a least squares sense.
+
+683
+00:47:22,400 --> 00:47:24,440
+ So that's really, really smart.
+
+684
+00:47:24,440 --> 00:47:30,480
+ And we'll understand, I guess, from an optimization perspective, how to generalize that soon.
+
+685
+00:47:30,480 --> 00:47:31,840
+ But let's appreciate it first.
+
+686
+00:47:31,840 --> 00:47:32,840
+ Yeah?
+
+687
+00:47:32,840 --> 00:47:33,840
+ [INAUDIBLE]
+
+688
+00:47:33,840 --> 00:47:43,340
+ Yeah, that's a great question.
+
+689
+00:47:43,340 --> 00:47:47,720
+ So I understand how to do a pseudo-inverse with all those magical properties for a linear
+
+690
+00:47:47,720 --> 00:47:49,960
+ transform.
+
+691
+00:47:49,960 --> 00:47:56,560
+ But if it's a nonlinear map, then I don't know how to do the same stuff.
+
+692
+00:47:56,560 --> 00:47:59,440
+ This is the result of linear least squares.
+
+693
+00:47:59,440 --> 00:48:02,320
+ And nonlinear least squares is a lot harder.
+
+694
+00:48:02,320 --> 00:48:03,320
+ Yeah?
+
+695
+00:48:03,320 --> 00:48:04,320
+ [INAUDIBLE]
+
+696
+00:48:04,320 --> 00:48:05,320
+ Minimum norm.
+
+697
+00:48:05,320 --> 00:48:06,320
+ [INAUDIBLE]
+
+698
+00:48:06,320 --> 00:48:07,320
+ Yeah.
+
+699
+00:48:07,320 --> 00:48:08,320
+ [INAUDIBLE]
+
+700
+00:48:08,320 --> 00:48:09,320
+ Yeah.
+
+701
+00:48:09,320 --> 00:48:10,320
+ [INAUDIBLE]
+
+702
+00:48:10,320 --> 00:48:11,320
+ Yeah.
+
+703
+00:48:11,320 --> 00:48:12,320
+ [INAUDIBLE]
+
+704
+00:48:12,320 --> 00:48:13,320
+ Yeah.
+
+705
+00:48:13,320 --> 00:48:14,320
+ [INAUDIBLE]
+
+706
+00:48:14,320 --> 00:48:15,320
+ Yeah.
+
+707
+00:48:15,320 --> 00:48:16,320
+ [INAUDIBLE]
+
+708
+00:48:16,320 --> 00:48:17,320
+ That's right.
+
+709
+00:48:17,320 --> 00:48:18,320
+ [INAUDIBLE]
+
+710
+00:48:18,320 --> 00:48:39,000
+ It's a convenient property because that's what pseudo-inverse does.
+
+711
+00:48:39,000 --> 00:48:40,120
+ But I think you're right to ask.
+
+712
+00:48:40,120 --> 00:48:41,520
+ That may or may not be the right thing.
+
+713
+00:48:41,520 --> 00:48:45,440
+ And we're going to generalize this so that we can be very explicit about what we wanted
+
+714
+00:48:45,440 --> 00:48:50,280
+ to do when no solutions exist or when there's multiple solutions exist.
+
+715
+00:48:50,280 --> 00:48:55,960
+ In fact, when multiple solutions exist, we should pick up-- it's better to not let pseudo-inverse--
+
+716
+00:48:55,960 --> 00:49:00,440
+ I mean, as clever as it is, I'd rather say what I wanted to do in the null space.
+
+717
+00:49:00,440 --> 00:49:02,680
+ And we can say that very explicitly.
+
+718
+00:49:02,680 --> 00:49:08,320
+ And then also in the case of not being sufficient, like if I'm throwing a baseball at really
+
+719
+00:49:08,320 --> 00:49:12,600
+ high speeds and I can't get it exactly right, I'd rather stop.
+
+720
+00:49:12,600 --> 00:49:16,920
+ I'd rather not throw the ball, maybe, or something like that, rather than going off way off to
+
+721
+00:49:16,920 --> 00:49:18,360
+ the side.
+
+722
+00:49:18,360 --> 00:49:22,480
+ And that's actually-- that is true of real robot motions.
+
+723
+00:49:22,480 --> 00:49:28,120
+ Typically, if you can't follow a trajectory, the one we use the most, it will slow down
+
+724
+00:49:28,120 --> 00:49:31,200
+ and follow the actual trajectory as well as possible.
+
+725
+00:49:31,200 --> 00:49:35,280
+ But it will not deviate from the trajectory because if you worked hard to make a collision-free
+
+726
+00:49:35,280 --> 00:49:42,280
+ plan or something, you don't want to just have your low-level controller do that.
+
+727
+00:49:42,280 --> 00:49:44,280
+ Yeah?
+
+728
+00:49:44,280 --> 00:49:46,280
+ [INAUDIBLE]
+
+729
+00:49:46,280 --> 00:49:48,280
+ Yep.
+
+730
+00:49:48,280 --> 00:49:50,280
+ [INAUDIBLE]
+
+731
+00:49:50,280 --> 00:49:56,920
+ So this is-- so all great questions.
+
+732
+00:49:56,920 --> 00:49:58,240
+ So what do I mean by best effort?
+
+733
+00:49:58,240 --> 00:50:05,640
+ I actually mean that the reconstruction error of J times V will be as close as possible
+
+734
+00:50:05,640 --> 00:50:08,720
+ to V in a least squares sense.
+
+735
+00:50:08,720 --> 00:50:14,800
+ So I will actually take the norm, the L2 norm of the vector and the reconstructed vector,
+
+736
+00:50:14,800 --> 00:50:20,760
+ and that norm will be minimized.
+
+737
+00:50:20,760 --> 00:50:25,400
+ It can happen that you would not want to execute that motion.
+
+738
+00:50:25,400 --> 00:50:26,800
+ That's why we're going to do better.
+
+739
+00:50:26,800 --> 00:50:28,880
+ This is the intro.
+
+740
+00:50:28,880 --> 00:50:31,840
+ This is the first-- this is like first controller.
+
+741
+00:50:31,840 --> 00:50:32,800
+ [INAUDIBLE]
+
+742
+00:50:32,800 --> 00:50:42,800
+ You can definitely just multiply the matrices and see what the difference is for sure.
+
+743
+00:50:42,800 --> 00:50:43,800
+ Yep.
+
+744
+00:50:43,800 --> 00:50:44,800
+ Yep.
+
+745
+00:50:44,800 --> 00:50:45,800
+ Yes?
+
+746
+00:50:45,800 --> 00:50:46,800
+ [INAUDIBLE]
+
+747
+00:50:46,800 --> 00:50:47,800
+ That's true.
+
+748
+00:50:47,800 --> 00:50:48,800
+ [INAUDIBLE]
+
+749
+00:50:48,800 --> 00:51:01,560
+ I would always stack them for-- in the generalized position, I would make that a vector representation.
+
+750
+00:51:01,560 --> 00:51:06,360
+ So if you had three in the wrist or something like this, then maybe you'd get up to nine
+
+751
+00:51:06,360 --> 00:51:11,800
+ or 10, depending if you've added a new-- but the generalized coordinate vector is always
+
+752
+00:51:11,800 --> 00:51:14,800
+ a vector.
+
+753
+00:51:14,800 --> 00:51:22,560
+ [INAUDIBLE]
+
+754
+00:51:22,560 --> 00:51:25,320
+ So we want-- and this is a great question.
+
+755
+00:51:25,320 --> 00:51:31,320
+ I mean, there's actually-- because these things are good for computing different quantities,
+
+756
+00:51:31,320 --> 00:51:35,760
+ sometimes you actually compute multiple things.
+
+757
+00:51:35,760 --> 00:51:38,280
+ Drake is going to do that in the background for you.
+
+758
+00:51:38,280 --> 00:51:43,360
+ So if it ever does work to compute rotation matrices and you don't change the context,
+
+759
+00:51:43,360 --> 00:51:45,240
+ then it will cache those.
+
+760
+00:51:45,240 --> 00:51:49,240
+ And future computations will be faster because it already computed that once.
+
+761
+00:51:49,240 --> 00:51:50,240
+ Yeah.
+
+762
+00:51:50,240 --> 00:51:51,240
+ [INAUDIBLE]
+
+763
+00:51:51,240 --> 00:52:04,320
+ For sure, prismatic joints can be simulated in Drake or in any software.
+
+764
+00:52:04,320 --> 00:52:05,320
+ It's a standard thing.
+
+765
+00:52:05,320 --> 00:52:08,320
+ Yes, there's definitely robotic arms that will have that.
+
+766
+00:52:08,320 --> 00:52:12,360
+ I guess maybe the most common thing you'll see is like-- even if you took our EWA, some
+
+767
+00:52:12,360 --> 00:52:17,040
+ people will put it on a linear stage or something like this to move around.
+
+768
+00:52:17,040 --> 00:52:18,120
+ Those would be prismatic.
+
+769
+00:52:18,120 --> 00:52:22,320
+ But absolutely, you'll see arms that are like the overhead arms that will have prismatic
+
+770
+00:52:22,320 --> 00:52:24,280
+ joints moving around.
+
+771
+00:52:24,280 --> 00:52:31,360
+ There's also-- there's very clever parallel mechanisms and the like.
+
+772
+00:52:31,360 --> 00:52:34,480
+ OK.
+
+773
+00:52:34,480 --> 00:52:38,040
+ I have a notebook that shows you the-- I'll just tell you what it shows you so I can keep
+
+774
+00:52:38,040 --> 00:52:39,040
+ going here.
+
+775
+00:52:39,040 --> 00:52:42,080
+ But you can plot-- so let me just say one more thing.
+
+776
+00:52:42,080 --> 00:52:47,280
+ So your question also was, can I know when I'm going to get multiple solutions?
+
+777
+00:52:47,280 --> 00:52:52,440
+ That's a good-- so let's just say, how do we know whether this matrix is invertible
+
+778
+00:52:52,440 --> 00:52:54,800
+ just by looking at it?
+
+779
+00:52:54,800 --> 00:53:04,920
+ The conditions on this getting a good solution are that the row rank-- it's full row rank.
+
+780
+00:53:04,920 --> 00:53:26,720
+ So if you will find an exact solution if JG function of Q is full row rank.
+
+781
+00:53:26,720 --> 00:53:34,040
+ So in this case, if it's rank is 6, then that means you can perfectly reconstruct this.
+
+782
+00:53:34,040 --> 00:53:35,040
+ OK.
+
+783
+00:53:35,040 --> 00:53:42,960
+ And pseudo inverse will find it.
+
+784
+00:53:42,960 --> 00:53:54,400
+ So the rank is a very sort of Boolean quantity of the matrix.
+
+785
+00:53:54,400 --> 00:53:59,640
+ And even before you drop rank completely-- like, in real robots, don't get rank 5.
+
+786
+00:53:59,640 --> 00:54:04,000
+ They're not going to get rank-- but they're going to get something very close to rank
+
+787
+00:54:04,000 --> 00:54:05,000
+ 5.
+
+788
+00:54:05,000 --> 00:54:08,000
+ And you're going to send extremely large velocities to your robot.
+
+789
+00:54:08,000 --> 00:54:13,000
+ So the interesting thing is not when this becomes strictly non-invertible, but when
+
+790
+00:54:13,000 --> 00:54:18,600
+ it becomes almost non-invertible numerically, such that when I ask for a velocity in some
+
+791
+00:54:18,600 --> 00:54:23,240
+ direction that I can't go, I will send an enormous v.
+
+792
+00:54:23,240 --> 00:54:29,280
+ When this thing becomes almost low rank, that's the condition to watch out for.
+
+793
+00:54:29,280 --> 00:54:33,160
+ So if JG is full row rank, that's fine.
+
+794
+00:54:33,160 --> 00:54:40,800
+ But the real thing you want to watch is the singular values of J. And if the smallest
+
+795
+00:54:40,800 --> 00:54:45,920
+ singular value gets close to 0, that means there's some direction.
+
+796
+00:54:45,920 --> 00:54:49,560
+ If you ask it to move in that direction, you're going to get-- when you take an inverse of
+
+797
+00:54:49,560 --> 00:54:53,160
+ something close to 0, you're going to get something close to infinity.
+
+798
+00:54:53,160 --> 00:54:56,720
+ And you're going to get very large velocities.
+
+799
+00:54:56,720 --> 00:54:57,720
+ That's the problem.
+
+800
+00:54:57,720 --> 00:55:03,160
+ So for instance, take my IWA, and I straighten its arms out.
+
+801
+00:55:03,160 --> 00:55:09,320
+ That's the condition where my ability to move-- so if I ask it to move in a velocity like
+
+802
+00:55:09,320 --> 00:55:14,720
+ this, it's going to say, I need extremely large velocities, because that lever arm is
+
+803
+00:55:14,720 --> 00:55:19,160
+ so small, in order to move at the commanded velocity.
+
+804
+00:55:19,160 --> 00:55:24,100
+ And you just don't want to send that to the robot.
+
+805
+00:55:24,100 --> 00:55:30,440
+ So in practice, in the notebooks, if you want to run them, you'll see that I plot out the
+
+806
+00:55:30,440 --> 00:55:31,720
+ lowest singular value.
+
+807
+00:55:31,720 --> 00:55:32,720
+ And you can watch.
+
+808
+00:55:32,720 --> 00:55:34,040
+ The arm gets straight.
+
+809
+00:55:34,040 --> 00:55:36,400
+ The singular value gets close to 0.
+
+810
+00:55:36,400 --> 00:55:42,360
+ And you're in bad shape.
+
+811
+00:55:42,360 --> 00:55:45,920
+ So singularities are this thing that we think about a lot.
+
+812
+00:55:45,920 --> 00:55:47,320
+ Sometimes we think about them in motion planning.
+
+813
+00:55:47,320 --> 00:55:50,280
+ So we try to avoid straightening the arm.
+
+814
+00:55:50,280 --> 00:55:54,360
+ It happens on-- so if you have a tele-op interface, and you're just messing around with your robot,
+
+815
+00:55:54,360 --> 00:55:58,120
+ and you're, I don't know, trying to do something clever, then you're going to go, whunk, like
+
+816
+00:55:58,120 --> 00:55:59,120
+ this.
+
+817
+00:55:59,120 --> 00:56:05,320
+ And if your controller isn't protecting you from that, either bad things will happen,
+
+818
+00:56:05,320 --> 00:56:07,520
+ or the robot will power down, or fault, or something like that.
+
+819
+00:56:07,520 --> 00:56:10,680
+ So you have to-- you kind of have to think about this when you're writing your low-level
+
+820
+00:56:10,680 --> 00:56:12,880
+ controller.
+
+821
+00:56:12,880 --> 00:56:19,520
+ But people get funny about thinking about singularities.
+
+822
+00:56:19,520 --> 00:56:21,040
+ It's not a black hole.
+
+823
+00:56:21,040 --> 00:56:23,840
+ It's not like the robot explodes.
+
+824
+00:56:23,840 --> 00:56:27,000
+ It's really-- so OK, here's a way to phrase that question.
+
+825
+00:56:27,000 --> 00:56:29,560
+ Is it the math that's breaking?
+
+826
+00:56:29,560 --> 00:56:36,360
+ Or is it the robot that's-- is it physically something that's stuck in the robot?
+
+827
+00:56:36,360 --> 00:56:38,060
+ And it's really sort of the math.
+
+828
+00:56:38,060 --> 00:56:43,920
+ It's the map from end effector to joint angle that's breaking.
+
+829
+00:56:43,920 --> 00:56:49,480
+ So the thinking in end effector coordinates fails when you get into a singularity.
+
+830
+00:56:49,480 --> 00:56:51,280
+ It's not the right place to think about it.
+
+831
+00:56:51,280 --> 00:56:55,920
+ But the robot can perfectly go through singular configurations, as long as you're not thinking
+
+832
+00:56:55,920 --> 00:56:57,840
+ in end effector space.
+
+833
+00:56:57,840 --> 00:57:01,440
+ And to make that point, let me jump to this.
+
+834
+00:57:01,440 --> 00:57:03,720
+ I made this super simple example.
+
+835
+00:57:03,720 --> 00:57:06,220
+ It's a two-dimensional robot.
+
+836
+00:57:06,220 --> 00:57:08,680
+ The kinematics are perfectly clean.
+
+837
+00:57:08,680 --> 00:57:17,880
+ It has a singular configuration, which you can see in two lines, when the arm goes straight.
+
+838
+00:57:17,880 --> 00:57:28,600
+ But I'm going to play basically a sine wave and go in and out of-- I can make it-- I can
+
+839
+00:57:28,600 --> 00:57:30,960
+ go and make it in and out of singularity.
+
+840
+00:57:30,960 --> 00:57:32,480
+ It's no problem.
+
+841
+00:57:32,480 --> 00:57:36,000
+ We can write down exactly what the Jacobian does during that.
+
+842
+00:57:36,000 --> 00:57:39,640
+ And the singular value gets to 0 and back out again.
+
+843
+00:57:39,640 --> 00:57:40,640
+ And that's fine.
+
+844
+00:57:40,640 --> 00:57:41,640
+ Nothing explodes.
+
+845
+00:57:41,640 --> 00:57:44,960
+ It's perfectly good.
+
+846
+00:57:44,960 --> 00:57:45,960
+ But what's happening there?
+
+847
+00:57:45,960 --> 00:57:47,840
+ It's kind of-- it's an interesting-- you have to sort of think
+
+848
+00:57:47,840 --> 00:57:48,840
+ through that.
+
+849
+00:57:48,840 --> 00:57:56,600
+ So the map that says, if I'm perfectly straight-- no, I'll stop it.
+
+850
+00:57:56,600 --> 00:57:58,080
+ I think it's going to be annoying.
+
+851
+00:57:58,080 --> 00:57:59,240
+ I'm perfectly straight.
+
+852
+00:57:59,240 --> 00:58:03,400
+ The map says there is no velocity I can execute that will make my hand come closer to the
+
+853
+00:58:03,400 --> 00:58:06,960
+ base.
+
+854
+00:58:06,960 --> 00:58:13,000
+ But there's clearly a velocity-- there's clearly something I can execute to get me closer to
+
+855
+00:58:13,000 --> 00:58:14,000
+ the base.
+
+856
+00:58:14,000 --> 00:58:15,000
+ What's up?
+
+857
+00:58:15,000 --> 00:58:16,000
+ What happened?
+
+858
+00:58:16,000 --> 00:58:17,000
+ Yeah.
+
+859
+00:58:17,000 --> 00:58:18,000
+ Second order.
+
+860
+00:58:18,000 --> 00:58:19,000
+ Yeah.
+
+861
+00:58:19,000 --> 00:58:20,000
+ Yeah, you got it.
+
+862
+00:58:20,000 --> 00:58:32,000
+ So instantaneously, the velocity at that moment, even though the command's going through, the
+
+863
+00:58:32,000 --> 00:58:34,600
+ velocity going towards the base is 0.
+
+864
+00:58:34,600 --> 00:58:36,800
+ But it can instantaneously accelerate towards the base.
+
+865
+00:58:36,800 --> 00:58:38,800
+ So at the next time step, it's a little bit more.
+
+866
+00:58:38,800 --> 00:58:39,800
+ And then it's going to go through.
+
+867
+00:58:39,800 --> 00:58:42,880
+ So you have to look at the second derivative to get out of that particular one.
+
+868
+00:58:42,880 --> 00:58:44,200
+ Or you just send sine waves in.
+
+869
+00:58:44,200 --> 00:58:53,960
+ If you think in joint space, then you're immune to that mapping, of course.
+
+870
+00:58:53,960 --> 00:58:57,600
+ So once you're in the six-dimensional land, then derivatives make sense.
+
+871
+00:58:57,600 --> 00:58:59,360
+ You can just take simple derivatives.
+
+872
+00:58:59,360 --> 00:59:02,560
+ I don't have to explain the different representations and stuff like this.
+
+873
+00:59:02,560 --> 00:59:05,720
+ So you can really just take J dot.
+
+874
+00:59:05,720 --> 00:59:08,880
+ And there's a canonical choice for J dot once you have J.
+
+875
+00:59:08,880 --> 00:59:10,880
+ That's good.
+
+876
+00:59:10,880 --> 00:59:11,880
+ Yeah.
+
+877
+00:59:11,880 --> 00:59:15,080
+ Yeah, I'm going to stop there.
+
+878
+00:59:15,080 --> 00:59:20,120
+ So this is the makings of a controller.
+
+879
+00:59:20,120 --> 00:59:25,000
+ Now we have the basic idea that we're going to write this diff_ik controller, where if
+
+880
+00:59:25,000 --> 00:59:33,780
+ you put on an input port the desired spatial velocity, a 6 by 1 number, and you tell me--
+
+881
+00:59:33,780 --> 00:59:37,680
+ in the thing that implements the system, you tell me what the robot's like.
+
+882
+00:59:37,680 --> 00:59:42,400
+ I will call calc Jacobian spatial velocity.
+
+883
+00:59:42,400 --> 00:59:47,960
+ I'll take an inverse, and I'll compute this velocity out.
+
+884
+00:59:47,960 --> 00:59:49,600
+ So let's do that.
+
+885
+00:59:49,600 --> 01:00:03,400
+ It's worth doing.
+
+886
+01:00:03,400 --> 01:00:13,200
+ I'm just going to send a simple feedforward constant command in spatial velocity here.
+
+887
+01:00:13,200 --> 01:00:16,920
+ I just said a constant spatial velocity, and I gave it a little bit of a twist just so
+
+888
+01:00:16,920 --> 01:00:20,180
+ it wasn't just going straight down or whatever.
+
+889
+01:00:20,180 --> 01:00:29,360
+ But I just send move your hand down in this translational velocity and a little bit of
+
+890
+01:00:29,360 --> 01:00:32,440
+ angular velocity, and it does its thing.
+
+891
+01:00:32,440 --> 01:00:36,120
+ And it's just a few lines of code.
+
+892
+01:00:36,120 --> 01:00:41,000
+ In Drake, when you write the system, you make a new system.
+
+893
+01:00:41,000 --> 01:00:45,280
+ You basically have to declare the input ports, the output ports, and then you make your little
+
+894
+01:00:45,280 --> 01:00:49,440
+ output, which just calcs the Jacobian.
+
+895
+01:00:49,440 --> 01:00:54,200
+ You get the spatial velocity.
+
+896
+01:00:54,200 --> 01:00:55,920
+ I just hard-coded the desired.
+
+897
+01:00:55,920 --> 01:00:59,960
+ I take a p_inv, and I set the output.
+
+898
+01:00:59,960 --> 01:01:05,560
+ And I've done the work.
+
+899
+01:01:05,560 --> 01:01:08,400
+ Yeah?
+
+900
+01:01:08,400 --> 01:01:11,000
+ OK.
+
+901
+01:01:11,000 --> 01:01:13,440
+ We're going to make that a little bit better and a little bit more general in a second
+
+902
+01:01:13,440 --> 01:01:14,920
+ here.
+
+903
+01:01:14,920 --> 01:01:17,960
+ One more detail that I left behind here.
+
+904
+01:01:17,960 --> 01:01:24,520
+ So how did we go from this to this?
+
+905
+01:01:24,520 --> 01:01:31,480
+ I had a piecewise pose trajectory that we computed by composition of transforms and
+
+906
+01:01:31,480 --> 01:01:33,800
+ then slurping them together.
+
+907
+01:01:33,800 --> 01:01:40,040
+ But how did I go from this to a derivative of that?
+
+908
+01:01:40,040 --> 01:01:41,520
+ Yes?
+
+909
+01:01:41,520 --> 01:01:43,920
+ [INAUDIBLE]
+
+910
+01:01:43,920 --> 01:01:46,160
+ You can do it-- we don't have to fit anything.
+
+911
+01:01:46,160 --> 01:01:47,840
+ You can do it perfectly.
+
+912
+01:01:47,840 --> 01:02:04,160
+ And it's just the same math of all the spatial derivatives and spatial quantities.
+
+913
+01:02:04,160 --> 01:02:05,280
+ We do know the entire function.
+
+914
+01:02:05,280 --> 01:02:11,000
+ So actually, so far in the code, when we put this together, we actually represented this
+
+915
+01:02:11,000 --> 01:02:16,960
+ as a piecewise pose trajectory.
+
+916
+01:02:16,960 --> 01:02:34,120
+ We called that, which was doing linear interpolation for translation
+
+917
+01:02:34,120 --> 01:02:47,320
+ and quaternion slurp for rotations.
+
+918
+01:02:47,320 --> 01:02:51,360
+ And this is one of the trajectory classes in Drake.
+
+919
+01:02:51,360 --> 01:03:02,280
+ It turns out you can just-- and I called this xg trajectory in the code.
+
+920
+01:03:02,280 --> 01:03:06,960
+ Since these are such common operations, the trajectory classes all support the types of
+
+921
+01:03:06,960 --> 01:03:08,280
+ operations you want to run on them.
+
+922
+01:03:08,280 --> 01:03:22,360
+ So you can just say equals xg traj dot make derivative.
+
+923
+01:03:22,360 --> 01:03:31,160
+ And it does exactly the spatial operations needed.
+
+924
+01:03:31,160 --> 01:03:39,680
+ They map from the quaternion slurp into a perfect piecewise-- this one is a piecewise
+
+925
+01:03:39,680 --> 01:03:57,880
+ polynomial now-- which is linear interpolation in spatial velocity.
+
+926
+01:03:57,880 --> 01:04:07,000
+ And it just comes out of the same types of transformations-- no, that's a bad choice--
+
+927
+01:04:07,000 --> 01:04:16,320
+ of conversions that we used to go back and forth between the different representations.
+
+928
+01:04:16,320 --> 01:04:33,400
+ So let me just show you real quick, since I've got it open here.
+
+929
+01:04:33,400 --> 01:04:36,680
+ This is my first crack at the gimbal lock.
+
+930
+01:04:36,680 --> 01:04:40,600
+ I've got a mustard bottle.
+
+931
+01:04:40,600 --> 01:04:43,080
+ It does all the right things, but I'm like, no one's going to know what I'm talking about.
+
+932
+01:04:43,080 --> 01:04:45,040
+ So I canned that.
+
+933
+01:04:45,040 --> 01:04:51,400
+ I'll make it better tomorrow.
+
+934
+01:04:51,400 --> 01:04:54,360
+ So now let's just think about putting that whole thing together.
+
+935
+01:04:54,360 --> 01:04:59,560
+ So we have the sketch with key frames.
+
+936
+01:04:59,560 --> 01:05:00,840
+ We're going to make the gripper frames.
+
+937
+01:05:00,840 --> 01:05:02,760
+ This is the code I showed you before.
+
+938
+01:05:02,760 --> 01:05:09,000
+ Just a composition of all the different pick, pre-pick, place, pre-place.
+
+939
+01:05:09,000 --> 01:05:12,440
+ I set the timings.
+
+940
+01:05:12,440 --> 01:05:19,680
+ I set the initial gripper position, the initial object position, and a goal object position.
+
+941
+01:05:19,680 --> 01:05:22,120
+ OK.
+
+942
+01:05:22,120 --> 01:05:23,120
+ Visualize them for fun.
+
+943
+01:05:23,120 --> 01:05:29,960
+ Then we're going to turn those into trajectories the way we did before.
+
+944
+01:05:29,960 --> 01:05:49,040
+ Run those through.
+
+945
+01:05:49,040 --> 01:05:51,080
+ 30 seconds to execute.
+
+946
+01:05:51,080 --> 01:05:52,080
+ Visualize them.
+
+947
+01:05:52,080 --> 01:05:56,840
+ That was this visualization we said before.
+
+948
+01:05:56,840 --> 01:06:01,720
+ And turn those into trajectories.
+
+949
+01:06:01,720 --> 01:06:03,720
+ Draw those trajectories.
+
+950
+01:06:03,720 --> 01:06:10,120
+ You can turn the orientations into trajectories with Slurp.
+
+951
+01:06:10,120 --> 01:06:14,440
+ Make my little open/close gripper command.
+
+952
+01:06:14,440 --> 01:06:24,120
+ I'm going to do make derivative.
+
+953
+01:06:24,120 --> 01:06:25,120
+ Get the translational.
+
+954
+01:06:25,120 --> 01:06:29,200
+ And then basically the pseudo-inverse controller.
+
+955
+01:06:29,200 --> 01:06:33,960
+ Let me even put this up slightly cleaner on here.
+
+956
+01:06:33,960 --> 01:06:39,640
+ So the pseudo-inverse controller has a vector input port, which is the spatial velocity
+
+957
+01:06:39,640 --> 01:06:41,280
+ commanded coming in.
+
+958
+01:06:41,280 --> 01:06:43,440
+ VWG.
+
+959
+01:06:43,440 --> 01:06:45,880
+ It's six elements.
+
+960
+01:06:45,880 --> 01:06:48,880
+ It takes in the current IWA position.
+
+961
+01:06:48,880 --> 01:06:52,080
+ That's a seven element vector input.
+
+962
+01:06:52,080 --> 01:06:57,200
+ It has one output port, which is the IWA commanded velocity, which is seven numbers.
+
+963
+01:06:57,200 --> 01:07:00,680
+ And to evaluate that output port, you call it calc output.
+
+964
+01:07:00,680 --> 01:07:05,040
+ So anytime somebody asks for my output, it calls calc output.
+
+965
+01:07:05,040 --> 01:07:08,960
+ And I get VG and Q from the input ports.
+
+966
+01:07:08,960 --> 01:07:17,960
+ I set the positions of my internal plant to Q so that I can do kinematics at that state.
+
+967
+01:07:17,960 --> 01:07:24,680
+ I get my calc spatial velocity, JG.
+
+968
+01:07:24,680 --> 01:07:28,840
+ I had to do one little hack because otherwise it wanted to move the-- it gives me the Jacobian
+
+969
+01:07:28,840 --> 01:07:29,840
+ also of the fingers.
+
+970
+01:07:29,840 --> 01:07:31,640
+ And I wanted that to be separate.
+
+971
+01:07:31,640 --> 01:07:34,360
+ So I just pulled off the fingers elements of my Jacobian.
+
+972
+01:07:34,360 --> 01:07:36,160
+ I didn't pull off the fingers.
+
+973
+01:07:36,160 --> 01:07:40,840
+ I removed the rows of the JG corresponding to the fingers.
+
+974
+01:07:40,840 --> 01:07:47,360
+ And then I computed the pseudo-inverse and set from vector.
+
+975
+01:07:47,360 --> 01:07:51,560
+ And you put that-- that's just this code you saw right here.
+
+976
+01:07:51,560 --> 01:07:53,040
+ OK, I get excited.
+
+977
+01:07:53,040 --> 01:08:05,680
+ I know that's a little anti-climatic.
+
+978
+01:08:05,680 --> 01:08:09,760
+ But it takes a second, and then it'll--
+
+979
+01:08:09,760 --> 01:08:10,880
+ beautiful.
+
+980
+01:08:10,880 --> 01:08:22,800
+ Actually, I don't know why Meshcat doesn't update in that case.
+
+981
+01:08:22,800 --> 01:08:23,800
+ Here we go.
+
+982
+01:08:23,800 --> 01:08:26,960
+ OK, so everything is computed directly.
+
+983
+01:08:26,960 --> 01:08:30,560
+ This is a simulation now, not just a plan playback.
+
+984
+01:08:30,560 --> 01:08:36,880
+ You can tell there's the contact forces between the gripper and the brick.
+
+985
+01:08:36,880 --> 01:08:45,000
+ OK, our first end-to-end system.
+
+986
+01:08:45,000 --> 01:08:49,880
+ We've got all the pieces together to do that.
+
+987
+01:08:49,880 --> 01:08:52,880
+ Ha ha.
+
+988
+01:08:52,880 --> 01:08:58,880
+ That's the least impressive thing I've ever been clapped for.
+
+989
+01:08:58,880 --> 01:09:00,880
+ But thank you.
+
+990
+01:09:00,880 --> 01:09:06,400
+ OK, and it's fairly simple.
+
+991
+01:09:06,400 --> 01:09:11,720
+ You have the trajectory source, which we computed.
+
+992
+01:09:11,720 --> 01:09:14,160
+ It goes into the pseudo-inverse controller.
+
+993
+01:09:14,160 --> 01:09:16,640
+ Our integrator, which is just an object.
+
+994
+01:09:16,640 --> 01:09:19,720
+ And that goes right into the EWA position command.
+
+995
+01:09:19,720 --> 01:09:22,120
+ And then we have a simple little WSG command.
+
+996
+01:09:22,120 --> 01:09:25,160
+ That's the whole thing.
+
+997
+01:09:25,160 --> 01:09:28,440
+ Questions about that?
+
+998
+01:09:28,440 --> 01:09:28,940
+ Yeah?
+
+999
+01:09:28,940 --> 01:09:32,920
+ [INAUDIBLE]
+
+1000
+01:09:32,920 --> 01:09:36,320
+ There is no acceleration compensation here.
+
+1001
+01:09:36,320 --> 01:09:37,280
+ So what would go wrong?
+
+1002
+01:09:37,280 --> 01:09:41,400
+ So if I were to choose a trajectory in my gripper frame--
+
+1003
+01:09:41,400 --> 01:09:44,840
+ this is a really good point.
+
+1004
+01:09:44,840 --> 01:09:48,200
+ Since I ignored the arm completely when I made my gripper frame,
+
+1005
+01:09:48,200 --> 01:09:52,640
+ if I accidentally put a desired gripper that was at arm's length,
+
+1006
+01:09:52,640 --> 01:09:58,120
+ for instance, then this controller would not do good things.
+
+1007
+01:09:58,120 --> 01:09:59,960
+ I would not run that on the robot.
+
+1008
+01:09:59,960 --> 01:10:01,840
+ I would not give you a teleop device and tell
+
+1009
+01:10:01,840 --> 01:10:03,360
+ you to run it on the robot.
+
+1010
+01:10:03,360 --> 01:10:05,120
+ We're going to make a better one now.
+
+1011
+01:10:05,120 --> 01:10:08,440
+ So I guess in the beginning of the next lecture.
+
+1012
+01:10:08,440 --> 01:10:12,800
+ So just to forecast that, this pseudo-inverse
+
+1013
+01:10:12,800 --> 01:10:17,560
+ is magical because it's actually solving an optimization problem.
+
+1014
+01:10:17,560 --> 01:10:19,680
+ You can think about this as it's actually
+
+1015
+01:10:19,680 --> 01:10:23,000
+ solving that least squares optimization problem I
+
+1016
+01:10:23,000 --> 01:10:24,680
+ spoke to a little bit.
+
+1017
+01:10:24,680 --> 01:10:28,840
+ And we can take an optimization perspective to generalize this.
+
+1018
+01:10:28,840 --> 01:10:31,920
+ So if we want to solve a slightly bigger optimization problem,
+
+1019
+01:10:31,920 --> 01:10:35,360
+ that we say be as close as possible.
+
+1020
+01:10:35,360 --> 01:10:37,800
+ But if you have extra degrees of freedom,
+
+1021
+01:10:37,800 --> 01:10:39,400
+ then here's what I want you to do.
+
+1022
+01:10:39,400 --> 01:10:42,600
+ Or if you get close to singular, don't do this.
+
+1023
+01:10:42,600 --> 01:10:44,240
+ We can start putting guardrails in.
+
+1024
+01:10:44,240 --> 01:10:46,820
+ And I'll tell you an optimization view of making a better version
+
+1025
+01:10:46,820 --> 01:10:47,620
+ of that controller.
+
+1026
+01:10:47,620 --> 01:10:49,560
+ And that one you could hammer on.
+
+1027
+01:10:49,560 --> 01:10:52,920
+ And it'll be pretty robust.
+
+1028
+01:10:52,920 --> 01:10:56,360
+ Other questions?
+
+1029
+01:10:56,360 --> 01:10:58,280
+ Yes?
+
+1030
+01:10:58,280 --> 01:11:03,640
+ [INAUDIBLE]
+
+1031
+01:11:03,640 --> 01:11:10,080
+ Yep, so mathematically, the code defines continuous derivatives.
+
+1032
+01:11:10,080 --> 01:11:12,760
+ And you just define a dynamical system
+
+1033
+01:11:12,760 --> 01:11:15,360
+ that has continuous derivatives that are one,
+
+1034
+01:11:15,360 --> 01:11:18,600
+ that are the magnitude of the input.
+
+1035
+01:11:18,600 --> 01:11:21,160
+ And then underneath Drake, whenever
+
+1036
+01:11:21,160 --> 01:11:22,920
+ there's a continuous time system,
+
+1037
+01:11:22,920 --> 01:11:24,760
+ then it's always running some integrator.
+
+1038
+01:11:24,760 --> 01:11:27,000
+ And there's a suite of integrators you pick from.
+
+1039
+01:11:27,000 --> 01:11:28,560
+ By default, I put this in--
+
+1040
+01:11:28,560 --> 01:11:29,880
+ whenever you're using the hardware station,
+
+1041
+01:11:29,880 --> 01:11:31,680
+ there's just doing a fixed step integration
+
+1042
+01:11:31,680 --> 01:11:33,720
+ with certain-- like a forward Euler.
+
+1043
+01:11:33,720 --> 01:11:36,840
+ Actually, it's not.
+
+1044
+01:11:36,840 --> 01:11:40,280
+ I think it's fourth order, but fixed time step.
+
+1045
+01:11:40,280 --> 01:11:43,400
+ But you can easily switch between-- you can do Runge-Kutta.
+
+1046
+01:11:43,400 --> 01:11:45,720
+ You can do a stiff solver, whatever.
+
+1047
+01:11:45,720 --> 01:11:47,800
+ There's a suite of integrators you can pick from.
+
+1048
+01:11:47,800 --> 01:11:53,980
+ So when we make a more advanced optimization-based version,
+
+1049
+01:11:53,980 --> 01:11:56,100
+ then you have to be a little bit careful about that.
+
+1050
+01:11:56,100 --> 01:11:59,280
+ Because if your optimization-based thing
+
+1051
+01:11:59,280 --> 01:12:03,200
+ becomes-- it's expensive to compute,
+
+1052
+01:12:03,200 --> 01:12:06,240
+ and your solver starts trying to integrate at high accuracy,
+
+1053
+01:12:06,240 --> 01:12:08,520
+ then it could solve a lot of optimization problems
+
+1054
+01:12:08,520 --> 01:12:10,560
+ to move a red brick.
+
+1055
+01:12:10,560 --> 01:12:12,560
+ And you want to avoid that.
+
+1056
+01:12:12,560 --> 01:12:13,560
+ Yes?
+
+1057
+01:12:13,560 --> 01:12:14,520
+ [INAUDIBLE]
+
+1058
+01:12:14,520 --> 01:12:22,560
+ So let me just say that a little bit more carefully.
+
+1059
+01:12:22,560 --> 01:12:25,180
+ So the sixth degree of freedom arm
+
+1060
+01:12:25,180 --> 01:12:29,380
+ has an analytic IK solution when you have six revolute joints.
+
+1061
+01:12:29,380 --> 01:12:31,780
+ But it's not actually--
+
+1062
+01:12:31,780 --> 01:12:32,740
+ it's not always unique.
+
+1063
+01:12:32,740 --> 01:12:34,460
+ There's still multiple solutions.
+
+1064
+01:12:34,460 --> 01:12:35,380
+ I think there's eight.
+
+1065
+01:12:35,380 --> 01:12:37,500
+ Tommy would know exactly how many solutions
+
+1066
+01:12:37,500 --> 01:12:39,940
+ there are in the sixth.
+
+1067
+01:12:39,940 --> 01:12:43,340
+ And so you still have to make some choices about,
+
+1068
+01:12:43,340 --> 01:12:45,720
+ do you want your elbow here, do you want your elbow here,
+
+1069
+01:12:45,720 --> 01:12:46,660
+ and stuff like this.
+
+1070
+01:12:46,660 --> 01:12:50,380
+ And that would be a direct IK solution, which implies
+
+1071
+01:12:50,380 --> 01:12:52,540
+ something, of course, if you were going to do diff IK,
+
+1072
+01:12:52,540 --> 01:12:53,920
+ it would also be well-behaved.
+
+1073
+01:12:53,920 --> 01:12:57,580
+ But that would typically circumvent the need for diff IK.
+
+1074
+01:12:57,580 --> 01:12:59,620
+ And you go straight for IK in that sort of setting.
+
+1075
+01:12:59,620 --> 01:13:07,580
+ If you were to--
+
+1076
+01:13:07,580 --> 01:13:10,540
+ if you had a trajectory in end effector Q,
+
+1077
+01:13:10,540 --> 01:13:12,780
+ you could come up with a trajectory out of it.
+
+1078
+01:13:12,780 --> 01:13:14,540
+ I guess you'd have to interpolate carefully around
+
+1079
+01:13:14,540 --> 01:13:15,180
+ that.
+
+1080
+01:13:15,180 --> 01:13:17,100
+ Otherwise, you could get into the same things.
+
+1081
+01:13:17,100 --> 01:13:18,860
+ But it's really the mapping from velocities
+
+1082
+01:13:18,860 --> 01:13:21,660
+ that gets problematic.
+
+1083
+01:13:21,660 --> 01:13:22,160
+ Yes?
+
+1084
+01:13:22,160 --> 01:13:23,160
+ [INAUDIBLE]
+
+1085
+01:13:23,160 --> 01:13:32,340
+ Six degree of freedom robots are terrible.
+
+1086
+01:13:32,340 --> 01:13:33,380
+ No, sorry.
+
+1087
+01:13:33,380 --> 01:13:35,060
+ They're mathematically beautiful.
+
+1088
+01:13:35,060 --> 01:13:38,740
+ But if you have a six degree of freedom robot that
+
+1089
+01:13:38,740 --> 01:13:42,320
+ picks something up, you're going to be so frustrated that you
+
+1090
+01:13:42,320 --> 01:13:45,140
+ can't get around or do--
+
+1091
+01:13:45,140 --> 01:13:47,740
+ it feels extremely limiting once you
+
+1092
+01:13:47,740 --> 01:13:49,260
+ have kinematic constraints.
+
+1093
+01:13:49,260 --> 01:13:51,060
+ So I was being a little dramatic.
+
+1094
+01:13:51,060 --> 01:13:52,780
+ But I really think seven degree of freedom
+
+1095
+01:13:52,780 --> 01:13:55,020
+ is common because you need it.
+
+1096
+01:13:55,020 --> 01:13:58,980
+ In fact, I think probably the robots of 2025 or something
+
+1097
+01:13:58,980 --> 01:14:00,740
+ are going to have even maybe another wrist joint
+
+1098
+01:14:00,740 --> 01:14:01,240
+ or something.
+
+1099
+01:14:01,240 --> 01:14:03,980
+ I think most of the robots today are meant for picking things up
+
+1100
+01:14:03,980 --> 01:14:04,980
+ from above.
+
+1101
+01:14:04,980 --> 01:14:08,260
+ And it gets really frustrating to put a kooka in the sink.
+
+1102
+01:14:08,260 --> 01:14:09,940
+ It's just really frustrating.
+
+1103
+01:14:09,940 --> 01:14:11,900
+ And then if you pick up a spatula and try to--
+
+1104
+01:14:11,900 --> 01:14:14,860
+ it's terrible because you've got not only six degrees of freedom
+
+1105
+01:14:14,860 --> 01:14:15,600
+ or seven degrees of freedom.
+
+1106
+01:14:15,600 --> 01:14:16,980
+ And you have a long wrist.
+
+1107
+01:14:16,980 --> 01:14:19,620
+ Then the kinematics are very hard to find solutions.
+
+1108
+01:14:20,620 --> 01:14:21,120
+ OK.
+
+1109
+01:14:21,120 --> 01:14:21,620
+ Good.
+
+1110
+01:14:21,620 --> 01:14:25,020
+ We'll do the optimization view next time.
+
+1111
+01:14:25,020 --> 01:14:35,020
+ [BLANK_AUDIO]
+

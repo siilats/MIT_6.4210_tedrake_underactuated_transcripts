@@ -1,0 +1,1440 @@
+ [INAUDIBLE]
+ OK.
+ We ready?
+ We good?
+ Welcome back, everybody.
+ I just heard-- I guess I was in lecture prep mode,
+ and I wasn't on piazza.
+ But I just heard the deep note is having trouble,
+ so I will look at that right after class.
+ I didn't realize, but if you're struggling with that,
+ I will--
+ I don't know.
+ I'll do my best to look at it right after class.
+ So today, we are transitioning into the first perception
+ set of lectures.
+ OK.
+ Now, I mean, the basic setup, I guess,
+ I can do my standard setup, is that so far, we've
+ either assumed we knew where the block was immediately,
+ or I actually, in some of the notebooks,
+ I had the system pull on the output port that
+ was the cheat port, I call it, from the manipulation station.
+ So if you look closely at the manipulation station,
+ it tells you what you would get from the robot, which
+ are the IWA positions and the shunk positions.
+ It doesn't tell you directly--
+ I mean, there's no sensors saying where the block is yet.
+ But we have these cheat ports that
+ will tell you the position and the pose
+ of any object in the scene.
+ And so I was using that as a backdoor
+ to figure out where the brick started
+ and plan everything relative to that, or I just hardcoded it.
+ So today, we're going to stop using those.
+ We're going to instead use the cameras.
+ So the cameras are the sensors that we have available
+ to see the world and to figure out where that red brick is.
+ And thus begins the conversation for perception.
+ So I mean, maybe it goes without saying,
+ but computer vision is hard.
+ It's been hard for a long time.
+ It got a lot better in the last few years with deep learning.
+ But if you think about why it's hard
+ and why it breaks a lot of the optimization type approaches
+ like we saw for kinematics, I would
+ say is because if you take the color
+ values of the pixels in an image,
+ this is a very bad space.
+ So RGB, the red, green, blue space,
+ the color values in an image, they
+ don't satisfy the sort of--
+ it's hard to write optimization directly
+ against the RGB values.
+ So you can have very nearby RGB values
+ that mean very different things in terms
+ of the geometry in the world and vice versa.
+ So you can change the lighting a lot,
+ and the brick's still in the same scene.
+ The RGB values went all over the place.
+ So because of this, I would say there are two
+ major branches of perception for robotics.
+ One of them continues to use geometry
+ but uses a different type of cameras, which gives
+ direct geometry information.
+ I'm going to tell you a little bit about them.
+ And the other is now sort of the more deep learning-based work.
+ I've separated into deep perception.
+ Typically, it can work directly from RGB values,
+ and it's becoming highly effective.
+ Now, even in the last year or so,
+ we're starting to see those two worlds collapse again.
+ And people are doing like NERF, if people know what NERF is,
+ or deep SDF.
+ Or you're seeing deep learning using geometry representations
+ and trying to combine those two again.
+ So it's not a surprise, maybe, but I'd
+ say those two streams are interesting by themselves
+ and are going to be hopelessly intertwined into the future.
+ So I mean, I do think, though, it's important.
+ Some people say deep learning is all you need
+ to do for perception right now.
+ And I just don't think that's true.
+ I think there has been this other parallel revolution,
+ just as--
+ maybe not quite as dramatic as the deep learning.
+ But going on very much in parallel
+ and getting spectacular results has
+ been this geometric perception pipeline.
+ And that's sad, like really comically sad there.
+ OK.
+ Huh.
+ I'm sorry, I shouldn't have unplugged that one.
+ I just screwed up your stream, did I?
+ I meant to unplug this one.
+ Man, the number of technical problems I've managed to have.
+ [AUDIO OUT]
+, let's try.
+ [AUDIO OUT]
+ Kind of ruined my flow, didn't it?
+ [AUDIO OUT]
+ [AUDIO OUT]
+ It's going to make me register real quick.
+ That's what I didn't do, I think.
+ [AUDIO OUT]
+ Good Lord.
+ [AUDIO OUT]
+ [AUDIO OUT]
+ I'll just use my iPhone in a second here.
+ [AUDIO OUT]
+ [AUDIO OUT]
+ I'm going to lecture off my iPhone.
+ How about that?
+ [AUDIO OUT]
+ That works fine.
+ [AUDIO OUT]
+ It should not be better than the MIT network.
+ OK.
+ Sorry about that.
+ It's going to play the videos a little slower probably.
+ [AUDIO OUT]
+ OK, so there's a second revolution-- sorry for that--
+ based on geometric processing of the visual scene.
+ So you've probably seen incredible reconstructions
+ from autonomous driving, driving through town,
+ and building beautiful maps.
+ This is sort of the indoor equivalent of the SLAM,
+ if you know, the simultaneous localization and mapping.
+ This one is called dynamic fusion.
+ It's in particular tracking objects
+ that can change their shape or change their pose relative.
+ But it's just absolutely stunning
+ that a handful of years ago, people
+ started being able to build this sort of quality
+ reconstruction of a 3D world from a camera
+ that you can fit in your pocket.
+ In fact, I've got one in my pocket right here.
+ Yeah, look at that.
+ These kind of cameras, right?
+ I don't always have them in my pocket.
+ But-- oh, that's not true actually,
+ because I do always have one in my pocket.
+ There's one right there too, right?
+ Which is pretty awesome.
+ So that has been fueled by a lot of different things.
+ I mean, robotics is a good enterprise.
+ But I would say robotics by itself
+ might not have been enough fuel for this.
+ But now augmented reality, like Facebook Labs,
+ is working on this.
+ It was originally Oculus.
+ And the people that did this work became Oculus,
+ became Facebook Reality Labs.
+ So it's being powered by those kind of revolutions.
+ So let's just think a little bit about these different types
+ of sensors, and why are they different than a standard
+ camera, and why did they help robotics jump into the
+ perception age, I would say.
+ There's a couple different types out there.
+ You've probably heard of LIDAR, the laser range finders.
+ These are based on time of flight, where they're actually
+ shooting out an active laser, and then waiting for the
+ return, and measuring the distance.
+ And some of these are just crazy good, right?
+ So even a year ago, there was these 500 meter range luminars
+ coming out where a car can drive through it.
+ It can basically see the whole city, it feels like.
+ And it's just building highly accurate geometric models as
+ it's driving down the street.
+ It's crazy good.
+ And you see these kind of--
+ I don't know if that's actually processed, or that
+ could just be a raw return.
+ Some of the raw returns from these cameras
+ just look spectacular.
+ I mean, the resolution degrades the farther you go, but it's
+ still crazy good.
+ And when these started happening, this started
+ powering a lot of the geometric work in robotics
+ perception.
+ Stereo imaging is still a thing.
+ It's an important thing, where you'll see stereo heads that
+ were the classic approach to building
+ sensors for perception.
+ This is actually the Carnegie head, which is stuck in the
+ middle of Atlas, which is the humanoid robot from at least
+ the version of Atlas we have upstairs, carried around this
+ stereo pair head.
+ And basically, the basic principle, there's two cameras.
+ And it's comparing the two images, trying to find similar
+ blocks in the left and right image, and then saying how
+ different are those blocks in the image using the distance
+ between the lenses and figuring out the depth.
+ There's many different ways to do it, but basically, a simple
+ block matching stereo is a perfectly good way to do it.
+ Each of these have different pros and cons.
+ I'll tell you about the ones we picked.
+ I'll tell you most about the one we picked.
+ Structured light, it was the Microsoft
+ Kinect came out.
+ This was considered a major advance for indoor.
+ LiDAR was traditionally considered for outdoor
+ applications, and it works in natural light, whereas the
+ Kinect was one of the first things that powered the indoor
+ perception revolution.
+ And the fact that they became so cheap because they were
+ sold with game consoles was a big, big deal.
+ I think that really opened up the number of people that were
+ playing with them and just really
+ bootstrapped the research.
+ So the structured light approach is you're projecting
+ some image onto the scene, which allows you to then, by
+ taking a picture, have far more information than you
+ would have had with just random pixels coming in.
+ But the one that we're going to use that I have in my
+ pocket here is an Intel RealSense D415.
+ They're pretty small, pretty nice.
+ This is actually a projected texture stereo.
+ The RealSense line and the Intel line has a handful of
+ different technologies, but this is the projected texture
+ stereo version.
+ So it's basically a stereo camera, except that it's also
+ got a little projector, obviously, that's just pushing
+ out some pattern of light.
+ So that if you were to look at--
+ if you take stereo images of a purely white wall, then
+ there's nothing that it could possibly do to compare those
+ images to get a reasonable depth.
+ But if you project an invisible pattern, an IR pattern even,
+ on the wall, then there's still something that it can
+ see in order to get good depth information.
+ And in general, it reduces the reliance on the textures in
+ the world, because it's providing its own texture.
+ Compared to things like LiDAR and other time of flight
+ technologies, one of the reasons we like this is
+ because they don't interfere with each other.
+ So it actually doesn't care what the--
+ so compared to the structured light, where it's trying to
+ set up a certain pattern out, this one's just putting out
+ any old pattern.
+ It just wants to have texture.
+ It doesn't care--
+ it's not trying to match a specific pattern.
+ It's just trying to make sure that there's not
+ sameness everywhere.
+ So if you have two cameras pointing at the same scene,
+ and they're both projecting texture, no big deal.
+ It's still getting good returns.
+ Whereas a lot of the other cameras before that, you had
+ to really synchronize your multiple cameras to make sure
+ they weren't hitting--
+ sending active pulses at the same time.
+ It was a major, major pain.
+ And we do use multiple cameras.
+ I'll show you in a minute the number of cameras we put
+ around that dish-loading example.
+ But this is new news.
+ This is August 17th this year.
+ Super sad.
+ I don't really use emojis, but I almost put a sad emoji on
+ here, right?
+ I don't really know what I'm going to do.
+ But it's really bad news for the field.
+ I mean, we're bummed.
+ There's not a great replacement yet.
+ I mean, there's more technologies out there, but
+ the RealSense has become a favorite for sure.
+ And I think we're--
+ I don't know.
+ We're just too small as a field to matter.
+ But they're selling them, but I guess they're
+ not selling enough.
+ So I don't know what we'll be using next year in class.
+ But we've got a bunch of RealSenses.
+ We're going to hang on to them, keep using them as long
+ as we can.
+ OK.
+ So we have the ability to simulate these cameras, of
+ course, in the simulation.
+ But we simulate them in various levels of fidelity.
+ OK?
+ So the simplest one, and the one we'll use for most of the
+ class, is just a standard OpenGL renderer.
+ OK?
+ So OpenGL is sort of the basic graphics language that's
+ existed forever.
+ It's not particularly fancy in the way it does lighting.
+ Or it's capable, but not compared to the new game
+ engine quality technologies.
+ But it's fast.
+ And it's got GPU acceleration.
+ And it's definitely faster than real time.
+ OK.
+ So let me just step you through.
+ This is just a diagram from a very simple system that has an
+ object, a single object in the scene.
+ Turns out it's a mustard bottle.
+ OK.
+ And so we've got a multi-body plant, which is just holding
+ the mustard bottle, not doing anything interesting.
+ We've got the scene graph, which is the geometry engine.
+ And we now can take an RGB sensor and add a new sensor
+ into the diagram.
+ It hooks right up to the scene graph.
+ OK.
+ It's just another system.
+ It reads geometry.
+ It has a message passing with the scene graph to get the
+ geometry information.
+ And it spits out color image, but also depth image in a
+ couple different channels.
+ And a label image for when you want to train your machine
+ learning algorithms.
+ You can say per pixel what object is it associated with.
+ And you can have it spit out the pose of the sensor.
+ OK.
+ So RGBD for red, green, blue, and depth sensors.
+ It's just one more channel that gives you a
+ depth signal back.
+ OK.
+ And the images that come out are the standard--
+ you take the first three channels, the
+ standard RGB images.
+ You get something that looks like this out.
+ There's a little mustard bottle.
+ And then there's an image that's the same number of
+ pixels, the same size, which just says for every pixel,
+ what's the distance to the object in the scene?
+ The first return, right?
+ Or NAN if it's too far.
+ Actually, it's not NAN.
+ There's a particular integer for that.
+ OK.
+ So you'll see this come slowly into MeshCat here.
+ So in MeshCat, you can push the point clouds out to the
+ renderer, too.
+ So first of all, I drew the camera with the camera
+ coordinates here.
+ So you can see red, green, blue, remember?
+ So x, y, z.
+ Right?
+ So in order to get the images that we saw, we wanted the
+ camera oriented like this.
+ It's a little bit hard to think about.
+ I put it at a little bit of a tilt in order to get a little
+ bit of an angle on the shot.
+ OK?
+ But you can go in and navigate through MeshCat.
+ You can turn on and off the geometry from scene graph.
+ And you can turn on and off the point cloud.
+ But there's a point cloud in there giving you the same sort
+ of the raw information, I guess, from the cameras.
+ Right?
+ Now, the camera only sees one side of the object.
+ Right?
+ And that's a big part of what we have to take care of in
+ perception is the fact that we only get partial views.
+ Right?
+ So it's not going to be enough to assume you could see all
+ parts of the object and match all parts of the object.
+ When you have occlusions, when you have multiple objects in
+ the scene, it gets even worse.
+ And the best perception systems can do a lot with very
+ partial views.
+ OK.
+ I said we like to just not worry about the cameras
+ interfering.
+ OK?
+ But this is a little ridiculous, I would say.
+ We just didn't want to worry about whether we had enough
+ cameras or we wanted to avoid partial views as much as
+ possible, so we put a bunch of cameras all over the place.
+ And we would do things like use some cameras to train the
+ other cameras.
+ There were multiple reasons for it.
+ But we instrumented the world with plenty of cameras, OK?
+ Including two on the wrist.
+ Right?
+ So right on the wrist of the robot, there's
+ two right there.
+ We'll mount them in various places.
+ The robot that we tried to bring in--
+ we successfully brought the robot in, but the cage had to
+ be disassembled.
+ And the cage had--
+ the standard cage we had around it was there primarily to hold
+ the cameras in fixed locations and have a nice view down into
+ the scene.
+ So we're going to talk mostly today about relatively
+ simple-- like clean point clouds.
+ And thinking about what you do if the point clouds are giving
+ you pure geometry information.
+ But next time, we're going to go into the fact that the real
+ point clouds are pretty messy.
+ OK?
+ So I'm just--
+ introduce the idea of it here, but we're going to dig more
+ into it with our methods next time.
+ So this is a simulated depth return for
+ this kind of a scene.
+ OK?
+ And this is what you actually get out of
+ the real depth camera.
+ Now you notice it's not Gaussian noise.
+ OK?
+ So it's not like I take every pixel and I pull a random
+ number and I change the depth value by some Gaussian number.
+ It's much more stereotypical than that.
+ It tends to happen on the edges of objects, right?
+ Where the normals are not very incident to the camera.
+ OK?
+ That's a typical place where you don't get good returns or
+ don't get good depth images.
+ Or if one camera can't-- or if both cameras can't see the
+ side of an object or something like that.
+ There's other--
+ so transparent or reflective surfaces are all-- there's
+ things like this that are the canonical bad
+ cases for these cameras.
+ There was a great project actually by the same Facebook
+ group where they were mapping the inside of homes and they
+ wanted to build these beautiful 3D
+ maps of indoor homes.
+ And the problem is people have windows and
+ people have mirrors.
+ So they actually--
+ they had a very clever--
+ I'll actually talk about it later.
+ But they have a very clever trick for figuring out how to
+ work with mirrors and windows.
+ OK, so this is just an example--
+ another example of-- this is the D415 where Cooney is
+ looking at some Legos and vegetables and random stuff on
+ his table, OK?
+ But if you scroll around the 3D-- the same way I scrolled
+ around the mustard bottle, he's got the camera above.
+ The camera's not moving.
+ This is just looking at the point cloud that's coming out
+ from different angles.
+ I would say there's one word that everybody always uses
+ when they talk about the point clouds out of D415--
+ lumpy.
+ Everybody says lumpy.
+ It's like--
+ it doesn't seem like a word that would come to--
+ but I've heard a lot of people say, yeah, yeah, those are
+ lumpy point clouds.
+ And it just has this characteristic ripple, OK?
+ And if your carrots or whatever are like about the
+ same size as your lumps, things get pretty dicey.
+ So that wasn't meant to be a joke.
+ OK.
+ So that's our setup.
+ Let's start thinking about how to do work with point clouds
+ and how to go from depth to point clouds and why, as you
+ can see here, that thinking about point clouds is actually
+ a kinematics problem.
+ So I hope it blends nicely from what we did last time.
+ OK.
+ I'll start here.
+ So there's many representations of 3D data, of
+ 3D geometry, let me say.
+ OK.
+ The one that we were just illustrating there is called a
+ point cloud.
+ OK.
+ So typically, this would be a--
+ let's say a 3 by n matrix, OK, where this is the x, y, z
+ positions in a Cartesian frame.
+ And this is the number of pixels or number of points.
+ OK.
+ It can also be--
+ you can also have RGB values.
+ You can also have normal information.
+ There are a couple other things that you can--
+ extra information you can add to the point cloud.
+ But the first thing we'll think about is just x, y, z
+ positions in space that are a point that I got from a--
+ indirectly from a depth camera.
+ OK.
+ I mean, a depth image, like we got directly out of the
+ camera, is also, in some sense, a
+ representation of 3D geometry.
+ But it's not enough by itself.
+ You also need to know, let's say, the camera info.
+ I'll get more detailed about that later.
+ But in order to turn that 2D image into a 3D point cloud,
+ you need to know something about the geometry of the
+ camera, and potentially even the location in space.
+ There are other representations of 3D
+ geometry, too.
+ I mean, you can do triangular meshes.
+ Some of you will have heard of signed distance
+ representations.
+ And this has led to things like NERF, which I will say
+ more carefully later.
+ Voxel grids are another one, or occupancy grids.
+ OK.
+ So for the most part, I want you to--
+ we're going to think about these kind of the same way we
+ thought about rotations, where there are many, many
+ different types of representations for the
+ geometry.
+ There are ways to go back and forth between them.
+ And for different algorithms, they have different virtues.
+ So sometimes we'll choose to use the point cloud directly.
+ Sometimes it's better to use the depth image or signed
+ distance function.
+ The only caveat, the only place that that analogy breaks is
+ that in the rotation representations, we could go
+ back and forth without any loss of information.
+ Whereas here, sometimes you have to be careful.
+ You might actually lose information when you go across
+ one of these boundaries.
+ But in general, I think the healthy attitude--
+ so oftentimes people will be like, oh, I have a new
+ algorithm.
+ I just realized you could do everything in
+ signed distance functions.
+ And I think the people that have thought about perception
+ a long time think, well, the representations are basically
+ the same.
+ You're not discovering something.
+ It's like, really just think about this as a library of
+ representations you can go back and forth between.
+ We're going to focus today on the point cloud
+ representation, because it plays very well with the
+ kinematics of finding an object, finding our red brick.
+ OK.
+ Here's the setup.
+ I've got some geometry in my world.
+ Got some multicolored chalk.
+ OK.
+ And let's say I've taken my camera.
+ I'm just going to do it in 2D, because I have a 2D blackboard.
+ But you can generalize it to 3D easily enough.
+ So I've got some camera.
+ And let's just say I was able to see all sides of it to
+ start.
+ We'll pretend we had maybe multiple cameras looking at it
+ and we assembled some point cloud where we got nice,
+ evenly distributed points from all over the object.
+ OK.
+ So we'll call our object O and our object frame O. OK.
+ So I want to distinguish between two sets of points.
+ OK.
+ We're going to think about the points.
+ Well, we're going to do two things.
+ We're going to have the points that are coming out of the
+ camera, which we tend to call those the scene points.
+ OK.
+ So if I have a camera and I've taken my depth camera and I've
+ projected the points into the 3D world, then I'm going to
+ have a bunch of scene points.
+ And they're going to come in the camera frame.
+ OK.
+ And our job, our task, is to try to figure out the pose of
+ this object using the scene points that
+ are coming in here.
+ Now, there's many ways to do it.
+ But we're going to start with an algorithm that, since we're
+ working with points on this side, we're going to go ahead
+ and represent our object.
+ Again, we have multiple--
+ you could think of it as represented as a mesh or by a
+ sine distance function or lots of different options.
+ But our object, our known geometry that we're looking
+ for, I'm going to go ahead and represent that geometry with a
+ set of points, too.
+ And we'll call that the model points.
+ And that's going to be represented in the object
+ frame.
+ So basically, you start off.
+ You know the thing you're looking for.
+ The way you describe it is by a set of points that I hope to
+ find in the world.
+ And then I'm getting scene points actually measured.
+ And my job is going to be to somehow find the relationship
+ between these scene points and the model points, both in
+ terms of the pose and in terms of mapping those two,
+ figuring out which scene point goes with which model point.
+ OK.
+ So let's assume that we know--
+ this is the camera's pose in the world.
+ Let's say we know that.
+ We can measure it.
+ We can calibrate it.
+ Our task is going to be to estimate the object's pose in
+ the world.
+ Right?
+ Camera's viewing the world, giving about a
+ bunch of depth returns.
+ Now, we're going to make a bunch of
+ assumptions to start.
+ OK.
+ We're going to assume that the only scene points that come in
+ that are in our point cloud are from the actual object.
+ It's never like that.
+ Normally, you have your object.
+ You have the table.
+ You have all these spurious points that are coming in.
+ It's never that simple.
+ But to start off, let's just assume that we have only the
+ scene points.
+ We'll talk about how to generalize that soon.
+ AUDIENCE: Are we assuming that we know the model points?
+ PROFESSOR: Yes, we assume that these are known.
+ This object is known.
+ Right?
+ So this would be finding a known object in the scene, not
+ understanding some new object you've never seen before.
+ And we're going to make another assumption, huge
+ assumption, but even this lecture will get around.
+ OK?
+ Let's assume that we know the correspondences.
+ OK?
+ What do we mean by correspondence?
+ That's an important word that's going to come up over
+ and over again.
+ If I have my canonical model, which has some number of
+ points, my model points, if I had enough colors, I would
+ make each of these different colors possibly.
+ But OK.
+ There's something you're doing immediately with your
+ impressive vision system is you're realizing that this
+ point goes with that point, this point
+ goes with that point.
+ Right?
+ You're corresponding the points based on your
+ understanding of the object.
+ OK?
+ These are the correspondences.
+ OK?
+ And I'm going to just assume, even just to keep the
+ notation the same, that this is--
+ I'll call this 0.1, 0.2, 0.3, go around, and I'll assume
+ that these are correctly ordered so that model point i
+ actually corresponds to scene point i.
+ Yeah?
+ Do you mean that if I line these up, that they actually
+ match up, or that there's just some relationship that
+ could satisfy the epsilon on top of--
+ Yeah, yeah.
+ So I'm starting with they actually line up, one to one
+ matching, and we're going to quickly
+ remove that assumption.
+ So it's crazy.
+ That's never going to happen.
+ OK.
+ Maybe I'll go over here.
+ So given our kinematics and our frames and our
+ understanding, we know that we can put everything into the
+ world frame, right?
+ So that the models--
+ let's see, I'll do--
+ I can take my model points, which are
+ specified in object frame.
+ There's some pose of the object that would transform me
+ into the world frame.
+ And similarly, I want that to match the scene points, one to
+ one matching because I've assumed correspondences.
+ And the scene points are given by this.
+ But I can go ahead and just--
+ because this is known and this is known, I can just
+ pre-compute that and just work with this as my object.
+ OK.
+ So given that, the question is, how do I
+ reconstruct xw, x, o, in w?
+ This is very much an inverse kinematics problem.
+ Right?
+ Right.
+ Given the end effectors, it's very much similar to if I had
+ my robot arm and I had my gripper desired end effector,
+ I need to figure out what the joint angles are.
+ OK, here I've got my points that are associated and I want
+ to figure out what the Q, or in this case it's represented
+ directly as a pose, of that object is.
+ Now last time we didn't actually do
+ inverse kinematics.
+ Right?
+ We did forward kinematics, then we did differential
+ kinematics, then we did differential inverse
+ kinematics, but we never did inverse kinematics.
+ Right?
+ So we did Jacobians, everything.
+ This time we're actually going to do inverse kinematics.
+ We're going to actually solve this directly.
+ Why not differential this time?
+ Why am I not going to immediately
+ talk about Jacobians?
+ Yeah?
+ [INAUDIBLE]
+ Right.
+ So what would be the closest notion?
+ So the comment there was that there's not an analogous
+ notion, I'm saying, that there's not an analogous
+ notion of the joint measurements, for instance, in
+ the camera space.
+ But if I had a current pose, I could ask, what is an
+ incremental change in my model points relative--
+ if I were to make an incremental change in this
+ pose, how do my scene points change?
+ I could still ask the differential question.
+ So I think it's possible we could still do differential
+ kinematics.
+ And in fact, we will do differential kinematics for
+ perception when we want to do things like tracking objects.
+ But unfortunately, we have to solve a harder problem for
+ perception to start.
+ The EWA, we always have joint measurements that tell me what
+ position I'm in right now.
+ And I can ask, given I'm in this position, what's an
+ increment going to do?
+ In the perception problem, the robot has to
+ wake up at some point.
+ And for the first time, look at a bunch of points and solve
+ a harder problem of figuring out where am I at all.
+ I can't do an incremental change until I have something
+ to start from.
+ So I have to solve this sort of more global problem first
+ in order to start this.
+ Did I say that well enough?
+ You guys didn't look totally with me on that.
+ OK.
+ Basically, I don't have an initial guess for the pose.
+ If I had an initial guess, I could say, if I change that
+ initial guess a little bit, then how would it change?
+ But I don't have a close initial guess such that local
+ changes of it are going to get me where I need to be.
+ Yeah?
+ AUDIENCE: Could you explain why this version of the problem
+ is harder compared to the differential version?
+ Is it computation complexity or something?
+ PROFESSOR: The question is, so why is this version of the
+ problem harder?
+ Why do I say this is the global problem which is harder?
+ So the short answer is that basically, the differential
+ problem is that locally, you're solving a bunch of
+ linear equations all the time.
+ And we did write convex problems in order to track it.
+ So our quadratic programming approach to differential
+ inverse kinematics was an excellent solution.
+ When you don't have that initial guess, then you have
+ to solve the harder problem where it might have multiple
+ local minima.
+ And in general, you have to find the needle
+ in the haystack.
+ It's not about tracking something that
+ you've already found.
+ It's about finding it for the first time.
+ And because there are lots of different--
+ we're going to see when we write the equations down why
+ there are local minima that come up.
+ But you might think, that clump of points over here is my
+ brick, no, that could be that point.
+ There could be something very different that would be close
+ matches to your points.
+ So it's a harder problem.
+ It does translate all the way down to computational
+ complexity, but that's not the simplest way to see it.
+ So let's think about this problem here.
+ I want you to see this as basically a linear problem.
+ So why is that a linear problem?
+ So I can write x w o o m i equals psi.
+ This is given.
+ We have to solve for this.
+ You can write this as p o w plus r o w p o m i.
+ OK.
+ Where this is the position of the frame,
+ and this is the rotation of that frame.
+ And in particular, if we now choose 3 by 3 rotation matrices
+ as a representation of this, then this equation
+ is actually a matrix equation.
+ I'm not just hiding behind spatial algebra
+ to make that true.
+ This is actually a matrix, a 3 by 3 matrix,
+ times a 3 by 1 vector.
+ And this equation should match.
+ So I can write this, this being multiplied
+ like this in this structure.
+ When I see that, I think the problem I'm trying to solve
+ is linear in my parameters, my decision parameters.
+ So I hope you see this as being Ax, maybe
+ equal to approximately equal to b.
+ But you have to be a little careful,
+ because what's in x?
+ What are the things I'm trying to solve for?
+ In order to write this out, you have
+ to shuffle and flip and reorient,
+ because x is actually holding inside it p w o and r w o
+ rolled out into a long vector.
+ A actually has-- what does it have?
+ It has this hiding inside the A plus a bunch of 1's
+ to get that term.
+ And b is that term.
+ But if I see this, I see a linear set of equations.
+ Now because, as Alex points out, it's
+ ridiculous to assume that you have exactly
+ overlap all the time, asking that to be exactly
+ equal for a whole bunch of points from a sensor
+ that we know is going to be a little bit noisy,
+ we know it's not going to match all the points.
+ It's too much to say, here's a bunch of equations,
+ make that equality hold.
+ So just like last time, we're going
+ to write the softer version of this as an optimization
+ problem.
+ So what I'd like to do instead is roughly this.
+ I'll see you in just a second.
+ I'll even just-- I can call my decision variables
+ whatever I like here.
+ So p r p plus r.
+ Yeah?
+ [INAUDIBLE]
+ Ah.
+ I'm going to get to that in a second.
+ Yeah.
+ OK, so we're close to this.
+ OK?
+ This is the direct translation from this.
+ Now Alex made an excellent point,
+ which I should have repeated, which
+ is that there's something wrong with the formulation
+ that I've written here.
+ If I search over all p's and all r's,
+ then there's nothing guaranteeing that I'll get
+ a rotation matrix out.
+ If I've chosen a 3 by 3 rotation matrices,
+ then I need something else to guarantee
+ that I'm going to actually get a rotation matrix out.
+ Right?
+ So the conditions to make a rotation matrix
+ are additional constraints, just like we
+ added in the QP formulation for the kinematics.
+ You can write it a bunch of different ways.
+ Roughly, you need r to be orthonormal.
+ OK?
+ And you need the determinant of r to be positive 1.
+ This is equivalent to saying that r transpose is r inverse.
+ OK?
+ But we'll use this form of it.
+ OK.
+ Those are the constraints that will guarantee
+ that if we solve this optimization problem subject
+ to those constraints, then we'll get a good rotation matrix.
+ Now this, because of this Ax minus b,
+ this is a nice quadratic objective in the sense
+ that it's convex.
+ Should just say convex.
+ What is this?
+ The decision variables are the elements of r.
+ OK?
+ So this is actually nine constraints
+ that I've written in this matrix form,
+ where all the elements of this thing
+ have to equal the elements of this thing.
+ OK?
+ And each of those nine constraints
+ is quadratic in the elements of r.
+ I get r1 times r1 plus whatever.
+ OK?
+ So this is nine quadratic equality constraints.
+ And then this one is actually worse.
+ Anybody know what the determinant of 3 by 3 matrix
+ r's are?
+ What degree-- how the coefficients of r enter that?
+ You can look up your determined formula,
+ and you can-- the 3 by 3 determinant
+ is just a sum of 2 by 2 determinants, whatever,
+ multiply.
+ But this is basically cubic in coefficients of r.
+ OK?
+ So this one's beautiful.
+ This up here, beautiful.
+ As with my optimization hat on, this is beautiful.
+ This one's like, eh, don't love that.
+ But we can maybe deal with that.
+ I know a bit about how to do quadratic equality constraints.
+ Cubic-- I hate that one.
+ OK?
+ So here's what most people do, is we're just going to--
+ let's pretend that one's not there,
+ and we'll deal with it later.
+ OK?
+ Because it really does make the optimization hard.
+ That's an ugly nonlinear constraint, the cubic one.
+ Fortunately, if this is true, if we satisfy this,
+ then the determinant can actually only be plus or minus
+ 1.
+ So basically, we'll solve it.
+ We'll check if the determinant is plus or minus 1.
+ If it was minus 1, we'll make our correction and resolve.
+ OK?
+ And that works out.
+ Because writing that constraint directly is gross.
+ OK, so a couple questions, just to make
+ sure you're following with me.
+ So if I have 10 points from my object,
+ how many decision variables do I have?
+ Mi and Si are-- there's 10 points.
+ Yeah?
+ [INAUDIBLE]
+ Right.
+ Right.
+ The number of decision variables does not
+ change with the number of points.
+ I've got 3 by 3 matrix here, and 3 by 1 vector here.
+ All that I'm doing, if I have more variables,
+ I've just changed my objective function.
+ I have more terms in this.
+ They sum up.
+ OK?
+ But I still only have nine decision variables.
+ The number of decision variables does not
+ depend on the number of points in the scene.
+ OK.
+ So even this problem, the quadratically constrained
+ quadratic objective, that's not a great problem.
+ OK?
+ In general, we would have to relax it
+ to do nice work with it.
+ It turns out that this particular problem
+ has a beautiful solution, the closed form solution,
+ given the singular value decomposition.
+ It's one of those quirks where there's
+ a bunch of sets of things we know how to solve beautifully
+ with optimization.
+ There's a bunch of things we can solve
+ a bunch of different ways.
+ They're all the same set.
+ And then there's SVD, which solves these weird problems
+ that I don't know totally how to connect.
+ This problem, we are going to have a good solution for.
+ But I want you to have a little bit of geometric--
+ the same way I tried to draw the QPs last time,
+ I'm going to try to draw this optimization problem for you
+ so you can have some intuition about what's happening.
+ To do that, let's do it in 2D real quick.
+ OK?
+ I hope it will also help you work through the mechanics.
+ OK?
+ So in 2D, remember our rotation matrices
+ are now 2 by 2 matrices.
+ We know that they always have the canonical form, right?
+ The cosine theta, negative sine theta, sine theta, cos theta.
+ That's just background knowledge.
+ OK?
+ But I'm not going to use theta as my decision variables.
+ That would be a-- if I tried to search over thetas,
+ then I would have this nonlinear dependence
+ through cosine and sine of that.
+ And that would be a harder optimization.
+ OK?
+ I want to leverage the fact that this was a linear term here,
+ which turned into a quadratic objective.
+ So I have to use the coefficients of r, not theta.
+ You know, I can't make the coefficients of r
+ nonlinearly depend on my decisions.
+ OK?
+ So I could just do ABCD as my parameterization.
+ In general, in the 3 by 3 case, that is roughly what you do.
+ You would fill out the whole 3 by 3 matrix.
+ OK?
+ In this case, in 2 by 2, everything's better in 2D.
+ OK?
+ In 2D, you know if you have an orthonormal matrix,
+ then you have to have this relationship where I can say--
+ I know that's going to be true.
+ In order for the orthonormal vector--
+ there is exactly one orthonormal vector to this, and it's that.
+ OK?
+ So this is going to be my parameterization.
+ Let's assume that the position is 0 or known,
+ just so I can plot the--
+ I make a graph over--
+ I'm going to basically plot A and B,
+ and then I want to plot my objectives and my constraints
+ on top of that.
+ OK?
+ So the objective, we said, is going
+ to be quadratic in the coefficients of A and B.
+ So A and B, when I multiply things through here,
+ each term here is going to be linear until I square it.
+ So what's that going to look like as a function of A and B?
+ It's going to be a positive quadratic, because it's
+ this nice squared form.
+ It's going to look like a nice bowl somewhere in my state
+ space--
+ in my variable space here.
+ So I expect that to look like some bowl,
+ just like I had last time.
+ Now, what do the constraints look like?
+ If I have R, R transpose equals I, that's equivalent--
+ I write this out.
+ What is that going to be?
+ So that's going to give me two different constraints.
+ I get A squared plus B squared has to equal 1.
+ What's this guy here?
+ A squared plus B squared equals 1.
+ And the off-diagonal-- oops--
+ the off-diagonal says that AB minus BA equals 0.
+ That one's vacuously true, so we don't even
+ need to include it in our optimization.
+ It happens that saying the determinant of R
+ equals plus 1 in 2D, it's just this quadratic again,
+ and it gives me the same constraint.
+ So I've already got that one covered.
+ I'm guaranteed to have a determinant of plus 1
+ because I did this trick.
+ If I had independently parameterized those,
+ I would need to have this constraint.
+ When you have a determinant that's minus 1,
+ that gives you these rotorotations, they're called.
+ So that would be like my vector doing a rotation and a flip.
+ And so by parameterizing this, this is like AB.
+ This is, if you think about it, is A negative B, or negative BA.
+ This is-- that's what I've done here,
+ is parameterized those.
+ This way, so that's only going to give me positive rotations.
+ The rotor rotation would have been down here.
+ I hope I'm not-- I hope I'm saying that well enough
+ to be useful.
+ Good, OK, so we have a quadratic objective over B and A.
+ And we have a constraint, which is a quadratic constraint,
+ A squared plus B squared equals 1.
+ So that's going to be the circle, the unit circle on here.
+ Now, remember that the number of points, that's true no matter
+ how many scene points I put in.
+ So I can make a problem, a real problem, in 2D
+ and have lots of scene points and just build up
+ this different quadratic objective
+ and quadratic constraint.
+ And that's what I've done here.
+ So I've got a real object that I cast some scene points from.
+ And I can turn the object, so I move the data points.
+ I've got theta parameterizing my turn.
+ That's just for my GUI, really, to change the problem data.
+ And the quadratic form, in order to minimize that objective,
+ is moving around.
+ The cool thing is, it wants to be--
+ can you see what's happening here?
+ I hope I can do this without redefining anything.
+ There we go.
+ You see what's happening there?
+ That's the-- that disk is the unit circle constraint just
+ projected up.
+ The minimum of that quadratic form, it wants to be at the--
+ of course, because in order to make those points match
+ through a rotation, it's going to find a rotation that is--
+ in order to make those points match,
+ it's going to find an actual rotation.
+ It's not going to try to shrink anything.
+ It's not going to try to expand anything.
+ So in the noise-free case, it's beautiful and good.
+ If I rotate the object, then I get a different quadratic form
+ that moves around.
+ And that constraint actually doesn't have to do any work.
+ Now, as soon as you have noise, or you
+ have bad correspondences, or anything like that,
+ then what's going to happen is the objective,
+ in order to match my data, the objective
+ is going to get more complicated.
+ And it could move away from the unit circle.
+ And that constraint is going to pull me back.
+ Now, we're going to come back to that later,
+ when we think about a convex relaxation.
+ Oh, that's cool.
+ Didn't mean to do that.
+ New trick.
+ So in general, we might eventually
+ relax the unit circle constraint to the unit disk.
+ So it's easier to write an optimization problem that says
+ I'm anywhere inside of the circle,
+ not just on the boundary of the circle.
+ The boundary of a circle is a non-convex set.
+ But I can say I'm inside a circle,
+ including the interior.
+ And then we're going to see things
+ like the optimization is tight.
+ It will give me the right answer if the quadratic form is
+ pulling me outside.
+ But when it goes inside, I start getting some errors.
+ And that's going to be--
+ even in the most advanced, like, SDP relaxations-- sorry,
+ the semi-definite programming relaxations of point cloud
+ registration that you'll read in papers these years that
+ are still coming out, you're going to see them saying,
+ oh, it's tight often.
+ But there's some cases where it's not tight.
+ It's exactly this picture.
+ It's when it's sliding inside.
+ It's not.
+ OK.
+ Changing the number of points will change the shape
+ of my quadratic bowl.
+ But it doesn't move that constraint.
+ And in the noise-free case, it's not going to move the minimum.
+ So that's the picture I want you to have in your head.
+ OK.
+ Let's make sure you're fully with me here.
+ So here's a couple immediate things that come to mind.
+ My box is symmetric.
+ It has rotational symmetry, especially--
+ I mean, even if it's a rectangle,
+ it's got some symmetry.
+ If it's a cube, it's got lots of symmetry, right?
+ So how do symmetries affect the algorithm?
+ How would they change that picture?
+ My object was suddenly symmetric, or even circular,
+ or something.
+ How would that change that picture?
+ [INAUDIBLE]
+ What's that?
+ [INAUDIBLE]
+ We have-- what would it have to do to that picture?
+ The objective is quadratic.
+ So it can't go up and then go back down.
+ Yeah.
+ [INAUDIBLE]
+ So it's going across both places, right?
+ Yeah.
+ This is all the right stuff to think about.
+ But it can never happen in this case,
+ because we assumed correspondences.
+ So there's no such thing as symmetry,
+ because even if I draw a point that looks like this,
+ the fact that I had a magic correspondence function,
+ even if I were to rotate this, it would correspond to--
+ I've already broken the symmetry by assigning a correspondence.
+ So the pictures you have in your head about symmetries
+ in the correspondence case are wrong.
+ That sounded mean.
+ We're going to solve the correspondence problem
+ in a second.
+ But when you think of that picture,
+ I would immediately think, OK, how
+ does it handle the symmetries case?
+ And you don't have to handle the symmetries case.
+ It does not handle the symmetries case.
+ Another fun one.
+ I won't belabor it, but you think
+ about what's the minimum number of points
+ that you need for this problem to have a unique solution.
+ It's almost what you think, but it
+ might be a little bit more or less than you think.
+ You can do it by just counting the number of decision
+ variables and counting the number of constraints.
+ If you assume that the points are unique,
+ so if the points landed on top of each other,
+ that would be a degenerate case.
+ But if you assume the points are unique,
+ then you can just play a counting game
+ and figure out how many parameters you need.
+ And it'll give you a slightly different answer
+ if you use this clever parameterization in 2D
+ versus the four parameters.
+ But it's all good.
+ You can completely understand this.
+ But let's dig into this a little bit more.
+ So this correspondence function was just
+ too big of an assumption.
+ But that's what made our optimization magically good.
+ The fact that you can solve that, in fact,
+ in a closed form with a call to the singular value
+ decomposition, which is as close as you get numerically,
+ I guess, to a closed form solution.
+ That's amazing.
+ So let's lean on it and come up with an algorithm that
+ solves for the correspondences and the poses simultaneously.
+ OK.
+ The case that we're going to use to think about it
+ is imagine that you've gotten yourself
+ close to the right answer.
+ So I've got my real object and I've got my measured object.
+ So let's say I'm sort of close.
+ Then a reasonable heuristic would
+ be to basically assign the correspondences based
+ on what's close to me.
+ The true correspondence is this.
+ But let's just examine as a heuristic.
+ Given my current guess, this goes back
+ to the differential IK case.
+ So let's think about it sort of in a differential way, where
+ I've got an initial guess and I want to improve it.
+ So what if I use as a heuristic--
+ let me pretend that my correspondences are whichever
+ point I find on the other one that is closest
+ in a Euclidean sense.
+ And maybe the mapping might not be unique.
+ It could be that I map multiple points to the same--
+ multiple model points to the same scene point or vice versa.
+ Typically, you pick one because you search through--
+ you search through either your model points
+ and find the closest scene point or vice versa.
+ OK?
+ All right.
+ So let's say we just assign the correspondences that way,
+ based on the closest points.
+ What would that look like in our optimization?
+ Well, in this, we need a slightly refined notation
+ here.
+ If I write-- let me call it Cj or Ci for correspondence i
+ equals j.
+ OK?
+ This is a model point i corresponds to scene point j
+ that I can write that my thing that I'm searching for here--
+ model-- I'm going to just use the Ci here--
+ minus Pwsi squared as my objective.
+ This is just the Euclidean distance.
+ Right?
+ So for each C-- for each of these model points,
+ I can just look through this.
+ I can just try all of my possible correspondences
+ and find the closest point.
+ That would be something like saying that Ci is like an arg
+ min over j of Mj.
+ OK?
+ So just look through the points, find the closest one,
+ and write it into Ci.
+ OK?
+ This is the closest point.
+ Now, I don't need any constraints here,
+ because in this case, now this is the decision variable,
+ and this is fixed.
+ Right?
+ So that's not-- I don't have to worry about that not
+ being a rotation matrix.
+ That's just fixed.
+ It's a constant.
+ OK.
+ The iterative closest point algorithm,
+ one of the most famous algorithms in point
+ registration, is just this.
+ It's called ICP.
+ OK?
+ It just says, take an initial guess of my pose,
+ solve this problem, OK?
+ Find the correspondences, then solve that problem,
+ then solve this problem, then solve that problem.
+ OK?
+ And iterate until convergence.
+ Convergence is simple.
+ It's an integer-based convergence, right?
+ Once my correspondences don't change,
+ because that solves to global optimality,
+ if the correspondences don't change,
+ then that one's not going to do any work.
+ So you have a complete-- it's not like a floating point
+ convergence.
+ It's like iterations are done.
+ No more work to do.
+ Convergence.
+ Yes?
+ Is it a chance to always converge?
+ Is it guaranteed to always converge?
+ It is certainly not guaranteed to always converge
+ to the right solution.
+ There are local minima.
+ You can find yourself attached, corresponding
+ to the wrong points, and unable to get out.
+ It should always converge, I think.
+ I can't imagine a case where-- is there a way it would
+ oscillate?
+ It's a good question.
+ I don't know for sure.
+ But I think the most important point
+ is it won't necessarily converge to the right solution.
+ So you can certainly get yourself into traps.
+ OK, this is a real algorithm.
+ People use it all the time.
+ No, not on this side.
+ This is one step of the algorithm
+ would be just find the closest points.
+ I have a shaded blue object, and the other object
+ being the transformed object in the pink.
+ Just find the closest point.
+ And if you're-- this is with known correspondences, I guess.
+ Then the match is correct, and it
+ solves the global optimization.
+ And I made a bunch of cutesy animations.
+ Oh, that's not mine.
+ This is the Stanford bunny.
+ But that's the classic iterative closest point graphic
+ you could find all over the place.
+ So there's a lot of points there.
+ You can do this at scale.
+ I forgot to stick in my cutesy graphics.
+ Shoot.
+ But you can do this at scale.
+ In order to scale it up, that problem, again,
+ doesn't get bigger.
+ The objective gets-- there's more terms in the objective.
+ But the decision variables doesn't change.
+ That's fine.
+ This one, the only thing you want to do
+ is make that closest point query faster.
+ So you use clever data structures
+ to make that closest point query faster.
+ In particular, we'll use FLAN, which
+ is a Fast Nearest Neighbor algorithm,
+ in order to make that work.
+ But once you do that, it scales to big problems.
+ And it's practically useful.
+ So this is a close-up view of the wrist
+ camera of the dish-loading robot when it's picking up a mug.
+ Now, why do you think--
+ right here.
+ It stops.
+ You see that little chuk-chuk-chuk-chuk?
+ And then it goes?
+ What do you think's happening there?
+ So it's got a deep perception system, finding mugs,
+ doing planning.
+ Gets all close.
+ But before it picks anything up, it
+ takes a nice shot with the wrist-mounted camera.
+ And it does some ICP registration
+ to align the point clouds right in the hand frame,
+ kik-kik-kik-kik, in order to grab.
+ So for real applications, if you will--
+ I mean, almost real applications, right?
+ Then this is actually a very good algorithm for--
+ especially when you are close to a good solution
+ and you want to refine it.
+ In general, the deep perception approaches
+ are going to do better at the global problem of,
+ I've got-- I don't know where it is in the scene.
+ But for the local problems, the geometric often
+ are still state of the art.
+ And I should say, a couple of things
+ to note about that application.
+ So you have to be careful.
+ Why don't you just get right close to picking the mug up
+ when you do that, right?
+ So as you get closer to the geometry,
+ the depth cameras have a minimum throw, a minimum range, right?
+ So if you get too close, things start
+ disappearing from your point cloud.
+ It's kind of frustrating.
+ You think, oh, the perfect place for a camera?
+ I'll put it in my hand.
+ And then it's like, you can't see anything
+ because you've got a minimum range, OK?
+ So there's some sweet spot where you get just--
+ depending on which camera you've mounted on your hand,
+ you get to a certain distance.
+ You take your best possible point cloud, and off you go.
+ But even when we use-- we still use these kind of algorithms
+ even for our deep learning pipeline.
+ So this is an early version of a tool
+ that has gotten very mature in many labs nowadays,
+ where in order to train a deep learning system, which
+ we will do, we have some CAD models.
+ We have some raw perception data.
+ Like, we took our drill and put it in the space.
+ And we just want to come up with ground truth labels
+ of real world data.
+ We have a human give our initial guess.
+ So the human says, it's around here, here, here, three clicks.
+ And then that's a good enough initial guess
+ that our ICP can go in and do the rest of the work.
+ We label the images as saying that I
+ know that I have pixels there that correspond to the drill.
+ And then I can back out actually all of the different frames
+ that I took now know exactly where the drill is.
+ And you can label-- with a few clicks from the human,
+ you can give a huge training set to a deep network.
+ So it really is-- even though it's our starter algorithm,
+ it really is still a useful algorithm.
+ Let me just end by pointing out a couple things for today.
+ We're going to talk more about the noisy case soon.
+ But let me just-- I think right here on the board,
+ we already have a couple examples that
+ would show some of its limitations.
+ One of those limitations is extreme sensitivity
+ to outliers.
+ If I happen to have a beautiful point cloud
+ around my measured object, and then, I don't know,
+ two extra points way over here, then in my quadratic form,
+ I'm going to-- well, sorry.
+ The original thing-- so if it never corresponds to that,
+ you're fine.
+ But if you get to the point where this thing is pulling you
+ in the wrong direction, then you can
+ have what looks like a pretty good point cloud,
+ have one point pulling me in the wrong direction,
+ totally skew my objective and compromise my results.
+ So there is a sensitivity of the outliers.
+ As soon as you get inside where your argmin is only
+ matching the real object, then things tend to be fairly OK.
+ But if your closest point captures some outlier,
+ then things get bad.
+ And especially because the cost of the outliers,
+ the cost you penalize basically by the length of these rubber
+ bands, roughly.
+ So the bigger the rubber band, the bigger
+ the relative contribution of a single point.
+ And we'll talk about some of the other--
+ what happens in the noisy case and how
+ you can make it more robust next time, too.
+ But let me just say that this one,
+ if we ask the question again, what
+ happens on a rotationally symmetric object,
+ this time it's going to be exactly what we
+ were saying before.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, yeah.
+ I mean, this SVD formulation is beautiful in L2.
+ It's harder in L1.
+ I think what people end up doing--
+ the question was, why not change this to an L1 objective
+ so it's less sensitive to outliers?
+ So if you just did the absolute value, for instance.
+ So it makes the optimization problem a little bit harder.
+ What people tend to do is truncated least squares.
+ So you can solve that as a-- and there's various approaches
+ to solving for that.
+ Or you even, in your closest point algorithm,
+ try to explicitly reject outliers.
+ Also, we'll talk about RANSAC as another--
+ there's a couple different approaches.
+ But normally, it's stick with that.
+ It's a workhorse.
+ And do what you need to to clean it up before you hand it to
+ that.
+ Think about how the iterative closest point algorithm works
+ now for a rotationally symmetric.
+ If I'm off by 90 degrees or 180 degrees,
+ it's going to find matches.
+ They're going to be the wrong matches.
+ But it'll lock itself in and it'll be stuck.
+ So if you don't care, if you don't
+ mind rotational symmetries in your answer, that's fine.
+ But if you were looking for a canonical pose,
+ ICP won't give it to you.
+ Cool.
+ So parts of perception are just kinematics.
+ And this is our first version of the algorithm.
+ We'll get more fancy with it in the next couple lectures.
+ I will go look at DeepNote right now,

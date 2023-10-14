@@ -1,0 +1,2388 @@
+1
+00:00:00,000 --> 00:00:08,680
+ up again. All right, that is recording too. Yeah. Okay, so today I want to wrap up what
+
+2
+00:00:08,680 --> 00:00:15,000
+ we've been talking about with point clouds and what I've been calling geometric view
+
+3
+00:00:15,000 --> 00:00:22,080
+ of perception. Okay, so just to recap a bit, we started off by talking about, let's say
+
+4
+00:00:22,080 --> 00:00:31,440
+ maybe day one, in addition to introducing point clouds and cameras and the like, we
+
+5
+00:00:31,440 --> 00:00:41,960
+ talked about the point registration problem, where you have two point clouds and you're
+
+6
+00:00:41,960 --> 00:00:47,560
+ trying to find the pose that maps one into the other. So that's point set registration
+
+7
+00:00:47,560 --> 00:00:54,600
+ or point registration. We went from there into the iterative closest point algorithm.
+
+8
+00:00:54,600 --> 00:01:02,120
+ That snuck into day two, but that was the start. And then day two, we started addressing
+
+9
+00:01:02,120 --> 00:01:10,840
+ the fact that real point clouds are messy, right? We talked about the various ways that
+
+10
+00:01:10,840 --> 00:01:23,680
+ they could be messy. And we talked about generalizing the notion of correspondence as one way to
+
+11
+00:01:23,680 --> 00:01:45,920
+ address this, right? And things like more clever ways to deal with outliers, right?
+
+12
+00:01:45,920 --> 00:01:51,480
+ And we generally toyed around with generalizations of this point set registration problem. You
+
+13
+00:01:51,480 --> 00:01:57,440
+ know, we're trying to find, we've got two point clouds. We have to guess the correspondences
+
+14
+00:01:57,440 --> 00:02:01,760
+ or somehow be told the correspondences, but we're going to roughly try to register these
+
+15
+00:02:01,760 --> 00:02:09,600
+ two point clouds together. But I don't want to leave this sort of part of the course until
+
+16
+00:02:09,600 --> 00:02:15,840
+ I tell you that I don't think point registration, point set registration is sort of the only
+
+17
+00:02:15,840 --> 00:02:19,000
+ way to think about this. And it's not clear, we started talking about it a little bit at
+
+18
+00:02:19,000 --> 00:02:23,600
+ the end last time, that this idea that you should just find the pose that makes two point
+
+19
+00:02:23,600 --> 00:02:29,040
+ sets close together is always the best objective. It might be lacking in important ways.
+
+20
+00:02:29,040 --> 00:02:45,280
+ So today, I want to go beyond just registration and start thinking about some of the other
+
+21
+00:02:45,280 --> 00:02:54,240
+ aspects of what makes a good perception system, even if you're given just point cloud data,
+
+22
+00:02:54,240 --> 00:02:58,080
+ what are things that you need that maybe is beyond the metric which just says, are my
+
+23
+00:02:58,080 --> 00:03:06,080
+ points close together? Okay. And I can start with that, you know, and this is still in
+
+24
+00:03:06,080 --> 00:03:11,080
+ the context of sort of geometric perception. Unfortunately, there's a lot of perception
+
+25
+00:03:11,080 --> 00:03:17,960
+ that's beyond geometry too, but even in the landscape of sort of geometry, I think there's
+
+26
+00:03:17,960 --> 00:03:24,360
+ things that are missing from our basic algorithms, and I want to start talking about them today.
+
+27
+00:03:24,360 --> 00:03:29,440
+ So here's what happens when you start using ICP and all these variants, right? You have
+
+28
+00:03:29,440 --> 00:03:35,440
+ a beautiful model of your mustard bottle or your coffee mug or something like this. It's
+
+29
+00:03:35,440 --> 00:03:41,600
+ sitting on the table. You've got a couple cameras pointing at it, and ICP tells you
+
+30
+00:03:41,600 --> 00:03:48,280
+ roughly that, you know, here's the table, and it's like, you know, here's my mug, and
+
+31
+00:03:48,280 --> 00:03:52,480
+ it's telling you that your mug is in the table, right? For instance, like it got some returns,
+
+32
+00:03:52,480 --> 00:03:59,320
+ it did its best bet to fit, and it's giving you a pose back that says, you know, mug is
+
+33
+00:03:59,320 --> 00:04:06,840
+ in the table. I guarantee that'll happen. It'll happen for a bunch of different reasons,
+
+34
+00:04:06,840 --> 00:04:11,360
+ maybe because you have points down on the table that are pulling it down, you know,
+
+35
+00:04:11,360 --> 00:04:14,880
+ or we have outliers or something like this, but this is a very classic thing to happen
+
+36
+00:04:14,880 --> 00:04:20,720
+ is you're looking at it and you say, that's a silly answer. Clearly, the mug's not in
+
+37
+00:04:20,720 --> 00:04:26,280
+ the table. Or you'll get another one where, you know, the mug is floating in the air,
+
+38
+00:04:26,280 --> 00:04:33,280
+ and, you know, again, you know something that the point set registration algorithm doesn't
+
+39
+00:04:33,280 --> 00:04:39,880
+ know, which is that mugs don't spontaneously hover in the air, right? I mean, maybe when
+
+40
+00:04:39,880 --> 00:04:44,960
+ they're in motion, but if the scene is static, you know, then this shouldn't be a reasonable
+
+41
+00:04:44,960 --> 00:04:51,520
+ answer. And another one that you'll get often is if you're trying to register multiple things,
+
+42
+00:04:51,520 --> 00:04:59,600
+ it's sort of a version of this. You can get, you know, if you're trying to register multiple
+
+43
+00:04:59,600 --> 00:05:03,680
+ mugs at the same time, you'll get them overlapping, for instance, right? You'll say, it'll say,
+
+44
+00:05:03,680 --> 00:05:10,360
+ I found two mugs in the scene, for instance, and they're, you know, in penetration. Okay,
+
+45
+00:05:10,360 --> 00:05:17,040
+ so there's clearly things that you know that we somehow haven't yet expressed in our points
+
+46
+00:05:17,040 --> 00:05:23,920
+ should be close in a Euclidean distance objective. Okay? There's another really clever one about
+
+47
+00:05:23,920 --> 00:05:27,920
+ knowing, just knowing that the camera, you know, if the camera is getting point clouds
+
+48
+00:05:27,920 --> 00:05:34,840
+ here or points here, and the camera is over here, right? Then you also know, for instance,
+
+49
+00:05:34,840 --> 00:05:41,440
+ that there can't be an object anywhere here between the camera and the points, right?
+
+50
+00:05:41,440 --> 00:05:46,920
+ We haven't captured that yet either. So the goal for today is to think about ways
+
+51
+00:05:46,920 --> 00:05:57,360
+ to capture those kind of events. Yeah. So this I'll call, this here I'll call the free
+
+52
+00:05:57,360 --> 00:06:14,440
+ space constraints. This would be, I guess, both this one and this being in the table,
+
+53
+00:06:14,440 --> 00:06:29,960
+ these are non-penetration constraints. And this one's actually interesting, right? The
+
+54
+00:06:29,960 --> 00:06:38,480
+ fact that mugs don't fly normally. This has to do with physics, right? It requires something
+
+55
+00:06:38,480 --> 00:06:45,400
+ about the equations of motion to know that that's not an okay solution. So in the case
+
+56
+00:06:45,400 --> 00:06:53,360
+ of a static scene, I think the simplest version of this would just be to say this is a static
+
+57
+00:06:53,360 --> 00:07:06,240
+ equilibrium constraint. Right? You somehow know that if you were to draw the forces for
+
+58
+00:07:06,240 --> 00:07:14,120
+ a free body diagram, those forces should balance and you should have equilibrium, right? And
+
+59
+00:07:14,120 --> 00:07:19,560
+ we haven't yet told our perception system how to think about that. Okay. So all of these
+
+60
+00:07:19,560 --> 00:07:24,760
+ are possible. Some of them are harder than others, but to do it, we're going to have
+
+61
+00:07:24,760 --> 00:07:30,560
+ to start, we're going to have to give up a little bit on the beauty of our formulation,
+
+62
+00:07:30,560 --> 00:07:36,200
+ right? When we were up here, we were solving this beautiful problem in the point set, right?
+
+63
+00:07:36,200 --> 00:07:53,120
+ Registration, right? Our, you know, we were solving this sort of a problem with some correspondences
+
+64
+00:07:53,120 --> 00:08:01,360
+ known and we used primarily the singular value decomposition in our inner loop, right? This
+
+65
+00:08:01,360 --> 00:08:07,440
+ was our heavy hitter was the ability to, if I give you a bunch of two point clouds and
+
+66
+00:08:07,440 --> 00:08:12,280
+ I need to, and I know the correspondences, then the inner loop could be, I can find that
+
+67
+00:08:12,280 --> 00:08:18,800
+ pose using singular value decomposition. And that's beautiful and it always works. You
+
+68
+00:08:18,800 --> 00:08:21,800
+ know, it'll like, you can give it noisy point clouds, it'll find the best effort. It'll
+
+69
+00:08:21,800 --> 00:08:26,640
+ solve this least squares problem. Okay. And it's every time you call it, it'll give you
+
+70
+00:08:26,640 --> 00:08:31,200
+ the same answer. It's good stuff. We're going to give up on that. We're going to have more
+
+71
+00:08:31,200 --> 00:08:36,440
+ approximate methods these days that will work sometimes, not always, but can work, can handle
+
+72
+00:08:36,440 --> 00:08:43,680
+ a richer specification of problems. Okay. So I realized last time I went off the rails
+
+73
+00:08:43,680 --> 00:08:48,440
+ a little bit, which is, see, this is why it's good to come to lecture even when the videos
+
+74
+00:08:48,440 --> 00:08:54,240
+ are online, because I saw all of you going like, what? Right. And I, that's feedback
+
+75
+00:08:54,240 --> 00:08:58,960
+ for me to know I went a little fast at the end. So let me just make sure I put this in
+
+76
+00:08:58,960 --> 00:09:06,160
+ context, right? What we've been talking about, some of these optimization problems, we've
+
+77
+00:09:06,160 --> 00:09:20,320
+ been talking about convex optimization problems. And the examples I gave you before were, for
+
+78
+00:09:20,320 --> 00:09:33,040
+ instance, when I had a quadratic objective, right? I had, let's say, x1, x2, and I wanted
+
+79
+00:09:33,040 --> 00:09:46,720
+ to minimize over x something that looks like ax minus b squared, right? Subject to some
+
+80
+00:09:46,720 --> 00:10:00,120
+ linear constraints. We've been playing with this now as a quadratic program. Okay. So
+
+81
+00:10:00,120 --> 00:10:05,480
+ this is a beautiful type of optimization problem where I can take, I don't have to even worry
+
+82
+00:10:05,480 --> 00:10:11,920
+ too much about having an initial guess for x. All I need to do is find the minimum of
+
+83
+00:10:11,920 --> 00:10:18,520
+ this cost landscape, which satisfies these constraints. And I know that I found the optimal
+
+84
+00:10:18,520 --> 00:10:29,000
+ answer to the problem. This is just one example of the space of convex optimization problems,
+
+85
+00:10:29,000 --> 00:10:36,840
+ which we're going to use but not study in the depth that they're worth studying. But
+
+86
+00:10:36,840 --> 00:10:40,200
+ I think you can use them very effectively with just having this basic understanding
+
+87
+00:10:40,200 --> 00:10:49,200
+ of things that have quadratic objectives can be handed into a quadratic programming solver,
+
+88
+00:10:49,200 --> 00:10:54,160
+ for instance. If you had a linear objective but still linear constraints, that would be
+
+89
+00:10:54,160 --> 00:10:59,680
+ a linear program. Some of you know about that. There's other examples. So linear programming
+
+90
+00:10:59,680 --> 00:11:18,720
+ is a really important class. LPs. You might hear second order cone programming. This is
+
+91
+00:11:18,720 --> 00:11:37,200
+ LP. This is SOCP. And I mentioned too quickly last time, semi-definite programming, which
+
+92
+00:11:37,200 --> 00:11:48,680
+ is SDP. Okay. So there's these important classes of objective functions which look more interesting.
+
+93
+00:11:48,680 --> 00:11:54,160
+ They might look like ice cream cones instead of like a bowl. But they all have this property
+
+94
+00:11:54,160 --> 00:11:59,360
+ that if you write the problem down and you can fit it into one of these frameworks, then
+
+95
+00:11:59,360 --> 00:12:09,520
+ you are sure that your solver will be able to find a minima and give you the global answer.
+
+96
+00:12:09,520 --> 00:12:17,000
+ And we'll use some of them again as users throughout the class. But I want to mostly
+
+97
+00:12:17,000 --> 00:12:21,320
+ make a distinction between those and what we're going to start doing today, which is
+
+98
+00:12:21,320 --> 00:12:44,240
+ more general non-convex optimization. Okay. So now I'm going to think more generally about
+
+99
+00:12:44,240 --> 00:12:54,280
+ minimizing some function subject to some constraints. I still have my objective function
+
+100
+00:12:54,280 --> 00:13:03,520
+ up here, my constraints down here, and my decision variable is x. But now when f is
+
+101
+00:13:03,520 --> 00:13:12,960
+ arbitrary, I've lost this beautiful picture. I can suddenly start having cost landscapes
+
+102
+00:13:12,960 --> 00:13:32,120
+ that are much more complicated. Maybe f is doing this. And the expectations we should
+
+103
+00:13:32,120 --> 00:13:38,800
+ have for the algorithm are therefore a little bit less, right? We're going to basically
+
+104
+00:13:38,800 --> 00:13:45,080
+ have algorithms that will say if I start from an initial guess, they'll find a minimum,
+
+105
+00:13:45,080 --> 00:13:54,240
+ right? Maybe I start from this initial guess and I'll walk down the hill, right? And it
+
+106
+00:13:54,240 --> 00:14:00,440
+ will return a point saying, you know, this is the best I could find, right? Some minimum.
+
+107
+00:14:00,440 --> 00:14:14,520
+ We'll call this a local minimum. But we, in general, unless you know something more
+
+108
+00:14:14,520 --> 00:14:20,560
+ about the class of these curves, we lose the ability to say that I guarantee I found the
+
+109
+00:14:20,560 --> 00:14:31,120
+ best solution. Okay? So this is just a very high-level setup, but what I want you to make
+
+110
+00:14:31,120 --> 00:14:38,360
+ sure it lands is that the problem of registering two-point clouds where objective is just this
+
+111
+00:14:38,360 --> 00:14:45,800
+ nice quadratic distance between the points, we were able to use strong convex optimization
+
+112
+00:14:45,800 --> 00:14:52,720
+ kind of ideas for that. When you start doing these other important things, which are obviously
+
+113
+00:14:52,720 --> 00:15:01,320
+ important to rule out non-sensible solutions, then we are almost always going to leave this
+
+114
+00:15:01,320 --> 00:15:05,920
+ picture and enter this picture. So you will find you'll have perception systems that maybe
+
+115
+00:15:05,920 --> 00:15:15,560
+ don't stick the mug in the table, but they might not give you the best solution. How
+
+116
+00:15:15,560 --> 00:15:21,760
+ is that at that level? Are there questions at that level? I know some of you know this
+
+117
+00:15:21,760 --> 00:15:27,600
+ well and some of you, that's a very fast introduction to a big topic, but I'm trying to walk that
+
+118
+00:15:27,600 --> 00:15:28,600
+ line. Yes?
+
+119
+00:15:28,600 --> 00:15:29,600
+ [inaudible]
+
+120
+00:15:29,600 --> 00:15:44,840
+ That's a great question. So the question is, when humans are doing perception, what, you
+
+121
+00:15:44,840 --> 00:15:51,960
+ know, are we, what are we doing? Are our senses better or whatever? Of course, I don't know
+
+122
+00:15:51,960 --> 00:15:59,800
+ exactly the answer, but I think some things are clear. I think we are bringing so much
+
+123
+00:15:59,800 --> 00:16:06,240
+ extra information to bear on the problem, common sense type information that changes
+
+124
+00:16:06,240 --> 00:16:11,080
+ the way we perceive the world in ways that these geometric algorithms are not capturing.
+
+125
+00:16:11,080 --> 00:16:14,600
+ And even deep learning algorithms are not capturing, although they're getting closer,
+
+126
+00:16:14,600 --> 00:16:21,600
+ right? I think as we start, you know, using foundation models and big, large scale models
+
+127
+00:16:21,600 --> 00:16:26,440
+ that really have some broader understanding of where objects can be in the world, then
+
+128
+00:16:26,440 --> 00:16:35,000
+ maybe there's hope for some common sense. But like, you know, if I open a refrigerator,
+
+129
+00:16:35,000 --> 00:16:39,680
+ I have tons of priors about what I expect to see in the fridge and what I don't expect
+
+130
+00:16:39,680 --> 00:16:45,120
+ to see in the fridge, right? If there was, I don't know, a gorilla in my fridge, I would
+
+131
+00:16:45,120 --> 00:16:48,640
+ be surprised and my perception system would fail probably, right? You know, at least in
+
+132
+00:16:48,640 --> 00:16:53,160
+ the short term, I would probably run, you know, I don't know. But there's, I think if
+
+133
+00:16:53,160 --> 00:16:58,960
+ you, if you start reflecting on what you're doing as you're going through the world, before
+
+134
+00:16:58,960 --> 00:17:04,640
+ you open your eyes, you're bringing in so many initial guesses, right? Which then makes
+
+135
+00:17:04,640 --> 00:17:13,280
+ the, you know, I think we probably don't have super accurate geometric reasoning. I mean,
+
+136
+00:17:13,280 --> 00:17:18,480
+ people are good at 3D reasoning, but not like depth camera, sub millimeter accuracy kind
+
+137
+00:17:18,480 --> 00:17:22,640
+ of good. I think robots should be far superior than humans in terms of accuracy and those
+
+138
+00:17:22,640 --> 00:17:31,000
+ kinds of computations. Okay. But I think certainly we are able to rule out silly cases. The computational
+
+139
+00:17:31,000 --> 00:17:38,000
+ machinery with which we do that is hard to know. Yes.
+
+140
+00:17:38,000 --> 00:17:41,000
+ [inaudible]
+
+141
+00:17:41,000 --> 00:18:04,120
+ Okay. That's a huge question. I love it. Well, maybe, so the question was about tactile
+
+142
+00:18:04,120 --> 00:18:09,360
+ sensing and how, you know, but let me bite off a version of that question, right? So,
+
+143
+00:18:09,360 --> 00:18:13,960
+ how would, how would a tactile sensor, for instance, fit into this? And, and since we're
+
+144
+00:18:13,960 --> 00:18:20,000
+ talking about point clouds and geometry, a particular type of tactile sensor that's very
+
+145
+00:18:20,000 --> 00:18:24,680
+ popular these days is when you actually put a camera underneath your finger, okay, or
+
+146
+00:18:24,680 --> 00:18:29,000
+ palm or something like this, and you actually can get a point cloud. It's a very special
+
+147
+00:18:29,000 --> 00:18:34,200
+ point cloud that has, that never sees past your skin, for instance. But you can imagine
+
+148
+00:18:34,200 --> 00:18:40,360
+ actually using these tools almost out of the box with a tactile sensor also. Think of it
+
+149
+00:18:40,360 --> 00:18:46,760
+ as a camera that has a minimum, a maximum range that is your skin. Okay. But of course,
+
+150
+00:18:46,760 --> 00:18:52,560
+ bringing in things like non-penetration becomes very important when you know immediately that
+
+151
+00:18:52,560 --> 00:18:57,400
+ things are going to be touching before you, before you see them. So, so I think actually
+
+152
+00:18:57,400 --> 00:19:12,800
+ this lecture is very well motivated by tactile sensing. So, so why, you know, I think, I
+
+153
+00:19:12,800 --> 00:19:16,920
+ think you're right to continually press on why tactile sensors, I think tactile sensors
+
+154
+00:19:16,920 --> 00:19:21,560
+ have more potential than they have realized so far. I think everybody in the field would
+
+155
+00:19:21,560 --> 00:19:26,160
+ agree with that, but somehow we have, you know, massive data sets of, in a massive computer
+
+156
+00:19:26,160 --> 00:19:29,680
+ vision community and stuff like that, and we have like a few people making tactile sensors.
+
+157
+00:19:29,680 --> 00:19:33,680
+ A new one came out today, the GelSight Mini just came out today. If anybody saw that,
+
+158
+00:19:33,680 --> 00:19:38,760
+ that's cool. So maybe a new form factor, but, but they're just not as many, they're not
+
+159
+00:19:38,760 --> 00:19:48,480
+ in everybody's iPhones, right? It's a smaller scale. That community is still growing. Okay.
+
+160
+00:19:48,480 --> 00:19:57,120
+ So I want you to know actually that although there's a ton of things to know about these
+
+161
+00:19:57,120 --> 00:20:01,840
+ different problem classes, and when you go from non-convex to convex and things like
+
+162
+00:20:01,840 --> 00:20:07,800
+ this, when you're writing the, when you're writing code, for instance, in a mathematical
+
+163
+00:20:07,800 --> 00:20:14,840
+ program or in, there's a handful of optimization parsers which try to do some of the heavy
+
+164
+00:20:14,840 --> 00:20:20,360
+ lifting for you. Okay. So if you write in costs and constraints, you know, in the language
+
+165
+00:20:20,360 --> 00:20:25,240
+ of mathematical program, you add cost, add cost, add constraint. Mathematical program
+
+166
+00:20:25,240 --> 00:20:30,440
+ is actually doing a lot of work behind the scenes to decide whether you've still stayed
+
+167
+00:20:30,440 --> 00:20:37,480
+ in the realm of a convex optimization, and when it can detect that you have, then it
+
+168
+00:20:37,480 --> 00:20:43,680
+ will call a special solver that's extremely, you know, efficient for convex optimization.
+
+169
+00:20:43,680 --> 00:20:47,760
+ When you add a more general constraint, then it'll bounce over to a different, there's
+
+170
+00:20:47,760 --> 00:20:52,240
+ still custom solvers behind there that solve nonlinear problems, but they use a different
+
+171
+00:20:52,240 --> 00:21:02,760
+ set of algorithms behind the scenes. So, for instance, if you just in, you know, mathematical
+
+172
+00:21:02,760 --> 00:21:07,560
+ program, you add a quadratic cost, that's, so it doesn't even have to guess at this point.
+
+173
+00:21:07,560 --> 00:21:12,600
+ It knows the objective is quadratic when you say add quadratic cost. Okay. If you add a
+
+174
+00:21:12,600 --> 00:21:20,800
+ cost like this, actually, x dot x, where x is a decision variable, then because this
+
+175
+00:21:20,800 --> 00:21:27,240
+ is actually, x is actually symbolic, it knows enough to be able to parse that and realize
+
+176
+00:21:27,240 --> 00:21:33,560
+ you've added a quadratic constraint, and it will solve, call a QP solver. So, you know,
+
+177
+00:21:33,560 --> 00:21:40,440
+ like those are the same here. Okay. But you can also add arbitrary functions as costs
+
+178
+00:21:40,440 --> 00:21:48,280
+ or constraints, and we'll do that today. Okay. Just define a Python function. And here, it
+
+179
+00:21:48,280 --> 00:21:53,320
+ doesn't have the ability anymore to know that it's, even though this one happens to be quadratic,
+
+180
+00:21:53,320 --> 00:21:57,000
+ you could have put an arbitrary function behind there. So, it sees that it's going to start
+
+181
+00:21:57,000 --> 00:22:03,440
+ calling a nonlinear optimization solver. And when it calls your function, actually, it's
+
+182
+00:22:03,440 --> 00:22:10,360
+ going to pass in a version of x, a variable that is an autodiff type, which is automatic
+
+183
+00:22:10,360 --> 00:22:18,280
+ differentiation, so that it can also take gradients of your function and try to use,
+
+184
+00:22:18,280 --> 00:22:22,720
+ you know, gradients of this in order to get down there as fast as possible. Yes.
+
+185
+00:22:22,720 --> 00:22:48,240
+ [inaudible]
+
+186
+00:22:48,240 --> 00:22:52,400
+ That's a great point. So, there's two points to there. So, let me repeat the question. So,
+
+187
+00:22:52,400 --> 00:22:58,440
+ let's say I'm not taking a, you know, we've been talking mostly about you woke up, your eyes are
+
+188
+00:22:58,440 --> 00:23:02,760
+ open, the world was still, how do you understand it? And in that case, something like a static
+
+189
+00:23:02,760 --> 00:23:07,360
+ equilibrium constraint is appropriate. But the problem is actually different when things are
+
+190
+00:23:07,360 --> 00:23:12,280
+ moving, both in the case, in two ways. I think, first of all, if you open your eyes and admit
+
+191
+00:23:12,280 --> 00:23:16,640
+ things could have been moving when you started, then you don't want to be using static equilibrium
+
+192
+00:23:16,640 --> 00:23:22,280
+ constraints. You could use more general dynamic constraints. You know that things are not going
+
+193
+00:23:22,280 --> 00:23:27,000
+ to be, you know, falling faster than the acceleration due to gravity, for instance.
+
+194
+00:23:27,000 --> 00:23:31,640
+ That could be a constraint on your perception system. There's also a separate part of that
+
+195
+00:23:31,640 --> 00:23:36,560
+ question, which is, if I'm not opening my eyes and taking a one-shot sort of approach to it,
+
+196
+00:23:36,560 --> 00:23:42,920
+ but I'm rather tracking, then that can also change the problem. You can take an initial guess and
+
+197
+00:23:42,920 --> 00:23:48,200
+ expect that the answer only moved a little bit. And the same way we did instead of inverse
+
+198
+00:23:48,200 --> 00:23:52,240
+ kinematics, we did differential inverse kinematics. You could start taking, you know,
+
+199
+00:23:52,240 --> 00:23:58,360
+ just Jacobians of some of these things and expect actually a linearization of these problems to
+
+200
+00:23:58,360 --> 00:24:03,240
+ work fairly well. So I think in both ways, the tracking problem and the dynamic problem are
+
+201
+00:24:03,240 --> 00:24:08,320
+ pretty different. I'll mention tracking again at the end just to close that loop, but that's a
+
+202
+00:24:08,320 --> 00:24:22,600
+ very good point. Great. OK. So let's think about first the problem we already know, but in a way
+
+203
+00:24:22,600 --> 00:24:29,480
+ that gets us into non-convex. OK? So if I had parameterized my point registration problem,
+
+204
+00:24:29,480 --> 00:24:42,320
+ my point set registration problem, using theta instead of the pose written out with rotation
+
+205
+00:24:42,320 --> 00:24:51,360
+ matrices and the like, then already I have a non-convex formulation of the problem. So let
+
+206
+00:24:51,360 --> 00:24:57,880
+ me just say that carefully here. I think it's a good way to bridge to the more advanced versions
+
+207
+00:24:57,880 --> 00:25:14,080
+ here. If I wrote before, I was minimizing over p and r, where r was in SO(3), sum over i p plus r.
+
+208
+00:25:14,080 --> 00:25:35,560
+ OK. I could write it like this, or I can write it with the r transpose equals i, right?
+
+209
+00:25:35,560 --> 00:25:43,760
+ Determinant of r equals plus 1. Now, by writing this and this, I feel that I've over specified it,
+
+210
+00:25:43,760 --> 00:25:53,720
+ but at least it's super clear. OK? So the decision variables here were-- this is a matrix now. You
+
+211
+00:25:53,720 --> 00:26:02,000
+ know, r is a 3 by 3 matrix. This is a 3 by 1 vector, so I had 12 decision variables.
+
+212
+00:26:02,000 --> 00:26:21,040
+ Or in 2D, maybe it was a 2 by 2 matrix and a 2 by 1 in 2D. So what if we instead said,
+
+213
+00:26:21,040 --> 00:26:30,240
+ I want to parameterize this by just minimizing over p, which is the 2 by 1, and theta. OK?
+
+214
+00:26:30,240 --> 00:26:39,480
+ And I'll write the same objective, but now I'll have theta enter through the rotation matrix like
+
+215
+00:26:39,480 --> 00:26:58,920
+ this, right? Where r theta is my standard, cos theta minus sine theta, sine theta, cos theta.
+
+216
+00:26:58,920 --> 00:27:10,920
+ OK. So I've changed my decision variables instead of being from the matrix-- the entries of the
+
+217
+00:27:10,920 --> 00:27:19,240
+ matrix r to now being just one variable theta, right? This is just a scalar. That seems good.
+
+218
+00:27:19,240 --> 00:27:27,240
+ I've got less decision variables, maybe. But my beautiful quadratic bowls are not beautiful
+
+219
+00:27:27,240 --> 00:27:31,080
+ quadratic bowls anymore. I've got some sines and cosines in here that are changing it.
+
+220
+00:27:31,080 --> 00:27:38,560
+ In this simplest example, I can actually-- we can still think about what that landscape looks like.
+
+221
+00:27:38,560 --> 00:27:49,880
+ OK? So let's do that. And just so I can draw it on the board, let's even do it with the
+
+222
+00:27:49,880 --> 00:27:56,200
+ rotation-only case first. I'll just say positions are known, or we maybe played our trick of using
+
+223
+00:27:56,200 --> 00:28:07,680
+ relative positions, so we did everything relative. So let's think about having our model. So we had
+
+224
+00:28:07,680 --> 00:28:14,760
+ an accident last time, and my blue chalk is no longer with us. So the model points are now green.
+
+225
+00:28:14,760 --> 00:28:26,600
+ Sorry for that. I had a nice thing going there, but it's like my non-symmetric shape. This is my
+
+226
+00:28:26,600 --> 00:28:44,960
+ model points in 2D. OK? I've got my scene points, which are going to be only rotation for now,
+
+227
+00:28:44,960 --> 00:28:49,280
+ because I've already subtracted out-- because we know we can subtract that out. I've got my
+
+228
+00:28:49,280 --> 00:29:05,400
+ scene points like this. And the question is, what does the objective-- if I plot a function of theta,
+
+229
+00:29:05,400 --> 00:29:19,600
+ what does this cost look like? And is it going to be terrible, or is it going to be sort of OK?
+
+230
+00:29:19,600 --> 00:29:29,040
+ And I think it's actually not that bad to draw. It takes kind of a thought experiment,
+
+231
+00:29:29,040 --> 00:29:37,040
+ but let's take any one of these points. This is with the known correspondences,
+
+232
+00:29:37,040 --> 00:29:55,880
+ this case. So if I have my model point and my scene point, then my cost is the distance here.
+
+233
+00:29:55,880 --> 00:30:04,600
+ OK? My rotation, they should be-- if I had drawn it perfectly, they would lie on a circle,
+
+234
+00:30:04,600 --> 00:30:10,160
+ right? Because they can only-- they're only allowed to rotate, then those things are just
+
+235
+00:30:10,160 --> 00:30:28,760
+ going to move along the circle, right? OK. So if I have an initial guess, then my claim
+
+236
+00:30:28,760 --> 00:30:33,880
+ is that actually all-- this point here is going to contribute one cost term, which is
+
+237
+00:30:33,880 --> 00:30:42,440
+ the distance of that arc, right? The distance of that arc is going to be a function of my
+
+238
+00:30:42,440 --> 00:30:52,240
+ angle, theta, and the distance from the origin. I can just use my standard cosine-- law of
+
+239
+00:30:52,240 --> 00:30:56,720
+ cosines to figure out what that is. If I know this length, and I know this length are both
+
+240
+00:30:56,720 --> 00:31:01,320
+ some radius r, and I have-- I can write it as a function of this angle, I can tell you
+
+241
+00:31:01,320 --> 00:31:08,280
+ what that distance is, right? It's going to be-- what is it? r squared plus r squared
+
+242
+00:31:08,280 --> 00:31:16,600
+ minus 2 r squared cosine theta. It should be the length of that distance. Let me just
+
+243
+00:31:16,600 --> 00:31:20,400
+ make sure that checks. If cosine is-- if theta is 0, so it's exactly the same thing, that's
+
+244
+00:31:20,400 --> 00:31:30,520
+ 1, and this is the distance of 0. I'm pretty happy with that. It's close to that. OK.
+
+245
+00:31:30,520 --> 00:31:38,320
+ And let's say that's the distance for the r-- for the ith point. OK? Now, the sum of
+
+246
+00:31:38,320 --> 00:31:46,840
+ the distances is just going to be a sum of all these things
+
+247
+00:31:46,840 --> 00:31:56,040
+ added up. These are constants. From the point of view of this optimization, I'm just optimizing
+
+248
+00:31:56,040 --> 00:32:10,160
+ theta. So I just have, actually, cosine theta times a big sum of 2 ri squareds plus whatever
+
+249
+00:32:10,160 --> 00:32:22,680
+ this is, right? That's my cos landscape. Even though the shape is kind of interesting or
+
+250
+00:32:22,680 --> 00:32:30,120
+ whatever, in polar coordinates, it's actually really easy to write the cos landscape.
+
+251
+00:32:30,120 --> 00:32:40,040
+ So if I'm searching in this parameter space, it just looks like a cosine, roughly. Adding
+
+252
+00:32:40,040 --> 00:32:46,400
+ a constant will move it up and down. Adding a multiple like this will scale it up and
+
+253
+00:32:46,400 --> 00:32:54,040
+ down. But roughly, my cos landscape for in 2D, reconstructing the orientation, looks
+
+254
+00:32:54,040 --> 00:33:04,040
+ like this. OK? My claim is that these-- and that's supposed to be a nice cosine, not a
+
+255
+00:33:04,040 --> 00:33:09,800
+ lumpy cosine, which is sort of important to the point I'm making here. So maybe I'll just
+
+256
+00:33:09,800 --> 00:33:15,480
+ make that a little lower so that those are the same. Yeah?
+
+257
+00:33:15,480 --> 00:33:21,800
+ If I start a nonlinear optimization and its basic behavior is to go downhill until it
+
+258
+00:33:21,800 --> 00:33:31,160
+ finds a local minima, then in this setting, it's actually not bad, right? It might tell
+
+259
+00:33:31,160 --> 00:33:36,760
+ me something that's the angle I expected. It might tell me something that's 2 pi away
+
+260
+00:33:36,760 --> 00:33:45,240
+ from the angle I expected, but it's still right. It's not wrong. And the answer it gives
+
+261
+00:33:45,240 --> 00:33:49,800
+ me might depend on what my initial guess was, but it's actually going to solve that problem
+
+262
+00:33:49,800 --> 00:33:53,400
+ very nicely.
+
+263
+00:33:53,400 --> 00:34:02,960
+ In particular, there's a trendy way to say this, right? This function is non-convex,
+
+264
+00:34:02,960 --> 00:34:09,960
+ but all minima are global minima. So we like to try to say that about neural networks,
+
+265
+00:34:09,960 --> 00:34:16,200
+ too. OK? And there's other-- I think this is a new trend is understanding cost landscapes
+
+266
+00:34:16,200 --> 00:34:20,280
+ where they have this property that are not the simple picture, but they somehow still
+
+267
+00:34:20,280 --> 00:34:39,240
+ get optimization problems. OK? So all minima are global minima. Minima. So they achieve
+
+268
+00:34:39,240 --> 00:34:44,120
+ the same cost.
+
+269
+00:34:44,120 --> 00:34:50,480
+ So it's sort of not crazy if you're trying to parameterize 2D estimation problems in
+
+270
+00:34:50,480 --> 00:34:58,120
+ terms of data. This is a little bit too rosy of a picture. In 3D, it's going to get more
+
+271
+00:34:58,120 --> 00:35:07,600
+ crazy. And when you have to search for the correspondences also, we know from ICP, or
+
+272
+00:35:07,600 --> 00:35:11,140
+ we should expect from ICP, that there are going to be cases where it can get stuck in
+
+273
+00:35:11,140 --> 00:35:15,200
+ local minima. So we'll see that happen, too.
+
+274
+00:35:15,200 --> 00:35:21,040
+ But I want to establish that out of the box, it's not terrible to think about trying to
+
+275
+00:35:21,040 --> 00:35:28,440
+ search directly over this kind of a parameterization. And these are the kind of tools that you have
+
+276
+00:35:28,440 --> 00:35:29,440
+ in non-convex optimization. Yes?
+
+277
+00:35:29,440 --> 00:35:42,700
+ [INAUDIBLE]
+
+278
+00:35:42,700 --> 00:35:55,260
+ Yeah. I just need one more color to make that-- I was just trying to find a function to compute
+
+279
+00:35:55,260 --> 00:36:03,980
+ this distance, the distance between the point on the model and the corresponding point in
+
+280
+00:36:03,980 --> 00:36:12,780
+ the scene. And my claim was that that's an easy thing to compute if I call this r, and
+
+281
+00:36:12,780 --> 00:36:17,180
+ I do it in polar coordinates. This is also going to be r, since it's just rotating around
+
+282
+00:36:17,180 --> 00:36:25,220
+ the origin. That's all I've given it the ability to do if I've subtracted out the means properly.
+
+283
+00:36:25,220 --> 00:36:32,780
+ And this is r. So then my math was just to compute this distance as a function of my
+
+284
+00:36:32,780 --> 00:36:33,780
+ rotation angle theta.
+
+285
+00:36:33,780 --> 00:36:34,780
+ [INAUDIBLE]
+
+286
+00:36:34,780 --> 00:36:48,340
+ Yeah, yeah. So good. So when I get the correct theta, my cost is zero. I've lined up all
+
+287
+00:36:48,340 --> 00:36:55,380
+ my points in the noise-free case. When I go all the way to the opposite side, I've got
+
+288
+00:36:55,380 --> 00:37:00,540
+ the biggest possible distance and my biggest possible error. But if I keep wrapping around
+
+289
+00:37:00,540 --> 00:37:02,900
+ 2 pi, then I'll get zero error again.
+
+290
+00:37:02,900 --> 00:37:03,900
+ [INAUDIBLE]
+
+291
+00:37:03,900 --> 00:37:10,860
+ In fact, so I should have drawn this stopping at the-- in fact, that would have been more
+
+292
+00:37:10,860 --> 00:37:14,100
+ insightful on my part. I didn't think of it that way. I just looked at it in the algebra
+
+293
+00:37:14,100 --> 00:37:17,100
+ and said, I've got some constant, so it could be anywhere. But actually, that should be
+
+294
+00:37:17,100 --> 00:37:23,900
+ zero. It touches zero when things line up perfectly.
+
+295
+00:37:23,900 --> 00:37:24,900
+ [INAUDIBLE]
+
+296
+00:37:24,900 --> 00:37:37,780
+ Good. I drew it with a zero here. I forgot. I've had that insight once.
+
+297
+00:37:37,780 --> 00:37:45,060
+ That's our toolbox. Now we want to start saying, OK, if that cost function isn't enough,
+
+298
+00:37:45,060 --> 00:37:50,820
+ isn't rich enough, or I could potentially use constraints, how do I want to change that
+
+299
+00:37:50,820 --> 00:38:00,900
+ in order to capture these more rich phenomenon?
+
+300
+00:38:00,900 --> 00:38:13,540
+ So remember last time we talked about generalized correspondences, but we still did that two-step
+
+301
+00:38:13,540 --> 00:38:26,840
+ optimization. So let me write that.
+
+302
+00:38:26,840 --> 00:38:33,540
+ So for instance, when we talked about the coherent point drift, CPD, last time, my claim
+
+303
+00:38:33,540 --> 00:39:00,800
+ was that it was minimizing over some pose some function like this, right? And this was
+
+304
+00:39:00,800 --> 00:39:28,720
+ set using a Gaussian kernel in an iterative algorithm. So the same way ICP set the correspondences
+
+305
+00:39:28,720 --> 00:39:37,140
+ based on minimum distance and then solved this problem, CPD was setting the correspondences
+
+306
+00:39:37,140 --> 00:39:44,400
+ to be soft correspondences using a Gaussian kernel and then solving the SPD problem. Set
+
+307
+00:39:44,400 --> 00:39:49,720
+ it, solve the SPD problem, and alternate.
+
+308
+00:39:49,720 --> 00:39:55,000
+ The dream would be that we can solve for the correspondences and the poses at the same
+
+309
+00:39:55,000 --> 00:40:03,160
+ time. Now if we're willing to go to the non-convex optimization, then we can do that. We can
+
+310
+00:40:03,160 --> 00:40:08,280
+ write that down. Our mileage may vary because there could be local minima, but we at least
+
+311
+00:40:08,280 --> 00:40:10,840
+ can write that down.
+
+312
+00:40:10,840 --> 00:40:17,920
+ So today, we can do that same sort of thing. In fact, the more general way to write this
+
+313
+00:40:17,920 --> 00:40:22,880
+ would be to say minimize-- I could do it in terms of x, but maybe I'll minimize directly
+
+314
+00:40:22,880 --> 00:40:35,200
+ over theta now, for instance. And I could say ij. Let's take a non-linear loss function.
+
+315
+00:40:35,200 --> 00:40:50,320
+ I'll be careful about this in a second. And maybe it's a function of the transform points.
+
+316
+00:40:50,320 --> 00:40:55,200
+ So let's keep that structure.
+
+317
+00:40:55,200 --> 00:41:02,360
+ But I restricted myself to just quadratic functions before. Now I'm going to have an
+
+318
+00:41:02,360 --> 00:41:20,200
+ arbitrary loss function. The quadratic form is best for optimization, maybe, but the arbitrary
+
+319
+00:41:20,200 --> 00:41:24,320
+ loss function allows us to capture things like outliers and other features.
+
+320
+00:41:24,320 --> 00:41:33,640
+ So here are some sort of standard choices. You might hear about Huber loss. You could
+
+321
+00:41:33,640 --> 00:41:41,400
+ use the Gaussian kernel. That's roughly what the CPD was doing, which is nice because the
+
+322
+00:41:41,400 --> 00:41:50,160
+ idea from the Gaussian was that points that are far away have no effect on your optimization.
+
+323
+00:41:50,160 --> 00:41:58,840
+ It's a little subtle. I drew this here the way that you would normally see it in terms
+
+324
+00:41:58,840 --> 00:42:07,360
+ of a loss function. The Gaussian doesn't go to 0 in the way I've drawn it, but it's still--
+
+325
+00:42:07,360 --> 00:42:13,160
+ because it's flat, it has no effect on the optimization.
+
+326
+00:42:13,160 --> 00:42:18,320
+ So points that are far out here, if you were to move your guess a little bit and move them
+
+327
+00:42:18,320 --> 00:42:25,560
+ from here to here, it doesn't change your cost. So even though in a cost landscape setting,
+
+328
+00:42:25,560 --> 00:42:29,360
+ you might shift yourself up or down because it doesn't go to 0, but it doesn't change
+
+329
+00:42:29,360 --> 00:42:38,880
+ the shape of the landscape.
+
+330
+00:42:38,880 --> 00:42:43,760
+ I'm saying something I think simple. I hope I didn't say it in a complicated way. It's
+
+331
+00:42:43,760 --> 00:42:49,840
+ just that we were a little restricted by this quadratic form before, and we had to do these
+
+332
+00:42:49,840 --> 00:42:55,000
+ games with the coefficients. The more general case is just write the function you wanted
+
+333
+00:42:55,000 --> 00:42:59,680
+ directly in the loss.
+
+334
+00:42:59,680 --> 00:43:11,280
+ Any questions about that? Yeah?
+
+335
+00:43:11,280 --> 00:43:27,800
+ [INAUDIBLE]
+
+336
+00:43:27,800 --> 00:43:32,280
+ We could have done this-- so the question-- maybe I'll just try my answer. Hopefully,
+
+337
+00:43:32,280 --> 00:43:38,000
+ it's clear from this. Why didn't we do this right from the get-go? This is certainly one
+
+338
+00:43:38,000 --> 00:43:44,560
+ instance of this. This is just a more general form. If I choose L to just be the quadratic
+
+339
+00:43:44,560 --> 00:43:51,880
+ form, it could just be take whatever's inside this function and square it and multiply it
+
+340
+00:43:51,880 --> 00:43:58,680
+ by C. So this is a special case of this. This is a more general thing. And because it's
+
+341
+00:43:58,680 --> 00:44:05,640
+ more general, it can do things like taper off on the sides, which is a general way to
+
+342
+00:44:05,640 --> 00:44:10,400
+ handle outliers. That's the same way that we were handling outliers before. We now have
+
+343
+00:44:10,400 --> 00:44:12,640
+ machinery that'll handle outliers like this.
+
+344
+00:44:12,640 --> 00:44:13,640
+ [INAUDIBLE]
+
+345
+00:44:13,640 --> 00:44:26,040
+ Yep. Before, what we were doing was we were taking the losses we got from corresponding
+
+346
+00:44:26,040 --> 00:44:30,200
+ points. If the points were very unlikely to be corresponding, we were making that loss
+
+347
+00:44:30,200 --> 00:44:36,600
+ effectively zero. Here, in the same way, we're saying if the points are too far away with
+
+348
+00:44:36,600 --> 00:44:41,040
+ a-- let's say the Gaussian loss, if they're too far away, we're saying it has no effect
+
+349
+00:44:41,040 --> 00:44:46,440
+ on my cost. It's a flat. It's not quite zero, but it's flat. So it has no effect on the
+
+350
+00:44:46,440 --> 00:44:47,440
+ shape of my cost.
+
+351
+00:44:47,440 --> 00:44:48,440
+ [INAUDIBLE]
+
+352
+00:44:48,440 --> 00:45:01,600
+ Yeah. So those points that are far away are given our current guess. This is always going
+
+353
+00:45:01,600 --> 00:45:07,720
+ to be based on your initial guess. You're saying that my model is here, my scene is
+
+354
+00:45:07,720 --> 00:45:12,920
+ here. I'm going to give no weight to the difference between-- I'm not going to worry about trying
+
+355
+00:45:12,920 --> 00:45:16,040
+ to make this one match this one. That one's just too far away to worry about. I'll worry
+
+356
+00:45:16,040 --> 00:45:21,200
+ about the points that are closer, where my model to scene is smaller.
+
+357
+00:45:21,200 --> 00:45:29,520
+ Yeah? I had a request, just to convince everybody that I do read all the surveys. I really do.
+
+358
+00:45:29,520 --> 00:45:32,400
+ Not many of you write that much of the surveys. You tell me how many hours it takes, which
+
+359
+00:45:32,400 --> 00:45:38,520
+ is a little bit high this time. But also, a few of you write comments, and I read them
+
+360
+00:45:38,520 --> 00:45:45,000
+ all. And someone asked for a stretch break. All right. So let's take two seconds to just
+
+361
+00:45:45,000 --> 00:46:00,760
+ stand up and stretch. Yeah? It's a good time for it. You have to listen better now.
+
+362
+00:46:00,760 --> 00:46:06,960
+ Thank you.
+
+363
+00:46:06,960 --> 00:46:17,440
+ All right. They also said it could be small. They just were like, I just want to stretch
+
+364
+00:46:17,440 --> 00:46:22,560
+ my legs. So we're back at it. That's it.
+
+365
+00:46:22,560 --> 00:46:30,480
+ OK. There's a bunch of things to know about writing loss functions and writing code that
+
+366
+00:46:30,480 --> 00:46:38,040
+ uses these kind of loss functions. So in particular, when we were operating on this Euclidean distance
+
+367
+00:46:38,040 --> 00:46:43,280
+ a lot, I mentioned that there's data structures that are really good for that. So if you want
+
+368
+00:46:43,280 --> 00:46:49,520
+ to just find nearest neighbors in some Euclidean distance sense, a natural data structure is
+
+369
+00:46:49,520 --> 00:46:57,400
+ to use KD trees or other data structures you've learned from computer science classes, just
+
+370
+00:46:57,400 --> 00:47:14,800
+ to be efficient nearest neighbors. When you get into these more general loss functions
+
+371
+00:47:14,800 --> 00:47:20,600
+ that are functions of distances, there are other clever tricks. One of the ones that
+
+372
+00:47:20,600 --> 00:47:27,920
+ I like best is actually to use these sine distance functions. It depends on exactly
+
+373
+00:47:27,920 --> 00:47:32,680
+ what thing you're computing, but a common data structure that's useful to make these
+
+374
+00:47:32,680 --> 00:47:55,320
+ things fast, SDF. Not the scene description format. It's a different SDF. There's too
+
+375
+00:47:55,320 --> 00:48:07,160
+ many of them flying around. So the sine distance field or function, again, Stanford bunny comes
+
+376
+00:48:07,160 --> 00:48:14,920
+ up often, is just-- you can pre-compute. If I have, let's say, a mesh and I want to compute
+
+377
+00:48:14,920 --> 00:48:19,960
+ what is the distance, the closest distance from any point in the space to that mesh.
+
+378
+00:48:19,960 --> 00:48:24,680
+ And if I'm going to be doing a lot of queries, that's just asking what is the distance from
+
+379
+00:48:24,680 --> 00:48:31,600
+ a point to the mesh, then an efficient algorithm will, for instance, just pre-compute on a
+
+380
+00:48:31,600 --> 00:48:39,200
+ grid all of the distances from points in space to the mesh. They'll throw that on a GPU and
+
+381
+00:48:39,200 --> 00:48:43,880
+ then be able to access that super fast to do lots and lots of point queries, lots of
+
+382
+00:48:43,880 --> 00:48:49,880
+ distance computations on these 3D objects. The sine distance function, it's signed because
+
+383
+00:48:49,880 --> 00:48:54,440
+ you have a positive distance when you're outside the mesh and a negative distance when you're
+
+384
+00:48:54,440 --> 00:48:59,760
+ inside the mesh, because it's important to distinguish those two. And zero when you're
+
+385
+00:48:59,760 --> 00:49:03,960
+ on the boundary. It's just another representation of geometry, but it happens to make these
+
+386
+00:49:03,960 --> 00:49:07,560
+ distance-based objectives and queries very efficient. Yes?
+
+387
+00:49:07,560 --> 00:49:08,560
+ [INAUDIBLE]
+
+388
+00:49:08,560 --> 00:49:17,160
+ Yeah, that's a good question. So the way I've written it here, you're going to move the
+
+389
+00:49:17,160 --> 00:49:23,360
+ model every time because as you change the decision variables. But remember I said you
+
+390
+00:49:23,360 --> 00:49:33,960
+ could have also done everything like this, OWPSI. So the question was, which one are
+
+391
+00:49:33,960 --> 00:49:40,720
+ you going to pre-compute the sine distance function for? Typically, you have a model
+
+392
+00:49:40,720 --> 00:49:45,760
+ that you can afford to pre-compute with, and the scene comes in every time. So it makes
+
+393
+00:49:45,760 --> 00:49:49,800
+ sense to try to do your pre-computation on the model, not the scene. And if you were
+
+394
+00:49:49,800 --> 00:49:53,040
+ to flip over to this representation where you're moving the scene points around to match
+
+395
+00:49:53,040 --> 00:50:00,040
+ the model, then that makes this more efficient. It's not crazy actually to take a sine distance
+
+396
+00:50:00,040 --> 00:50:07,040
+ function and rotate it and translate it also, but I think this is more natural. Great question.
+
+397
+00:50:07,040 --> 00:50:08,040
+ Yes?
+
+398
+00:50:08,040 --> 00:50:09,040
+ [INAUDIBLE]
+
+399
+00:50:09,040 --> 00:50:10,040
+ Yep.
+
+400
+00:50:10,040 --> 00:50:11,040
+ [INAUDIBLE]
+
+401
+00:50:11,040 --> 00:50:21,680
+ Good. So that's a good question. So are these all convex? So the definition of a convex
+
+402
+00:50:21,680 --> 00:50:27,480
+ function is that if I take any two points on that function, that I could draw a straight
+
+403
+00:50:27,480 --> 00:50:34,680
+ line and it would have to be-- for a function, it would have to be above the function. So
+
+404
+00:50:34,680 --> 00:50:38,840
+ let's take the truncated least squares as the most extreme point. If I have this value
+
+405
+00:50:38,840 --> 00:50:45,680
+ here and this value here, then because the straight line between them is below the function,
+
+406
+00:50:45,680 --> 00:50:54,480
+ it's actually not a convex function. And this looks benign. And there are cases where, kind
+
+407
+00:50:54,480 --> 00:51:00,440
+ of like all global minima are OK, there are some non-convex functions that are benign.
+
+408
+00:51:00,440 --> 00:51:04,760
+ But once you get into this space and you start adding them and shifting them and multiplying
+
+409
+00:51:04,760 --> 00:51:09,760
+ them and having multiple together, you can quickly get into things that have local minima.
+
+410
+00:51:09,760 --> 00:51:15,080
+ Great question. Yeah. So this one actually, the Huber loss probably is convex. Yeah. I
+
+411
+00:51:15,080 --> 00:51:20,000
+ think I have to look at it exactly. But that sure looks convex to my eye. But the others
+
+412
+00:51:20,000 --> 00:51:26,000
+ are not necessarily.
+
+413
+00:51:26,000 --> 00:51:31,160
+ So yeah, I think some of the more efficient algorithms for doing these sort of-- especially
+
+414
+00:51:31,160 --> 00:51:35,760
+ tracking will actually pre-compute sign distance functions for the different models and put
+
+415
+00:51:35,760 --> 00:51:44,920
+ them on a GPU.
+
+416
+00:51:44,920 --> 00:51:49,080
+ So that's nice. We don't have an iterative algorithm in the sense of correspondences
+
+417
+00:51:49,080 --> 00:51:56,040
+ than implementation. And then SVD, we can write it all as one optimization and hand
+
+418
+00:51:56,040 --> 00:52:02,840
+ it directly to a non-convex solver and get to some local minima using this kind of formulation.
+
+419
+00:52:02,840 --> 00:52:09,440
+ So far, we're still in the space of objectives we already had, roughly. The real power of
+
+420
+00:52:09,440 --> 00:52:16,120
+ going to non-convex optimization and the real motivation to do that is to handle those constraints
+
+421
+00:52:16,120 --> 00:52:25,960
+ that I said weren't fitting nicely into the standard-- our previous formulation, the non-penetration,
+
+422
+00:52:25,960 --> 00:52:32,320
+ the static equilibrium, and the free space constraints.
+
+423
+00:52:32,320 --> 00:52:55,800
+ So just as an example of non-penetration, in 2D, let's say I have a bunch of scene points.
+
+424
+00:52:55,800 --> 00:53:01,600
+ Let's say I've just got a box that I'm trying to find. I've got a bunch of scene points
+
+425
+00:53:01,600 --> 00:53:14,720
+ like this. And I want to fit my model to my scene with my green chalk. I was looking for
+
+426
+00:53:14,720 --> 00:53:25,840
+ blue. But I want to say that my transformed model should not be in penetration. The box,
+
+427
+00:53:25,840 --> 00:53:30,880
+ I know, shouldn't be in the table. It shouldn't be in the wall. How can I write that as an
+
+428
+00:53:30,880 --> 00:53:35,280
+ optimization? I would like to think of it coming up with something that's as close as
+
+429
+00:53:35,280 --> 00:53:44,560
+ possible. It's trying to match the data, but it refused to go into the wall.
+
+430
+00:53:44,560 --> 00:53:53,880
+ We could do the same thing we did before. We can say-- let's do it with just theta in
+
+431
+00:53:53,880 --> 00:54:07,160
+ 2D here. So
+
+432
+00:54:07,160 --> 00:54:12,000
+ that objective maybe isn't so bad yet. But let's say I'm going to-- subject to the constraint
+
+433
+00:54:12,000 --> 00:54:21,800
+ that all of the model points, once they're transformed into the world coordinates, are--
+
+434
+00:54:21,800 --> 00:54:29,560
+ in this case, let's say it's 0, 0 here. Let's just say that they're greater than 0. So the
+
+435
+00:54:29,560 --> 00:54:36,560
+ x component is greater than 0 and the y component is greater than 0.
+
+436
+00:54:36,560 --> 00:54:46,160
+ This is a non-convex constraint because this is still-- I write that for all j. To flesh
+
+437
+00:54:46,160 --> 00:54:59,280
+ that out, remember, we have-- it's still a function of my decision variables. And it's
+
+438
+00:54:59,280 --> 00:55:08,640
+ a non-convex. It's not a linear function in this case. But we know how to write it.
+
+439
+00:55:08,640 --> 00:55:13,880
+ This landscape is going to be not as simple as that cosine. I've suddenly added new constraints
+
+440
+00:55:13,880 --> 00:55:19,600
+ on possible-- at immiscible thetas and p's. But the initial picture isn't that crazy.
+
+441
+00:55:19,600 --> 00:55:26,160
+ And isn't that different? And we can definitely ask our solver to do that kind of thing.
+
+442
+00:55:26,160 --> 00:55:37,000
+ And if you do, I did. And I got this. So here's my salmon red scene, my blue model. I drew
+
+443
+00:55:37,000 --> 00:55:45,680
+ the correspondences in. So if I did an ICP sort of loop but with that constraint, then
+
+444
+00:55:45,680 --> 00:55:48,720
+ I get a good solution out.
+
+445
+00:55:48,720 --> 00:55:59,760
+ So once we go to this non-convex optimization, we can start writing rich constraints. What
+
+446
+00:55:59,760 --> 00:56:06,760
+ I said last time too quickly was that there are some ways to do convex optimization for
+
+447
+00:56:06,760 --> 00:56:13,840
+ this type of constraint and a handful of them. There's a world of trying to make the best
+
+448
+00:56:13,840 --> 00:56:22,360
+ convex approximations of these, which I'm a fan of, that world. But it's a more subtle
+
+449
+00:56:22,360 --> 00:56:29,800
+ thing that I failed to make the point of last time. It's in the notes if you want.
+
+450
+00:56:29,800 --> 00:56:39,640
+ So how would you write this down just to make it sort of hopefully actionable? So if I had
+
+451
+00:56:39,640 --> 00:56:46,360
+ decision variables p, there's two of them in 2D for my positions, my xy position. Theta
+
+452
+00:56:46,360 --> 00:56:56,600
+ is one variable. And I can add my cost just like this. R, remember, is now a function
+
+453
+00:56:56,600 --> 00:57:04,280
+ of theta. So this is a nonlinear, non-convex objective. So I have to do it by-- I can't
+
+454
+00:57:04,280 --> 00:57:10,240
+ say add quadratic cost anymore. I add a cost and I hand it a function. And then I'll add
+
+455
+00:57:10,240 --> 00:57:15,240
+ constraint and I'll pass it a function to do that bottom one.
+
+456
+00:57:15,240 --> 00:57:19,440
+ But those functions are easy enough to write. I just can say what's the position in the
+
+457
+00:57:19,440 --> 00:57:27,040
+ world. I take R as cos theta, sine theta, sine theta, cos theta. And I compute my--
+
+458
+00:57:27,040 --> 00:57:34,520
+ it's just sort of the normal math. And then similarly, as a square, I can just call square,
+
+459
+00:57:34,520 --> 00:57:40,300
+ multiply the two vectors together in numpy. And mostly, it'll just work.
+
+460
+00:57:40,300 --> 00:57:48,360
+ There's a little crap about getting your variables into the function and out, this whole using
+
+461
+00:57:48,360 --> 00:57:52,400
+ partial and then unpacking with split. I'm not a huge fan of that. We'll make it better
+
+462
+00:57:52,400 --> 00:57:57,080
+ someday. But that's the tunnel that goes into the solver and then comes back out of the
+
+463
+00:57:57,080 --> 00:58:06,200
+ solver. So there's a little bit of boilerplate to make that good.
+
+464
+00:58:06,200 --> 00:58:11,480
+ That's what solved the previous problem. And it can solve much more complicated problems.
+
+465
+00:58:11,480 --> 00:58:19,320
+ The generalization of this idea is, in general, you can say I have multiple models. Or maybe
+
+466
+00:58:19,320 --> 00:58:25,040
+ the world is part of my model. It could be a function of the decision variables or it
+
+467
+00:58:25,040 --> 00:58:28,000
+ could just be welded to the world. That's fine.
+
+468
+00:58:28,000 --> 00:58:36,160
+ In general, you might say I want to search for q, the positions of my kinematics, such
+
+469
+00:58:36,160 --> 00:58:44,840
+ that the bodies match the points. You see why I think of it as a kinematics problem.
+
+470
+00:58:44,840 --> 00:58:51,880
+ And subject to the fact that there's no constraints. There's no collisions, no penetrations.
+
+471
+00:58:51,880 --> 00:58:59,320
+ So there's a huge library of these tools that you'll build up on the kinematics pipeline.
+
+472
+00:58:59,320 --> 00:59:02,880
+ They're all doing something like this under the scenes, but they're calling the kinematics
+
+473
+00:59:02,880 --> 00:59:06,120
+ methods to make it effective.
+
+474
+00:59:06,120 --> 00:59:14,520
+ So you can compute the signed distance of closest points between two bodies. That's
+
+475
+00:59:14,520 --> 00:59:20,160
+ queries that you can just ask the geometry engine for. And even better, you can just
+
+476
+00:59:20,160 --> 00:59:26,360
+ say I want the distance between two bodies to be at least some distance.
+
+477
+00:59:26,360 --> 00:59:31,760
+ And there's actually a bunch of details inside there to try to make that good for
+
+478
+00:59:31,760 --> 00:59:44,080
+ solvers. The computational geometry of doing those queries is sort of subtle, but I'll
+
+479
+00:59:44,080 --> 00:59:47,720
+ talk a bit about it next week when we talk about simulation.
+
+480
+00:59:47,720 --> 00:59:56,200
+ But if I have two bodies, then already you can imagine that finding the distance between
+
+481
+00:59:56,200 --> 01:00:00,600
+ two bodies, the closest distance between two bodies, that's like an interesting computational
+
+482
+01:00:00,600 --> 01:00:05,760
+ geometry problem. It seems sort of manageable when I draw it like that.
+
+483
+01:00:05,760 --> 01:00:10,880
+ It gets worse when they penetrate and you have to do the interior. Then the answers
+
+484
+01:00:10,880 --> 01:00:17,560
+ are not typically clean, even for relatively simple objects.
+
+485
+01:00:17,560 --> 01:00:27,960
+ But in particular for a solver, if you have multiple bodies, and if the closest point
+
+486
+01:00:27,960 --> 01:00:33,880
+ between bodies flops from being this body to this body, for instance, then that gives
+
+487
+01:00:33,880 --> 01:00:44,000
+ you cost functions that can look-- typically they're continuous but not differentiable.
+
+488
+01:00:44,000 --> 01:00:49,020
+ So you can have things like this in your cost landscape.
+
+489
+01:00:49,020 --> 01:00:53,340
+ And we try to do a lot of work to-- if it's at the minimum, that's one thing. It could
+
+490
+01:00:53,340 --> 01:00:59,120
+ also be on the way down to a minimum, it could do some silly things like this. These all
+
+491
+01:00:59,120 --> 01:01:04,660
+ make it harder for the optimizer to find its way to a good minimum.
+
+492
+01:01:04,660 --> 01:01:09,560
+ So there's hard work in the middle there that these functions do for you to try to smooth
+
+493
+01:01:09,560 --> 01:01:13,740
+ that out a little bit. Just not enough to change your answer significantly, but enough
+
+494
+01:01:13,740 --> 01:01:18,380
+ to make the numerics good. There's a lot of details behind it. There's all open source,
+
+495
+01:01:18,380 --> 01:01:25,200
+ so you can look at it. But the difference between writing your own like this and getting
+
+496
+01:01:25,200 --> 01:01:29,500
+ it all right versus calling one that's been hardened a little bit is in all these different
+
+497
+01:01:29,500 --> 01:01:36,100
+ little nuances.
+
+498
+01:01:36,100 --> 01:01:43,660
+ Non-penetration, this example of bodies moving around and not being allowed to penetrate,
+
+499
+01:01:43,660 --> 01:01:51,660
+ is a classic example where you will have local minima. You sort of don't expect to have the
+
+500
+01:01:51,660 --> 01:02:00,100
+ nice picture of this. So let me try to make that point. So imagine-- I've got to get all
+
+501
+01:02:00,100 --> 01:02:13,380
+ my colors right. So I've got some scene points over here. My box is here. I have some part
+
+502
+01:02:13,380 --> 01:02:19,900
+ of my world here, which I'd say don't run into the table or the wall or something like
+
+503
+01:02:19,900 --> 01:02:35,060
+ this. And my current guess is my model is over here. This sort of an optimization is
+
+504
+01:02:35,060 --> 01:02:38,340
+ going to try to pull it in here, and it's going to stop when it hits the constraint.
+
+505
+01:02:38,340 --> 01:02:42,980
+ And there's nothing powerful enough in the description we're giving it to suddenly change
+
+506
+01:02:42,980 --> 01:02:51,500
+ its mind and try something fundamentally different. And in general, even if your bodies are convex
+
+507
+01:02:51,500 --> 01:02:58,300
+ bodies, like the interior of the body that are convex, because we're working in the space
+
+508
+01:02:58,300 --> 01:03:05,380
+ outside those bodies, collision avoidance constraints are the classic example of local
+
+509
+01:03:05,380 --> 01:03:14,220
+ minima in optimization. It's one of the multiple minima in optimization. So don't expect miracles.
+
+510
+01:03:14,220 --> 01:03:18,420
+ It's going to get stuck here. It's going to say, here, this is the best I could do. It's
+
+511
+01:03:18,420 --> 01:03:23,860
+ not going to pop over here. But when you're close, it can do wonderful things with complicated
+
+512
+01:03:23,860 --> 01:03:30,420
+ constraints.
+
+513
+01:03:30,420 --> 01:03:35,620
+ I mentioned three to begin with. I mentioned non-penetration, which I gave a very simple
+
+514
+01:03:35,620 --> 01:03:41,860
+ example of there. I mentioned static stability constraints. I'm going to talk about that
+
+515
+01:03:41,860 --> 01:03:47,780
+ more. You'll even do a problem set, I think, on it when we talk about the physics engine,
+
+516
+01:03:47,780 --> 01:03:52,980
+ because you're going to use some of the equations of motion in order to write that kind of a
+
+517
+01:03:52,980 --> 01:03:54,380
+ constraint.
+
+518
+01:03:54,380 --> 01:04:00,060
+ But the last one, which I think is so important and maybe one of the biggest reasons why the
+
+519
+01:04:00,060 --> 01:04:06,860
+ point registration problem, I think, is not sufficient, is that gaze constraint, the free
+
+520
+01:04:06,860 --> 01:04:29,340
+ space constraint. And I think it's so clever.
+
+521
+01:04:29,340 --> 01:04:53,260
+ So this is the free space constraint. So if I have my scene points over here and my cameras
+
+522
+01:04:53,260 --> 01:05:06,180
+ over here, I guess I didn't get any returns over there because it's partial. It's occluded.
+
+523
+01:05:06,180 --> 01:05:12,020
+ Then I should immediately be able to say that any solution that's putting my model over
+
+524
+01:05:12,020 --> 01:05:18,820
+ here is a bad solution. It's not just that even if it's close in the sense of getting
+
+525
+01:05:18,820 --> 01:05:23,980
+ those points close, it's violating something that I know about the problem, which is to
+
+526
+01:05:23,980 --> 01:05:31,180
+ have gotten this point from that camera, it must not be anything here.
+
+527
+01:05:31,180 --> 01:05:41,060
+ So there's various ways to write that. The one that convinced me first of how important
+
+528
+01:05:41,060 --> 01:05:47,940
+ this was used sine distance functions on a GPU to make it fast. And the way that they
+
+529
+01:05:47,940 --> 01:05:56,180
+ did it was they actually made a new obstacle. They turned it into a non-penetration constraint.
+
+530
+01:05:56,180 --> 01:06:00,460
+ So they basically said, I'm going to go ahead and make an obstacle. I'll call it my observation
+
+531
+01:06:00,460 --> 01:06:08,100
+ obstacle, which is all, which is the, not the convex hull, it's the body defined by
+
+532
+01:06:08,100 --> 01:06:14,260
+ the rays between my camera and those points. And they said, I have a new body like this.
+
+533
+01:06:14,260 --> 01:06:20,420
+ I can compute the sine distance from that body on the fly and ask that the points in
+
+534
+01:06:20,420 --> 01:06:28,700
+ my model have a positive sine distance with that constraint.
+
+535
+01:06:28,700 --> 01:06:34,300
+ And I think that's just such an important cue that if you write an objective which says
+
+536
+01:06:34,300 --> 01:06:40,540
+ make my points match in a squared, in a quadratic sense, you just can't capture that. In fact,
+
+537
+01:06:40,540 --> 01:06:45,300
+ even if you've only reasoned about point clouds, you've already lost that piece of information,
+
+538
+01:06:45,300 --> 01:06:50,020
+ right? The depth image in some sense had more information than the point cloud. The point
+
+539
+01:06:50,020 --> 01:06:54,700
+ cloud has thrown away where the cameras were.
+
+540
+01:06:54,700 --> 01:07:01,020
+ But that is a hugely rich source of information to rule out a lot of possible strange candidates
+
+541
+01:07:01,020 --> 01:07:07,980
+ in the perception problem. And the folks that did that, I think, best, the one that I learned
+
+542
+01:07:07,980 --> 01:07:17,580
+ it from was this project called DART, which was trying to solve for Q. Is that playing?
+
+543
+01:07:17,580 --> 01:07:26,900
+ Oh, yeah. Okay. They compute these sine distance fields, right? That's a visualization of the
+
+544
+01:07:26,900 --> 01:07:33,980
+ sine distance function. And they do it for each body. And then they search over Q. And
+
+545
+01:07:33,980 --> 01:07:38,900
+ they make these incredible demos of even tracking real people's hands with an approximate model
+
+546
+01:07:38,900 --> 01:07:50,420
+ of a hand where they're just using this basic idea to solve that problem subject to the
+
+547
+01:07:50,420 --> 01:07:59,260
+ kinematics constraints. We're using theta instead of pose, non-penetration constraints,
+
+548
+01:07:59,260 --> 01:08:03,940
+ and free space constraints written as non-penetration constraints, all with sine distance functions.
+
+549
+01:08:03,940 --> 01:08:14,780
+ I put it in the middle because I had some cool visualizations of the optimization at
+
+550
+01:08:14,780 --> 01:08:28,140
+ work. Okay. So when you're seeing that, what are you seeing, right? You're seeing the solver
+
+551
+01:08:28,140 --> 01:08:32,980
+ take an initial guess. It has some Q. It's somewhere on the landscape. And it's walking
+
+552
+01:08:32,980 --> 01:08:37,940
+ down the landscape, and it's slowly fitting into the -- snapping into place. And they
+
+553
+01:08:37,940 --> 01:08:53,780
+ just did incredible tracking demos with this kind of work. Even tracking humans. Super
+
+554
+01:08:53,780 --> 01:09:02,140
+ impressive. It can get -- okay. So the property of these algorithms are that if you start
+
+555
+01:09:02,140 --> 01:09:07,860
+ with a good initial guess, it can snap in. But if you just think of this as like in the
+
+556
+01:09:07,860 --> 01:09:12,140
+ context of this demo, you actually saw it lost the arm for a second. Did you guys notice
+
+557
+01:09:12,140 --> 01:09:18,140
+ the frame where it lost the arm? So if it gets confused, then it's sometimes very hard
+
+558
+01:09:18,140 --> 01:09:22,740
+ to get back. So these things will work incredibly well until they don't and then they fall off
+
+559
+01:09:22,740 --> 01:09:32,100
+ the rails. So don't put it in a safety-critical application. But they're super powerful. Okay?
+
+560
+01:09:32,100 --> 01:09:38,340
+ And that's an example of using it recursively to solve the tracking problem like we talked
+
+561
+01:09:38,340 --> 01:09:45,580
+ about. So we took the initial guess. We found some minima. And then we took a new snapshot
+
+562
+01:09:45,580 --> 01:09:49,180
+ from our camera. The problem data moved a little bit. But hopefully the minima didn't
+
+563
+01:09:49,180 --> 01:09:54,100
+ move too much. And we just keep solving. And it's trying to track the moving minima in
+
+564
+01:09:54,100 --> 01:10:01,740
+ the landscape. [ Inaudible ]
+
+565
+01:10:01,740 --> 01:10:08,460
+ Those -- no, the limbs are all using the same tracking method. The comparison is -- I think
+
+566
+01:10:08,460 --> 01:10:15,180
+ only one of them is visualized in that. Yeah. So the parameterization is Q, which is like
+
+567
+01:10:15,180 --> 01:10:25,380
+ the generalized positions. And it's just searching through Q in order to solve those. Okay. So
+
+568
+01:10:25,380 --> 01:10:34,820
+ that was -- that's the sort of -- the importance of non-convex geometric reasoning in there.
+
+569
+01:10:34,820 --> 01:10:52,380
+ Like I said, there are more advanced topics in geometric perception. For instance, I really
+
+570
+01:10:52,380 --> 01:11:02,620
+ like the convex relaxations, where you try to find versions of the hard problem that
+
+571
+01:11:02,620 --> 01:11:11,540
+ you can solve very reliably. I put a very simple example of one in the notes. I think
+
+572
+01:11:11,540 --> 01:11:18,500
+ this notion of tracking gets into a nice set of different tools where you can solve the
+
+573
+01:11:18,500 --> 01:11:24,140
+ tracking problem differently than you'd solve just the one-shot perception problem. Like
+
+574
+01:11:24,140 --> 01:11:32,340
+ I say, you can use differential kinematics instead of inverse kinematics. So dynamic
+
+575
+01:11:32,340 --> 01:11:47,500
+ obstacles, if you will. And I would say dense reconstruction is also a nearby problem here.
+
+576
+01:11:47,500 --> 01:11:52,980
+ If you wanted to build a map of the world or build your object model from just having
+
+577
+01:11:52,980 --> 01:12:02,380
+ a camera moving around it, these two both are sort of -- you might have heard of SLAM,
+
+578
+01:12:02,380 --> 01:12:11,500
+ simultaneous localization and mapping in robotics. It's really based on the same foundations
+
+579
+01:12:11,500 --> 01:12:26,940
+ that we've talked about here. Very dependent on getting correspondences correct, but hugely
+
+580
+01:12:26,940 --> 01:12:37,580
+ powerful and important and successful applications of these.
+
+581
+01:12:37,580 --> 01:12:42,860
+ So if I just reflect back on what we did and where does it fit in the space of manipulation
+
+582
+01:12:42,860 --> 01:12:50,180
+ tools, I think geometry is incredibly important. I think our depth sensors are superhuman in
+
+583
+01:12:50,180 --> 01:12:57,460
+ their accuracy, for instance. So in terms of refinement of an initial guess, they're
+
+584
+01:12:57,460 --> 01:13:04,860
+ incredibly valuable. But I remember a few years ago when we started doing more work
+
+585
+01:13:04,860 --> 01:13:11,180
+ with deep learning perception and we were using RGB as much as we were using depth.
+
+586
+01:13:11,180 --> 01:13:14,420
+ And that transition sort of happened where we started using the color values, handing
+
+587
+01:13:14,420 --> 01:13:19,580
+ them to a neural network. And I remember asking the guys in the lab, I said, OK, if you were
+
+588
+01:13:19,580 --> 01:13:24,220
+ to give away either the depth or the RGB, if I can take one away, which one would you
+
+589
+01:13:24,220 --> 01:13:31,160
+ keep? And that answer flipped. And I think nowadays, if people have to pick just one,
+
+590
+01:13:31,160 --> 01:13:38,340
+ they would say, take my depth, give me my RGB. Because there's so much information that
+
+591
+01:13:38,340 --> 01:13:45,540
+ is not captured in the XYZ value of the point cloud. Context about when objects start, when
+
+592
+01:13:45,540 --> 01:13:52,580
+ they stop, but also much, much more than that. We haven't talked enough about RGB, but we
+
+593
+01:13:52,580 --> 01:13:55,660
+ will.
+
+594
+01:13:55,660 --> 01:14:03,080
+ I do think that it's very natural to combine guesses based on data-driven methods and RGB,
+
+595
+01:14:03,080 --> 01:14:09,840
+ and then refine them with the geometric methods. And I think we learned a bunch of cool geometry
+
+596
+01:14:09,840 --> 01:14:13,960
+ stuff. Hopefully it's good. OK, see you next time.
+
+597
+01:14:13,960 --> 01:14:37,420
+ [SIDE CONVERSATION]
+

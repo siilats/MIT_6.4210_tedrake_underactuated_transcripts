@@ -1,0 +1,6128 @@
+1
+00:00:00,000 --> 00:00:01,640
+ Let's do it.
+
+2
+00:00:01,640 --> 00:00:07,960
+ So last time, we did our sort of lightning introduction
+
+3
+00:00:07,960 --> 00:00:11,920
+ to deep learning for manipulation.
+
+4
+00:00:11,920 --> 00:00:14,520
+ We talked a little bit more detail
+
+5
+00:00:14,520 --> 00:00:18,720
+ about the deep version of pose estimation
+
+6
+00:00:18,720 --> 00:00:22,200
+ and some of the nuances of asking a neural network
+
+7
+00:00:22,200 --> 00:00:26,680
+ to spit out in orientation.
+
+8
+00:00:26,680 --> 00:00:29,960
+ If you choose Euler angles, you might be sad.
+
+9
+00:00:29,960 --> 00:00:31,360
+ If you choose quaternions, there's
+
+10
+00:00:31,360 --> 00:00:33,240
+ some evidence that you might be sad.
+
+11
+00:00:33,240 --> 00:00:35,840
+ And thinking more about the exact output
+
+12
+00:00:35,840 --> 00:00:39,840
+ that you ask the network to give can make a big difference.
+
+13
+00:00:39,840 --> 00:00:42,640
+ And I guess the last big point I made last time
+
+14
+00:00:42,640 --> 00:00:46,480
+ was that for the types of shapes we often
+
+15
+00:00:46,480 --> 00:00:49,360
+ manipulate in manipulation, we have
+
+16
+00:00:49,360 --> 00:00:51,280
+ to accept that there's going to be potentially
+
+17
+00:00:51,280 --> 00:00:53,360
+ ambiguity in pose.
+
+18
+00:00:53,360 --> 00:00:56,120
+ And so outputting an entire distribution over pose
+
+19
+00:00:56,120 --> 00:00:58,520
+ can be a much richer specification than asking
+
+20
+00:00:58,520 --> 00:00:59,480
+ for just a single pose.
+
+21
+00:00:59,480 --> 00:01:04,800
+ But I already forecasted.
+
+22
+00:01:04,800 --> 00:01:09,400
+ I actually think asking for a pose out of the network
+
+23
+00:01:09,400 --> 00:01:12,640
+ is probably the wrong thing to ask for.
+
+24
+00:01:12,640 --> 00:01:19,040
+ It pigeonholes you into a world where you have CAD models,
+
+25
+00:01:19,040 --> 00:01:20,560
+ for instance, of your objects.
+
+26
+00:01:20,560 --> 00:01:23,640
+ And you're trying to find a specific object in the world
+
+27
+00:01:23,640 --> 00:01:27,000
+ where you can describe that object by the CAD model
+
+28
+00:01:27,000 --> 00:01:29,000
+ and the pose, for instance.
+
+29
+00:01:29,000 --> 00:01:31,400
+ And I want to think today with you about a little bit more
+
+30
+00:01:31,400 --> 00:01:35,080
+ general question of object representations.
+
+31
+00:01:35,080 --> 00:01:51,880
+ And I think what object representations
+
+32
+00:01:51,880 --> 00:01:53,160
+ support manipulation?
+
+33
+00:01:53,160 --> 00:01:56,560
+ [WRITING ON BOARD]
+
+34
+00:01:56,560 --> 00:02:07,960
+ And it's a subtle thing.
+
+35
+00:02:07,960 --> 00:02:10,760
+ But we've sort of already given--
+
+36
+00:02:10,760 --> 00:02:13,600
+ we have pipelines that work for two extremes.
+
+37
+00:02:13,600 --> 00:02:22,200
+ At one extreme, we have known objects.
+
+38
+00:02:22,200 --> 00:02:23,720
+ Say we have a CAD model or something
+
+39
+00:02:23,720 --> 00:02:27,920
+ that we can throw in a simulator and generate a bunch of data.
+
+40
+00:02:27,920 --> 00:02:30,120
+ We can do pose.
+
+41
+00:02:30,120 --> 00:02:31,000
+ We can do our grasp.
+
+42
+00:02:31,000 --> 00:02:37,120
+ We could do pose estimation, grasp planning.
+
+43
+00:02:37,120 --> 00:02:40,120
+ We can specify the goals of manipulation
+
+44
+00:02:40,120 --> 00:02:42,960
+ in terms of pose of objects.
+
+45
+00:02:42,960 --> 00:02:45,920
+ That's a pretty good pipeline.
+
+46
+00:02:45,920 --> 00:02:47,480
+ But its limitation, I think, really
+
+47
+00:02:47,480 --> 00:02:51,840
+ comes from having to do only known objects.
+
+48
+00:02:51,840 --> 00:02:55,640
+ At the other extreme, we said unknown objects, anything goes.
+
+49
+00:02:55,640 --> 00:03:01,760
+ I would say arbitrary unknown objects.
+
+50
+00:03:01,760 --> 00:03:09,880
+ And we did even just geometric estimation.
+
+51
+00:03:09,880 --> 00:03:11,600
+ We did antipodal grasping.
+
+52
+00:03:11,600 --> 00:03:21,800
+ And for simple objectives, where you just
+
+53
+00:03:21,800 --> 00:03:25,400
+ want to do things like move all the points in that bin
+
+54
+00:03:25,400 --> 00:03:27,440
+ over to that bin, then that's actually
+
+55
+00:03:27,440 --> 00:03:30,760
+ a fairly useful pipeline.
+
+56
+00:03:30,760 --> 00:03:36,080
+ You'll see if you combine this with a deep segmentation
+
+57
+00:03:36,080 --> 00:03:48,360
+ network, even an instance level segmentation and recognition,
+
+58
+00:03:48,360 --> 00:03:51,160
+ then that gets already pretty useful.
+
+59
+00:03:51,160 --> 00:03:54,640
+ And we're going to have you do this on the problem set.
+
+60
+00:03:54,640 --> 00:03:57,880
+ You could say, pick the mustard bottle out of the bin,
+
+61
+00:03:57,880 --> 00:04:00,280
+ or pick the Cheez-It box.
+
+62
+00:04:00,280 --> 00:04:03,320
+ There is a world outside of Cheez-It boxes and Spam cans
+
+63
+00:04:03,320 --> 00:04:06,040
+ and mustard bottles, but we're pretty
+
+64
+00:04:06,040 --> 00:04:07,520
+ happy in our little world.
+
+65
+00:04:07,520 --> 00:04:11,280
+ So that is already a pretty good pipeline.
+
+66
+00:04:11,280 --> 00:04:15,440
+ But at some point, manipulation is about more than just picking
+
+67
+00:04:15,440 --> 00:04:16,920
+ things up and dropping them off.
+
+68
+00:04:16,920 --> 00:04:19,840
+ That's not a very rich specification for a task.
+
+69
+00:04:19,840 --> 00:04:21,680
+ So what I want to think about with you today
+
+70
+00:04:21,680 --> 00:04:27,120
+ is this middle ground of how can we relax
+
+71
+00:04:27,120 --> 00:04:30,280
+ the assumption of known objects.
+
+72
+00:04:30,280 --> 00:04:31,920
+ We're going to have to give up, I think,
+
+73
+00:04:31,920 --> 00:04:34,160
+ doing arbitrary unknown objects, because I don't even
+
+74
+00:04:34,160 --> 00:04:35,920
+ know how to specify-- if you just tell me
+
+75
+00:04:35,920 --> 00:04:38,320
+ the object is anything, then I don't really even know how
+
+76
+00:04:38,320 --> 00:04:40,880
+ to specify the task anymore.
+
+77
+00:04:40,880 --> 00:04:42,760
+ So I need something in the middle here
+
+78
+00:04:42,760 --> 00:04:46,160
+ that is usefully general, but allows
+
+79
+00:04:46,160 --> 00:04:49,280
+ me to still specify the task.
+
+80
+00:04:49,280 --> 00:04:53,960
+ And I think what the computer vision world has
+
+81
+00:04:53,960 --> 00:04:56,280
+ been calling it, and what we've been starting to call it
+
+82
+00:04:56,280 --> 00:04:58,000
+ in manipulation, there's a nice spot--
+
+83
+00:04:58,000 --> 00:04:59,400
+ it's probably a little bit closer
+
+84
+00:04:59,400 --> 00:05:02,160
+ to the known objects than the full arbitrary--
+
+85
+00:05:02,160 --> 00:05:06,440
+ that I want to explore today, which is this category level.
+
+86
+00:05:06,440 --> 00:05:09,520
+ Category level perception and category level manipulation.
+
+87
+00:05:14,680 --> 00:05:18,080
+ And I think that the trick is going
+
+88
+00:05:18,080 --> 00:05:21,640
+ to be finding representations of objects that
+
+89
+00:05:21,640 --> 00:05:26,080
+ allow us to specify the task, but aren't tied to having just
+
+90
+00:05:26,080 --> 00:05:27,440
+ a single--
+
+91
+00:05:27,440 --> 00:05:28,320
+ a single category.
+
+92
+00:05:28,320 --> 00:05:31,160
+ It doesn't have to be a pose, for instance.
+
+93
+00:05:31,160 --> 00:05:37,320
+ And there's a few canonical categories
+
+94
+00:05:37,320 --> 00:05:39,880
+ that all the roboticists like to use.
+
+95
+00:05:39,880 --> 00:05:41,920
+ So here's the task, roughly.
+
+96
+00:05:41,920 --> 00:05:45,680
+ I've got mugs.
+
+97
+00:05:45,680 --> 00:05:46,560
+ Everybody uses mugs.
+
+98
+00:05:46,560 --> 00:05:48,180
+ You've seen mugs in our slides already.
+
+99
+00:05:48,180 --> 00:05:51,880
+ But there's normal mugs you wouldn't be surprised by.
+
+100
+00:05:51,880 --> 00:05:54,320
+ And they get pretty ridiculous pretty fast.
+
+101
+00:05:54,320 --> 00:05:57,920
+ They get all shapes and sizes, all sorts of materials.
+
+102
+00:05:57,920 --> 00:06:03,760
+ We've got cat mugs that are completely weird shaped.
+
+103
+00:06:03,760 --> 00:06:06,880
+ There's one you'll see in the slides that has udders.
+
+104
+00:06:06,880 --> 00:06:10,040
+ Like it's-- if you go to the Disney store,
+
+105
+00:06:10,040 --> 00:06:13,320
+ you're going to come back with all kinds of weird gnome mugs
+
+106
+00:06:13,320 --> 00:06:15,080
+ and stuff like this.
+
+107
+00:06:15,080 --> 00:06:17,780
+ This is a small fraction of the collection
+
+108
+00:06:17,780 --> 00:06:19,680
+ we've acquired in our lab here.
+
+109
+00:06:19,680 --> 00:06:21,800
+ There's actually-- I walked over to the side,
+
+110
+00:06:21,800 --> 00:06:23,880
+ and I saw like eight boxes of test mugs.
+
+111
+00:06:23,880 --> 00:06:25,880
+ And there's the training mugs I didn't even see,
+
+112
+00:06:25,880 --> 00:06:29,080
+ which were over somewhere else.
+
+113
+00:06:29,080 --> 00:06:32,480
+ But it's interesting to just stop and think for a minute.
+
+114
+00:06:32,480 --> 00:06:36,520
+ Like, how do I write a goal?
+
+115
+00:06:36,520 --> 00:06:38,240
+ How do I even tell the manipulation system
+
+116
+00:06:38,240 --> 00:06:39,640
+ what I need to do?
+
+117
+00:06:39,640 --> 00:06:44,280
+ If I want to do something to mugs more generally,
+
+118
+00:06:44,280 --> 00:06:46,520
+ what is the representation that would support thinking
+
+119
+00:06:46,520 --> 00:06:47,920
+ about all of these things?
+
+120
+00:06:47,920 --> 00:06:49,540
+ I mean, clearly I can talk about them.
+
+121
+00:06:49,540 --> 00:06:51,680
+ I could say, put your finger through the handle,
+
+122
+00:06:51,680 --> 00:06:52,680
+ and that's going to work.
+
+123
+00:06:52,680 --> 00:06:55,800
+ I could tell you, and you'd do it fine.
+
+124
+00:06:55,800 --> 00:06:58,440
+ Or I could even say, just set them upright, line them up.
+
+125
+00:06:58,440 --> 00:07:00,320
+ Those are kind of reasonable tasks
+
+126
+00:07:00,320 --> 00:07:02,520
+ to ask a manipulation system.
+
+127
+00:07:02,520 --> 00:07:04,600
+ You don't get it out of this.
+
+128
+00:07:04,600 --> 00:07:05,960
+ You don't get it out of this.
+
+129
+00:07:05,960 --> 00:07:08,480
+ So we need something in the middle.
+
+130
+00:07:08,480 --> 00:07:12,680
+ The other canonical category has become shoes.
+
+131
+00:07:12,680 --> 00:07:18,400
+ There's a ridiculous number of shoes and diversity of shoes.
+
+132
+00:07:18,400 --> 00:07:21,640
+ That one was a surprise when we first grabbed that one.
+
+133
+00:07:21,640 --> 00:07:25,720
+ But there's also flip-flops, the types of things.
+
+134
+00:07:25,720 --> 00:07:27,360
+ And the other one we discovered is
+
+135
+00:07:27,360 --> 00:07:31,280
+ that for a while we were running these experiments where
+
+136
+00:07:31,280 --> 00:07:33,280
+ we basically said, anybody who comes in the lab,
+
+137
+00:07:33,280 --> 00:07:34,120
+ take off your shoe.
+
+138
+00:07:34,120 --> 00:07:36,480
+ We're going to put it on the rack and line it up,
+
+139
+00:07:36,480 --> 00:07:38,160
+ and we're going to do a good job of it.
+
+140
+00:07:38,160 --> 00:07:40,840
+ People have ridiculous shoes.
+
+141
+00:07:40,840 --> 00:07:43,400
+ We did really well, but we'd still
+
+142
+00:07:43,400 --> 00:07:47,040
+ get stumped by a shiny Italian shoe or something,
+
+143
+00:07:47,040 --> 00:07:49,720
+ which I didn't know if my robot should be touching
+
+144
+00:07:49,720 --> 00:07:50,800
+ in the first place.
+
+145
+00:07:50,800 --> 00:07:52,800
+ But are there like--
+
+146
+00:07:52,800 --> 00:07:55,760
+ the high heels can be impressively high.
+
+147
+00:07:55,760 --> 00:07:58,280
+ And we've seen them all, I think, at this point.
+
+148
+00:07:58,280 --> 00:08:00,760
+ But just think for a second.
+
+149
+00:08:00,760 --> 00:08:04,200
+ How do you write a manipulation specification, let alone
+
+150
+00:08:04,200 --> 00:08:09,800
+ the implementation, that would sort of ingest that level of--
+
+151
+00:08:09,800 --> 00:08:11,360
+ it's totally reasonable to say, I
+
+152
+00:08:11,360 --> 00:08:14,000
+ want them to be on the shoe rack in the store.
+
+153
+00:08:14,000 --> 00:08:16,160
+ They should all be pointing roughly like this.
+
+154
+00:08:16,160 --> 00:08:19,440
+ I could tell you that, but how do I tell my manipulation
+
+155
+00:08:19,440 --> 00:08:20,880
+ system that?
+
+156
+00:08:20,880 --> 00:08:24,800
+ And by the way, I always have this camera in my pocket.
+
+157
+00:08:24,800 --> 00:08:26,400
+ I got to do it all from this.
+
+158
+00:08:26,400 --> 00:08:29,040
+ So this is what I'm working with.
+
+159
+00:08:29,040 --> 00:08:35,120
+ This point cloud's in, maybe some untold amount of data
+
+160
+00:08:35,120 --> 00:08:38,760
+ behind the scenes, maybe some human annotations.
+
+161
+00:08:38,760 --> 00:08:40,680
+ That's to be determined.
+
+162
+00:08:40,680 --> 00:08:43,600
+ But I need to even specify the task.
+
+163
+00:08:43,600 --> 00:08:44,840
+ So that's the basic setup.
+
+164
+00:08:44,840 --> 00:08:50,800
+ So James was asking the other day.
+
+165
+00:08:50,800 --> 00:08:54,640
+ He said, pose feels like kind of almost too much to ask.
+
+166
+00:08:54,640 --> 00:08:57,080
+ For a lot of these tasks, I actually probably
+
+167
+00:08:57,080 --> 00:09:00,080
+ don't need to estimate the pose very accurately
+
+168
+00:09:00,080 --> 00:09:01,560
+ to accomplish the task.
+
+169
+00:09:01,560 --> 00:09:04,080
+ I mean, it's actually probably there's
+
+170
+00:09:04,080 --> 00:09:06,680
+ a representation out there that are easier
+
+171
+00:09:06,680 --> 00:09:10,320
+ than estimating the pose that would still get the job done.
+
+172
+00:09:10,320 --> 00:09:12,320
+ I don't have to have accuracy in this dimension
+
+173
+00:09:12,320 --> 00:09:16,640
+ to be able to set it down on the plane.
+
+174
+00:09:16,640 --> 00:09:20,560
+ So that's the basic setup.
+
+175
+00:09:20,560 --> 00:09:22,760
+ This is-- let's see, there's the udders right there.
+
+176
+00:09:22,760 --> 00:09:23,880
+ Look at that.
+
+177
+00:09:23,880 --> 00:09:28,560
+ Who gets cow udder mugs?
+
+178
+00:09:28,560 --> 00:09:30,520
+ But you'd like to be able to do something like--
+
+179
+00:09:30,520 --> 00:09:33,680
+ this is one of the canonical tasks now, I guess,
+
+180
+00:09:33,680 --> 00:09:36,400
+ is just take those mugs, put them on a rack.
+
+181
+00:09:36,400 --> 00:09:38,800
+ And why is that a good task?
+
+182
+00:09:38,800 --> 00:09:44,240
+ That's because it requires some understanding, if you will,
+
+183
+00:09:44,240 --> 00:09:45,680
+ of the mug.
+
+184
+00:09:45,680 --> 00:09:47,520
+ You have to understand where the handle is,
+
+185
+00:09:47,520 --> 00:09:49,320
+ and the handles are all over the place.
+
+186
+00:09:49,320 --> 00:09:54,240
+ This handle is so different than this one or whatever.
+
+187
+00:09:54,240 --> 00:09:58,520
+ But somehow, there's something about them that we understand,
+
+188
+00:09:58,520 --> 00:10:00,880
+ and you have to understand it fairly well to be able to
+
+189
+00:10:00,880 --> 00:10:01,440
+ thread the--
+
+190
+00:10:01,440 --> 00:10:03,960
+ I mean, not thread the needle, but stick the big peg
+
+191
+00:10:03,960 --> 00:10:07,560
+ through the bigger hole, much bigger hole.
+
+192
+00:10:07,560 --> 00:10:10,920
+ So that's an interesting balance of a task that requires
+
+193
+00:10:10,920 --> 00:10:13,120
+ some kinematic accuracy.
+
+194
+00:10:13,120 --> 00:10:16,920
+ It actually doesn't require much dynamic understanding,
+
+195
+00:10:16,920 --> 00:10:18,040
+ which is another key thing.
+
+196
+00:10:18,040 --> 00:10:19,720
+ We'll get to more dynamic stuff later.
+
+197
+00:10:19,720 --> 00:10:23,240
+ But it's a nice, I think, useful skill
+
+198
+00:10:23,240 --> 00:10:24,520
+ that you might want to program.
+
+199
+00:10:24,520 --> 00:10:30,920
+ OK, so there's a couple of different broad approaches
+
+200
+00:10:30,920 --> 00:10:31,600
+ with it.
+
+201
+00:10:31,600 --> 00:10:33,000
+ And rather than--
+
+202
+00:10:33,000 --> 00:10:36,620
+ I mean, last time, I felt like I kind of had to mention
+
+203
+00:10:36,620 --> 00:10:39,360
+ a bunch of things, but I don't really like doing that.
+
+204
+00:10:39,360 --> 00:10:43,840
+ So I'd rather go into one or two ideas a little bit more
+
+205
+00:10:43,840 --> 00:10:46,160
+ specifically, dig into some of the details.
+
+206
+00:10:46,160 --> 00:10:48,440
+ So I'm not going to mention every category level
+
+207
+00:10:48,440 --> 00:10:49,280
+ representation.
+
+208
+00:10:49,280 --> 00:10:50,960
+ Well, I'll cite a few extras that we
+
+209
+00:10:50,960 --> 00:10:52,160
+ won't talk about in detail.
+
+210
+00:10:52,160 --> 00:10:56,000
+ But let me go into a few that we thought a lot about
+
+211
+00:10:56,000 --> 00:10:59,480
+ that I think are representative.
+
+212
+00:10:59,480 --> 00:11:05,320
+ So it's actually possible to do a lot of this kind of thinking
+
+213
+00:11:05,320 --> 00:11:07,000
+ even in simulation.
+
+214
+00:11:07,000 --> 00:11:09,520
+ One of the nice tools about that is this-- you
+
+215
+00:11:09,520 --> 00:11:13,200
+ see this parametric--
+
+216
+00:11:13,200 --> 00:11:15,560
+ there's a bunch of basically spline parameters
+
+217
+00:11:15,560 --> 00:11:18,280
+ here that if you move them around continuously,
+
+218
+00:11:18,280 --> 00:11:20,680
+ you get a continuous set of mugs that
+
+219
+00:11:20,680 --> 00:11:25,080
+ represented everything we found in the cabinet at TRI.
+
+220
+00:11:25,080 --> 00:11:28,360
+ And you can, in simulation, generate a huge diversity.
+
+221
+00:11:28,360 --> 00:11:30,200
+ Never touch the same mug twice.
+
+222
+00:11:30,200 --> 00:11:32,120
+ There's an infinite number of mugs there.
+
+223
+00:11:32,120 --> 00:11:36,000
+ We also would texture map every mug differently.
+
+224
+00:11:36,000 --> 00:11:40,440
+ So you just take your favorite images off the web,
+
+225
+00:11:40,440 --> 00:11:42,600
+ slap them on there, throw them in your renderer,
+
+226
+00:11:42,600 --> 00:11:44,600
+ and you can generate a lot of data.
+
+227
+00:11:44,600 --> 00:11:49,080
+ So this is not an exploration that's restricted to reality.
+
+228
+00:11:49,080 --> 00:11:50,800
+ You can do it in simulation.
+
+229
+00:11:50,800 --> 00:11:53,240
+ In fact, we have this kind of nice pipeline now
+
+230
+00:11:53,240 --> 00:11:56,960
+ where you can take a new mug in, scan it super fast,
+
+231
+00:11:56,960 --> 00:11:59,760
+ take any image off the web or whatever,
+
+232
+00:11:59,760 --> 00:12:03,080
+ and very quickly generate a new simulation asset
+
+233
+00:12:03,080 --> 00:12:05,360
+ for mugs of some quality.
+
+234
+00:12:05,360 --> 00:12:12,840
+ It's interesting to just say the path
+
+235
+00:12:12,840 --> 00:12:18,240
+ from a mug on the table to a mug in simulation,
+
+236
+00:12:18,240 --> 00:12:21,400
+ it's still hard to go all the way to--
+
+237
+00:12:21,400 --> 00:12:23,720
+ so there's different things you might want to get right.
+
+238
+00:12:23,720 --> 00:12:25,880
+ You might want to get the physical properties right.
+
+239
+00:12:25,880 --> 00:12:28,480
+ You might want to get the rendering properties right.
+
+240
+00:12:28,480 --> 00:12:31,440
+ Getting a quick asset that you can manipulate
+
+241
+00:12:31,440 --> 00:12:32,960
+ is actually not that hard anymore.
+
+242
+00:12:32,960 --> 00:12:36,280
+ We have really nice 3D scanners, effectively.
+
+243
+00:12:36,280 --> 00:12:37,200
+ We can take pictures.
+
+244
+00:12:37,200 --> 00:12:39,240
+ We can do texture maps.
+
+245
+00:12:39,240 --> 00:12:42,320
+ But if you want to get the material properties--
+
+246
+00:12:42,320 --> 00:12:44,360
+ this is a super shiny mug for some reason,
+
+247
+00:12:44,360 --> 00:12:46,240
+ and this one's completely matte over here.
+
+248
+00:12:46,240 --> 00:12:49,480
+ So that's hard.
+
+249
+00:12:49,480 --> 00:12:51,040
+ Nerf is looking exciting.
+
+250
+00:12:51,040 --> 00:12:52,760
+ There are ideas out there that make
+
+251
+00:12:52,760 --> 00:12:54,960
+ it look like we're getting better at it,
+
+252
+00:12:54,960 --> 00:12:56,000
+ but that's still hard.
+
+253
+00:12:56,000 --> 00:12:57,320
+ And even the physical properties,
+
+254
+00:12:57,320 --> 00:13:00,240
+ like the frictional properties, the inertias,
+
+255
+00:13:00,240 --> 00:13:02,040
+ we have some capabilities for that.
+
+256
+00:13:02,040 --> 00:13:04,720
+ But we don't really have mature pipelines
+
+257
+00:13:04,720 --> 00:13:09,000
+ to go from this pile of junk into sim yet.
+
+258
+00:13:09,000 --> 00:13:10,800
+ It's a good standing challenge.
+
+259
+00:13:11,800 --> 00:13:12,800
+ OK.
+
+260
+00:13:12,800 --> 00:13:17,560
+ So this is an example of the task of take the shoes,
+
+261
+00:13:17,560 --> 00:13:20,320
+ any shoe, and just put it on the rack.
+
+262
+00:13:20,320 --> 00:13:23,080
+ So that's a different task that we looked at.
+
+263
+00:13:23,080 --> 00:13:29,360
+ Shen, in particular, was in the group at the time,
+
+264
+00:13:29,360 --> 00:13:32,840
+ and she had all kinds of small, cute shoes
+
+265
+00:13:32,840 --> 00:13:35,400
+ that were hard to grab.
+
+266
+00:13:35,400 --> 00:13:37,240
+ There's some high heels that came in there.
+
+267
+00:13:37,240 --> 00:13:40,280
+ That was from-- yeah.
+
+268
+00:13:40,280 --> 00:13:40,840
+ OK.
+
+269
+00:13:40,840 --> 00:13:44,240
+ So here's the first idea that we'll talk about.
+
+270
+00:13:44,240 --> 00:13:45,720
+ I listed two.
+
+271
+00:13:45,720 --> 00:13:48,000
+ One of them is going to be based on key points.
+
+272
+00:13:48,000 --> 00:13:50,200
+ And to some extent, that was an example
+
+273
+00:13:50,200 --> 00:13:53,120
+ that was suggested last time, I think.
+
+274
+00:13:53,120 --> 00:13:55,560
+ The way Charles proposed, maybe we think about even pose
+
+275
+00:13:55,560 --> 00:13:59,000
+ estimation might be through finding key points.
+
+276
+00:13:59,000 --> 00:14:02,280
+ But I want to talk through why that could be a good idea
+
+277
+00:14:02,280 --> 00:14:05,760
+ and solve something on this spectrum.
+
+278
+00:14:05,760 --> 00:14:07,480
+ It's not going to be only key points.
+
+279
+00:14:08,120 --> 00:14:10,440
+ If you just knew where a few key points were on the object,
+
+280
+00:14:10,440 --> 00:14:12,760
+ you might not be able to grab it.
+
+281
+00:14:12,760 --> 00:14:16,520
+ So I'm going to say key points plus plus.
+
+282
+00:14:16,520 --> 00:14:19,920
+ So what do I mean by key points?
+
+283
+00:14:19,920 --> 00:14:22,760
+ Some of you know this well, but there
+
+284
+00:14:22,760 --> 00:14:25,440
+ was a thing that happened in the computer vision world.
+
+285
+00:14:25,440 --> 00:14:29,760
+ It was motivated initially by human pose estimation.
+
+286
+00:14:29,760 --> 00:14:32,600
+ So if you've seen the videos of people dancing,
+
+287
+00:14:32,600 --> 00:14:34,320
+ and they're being tracked amazingly well
+
+288
+00:14:34,320 --> 00:14:40,360
+ by a neural network, that is a thing that has a capability that
+
+289
+00:14:40,360 --> 00:14:41,600
+ has gotten better and better.
+
+290
+00:14:41,600 --> 00:14:46,360
+ Open pose was the first one in 2014, I believe, around then,
+
+291
+00:14:46,360 --> 00:14:48,800
+ like pretty early in the revolution.
+
+292
+00:14:48,800 --> 00:14:51,440
+ And they've just gotten increasingly impressive,
+
+293
+00:14:51,440 --> 00:14:54,280
+ where you can see gymnasts that are basically
+
+294
+00:14:54,280 --> 00:14:57,720
+ folding themselves in half, but it's tracking them fairly well.
+
+295
+00:14:57,720 --> 00:15:02,320
+ And they can be made to work for household object types,
+
+296
+00:15:02,320 --> 00:15:04,720
+ different categories, not just humans.
+
+297
+00:15:04,720 --> 00:15:06,240
+ But the original push-- and actually,
+
+298
+00:15:06,240 --> 00:15:10,960
+ a lot of the architectures and even notation
+
+299
+00:15:10,960 --> 00:15:15,520
+ in the open source codes all have some like--
+
+300
+00:15:15,520 --> 00:15:17,600
+ you could tell that the code base started working only
+
+301
+00:15:17,600 --> 00:15:18,100
+ for humans.
+
+302
+00:15:18,100 --> 00:15:23,400
+ But the basic notion is that you'd like to have some--
+
+303
+00:15:23,400 --> 00:15:27,000
+ I mean, you can just attach them directly to the object,
+
+304
+00:15:27,000 --> 00:15:29,880
+ but some points that are identified.
+
+305
+00:15:29,880 --> 00:15:32,800
+ They need not to be--
+
+306
+00:15:32,800 --> 00:15:34,460
+ if you have enough of them, they probably
+
+307
+00:15:34,460 --> 00:15:38,600
+ are sufficient to estimate the pose for any one instance.
+
+308
+00:15:38,600 --> 00:15:41,240
+ But they are different than a pose estimation,
+
+309
+00:15:41,240 --> 00:15:43,640
+ because if I want to say maybe there's
+
+310
+00:15:43,640 --> 00:15:49,200
+ a key point for the back left leg of the table,
+
+311
+00:15:49,200 --> 00:15:51,160
+ or the chair, sorry, and I've got
+
+312
+00:15:51,160 --> 00:15:54,800
+ a bunch of different chairs, and I can sort of put
+
+313
+00:15:54,800 --> 00:15:58,120
+ a consistent key point across the category.
+
+314
+00:15:58,120 --> 00:16:02,600
+ So while the distance, possibly even the relative positions
+
+315
+00:16:02,600 --> 00:16:05,320
+ of the green key point versus the red key point
+
+316
+00:16:05,320 --> 00:16:07,440
+ or something like this, this is not
+
+317
+00:16:07,440 --> 00:16:11,880
+ a rigid transformation between the different objects.
+
+318
+00:16:11,880 --> 00:16:13,680
+ But it can be a consistent representation
+
+319
+00:16:13,680 --> 00:16:16,000
+ of a diversity of objects.
+
+320
+00:16:16,000 --> 00:16:18,680
+ For the mugs, we chose to put one
+
+321
+00:16:18,680 --> 00:16:20,760
+ on the bottom of the mug, which is interesting,
+
+322
+00:16:20,760 --> 00:16:23,560
+ because you don't even have to see necessarily the key point
+
+323
+00:16:23,560 --> 00:16:25,000
+ where you want to put it.
+
+324
+00:16:25,000 --> 00:16:27,280
+ But we wanted to put something in the bottom
+
+325
+00:16:27,280 --> 00:16:29,560
+ so that we could set it down, something in the handle
+
+326
+00:16:29,560 --> 00:16:31,800
+ so we could grab it, something in the top,
+
+327
+00:16:31,800 --> 00:16:33,480
+ not that we ever poured anything into it,
+
+328
+00:16:33,480 --> 00:16:35,560
+ but we at least want to know which way is up.
+
+329
+00:16:35,560 --> 00:16:40,160
+ For the shoes, we picked the toe, the heel, the top.
+
+330
+00:16:40,160 --> 00:16:44,400
+ This one was very different than these tops and the tongue.
+
+331
+00:16:44,400 --> 00:16:46,200
+ But just a few key points actually
+
+332
+00:16:46,200 --> 00:16:48,240
+ tell you a lot about the object.
+
+333
+00:16:48,240 --> 00:16:51,120
+ And they can morph across the category,
+
+334
+00:16:51,120 --> 00:16:55,720
+ but still be a consistent representation.
+
+335
+00:16:55,720 --> 00:17:00,160
+ So that's why it lives in this nice category-level space,
+
+336
+00:17:00,160 --> 00:17:02,680
+ is that that representation is more flexible.
+
+337
+00:17:02,680 --> 00:17:13,880
+ What's interesting, and still I think
+
+338
+00:17:13,880 --> 00:17:16,720
+ there's a lot of things you can do with this representation.
+
+339
+00:17:16,720 --> 00:17:19,680
+ So I said to some extent, the representation we need
+
+340
+00:17:19,680 --> 00:17:25,640
+ is we need it to be sufficient to specify tasks.
+
+341
+00:17:25,640 --> 00:17:33,960
+ So certainly a pose in a CAD model
+
+342
+00:17:33,960 --> 00:17:36,240
+ is sufficient to specify a task.
+
+343
+00:17:36,240 --> 00:17:39,320
+ I said this is limiting in terms of specifying a task.
+
+344
+00:17:39,320 --> 00:17:41,840
+ But it turns out if you just label a handful of points
+
+345
+00:17:41,840 --> 00:17:44,440
+ and allow them to shift along the category,
+
+346
+00:17:44,440 --> 00:17:46,200
+ there's still a lot of pretty useful things
+
+347
+00:17:46,200 --> 00:17:47,780
+ you can do, like the ones I showed you.
+
+348
+00:17:47,780 --> 00:17:53,760
+ Put the shoe on the rack, put the mug on the rack.
+
+349
+00:17:53,760 --> 00:18:00,040
+ In particular, if you assume that the objects are nearly
+
+350
+00:18:00,040 --> 00:18:02,040
+ rigid, for instance, and I assume
+
+351
+00:18:02,040 --> 00:18:05,480
+ that when I grab the objects, the key points, wherever
+
+352
+00:18:05,480 --> 00:18:08,200
+ they may be, they are in a very different relative location
+
+353
+00:18:08,200 --> 00:18:09,960
+ on that mug versus this mug.
+
+354
+00:18:09,960 --> 00:18:12,480
+ But when I start moving them, they
+
+355
+00:18:12,480 --> 00:18:15,000
+ go through only rigid transformations.
+
+356
+00:18:15,000 --> 00:18:17,400
+ Then I can write pretty--
+
+357
+00:18:17,400 --> 00:18:20,280
+ I can just turn it into an inverse kinematics problem.
+
+358
+00:18:20,280 --> 00:18:22,240
+ I can do all of my original thinking
+
+359
+00:18:22,240 --> 00:18:24,440
+ that we've already done in the kinematics parts
+
+360
+00:18:24,440 --> 00:18:29,760
+ of the lectures to talk about relative transformations
+
+361
+00:18:29,760 --> 00:18:30,880
+ of mugs.
+
+362
+00:18:30,880 --> 00:18:32,880
+ Maybe I can put a constraint saying
+
+363
+00:18:32,880 --> 00:18:37,000
+ that the point on the bottom of the mug must be on the table.
+
+364
+00:18:37,000 --> 00:18:39,000
+ The handle must be to the right.
+
+365
+00:18:39,000 --> 00:18:40,840
+ These are things that you can write directly
+
+366
+00:18:40,840 --> 00:18:43,240
+ as kinematic constraints.
+
+367
+00:18:43,240 --> 00:18:45,800
+ Throw it into your optimization problem
+
+368
+00:18:45,800 --> 00:18:49,200
+ and solve for across a category of objects.
+
+369
+00:18:49,200 --> 00:19:04,920
+ So like label fusion, which we had talked about using ICP,
+
+370
+00:19:04,920 --> 00:19:06,960
+ there are different ways to get key points.
+
+371
+00:19:06,960 --> 00:19:08,420
+ We'll talk a little bit in a minute
+
+372
+00:19:08,420 --> 00:19:10,320
+ about self-supervised key points,
+
+373
+00:19:10,320 --> 00:19:13,480
+ where you just try to have the perception system discover
+
+374
+00:19:13,480 --> 00:19:16,440
+ key points, meaningful key points by itself.
+
+375
+00:19:16,440 --> 00:19:18,560
+ But I actually think there's a lot of value
+
+376
+00:19:18,560 --> 00:19:22,680
+ in human-labeled key points.
+
+377
+00:19:22,680 --> 00:19:25,000
+ Because at some point, there's some information
+
+378
+00:19:25,000 --> 00:19:27,560
+ that the geometry doesn't give you.
+
+379
+00:19:27,560 --> 00:19:31,200
+ There's some semantic information about the object,
+
+380
+00:19:31,200 --> 00:19:34,520
+ the fact that this is a handle.
+
+381
+00:19:34,520 --> 00:19:36,280
+ People know the word affordance.
+
+382
+00:19:37,280 --> 00:19:37,780
+ Yeah.
+
+383
+00:19:37,780 --> 00:19:46,200
+ From psychology, I guess, Gibsonian, right?
+
+384
+00:19:46,200 --> 00:19:51,400
+ I think it's this notion of the handle is something
+
+385
+00:19:51,400 --> 00:19:55,000
+ that I can affect change with or something.
+
+386
+00:19:55,000 --> 00:19:58,600
+ The definition of the properties of the object that I care about
+
+387
+00:19:58,600 --> 00:20:00,400
+ are the things that afford me the ability
+
+388
+00:20:00,400 --> 00:20:03,840
+ to change something about the object or the world.
+
+389
+00:20:03,840 --> 00:20:07,000
+ And you can't get that, I think, easily out
+
+390
+00:20:07,000 --> 00:20:08,800
+ of a self-supervised pipeline unless you're
+
+391
+00:20:08,800 --> 00:20:13,200
+ trying to go all the way to an end-to-end task, maybe
+
+392
+00:20:13,200 --> 00:20:14,960
+ a deep reinforcement learning.
+
+393
+00:20:14,960 --> 00:20:18,080
+ But just looking at the geometry, it's hard.
+
+394
+00:20:18,080 --> 00:20:22,360
+ So we started off by saying, let's hand design
+
+395
+00:20:22,360 --> 00:20:26,280
+ the notion of the toe key point, the heel key point, the tongue,
+
+396
+00:20:26,280 --> 00:20:30,800
+ the back of the opening, and use our same kind of tricks
+
+397
+00:20:30,800 --> 00:20:35,000
+ to make a GUI that would allow you to quickly label
+
+398
+00:20:35,000 --> 00:20:38,680
+ lots of key points and generate a big data set.
+
+399
+00:20:38,680 --> 00:20:45,360
+ So it was important to us to have no requirement on CAD
+
+400
+00:20:45,360 --> 00:20:46,420
+ models.
+
+401
+00:20:46,420 --> 00:20:48,800
+ So that is a shoe that was just scanned
+
+402
+00:20:48,800 --> 00:20:52,160
+ by the robot doing its quick thing with a depth sensor
+
+403
+00:20:52,160 --> 00:20:54,240
+ and doing one of these dense reconstructions
+
+404
+00:20:54,240 --> 00:20:55,400
+ just on the point cloud.
+
+405
+00:20:55,400 --> 00:20:58,760
+ So that's a mesh that came out right out of a point cloud that
+
+406
+00:20:58,760 --> 00:21:02,160
+ was fused together by multiple views on the robot.
+
+407
+00:21:02,160 --> 00:21:05,880
+ And that was enough to throw it in the GUI, click a few times,
+
+408
+00:21:05,880 --> 00:21:08,000
+ and you can label lots of images.
+
+409
+00:21:08,000 --> 00:21:16,880
+ So I want to dig in a little bit to the details,
+
+410
+00:21:16,880 --> 00:21:18,800
+ and I'll go through a couple of examples here.
+
+411
+00:21:18,800 --> 00:21:28,600
+ So it's interesting to think about how do you actually
+
+412
+00:21:28,600 --> 00:21:32,400
+ set up this key point detection algorithm,
+
+413
+00:21:32,400 --> 00:21:34,440
+ and how do you train a key point detector?
+
+414
+00:21:34,440 --> 00:21:48,920
+ So the first question is, how do we formulate the problem here?
+
+415
+00:21:48,920 --> 00:21:51,600
+ Let me impose that we're going to start
+
+416
+00:21:51,600 --> 00:21:55,920
+ from an image coming in.
+
+417
+00:21:55,920 --> 00:21:58,840
+ And let's start off with the simpler maybe form
+
+418
+00:21:58,840 --> 00:22:03,080
+ where we just have an RGB image coming in, which
+
+419
+00:22:03,080 --> 00:22:09,680
+ has got-- it's just my width times height times RGB coming
+
+420
+00:22:09,680 --> 00:22:10,280
+ in.
+
+421
+00:22:10,280 --> 00:22:15,840
+ And I'm going to put it into a big deep network.
+
+422
+00:22:15,840 --> 00:22:18,280
+ I won't talk in detail about the architectures,
+
+423
+00:22:18,280 --> 00:22:20,240
+ but there's a bunch of canonical architectures
+
+424
+00:22:20,240 --> 00:22:24,560
+ for key point detection I can mention.
+
+425
+00:22:24,560 --> 00:22:28,120
+ And again, the first question is, what representation
+
+426
+00:22:28,120 --> 00:22:28,920
+ should we put out?
+
+427
+00:22:28,920 --> 00:22:34,640
+ What do you think?
+
+428
+00:22:34,640 --> 00:22:37,880
+ What's the natural representation to put out?
+
+429
+00:22:37,880 --> 00:22:43,120
+ Yeah, totally, right?
+
+430
+00:22:43,120 --> 00:22:48,080
+ I mean, you should just put potentially--
+
+431
+00:22:48,080 --> 00:22:50,040
+ let's even, like you said, it's easier
+
+432
+00:22:50,040 --> 00:22:51,840
+ to think first about just 2D key points.
+
+433
+00:22:52,840 --> 00:23:00,040
+ You can potentially project them back into 3D later.
+
+434
+00:23:00,040 --> 00:23:05,480
+ But yeah, so maybe if I have a handful of them
+
+435
+00:23:05,480 --> 00:23:11,440
+ that I want to spit out, one for each of the key points,
+
+436
+00:23:11,440 --> 00:23:15,160
+ you'd think I could just put the xy position out.
+
+437
+00:23:15,160 --> 00:23:16,840
+ And OpenPose, I believe, did this.
+
+438
+00:23:16,840 --> 00:23:21,520
+ Certainly, the early key point networks definitely did this.
+
+439
+00:23:21,520 --> 00:23:26,760
+ But people don't do that anymore.
+
+440
+00:23:26,760 --> 00:23:32,400
+ And for me, it's somewhere between a--
+
+441
+00:23:32,400 --> 00:23:33,760
+ I think we can generalize it.
+
+442
+00:23:33,760 --> 00:23:37,800
+ We can think about uncertainty distributions and the like.
+
+443
+00:23:37,800 --> 00:23:40,200
+ There's also something about what neural networks
+
+444
+00:23:40,200 --> 00:23:44,680
+ like to do that's hiding in there, which is frustrating.
+
+445
+00:23:44,680 --> 00:23:49,000
+ That I think we don't, as a field,
+
+446
+00:23:49,000 --> 00:23:52,760
+ completely understand what works and what doesn't work.
+
+447
+00:23:52,760 --> 00:23:57,120
+ And people have found that other representations can work better
+
+448
+00:23:57,120 --> 00:23:58,680
+ for a key point estimation.
+
+449
+00:23:58,680 --> 00:24:10,800
+ People know what the more common one these days is?
+
+450
+00:24:10,800 --> 00:24:11,840
+ Someone knows.
+
+451
+00:24:11,840 --> 00:24:26,320
+ [INAUDIBLE]
+
+452
+00:24:26,320 --> 00:24:26,820
+ Yeah.
+
+453
+00:24:26,820 --> 00:24:29,240
+ [INAUDIBLE]
+
+454
+00:24:29,240 --> 00:24:30,880
+ Yeah.
+
+455
+00:24:30,880 --> 00:24:33,840
+ So you could say, maybe I would just
+
+456
+00:24:33,840 --> 00:24:37,840
+ draw in the 2D image the locations of the points.
+
+457
+00:24:37,840 --> 00:24:39,480
+ That is close to what it is.
+
+458
+00:24:39,480 --> 00:24:48,280
+ But what they end up doing is for each key point i,
+
+459
+00:24:48,280 --> 00:24:50,040
+ we actually put out a 2D heat map.
+
+460
+00:24:50,040 --> 00:25:01,400
+ So the desired image, if you're making training data
+
+461
+00:25:01,400 --> 00:25:04,000
+ from this or from something else,
+
+462
+00:25:04,000 --> 00:25:08,120
+ would be actually an image that basically
+
+463
+00:25:08,120 --> 00:25:11,280
+ is drawn as a probability distribution, rendered
+
+464
+00:25:11,280 --> 00:25:15,800
+ as an image, if you will, where the pixel value i is the,
+
+465
+00:25:15,800 --> 00:25:19,000
+ let's say, the probability that the point is at this--
+
+466
+00:25:19,000 --> 00:25:29,880
+ that key point at x, y.
+
+467
+00:25:33,840 --> 00:25:38,000
+ So you see these little Gaussian heat maps
+
+468
+00:25:38,000 --> 00:25:45,840
+ that people will render as the output of the neural network,
+
+469
+00:25:45,840 --> 00:25:48,440
+ an entire image for each distinct key point.
+
+470
+00:25:48,440 --> 00:25:56,120
+ It is meant-- I think it is satisfying to think of it
+
+471
+00:25:56,120 --> 00:25:58,920
+ as trying to represent the uncertainty of your key point
+
+472
+00:25:58,920 --> 00:25:59,680
+ estimator.
+
+473
+00:25:59,680 --> 00:26:01,320
+ That is a very satisfying explanation
+
+474
+00:26:01,320 --> 00:26:04,440
+ for why this would work.
+
+475
+00:26:04,440 --> 00:26:06,160
+ But it still feels a little--
+
+476
+00:26:06,160 --> 00:26:07,800
+ like there's no real notion of people
+
+477
+00:26:07,800 --> 00:26:09,640
+ taking that to fruition.
+
+478
+00:26:09,640 --> 00:26:10,480
+ It's kind of like--
+
+479
+00:26:10,480 --> 00:26:14,200
+ I think the recipe right now is try a few covariances
+
+480
+00:26:14,200 --> 00:26:15,720
+ until you find one that works well.
+
+481
+00:26:15,720 --> 00:26:19,120
+ It's kind of like the official recipe I hear
+
+482
+00:26:19,120 --> 00:26:21,160
+ from people who do it a lot.
+
+483
+00:26:21,160 --> 00:26:24,800
+ And I think people don't tend to use--
+
+484
+00:26:24,800 --> 00:26:28,040
+ they tend to say that the desired image is
+
+485
+00:26:28,040 --> 00:26:30,960
+ this entire probability map.
+
+486
+00:26:30,960 --> 00:26:34,320
+ They don't tend to use maximum likelihood or other sort
+
+487
+00:26:34,320 --> 00:26:39,160
+ of losses that might account for more interesting uncertainty
+
+488
+00:26:39,160 --> 00:26:39,840
+ distributions.
+
+489
+00:26:39,840 --> 00:26:44,160
+ It's really almost-- it feels to me almost a trick to just--
+
+490
+00:26:44,160 --> 00:26:46,080
+ it's a neural network's like the output image.
+
+491
+00:26:46,080 --> 00:26:47,520
+ Image is in, the image is out.
+
+492
+00:26:47,520 --> 00:26:49,760
+ So let's write it like that.
+
+493
+00:26:49,760 --> 00:26:53,720
+ And you can make these smooth loss functions
+
+494
+00:26:53,720 --> 00:26:59,080
+ by, depending on how you infer the true key point
+
+495
+00:26:59,080 --> 00:27:02,440
+ location from the rendered image.
+
+496
+00:27:02,440 --> 00:27:05,320
+ If you take the expected value of this distribution,
+
+497
+00:27:05,320 --> 00:27:07,160
+ then that's a smooth function, which
+
+498
+00:27:07,160 --> 00:27:10,040
+ people do in the integral-posed networks.
+
+499
+00:27:10,040 --> 00:27:19,400
+ So for every one of these, we take a 2D heat map coming out.
+
+500
+00:27:19,400 --> 00:27:19,900
+ Yeah?
+
+501
+00:27:19,900 --> 00:27:20,400
+ [INAUDIBLE]
+
+502
+00:27:28,680 --> 00:27:30,840
+ So the question is, is this for a single category
+
+503
+00:27:30,840 --> 00:27:32,960
+ or for many categories?
+
+504
+00:27:32,960 --> 00:27:37,320
+ So I think the sweet spot seems to be for a single category.
+
+505
+00:27:37,320 --> 00:27:39,480
+ We're going to learn one set of representations.
+
+506
+00:27:39,480 --> 00:27:41,040
+ If you wanted to manipulate multiple categories
+
+507
+00:27:41,040 --> 00:27:42,880
+ simultaneously, I would think of it
+
+508
+00:27:42,880 --> 00:27:44,280
+ as a separate set of networks.
+
+509
+00:27:44,280 --> 00:27:46,880
+ Yeah?
+
+510
+00:27:46,880 --> 00:27:49,320
+ And how you define category is ambiguous.
+
+511
+00:27:49,320 --> 00:27:50,440
+ I gave you two examples.
+
+512
+00:27:50,440 --> 00:27:53,060
+ But is your system going to perform better
+
+513
+00:27:53,060 --> 00:27:54,960
+ if I called that a boot and distinguish it
+
+514
+00:27:54,960 --> 00:27:57,640
+ from the flip-flop and the other ones?
+
+515
+00:27:57,640 --> 00:27:58,960
+ For some tasks, yes.
+
+516
+00:27:58,960 --> 00:28:00,400
+ So I think the notion of a category
+
+517
+00:28:00,400 --> 00:28:02,440
+ is very vague at this point.
+
+518
+00:28:02,440 --> 00:28:05,560
+ But I think it depends on your task.
+
+519
+00:28:05,560 --> 00:28:13,120
+ So a reasonable loss function here
+
+520
+00:28:13,120 --> 00:28:17,680
+ would be like a heat map regression loss people use.
+
+521
+00:28:17,680 --> 00:28:25,840
+ What do I mean by that?
+
+522
+00:28:25,840 --> 00:28:29,960
+ I mean the output of my network is an entire image.
+
+523
+00:28:29,960 --> 00:28:34,640
+ And I will use the L2 distance between that image
+
+524
+00:28:34,640 --> 00:28:38,040
+ and the desired image, which is a hallucinated heat
+
+525
+00:28:38,040 --> 00:28:39,400
+ map with a small Gaussian.
+
+526
+00:28:39,400 --> 00:28:47,840
+ It's basically neural network out--
+
+527
+00:28:47,840 --> 00:28:54,440
+ let me call it neural network of the image
+
+528
+00:28:54,440 --> 00:29:07,000
+ minus hallucinated heat map with a Gaussian
+
+529
+00:29:07,000 --> 00:29:11,480
+ at the labeled key point.
+
+530
+00:29:11,480 --> 00:29:21,720
+ And that seems to work fairly well.
+
+531
+00:29:21,720 --> 00:29:24,400
+ I mean, people have different ways exactly to train it.
+
+532
+00:29:24,400 --> 00:29:32,120
+ So you said, do I mean taking a Gaussian blurring kernel?
+
+533
+00:29:32,120 --> 00:29:38,280
+ And if I made a 0, 1 image, and then I did a Gaussian kernel,
+
+534
+00:29:38,280 --> 00:29:40,360
+ I would get effectively a rendered image
+
+535
+00:29:40,360 --> 00:29:42,320
+ that looked like if I printed a Gaussian.
+
+536
+00:29:42,320 --> 00:29:49,400
+ So I think yes to both of them.
+
+537
+00:29:50,080 --> 00:29:50,560
+ Yeah.
+
+538
+00:29:50,560 --> 00:30:00,160
+ Yeah.
+
+539
+00:30:00,160 --> 00:30:02,680
+ So again, there are modifiers to this
+
+540
+00:30:02,680 --> 00:30:04,920
+ that I think can make a big difference in practice.
+
+541
+00:30:04,920 --> 00:30:06,560
+ The ones we used in our work were
+
+542
+00:30:06,560 --> 00:30:10,000
+ from the integral pose machine line, which
+
+543
+00:30:10,000 --> 00:30:11,600
+ did have one other term there.
+
+544
+00:30:11,600 --> 00:30:15,280
+ But conceptually, this is, I think, the workhorse.
+
+545
+00:30:16,040 --> 00:30:16,520
+ Yeah.
+
+546
+00:30:16,520 --> 00:30:24,000
+ OK.
+
+547
+00:30:24,000 --> 00:30:27,440
+ So a couple of nice points to make.
+
+548
+00:30:27,440 --> 00:30:31,360
+ So depending on how you generate the training data,
+
+549
+00:30:31,360 --> 00:30:34,360
+ whether it's synthetic training data or human labels
+
+550
+00:30:34,360 --> 00:30:36,240
+ through a GUI like this--
+
+551
+00:30:36,240 --> 00:30:38,400
+ so I made some of these points before.
+
+552
+00:30:38,400 --> 00:30:40,600
+ But the fact that it is a fundamentally different
+
+553
+00:30:40,600 --> 00:30:44,160
+ representation than pose, it has interesting properties
+
+554
+00:30:44,160 --> 00:30:49,120
+ like I can put a key point that I'm predicting right
+
+555
+00:30:49,120 --> 00:30:51,760
+ in the smack in the middle of the handle of the mug.
+
+556
+00:30:51,760 --> 00:30:53,680
+ It doesn't have to actually be geometrically
+
+557
+00:30:53,680 --> 00:30:55,480
+ connected to the mug.
+
+558
+00:30:55,480 --> 00:30:57,960
+ It's somehow an affordance of the mug
+
+559
+00:30:57,960 --> 00:31:03,480
+ that I have semantically labeled by a human annotation.
+
+560
+00:31:03,480 --> 00:31:05,720
+ But it need not be actually part of the mug.
+
+561
+00:31:05,720 --> 00:31:10,080
+ It could be the top of the mug in the free space here.
+
+562
+00:31:10,080 --> 00:31:13,640
+ You can have them be very sparse.
+
+563
+00:31:13,640 --> 00:31:15,200
+ You could have them be more dense.
+
+564
+00:31:15,200 --> 00:31:15,480
+ Right?
+
+565
+00:31:15,480 --> 00:31:17,040
+ And they're good for different things
+
+566
+00:31:17,040 --> 00:31:21,440
+ depending on how sparse or dense they are.
+
+567
+00:31:21,440 --> 00:31:23,400
+ But there's a lot of subtleties, I think,
+
+568
+00:31:23,400 --> 00:31:25,440
+ about how this works through.
+
+569
+00:31:25,440 --> 00:31:27,200
+ And I thought the place where I've
+
+570
+00:31:27,200 --> 00:31:30,880
+ seen the subtleties pop up in sort of the simplest
+
+571
+00:31:30,880 --> 00:31:34,000
+ to reason about fashion, we did this sort of thought
+
+572
+00:31:34,000 --> 00:31:34,600
+ experiment.
+
+573
+00:31:34,600 --> 00:31:36,200
+ Greg was doing this thought experiment
+
+574
+00:31:36,200 --> 00:31:38,600
+ with Maggie Wang of just what would it
+
+575
+00:31:38,600 --> 00:31:44,000
+ look like to use key points as a way to reason about boxes.
+
+576
+00:31:44,000 --> 00:31:50,040
+ I think he had a bunch of boxes in his apartment during COVID
+
+577
+00:31:50,040 --> 00:31:51,760
+ and was inspired to--
+
+578
+00:31:51,760 --> 00:31:54,200
+ he was pointing his depth camera at the piles of boxes
+
+579
+00:31:54,200 --> 00:31:58,120
+ and asking, could I estimate shapes and pose
+
+580
+00:31:58,120 --> 00:32:03,600
+ and everything in boxes given a key point type network?
+
+581
+00:32:03,600 --> 00:32:06,920
+ So let's just work through that as an example.
+
+582
+00:32:06,920 --> 00:32:18,960
+ The boxes-- the key points that he identified here on the board
+
+583
+00:32:18,960 --> 00:32:20,000
+ are in the picture.
+
+584
+00:32:20,000 --> 00:32:23,760
+ He put some yellow boxes at each of the corners.
+
+585
+00:32:23,760 --> 00:32:26,160
+ Maybe you want to know where the label is or something
+
+586
+00:32:26,160 --> 00:32:27,040
+ like that.
+
+587
+00:32:27,040 --> 00:32:28,580
+ Seems like a totally reasonable thing
+
+588
+00:32:28,580 --> 00:32:32,400
+ to output from the network.
+
+589
+00:32:32,400 --> 00:32:35,640
+ But it starts to get into some subtleties.
+
+590
+00:32:35,640 --> 00:32:45,120
+ So first question is, how many key points do we want per box?
+
+591
+00:32:45,120 --> 00:32:46,920
+ An important question.
+
+592
+00:32:46,920 --> 00:32:49,400
+ There's only a couple of sort of--
+
+593
+00:32:49,400 --> 00:32:49,920
+ well, sorry.
+
+594
+00:32:49,920 --> 00:32:52,000
+ It gets subtle if you start thinking about it.
+
+595
+00:32:52,000 --> 00:32:55,760
+ So let me ask you, how many key points do we want per box?
+
+596
+00:32:55,760 --> 00:32:56,600
+ You say three.
+
+597
+00:32:56,600 --> 00:32:57,100
+ Yeah?
+
+598
+00:32:57,100 --> 00:33:01,040
+ Yeah?
+
+599
+00:33:01,040 --> 00:33:02,800
+ [INAUDIBLE]
+
+600
+00:33:02,800 --> 00:33:04,000
+ OK.
+
+601
+00:33:04,000 --> 00:33:09,720
+ So let's say I just want to move them to the next--
+
+602
+00:33:09,720 --> 00:33:11,260
+ I'm going to pile the boxes over here
+
+603
+00:33:11,260 --> 00:33:12,560
+ to the piles of boxes over here.
+
+604
+00:33:12,560 --> 00:33:13,880
+ Maybe I want to do a--
+
+605
+00:33:13,880 --> 00:33:15,460
+ pack a trailer or something like that.
+
+606
+00:33:15,460 --> 00:33:17,000
+ Something a lot of people want to do.
+
+607
+00:33:17,000 --> 00:33:23,200
+ What do you think?
+
+608
+00:33:23,200 --> 00:33:24,800
+ Other answers besides three.
+
+609
+00:33:24,800 --> 00:33:27,160
+ So let me ask you why you say three first.
+
+610
+00:33:28,000 --> 00:33:28,500
+ I can--
+
+611
+00:33:28,500 --> 00:33:29,000
+ [INAUDIBLE]
+
+612
+00:33:29,000 --> 00:33:32,760
+ Right.
+
+613
+00:33:32,760 --> 00:33:38,200
+ So from three, we can get the height, the depth.
+
+614
+00:33:38,200 --> 00:33:40,600
+ Maybe we need four to get the width also.
+
+615
+00:33:40,600 --> 00:33:46,520
+ Yeah.
+
+616
+00:33:46,520 --> 00:33:47,320
+ Maybe four.
+
+617
+00:33:47,320 --> 00:33:52,040
+ So if I were to just get those four.
+
+618
+00:33:52,040 --> 00:33:54,760
+ But how do I know that they're those four?
+
+619
+00:33:54,760 --> 00:33:57,360
+ And what if I'm looking at it straight on from the side
+
+620
+00:33:57,360 --> 00:33:58,320
+ or something like that?
+
+621
+00:33:58,320 --> 00:33:58,820
+ Yeah?
+
+622
+00:33:58,820 --> 00:33:59,320
+ [INAUDIBLE]
+
+623
+00:33:59,320 --> 00:34:08,380
+ OK.
+
+624
+00:34:08,380 --> 00:34:09,120
+ Yeah.
+
+625
+00:34:09,120 --> 00:34:11,280
+ So you could try to predict all eight.
+
+626
+00:34:11,280 --> 00:34:14,520
+ And maybe that would give you some robustness even.
+
+627
+00:34:14,520 --> 00:34:16,480
+ If it's already just--
+
+628
+00:34:16,480 --> 00:34:19,320
+ think of it as a more robust version of the four key point
+
+629
+00:34:19,320 --> 00:34:20,720
+ thing.
+
+630
+00:34:20,720 --> 00:34:23,640
+ And yeah, for consistent tracking.
+
+631
+00:34:23,640 --> 00:34:26,960
+ So these are good questions, good examples.
+
+632
+00:34:26,960 --> 00:34:42,020
+ Yeah.
+
+633
+00:34:42,020 --> 00:34:42,520
+ Oh.
+
+634
+00:34:42,520 --> 00:34:43,020
+ [INAUDIBLE]
+
+635
+00:34:43,020 --> 00:34:53,400
+ Right.
+
+636
+00:34:53,400 --> 00:34:55,720
+ So that is a key point.
+
+637
+00:34:55,720 --> 00:34:59,240
+ I can't believe I was about to say that.
+
+638
+00:34:59,240 --> 00:35:02,920
+ I just-- that was like just association, not humor.
+
+639
+00:35:02,920 --> 00:35:04,600
+ So right.
+
+640
+00:35:04,600 --> 00:35:06,920
+ So you said it is an important thing
+
+641
+00:35:06,920 --> 00:35:09,760
+ to observe, which is that the orientation at which you're
+
+642
+00:35:09,760 --> 00:35:11,800
+ viewing the box, you might have a different number
+
+643
+00:35:11,800 --> 00:35:13,480
+ of key points available.
+
+644
+00:35:13,480 --> 00:35:16,120
+ Also, you can see there's an occlusion up here.
+
+645
+00:35:16,120 --> 00:35:18,080
+ If your box are piled up, it might cover up
+
+646
+00:35:18,080 --> 00:35:19,760
+ some of your corners.
+
+647
+00:35:19,760 --> 00:35:22,440
+ So occlusions are also a reason why you might-- your key points
+
+648
+00:35:22,440 --> 00:35:23,560
+ might appear or disappear.
+
+649
+00:35:23,560 --> 00:35:30,240
+ So are the key points unique?
+
+650
+00:35:30,240 --> 00:35:32,480
+ I think this is an important decision that one
+
+651
+00:35:32,480 --> 00:35:35,800
+ has to make when they're training a perception system.
+
+652
+00:35:35,800 --> 00:35:37,800
+ Do you expect to have--
+
+653
+00:35:37,800 --> 00:35:42,560
+ if I were to rotate the box by 180 degrees,
+
+654
+00:35:42,560 --> 00:35:43,560
+ and let's say I--
+
+655
+00:35:43,560 --> 00:35:45,880
+ you said the tracking example, which is a good example.
+
+656
+00:35:45,880 --> 00:35:47,140
+ But what if I wasn't tracking?
+
+657
+00:35:47,140 --> 00:35:50,560
+ I just showed two images with no context connecting the two
+
+658
+00:35:50,560 --> 00:35:53,560
+ of this box and this box rotated 180 degrees.
+
+659
+00:35:53,560 --> 00:35:57,000
+ Should I try to train something that
+
+660
+00:35:57,000 --> 00:36:00,720
+ is canonical orientation of the box,
+
+661
+00:36:00,720 --> 00:36:02,920
+ and maybe the only signal I have there
+
+662
+00:36:02,920 --> 00:36:06,200
+ is just where the label is, or there's a few small asymmetries?
+
+663
+00:36:06,200 --> 00:36:08,480
+ Most things are asymmetric a little bit.
+
+664
+00:36:08,480 --> 00:36:10,880
+ Maybe the mugs aren't so much.
+
+665
+00:36:10,880 --> 00:36:12,600
+ Or do I try to have something that
+
+666
+00:36:12,600 --> 00:36:16,080
+ is in whatever orientation gives the canonical key point
+
+667
+00:36:16,080 --> 00:36:17,600
+ locations?
+
+668
+00:36:17,600 --> 00:36:19,600
+ There's no right answer to any of these, really.
+
+669
+00:36:19,600 --> 00:36:21,440
+ These are-- it depends on the task, I think,
+
+670
+00:36:21,440 --> 00:36:23,080
+ is actually the right--
+
+671
+00:36:23,080 --> 00:36:24,440
+ the truth.
+
+672
+00:36:24,440 --> 00:36:27,160
+ But they get subtle pretty fast about the choices
+
+673
+00:36:27,160 --> 00:36:29,560
+ you make there.
+
+674
+00:36:29,560 --> 00:36:30,880
+ I like eight, myself.
+
+675
+00:36:30,880 --> 00:36:32,760
+ That's what I've always advocated for, eight.
+
+676
+00:36:32,760 --> 00:36:35,920
+ But I wish it was as simple as that.
+
+677
+00:36:35,920 --> 00:36:38,840
+ Because what if the box is--
+
+678
+00:36:38,840 --> 00:36:43,160
+ if my picture of the box--
+
+679
+00:36:43,160 --> 00:36:46,560
+ part of it's a little bit off the screen.
+
+680
+00:36:46,560 --> 00:36:49,440
+ I think occlusions are something that we can potentially
+
+681
+00:36:49,440 --> 00:36:52,200
+ deal with.
+
+682
+00:36:52,200 --> 00:36:58,600
+ You can actually estimate occluded key points.
+
+683
+00:36:58,600 --> 00:37:08,000
+ In synthetic data, it's very easy
+
+684
+00:37:08,000 --> 00:37:09,880
+ to label the location of the key points,
+
+685
+00:37:09,880 --> 00:37:10,920
+ even if they're occluded.
+
+686
+00:37:10,920 --> 00:37:12,880
+ There's nothing that would stop my simulation
+
+687
+00:37:12,880 --> 00:37:16,320
+ from putting xy locations, even the ones that
+
+688
+00:37:16,320 --> 00:37:18,440
+ are behind another box.
+
+689
+00:37:18,440 --> 00:37:21,440
+ In real world data, it might be hard to label occluded key
+
+690
+00:37:21,440 --> 00:37:24,360
+ points.
+
+691
+00:37:24,360 --> 00:37:26,640
+ But yeah, even if it's not occlusions,
+
+692
+00:37:26,640 --> 00:37:29,400
+ if it's just clipping or partial view or whatever,
+
+693
+00:37:29,400 --> 00:37:31,320
+ there might be reasons why you shouldn't expect
+
+694
+00:37:31,320 --> 00:37:32,960
+ to get exactly eight every time.
+
+695
+00:37:32,960 --> 00:37:35,360
+ So you have to have some sort of estimation pipeline that's
+
+696
+00:37:35,360 --> 00:37:40,400
+ OK with getting eight, but doesn't demand getting eight.
+
+697
+00:37:40,400 --> 00:37:42,960
+ I wish, because things would get easier if it was--
+
+698
+00:37:42,960 --> 00:37:44,340
+ if you could demand getting eight.
+
+699
+00:37:44,340 --> 00:37:53,660
+ The symmetries, I think, are an important issue.
+
+700
+00:37:53,660 --> 00:38:01,420
+ Do you try to make a representation that
+
+701
+00:38:01,420 --> 00:38:03,060
+ allows for the symmetries?
+
+702
+00:38:03,060 --> 00:38:05,780
+ In which case, how do you generate that synthetic data?
+
+703
+00:38:05,780 --> 00:38:07,740
+ Carefully, right?
+
+704
+00:38:07,740 --> 00:38:10,220
+ Or not?
+
+705
+00:38:10,220 --> 00:38:12,460
+ These all come up.
+
+706
+00:38:12,460 --> 00:38:21,780
+ So how would we output a system that didn't have--
+
+707
+00:38:21,780 --> 00:38:26,460
+ what would be the output of my network for a system that
+
+708
+00:38:26,460 --> 00:38:30,140
+ didn't try to identify any of the symmetries or anything
+
+709
+00:38:30,140 --> 00:38:30,640
+ like that?
+
+710
+00:38:30,640 --> 00:38:35,060
+ I mean, to some extent, this image
+
+711
+00:38:35,060 --> 00:38:36,580
+ is kind of an example of that.
+
+712
+00:38:36,580 --> 00:38:42,180
+ If I were to just draw a heat map that really just had
+
+713
+00:38:42,180 --> 00:38:45,260
+ a Gaussian in all the places I thought I had--
+
+714
+00:38:45,260 --> 00:38:48,020
+ single heat map, I could say these are the places where
+
+715
+00:38:48,020 --> 00:38:49,860
+ I have my Gaussians.
+
+716
+00:38:49,860 --> 00:38:54,020
+ And the desired image is to put a dot in every one of those.
+
+717
+00:38:54,020 --> 00:38:55,660
+ That would be a representation that
+
+718
+00:38:55,660 --> 00:38:59,780
+ would allow you to say, I don't care about which corner it is.
+
+719
+00:38:59,780 --> 00:39:01,500
+ They're all the same.
+
+720
+00:39:01,500 --> 00:39:04,700
+ And I want to generate a bunch of training data
+
+721
+00:39:04,700 --> 00:39:07,140
+ that would just find all the corner key points,
+
+722
+00:39:07,140 --> 00:39:09,180
+ and possibly the occluded corner key points, too.
+
+723
+00:39:09,180 --> 00:39:10,600
+ I could have the ones in the back.
+
+724
+00:39:10,600 --> 00:39:13,080
+ [INAUDIBLE]
+
+725
+00:39:13,080 --> 00:39:19,240
+ Say it again?
+
+726
+00:39:19,240 --> 00:39:20,720
+ Do you want to know what to tell it
+
+727
+00:39:20,720 --> 00:39:23,120
+ if it tries to go into the same box?
+
+728
+00:39:23,120 --> 00:39:25,200
+ So the question is, do you need to be
+
+729
+00:39:25,200 --> 00:39:27,960
+ able to identify the same box reliably from frame to frame,
+
+730
+00:39:27,960 --> 00:39:29,680
+ let's say.
+
+731
+00:39:29,680 --> 00:39:33,160
+ I think in a lot of these cases, that's
+
+732
+00:39:33,160 --> 00:39:35,240
+ not the stated requirement in the category level.
+
+733
+00:39:35,240 --> 00:39:38,440
+ It would be just, given I have some instances in front of me,
+
+734
+00:39:38,440 --> 00:39:41,120
+ be able to reason about them as one of the family of boxes.
+
+735
+00:39:41,120 --> 00:39:44,640
+ I think you can use object detection on top of this
+
+736
+00:39:44,640 --> 00:39:48,880
+ to do labels of particular boxes.
+
+737
+00:39:48,880 --> 00:39:50,760
+ If you want to have the shoeboxes different than
+
+738
+00:39:50,760 --> 00:39:53,560
+ whatever, I think the object detection pipeline
+
+739
+00:39:53,560 --> 00:39:55,960
+ would help you more with that.
+
+740
+00:39:55,960 --> 00:39:59,440
+ Maybe if the size was a strong indicator,
+
+741
+00:39:59,440 --> 00:40:02,480
+ and you could estimate the size more explicitly with this,
+
+742
+00:40:02,480 --> 00:40:03,520
+ maybe that would help.
+
+743
+00:40:03,520 --> 00:40:05,120
+ But oftentimes, I would just think
+
+744
+00:40:05,120 --> 00:40:07,920
+ of the perception front end.
+
+745
+00:40:07,920 --> 00:40:09,240
+ The object detection front end.
+
+746
+00:40:09,240 --> 00:40:17,440
+ So this would be all corners are the same.
+
+747
+00:40:17,440 --> 00:40:31,520
+ If I trained the bottom left corner, the top right corner,
+
+748
+00:40:31,520 --> 00:40:33,840
+ defined maybe in my camera frame, for instance,
+
+749
+00:40:33,840 --> 00:40:36,080
+ or something like that, and I trained each of those
+
+750
+00:40:36,080 --> 00:40:40,520
+ as being somehow a different Gaussian,
+
+751
+00:40:40,520 --> 00:40:43,960
+ then I could try to learn a more orientation-specific
+
+752
+00:40:43,960 --> 00:40:45,760
+ representation.
+
+753
+00:40:45,760 --> 00:40:46,880
+ And these are all possible.
+
+754
+00:40:46,880 --> 00:40:52,160
+ And I think the heat map progression loss
+
+755
+00:40:52,160 --> 00:40:53,240
+ would support any of those.
+
+756
+00:40:53,240 --> 00:40:57,280
+ Some of the other losses people use
+
+757
+00:40:57,280 --> 00:40:59,640
+ where you are kind of baking in the assumption
+
+758
+00:40:59,640 --> 00:41:01,720
+ that you have only one Gaussian, and you
+
+759
+00:41:01,720 --> 00:41:04,400
+ try to find the peak of that Gaussian.
+
+760
+00:41:04,400 --> 00:41:06,640
+ But the expected value interpolations
+
+761
+00:41:06,640 --> 00:41:08,680
+ in the integral pose machine would not do well
+
+762
+00:41:08,680 --> 00:41:10,440
+ on this kind of representation.
+
+763
+00:41:10,440 --> 00:41:14,720
+ There is an important point.
+
+764
+00:41:14,720 --> 00:41:24,200
+ So if you have multiple instances,
+
+765
+00:41:24,200 --> 00:41:25,600
+ then how do you deal with that?
+
+766
+00:41:25,600 --> 00:41:27,240
+ This gets a little bit to your point.
+
+767
+00:41:27,240 --> 00:41:32,200
+ How do you deal with multiple instances?
+
+768
+00:41:32,200 --> 00:41:42,920
+ [INAUDIBLE]
+
+769
+00:41:42,920 --> 00:41:44,160
+ That's really what people do.
+
+770
+00:41:44,160 --> 00:41:47,080
+ So she says, do instant segmentation at the same time.
+
+771
+00:41:47,080 --> 00:41:51,080
+ It is, to me, a major success story.
+
+772
+00:41:51,080 --> 00:41:54,840
+ That mask-rcnn pipeline just works so well
+
+773
+00:41:54,840 --> 00:41:58,800
+ that almost every other downstream perception task
+
+774
+00:41:58,800 --> 00:42:03,800
+ says, step one, get my crop around a particular object,
+
+775
+00:42:03,800 --> 00:42:06,040
+ and only worry about finding a single instance
+
+776
+00:42:06,040 --> 00:42:06,800
+ inside that crop.
+
+777
+00:42:06,800 --> 00:42:23,000
+ So typically, you take the bounding box approximation out
+
+778
+00:42:23,000 --> 00:42:25,920
+ of something like a mask-rcnn and just
+
+779
+00:42:25,920 --> 00:42:30,600
+ apply these algorithms directly inside that tighter bounding
+
+780
+00:42:30,600 --> 00:42:31,100
+ box.
+
+781
+00:42:31,100 --> 00:42:37,280
+ This is a pretty tight bounding box already,
+
+782
+00:42:37,280 --> 00:42:39,120
+ and you have corners from other places.
+
+783
+00:42:39,120 --> 00:42:41,720
+ But you can say, in this bounding box,
+
+784
+00:42:41,720 --> 00:42:45,640
+ I expect to find eight or less if it's going off to the side.
+
+785
+00:42:45,640 --> 00:42:55,380
+ Yeah?
+
+786
+00:42:55,380 --> 00:43:03,320
+ [INAUDIBLE]
+
+787
+00:43:03,320 --> 00:43:03,820
+ Yeah.
+
+788
+00:43:03,820 --> 00:43:04,800
+ So I don't claim--
+
+789
+00:43:04,800 --> 00:43:07,280
+ I'm not trying to claim this is the state-of-the-art box
+
+790
+00:43:07,280 --> 00:43:07,880
+ detection.
+
+791
+00:43:07,880 --> 00:43:10,080
+ I'm using it as a thought experiment for key points
+
+792
+00:43:10,080 --> 00:43:10,880
+ more than that.
+
+793
+00:43:10,880 --> 00:43:14,640
+ But I think I will show later a different--
+
+794
+00:43:14,640 --> 00:43:17,120
+ I was going to use this as the example for both this
+
+795
+00:43:17,120 --> 00:43:19,280
+ and the dense descriptors, which would be a little bit-- it's
+
+796
+00:43:19,280 --> 00:43:21,440
+ going to show you you can pretty reliably get
+
+797
+00:43:21,440 --> 00:43:23,960
+ the centers of the box, too.
+
+798
+00:43:23,960 --> 00:43:25,600
+ Yeah, absolutely.
+
+799
+00:43:25,600 --> 00:43:29,160
+ But the corners are appealing, I think,
+
+800
+00:43:29,160 --> 00:43:31,820
+ in the sense that if you wanted to estimate the shape of the box
+
+801
+00:43:31,820 --> 00:43:33,840
+ and that had some canonical values,
+
+802
+00:43:33,840 --> 00:43:35,800
+ then that might be the signal you most want.
+
+803
+00:43:35,800 --> 00:43:40,840
+ There's another interesting step,
+
+804
+00:43:40,840 --> 00:43:45,440
+ which I think connects back to what we've already
+
+805
+00:43:45,440 --> 00:43:46,400
+ learned in the class.
+
+806
+00:43:46,400 --> 00:43:49,640
+ So if I do have estimates in, let's say,
+
+807
+00:43:49,640 --> 00:43:57,200
+ 2D of my eight key points, then how do I get that back
+
+808
+00:43:57,200 --> 00:44:01,200
+ to something like a shape and a pose?
+
+809
+00:44:01,200 --> 00:44:04,720
+ So somehow, people want to do 3D key points, probably.
+
+810
+00:44:04,720 --> 00:44:18,040
+ So you can try to make a heat map in 3D.
+
+811
+00:44:18,040 --> 00:44:20,080
+ That's a standard approach.
+
+812
+00:44:20,080 --> 00:44:28,680
+ So think of it as a voxelized--
+
+813
+00:44:28,680 --> 00:44:32,560
+ so you have images at each possible depth.
+
+814
+00:44:32,560 --> 00:44:36,520
+ And you really put your Gaussian-desired kernel,
+
+815
+00:44:36,520 --> 00:44:40,760
+ a heat map in that big object, in that big space.
+
+816
+00:44:40,760 --> 00:44:42,520
+ I mean, like I said, it's shocking to me
+
+817
+00:44:42,520 --> 00:44:45,960
+ how many outputs people put on the output of a network.
+
+818
+00:44:45,960 --> 00:44:48,120
+ I mean, it seems hopelessly inefficient to do that.
+
+819
+00:44:48,120 --> 00:44:49,880
+ But it works.
+
+820
+00:44:49,880 --> 00:44:52,880
+ And we have hardware to support, right?
+
+821
+00:44:52,880 --> 00:44:58,600
+ A lot of people will do something like 2D key points
+
+822
+00:44:58,600 --> 00:45:00,480
+ plus depth per pixel.
+
+823
+00:45:00,480 --> 00:45:12,600
+ So you'd have the heat map for the 2D key points.
+
+824
+00:45:12,600 --> 00:45:15,000
+ And then you have one extra channel, which says--
+
+825
+00:45:15,000 --> 00:45:20,160
+ at every pixel, I think the depth is some number.
+
+826
+00:45:20,160 --> 00:45:24,960
+ And that is, I think, justified like this monocular stereo
+
+827
+00:45:24,960 --> 00:45:30,160
+ kind of workflow I mentioned to you before.
+
+828
+00:45:30,160 --> 00:45:31,740
+ And there's a handful-- some people
+
+829
+00:45:31,740 --> 00:45:42,640
+ will try to take 2D key points projected onto a point cloud,
+
+830
+00:45:42,640 --> 00:45:44,680
+ projected onto a depth measurement.
+
+831
+00:45:44,680 --> 00:45:59,480
+ That's not going to work for occluded key points.
+
+832
+00:45:59,480 --> 00:46:01,520
+ But at least for the key points you can see,
+
+833
+00:46:01,520 --> 00:46:03,640
+ if you have a depth image, it might be enough
+
+834
+00:46:03,640 --> 00:46:07,800
+ to just do a 2D key points and then project directly
+
+835
+00:46:07,800 --> 00:46:10,560
+ onto the depth, which is kind of--
+
+836
+00:46:10,560 --> 00:46:14,480
+ you could imagine this being the attempt to learn roughly that.
+
+837
+00:46:14,480 --> 00:46:26,040
+ If you can get 3D key point estimates out,
+
+838
+00:46:26,040 --> 00:46:27,840
+ then you can imagine trying to estimate
+
+839
+00:46:27,840 --> 00:46:31,000
+ the shape and the pose using basically
+
+840
+00:46:31,000 --> 00:46:36,880
+ the middle of our ICP step, that pose regression.
+
+841
+00:46:36,880 --> 00:46:43,040
+ It's an SVD problem when you have known correspondences
+
+842
+00:46:43,040 --> 00:46:50,480
+ and you're trying to estimate a given rigid rotation.
+
+843
+00:46:50,480 --> 00:46:52,280
+ It's actually easier in some sense,
+
+844
+00:46:52,280 --> 00:46:53,560
+ where it has less constraints.
+
+845
+00:46:53,560 --> 00:46:57,520
+ If you're allowed your box to shrink and stretch,
+
+846
+00:46:57,520 --> 00:47:00,240
+ then that is actually taking away some of the constraints
+
+847
+00:47:00,240 --> 00:47:02,300
+ on the transform.
+
+848
+00:47:02,300 --> 00:47:03,760
+ So it's actually an easier problem.
+
+849
+00:47:03,760 --> 00:47:05,920
+ But that pipeline can work well.
+
+850
+00:47:05,920 --> 00:47:09,600
+ Imagine doing ICP that's allowed to stretch and shrink in order
+
+851
+00:47:09,600 --> 00:47:13,800
+ to go from the key point coming out of your heat map
+
+852
+00:47:13,800 --> 00:47:19,160
+ into an estimation of this box's shape and relative pose.
+
+853
+00:47:19,160 --> 00:47:21,200
+ So that whole workflow can work pretty well.
+
+854
+00:47:21,200 --> 00:47:27,000
+ So this is how Greg played it out.
+
+855
+00:47:27,000 --> 00:47:29,920
+ It played out for Greg and Maggie.
+
+856
+00:47:29,920 --> 00:47:31,840
+ Those are rendered images.
+
+857
+00:47:31,840 --> 00:47:33,800
+ So this is just rendered boxes.
+
+858
+00:47:33,800 --> 00:47:37,120
+ He took some texture maps of Amazon boxes
+
+859
+00:47:37,120 --> 00:47:38,720
+ off the web or something.
+
+860
+00:47:38,720 --> 00:47:41,720
+ I think the way--
+
+861
+00:47:41,720 --> 00:47:43,480
+ I remember I was standing with Greg.
+
+862
+00:47:43,480 --> 00:47:45,040
+ I'm like, is that one rendered or real?
+
+863
+00:47:45,040 --> 00:47:45,880
+ I'd always ask him.
+
+864
+00:47:45,880 --> 00:47:49,640
+ And the tell is the background.
+
+865
+00:47:49,640 --> 00:47:53,200
+ He wasn't upside down in the forest when he had those boxes.
+
+866
+00:47:53,200 --> 00:47:55,240
+ So that's probably a render.
+
+867
+00:47:55,240 --> 00:47:57,600
+ That's a Blender rendered image, something like that.
+
+868
+00:47:57,600 --> 00:47:59,160
+ But they look really good.
+
+869
+00:47:59,160 --> 00:48:01,400
+ They can look really, really good.
+
+870
+00:48:01,400 --> 00:48:05,200
+ So you generate all your procedural training data.
+
+871
+00:48:05,200 --> 00:48:08,560
+ You can train your mask R-CNN front end
+
+872
+00:48:08,560 --> 00:48:14,280
+ with a perfect image pixel-wise labels
+
+873
+00:48:14,280 --> 00:48:16,400
+ for the instant segmentation.
+
+874
+00:48:16,400 --> 00:48:21,040
+ And then you can start making your synthetic desired key
+
+875
+00:48:21,040 --> 00:48:25,120
+ points either occluded or not.
+
+876
+00:48:25,120 --> 00:48:28,080
+ Actually, generating the unoccluded key points
+
+877
+00:48:28,080 --> 00:48:32,040
+ is harder in simulation.
+
+878
+00:48:32,040 --> 00:48:35,560
+ But then you generate a bunch of ground truth data.
+
+879
+00:48:35,560 --> 00:48:38,160
+ The performance in synthetic images,
+
+880
+00:48:38,160 --> 00:48:40,920
+ again, like random person sideways in the background,
+
+881
+00:48:40,920 --> 00:48:43,640
+ is an indication that that was a Blender image.
+
+882
+00:48:43,640 --> 00:48:48,280
+ But in real world data, it transfers surprisingly well
+
+883
+00:48:48,280 --> 00:48:50,120
+ or not surprising anymore.
+
+884
+00:48:50,120 --> 00:48:53,960
+ But you get these beautiful instance crops
+
+885
+00:48:53,960 --> 00:48:55,760
+ from the real data.
+
+886
+00:48:55,760 --> 00:48:59,280
+ And you can get pretty good predicted key points
+
+887
+00:48:59,280 --> 00:49:02,000
+ with just the standard machinery pushed through that.
+
+888
+00:49:02,000 --> 00:49:10,680
+ I do think that the subtleties of this--
+
+889
+00:49:10,680 --> 00:49:13,400
+ I don't know that we know the right answer.
+
+890
+00:49:13,400 --> 00:49:16,800
+ This was something we did for fun,
+
+891
+00:49:16,800 --> 00:49:21,720
+ but haven't taken all the way to fruition yet of how exactly we
+
+892
+00:49:21,720 --> 00:49:23,880
+ want to--
+
+893
+00:49:23,880 --> 00:49:27,440
+ what's the best way to represent these 3D key points.
+
+894
+00:49:27,440 --> 00:49:29,160
+ And I think it's driven partly, I think,
+
+895
+00:49:29,160 --> 00:49:30,820
+ by how you'd want to reconstruct and, like you say,
+
+896
+00:49:30,820 --> 00:49:32,320
+ what the task is, exactly what the--
+
+897
+00:49:32,320 --> 00:49:40,080
+ I think my preference has been for occluded key points,
+
+898
+00:49:40,080 --> 00:49:43,040
+ hoping for eight of them, a strong ICP type
+
+899
+00:49:43,040 --> 00:49:46,400
+ loss to reconstruct, which means we need our heat map in 3D.
+
+900
+00:49:46,400 --> 00:49:47,720
+ But who knows if that's the best.
+
+901
+00:49:47,720 --> 00:49:53,120
+ Questions on that?
+
+902
+00:49:53,120 --> 00:50:03,000
+ I can see how that's more than pose.
+
+903
+00:50:03,000 --> 00:50:05,400
+ It's more than pose even for boxes where there's not
+
+904
+00:50:05,400 --> 00:50:08,320
+ a lot more semantic information available.
+
+905
+00:50:08,320 --> 00:50:11,520
+ It still allows you to do things of boxes of all sizes.
+
+906
+00:50:14,360 --> 00:50:18,840
+ OK, so for manipulation of more interesting things,
+
+907
+00:50:18,840 --> 00:50:23,240
+ where we've labeled just a handful of key points,
+
+908
+00:50:23,240 --> 00:50:25,400
+ I think the key points alone are not enough.
+
+909
+00:50:25,400 --> 00:50:27,200
+ That's what I meant when I wrote key points
+
+910
+00:50:27,200 --> 00:50:30,800
+ plus plus over there.
+
+911
+00:50:30,800 --> 00:50:34,320
+ They are often enough to specify the task.
+
+912
+00:50:34,320 --> 00:50:36,160
+ So say I want these key points to move
+
+913
+00:50:36,160 --> 00:50:38,840
+ through this reg and transform over to this location.
+
+914
+00:50:38,840 --> 00:50:40,720
+ That's a nice way to specify the task.
+
+915
+00:50:40,720 --> 00:50:42,760
+ But if you actually want to grab the mug,
+
+916
+00:50:42,760 --> 00:50:46,000
+ then you need a little bit more.
+
+917
+00:50:46,000 --> 00:50:50,040
+ But it seems-- so we felt that there's
+
+918
+00:50:50,040 --> 00:50:52,040
+ a lot of interesting manipulation tasks
+
+919
+00:50:52,040 --> 00:50:55,640
+ that you can do with sort of an online geometry
+
+920
+00:50:55,640 --> 00:50:58,320
+ estimation of the geometry of the mug,
+
+921
+00:50:58,320 --> 00:51:00,760
+ the task specified in terms of key points,
+
+922
+00:51:00,760 --> 00:51:02,560
+ and then you do basically your antipodal.
+
+923
+00:51:02,560 --> 00:51:04,920
+ You can do something fancier in there.
+
+924
+00:51:04,920 --> 00:51:07,220
+ But if you just reason about the point cloud
+
+925
+00:51:07,220 --> 00:51:09,760
+ and you have the crop from the instant segmentation,
+
+926
+00:51:09,760 --> 00:51:11,120
+ then that's enough.
+
+927
+00:51:11,120 --> 00:51:13,560
+ The sort of the local instantaneous point cloud,
+
+928
+00:51:13,560 --> 00:51:16,080
+ maybe with a little bit of reconstruction,
+
+929
+00:51:16,080 --> 00:51:19,640
+ plus this idea that once I grab the object,
+
+930
+00:51:19,640 --> 00:51:21,360
+ it stays rigid in my hand and moves
+
+931
+00:51:21,360 --> 00:51:23,360
+ through the same rigid transforms,
+
+932
+00:51:23,360 --> 00:51:26,200
+ was enough to program a pretty interesting broader
+
+933
+00:51:26,200 --> 00:51:32,600
+ amount of tasks than we could do with the pose-based known
+
+934
+00:51:32,600 --> 00:51:33,600
+ object pipeline.
+
+935
+00:51:33,600 --> 00:51:37,360
+ Does that make sense?
+
+936
+00:51:41,080 --> 00:51:45,840
+ Right, so we have manipulated lots of shoes and lots of mugs,
+
+937
+00:51:45,840 --> 00:51:49,200
+ just to say it's statistically strong.
+
+938
+00:51:49,200 --> 00:51:51,320
+ So what are the limitations of that?
+
+939
+00:51:51,320 --> 00:51:55,520
+ That's just one recommendation of a pipeline.
+
+940
+00:51:55,520 --> 00:51:57,280
+ One of the things that it struggles with,
+
+941
+00:51:57,280 --> 00:52:01,360
+ if I only use the instantaneous point cloud that I'm getting,
+
+942
+00:52:01,360 --> 00:52:03,860
+ then I don't have any sense of what's the back of the object.
+
+943
+00:52:03,860 --> 00:52:05,820
+ Right, so if I wanted to grasp something that
+
+944
+00:52:05,820 --> 00:52:08,120
+ involved me picking up the back of the object,
+
+945
+00:52:08,120 --> 00:52:09,440
+ or if I'm moving it through space
+
+946
+00:52:09,440 --> 00:52:11,680
+ and I wanted to avoid collisions,
+
+947
+00:52:11,680 --> 00:52:14,440
+ if I pretended that my mug was only the front side that I
+
+948
+00:52:14,440 --> 00:52:17,320
+ could see, then I'm going to bash things in as I
+
+949
+00:52:17,320 --> 00:52:19,160
+ move through the world.
+
+950
+00:52:19,160 --> 00:52:24,120
+ But neural networks are good at predicting hard things.
+
+951
+00:52:24,120 --> 00:52:26,160
+ Shape completion is a thing.
+
+952
+00:52:26,160 --> 00:52:27,840
+ You can make shape completion networks
+
+953
+00:52:27,840 --> 00:52:30,040
+ that will hallucinate the back of an object.
+
+954
+00:52:30,040 --> 00:52:32,000
+ A lot of the tools we use in manipulation
+
+955
+00:52:32,000 --> 00:52:35,560
+ do this implicitly, but you can do it explicitly
+
+956
+00:52:35,560 --> 00:52:37,960
+ by just trying to have-- training a different network
+
+957
+00:52:37,960 --> 00:52:39,840
+ to take a partial view and hallucinate
+
+958
+00:52:39,840 --> 00:52:41,640
+ the backside, for instance.
+
+959
+00:52:41,640 --> 00:52:44,120
+ And if you put that into this pipeline,
+
+960
+00:52:44,120 --> 00:52:45,040
+ you can do even more.
+
+961
+00:52:45,040 --> 00:52:47,520
+ You can do collision avoidance constraints
+
+962
+00:52:47,520 --> 00:52:52,120
+ as you move through the world at a class general level.
+
+963
+00:52:52,120 --> 00:52:54,760
+ And we'll talk more about force control later,
+
+964
+00:52:54,760 --> 00:52:57,840
+ but I was just very surprised when
+
+965
+00:52:57,840 --> 00:53:01,600
+ Wei Gao, who was working on this,
+
+966
+00:53:01,600 --> 00:53:04,160
+ showed that with basically that same pipeline,
+
+967
+00:53:04,160 --> 00:53:06,240
+ just knowing where key points were,
+
+968
+00:53:06,240 --> 00:53:09,640
+ he could do a lot of tasks that would have seemed
+
+969
+00:53:09,640 --> 00:53:11,040
+ to require more information.
+
+970
+00:53:11,040 --> 00:53:14,880
+ So like peg and hole type tasks or force-based tasks.
+
+971
+00:53:14,880 --> 00:53:18,320
+ And basically, for those of you that know impedance control,
+
+972
+00:53:18,320 --> 00:53:21,840
+ and hopefully you all will in a few lectures,
+
+973
+00:53:21,840 --> 00:53:23,680
+ basically you just--
+
+974
+00:53:23,680 --> 00:53:26,240
+ if I wanted to apply an impedance
+
+975
+00:53:26,240 --> 00:53:29,120
+ between the mug and the world, if I grab the mug in my hand
+
+976
+00:53:29,120 --> 00:53:31,520
+ and I just start regulating the impedance down here,
+
+977
+00:53:31,520 --> 00:53:33,520
+ then I can do a lot of interesting tasks.
+
+978
+00:53:33,520 --> 00:53:36,640
+ So just to say that this pipeline supports
+
+979
+00:53:36,640 --> 00:53:39,640
+ relatively advanced things.
+
+980
+00:53:39,640 --> 00:53:43,440
+ I'll show you a couple of fun examples.
+
+981
+00:53:43,440 --> 00:53:47,160
+ Peg and hole type stuff.
+
+982
+00:53:47,160 --> 00:53:50,160
+ Erasing with arbitrary erasers.
+
+983
+00:53:50,160 --> 00:53:56,440
+ Like to have a reasonable eraser,
+
+984
+00:53:56,440 --> 00:53:58,900
+ that means some sort of force control type task.
+
+985
+00:53:58,900 --> 00:54:00,940
+ But how do you do force control if you don't even
+
+986
+00:54:00,940 --> 00:54:03,360
+ know the geometry of the thing you're controlling through?
+
+987
+00:54:03,360 --> 00:54:05,760
+ Well, you put a key point at the bottom,
+
+988
+00:54:05,760 --> 00:54:08,000
+ you regulate the force at the end of the key point,
+
+989
+00:54:08,000 --> 00:54:11,320
+ and you can do sort of a category level force control
+
+990
+00:54:11,320 --> 00:54:11,960
+ type task.
+
+991
+00:54:11,960 --> 00:54:17,840
+ Peg and hole kind of tasks work surprisingly well.
+
+992
+00:54:17,840 --> 00:54:24,160
+ It's plugging in USB cables, putting Legos together.
+
+993
+00:54:24,160 --> 00:54:25,280
+ Big Legos, admittedly.
+
+994
+00:54:25,280 --> 00:54:29,240
+ But yeah, plugging things into the USB charger.
+
+995
+00:54:33,040 --> 00:54:39,080
+ And it's mostly a question of what tasks
+
+996
+00:54:39,080 --> 00:54:41,760
+ can be sufficiently specified, and where
+
+997
+00:54:41,760 --> 00:54:46,560
+ this sort of very simple representation of the object
+
+998
+00:54:46,560 --> 00:54:48,760
+ is somehow sufficient.
+
+999
+00:54:48,760 --> 00:54:52,800
+ And for tasks like this, knowing where the end of the USB thing
+
+1000
+00:54:52,800 --> 00:54:55,400
+ is once it's in your hand is most of what you need to know.
+
+1001
+00:54:55,400 --> 00:55:02,680
+ Yeah.
+
+1002
+00:55:02,680 --> 00:55:03,760
+ That make sense?
+
+1003
+00:55:03,760 --> 00:55:06,200
+ So key points better than pose, I think.
+
+1004
+00:55:06,200 --> 00:55:08,520
+ To the point-- so I mean, here's what happens.
+
+1005
+00:55:08,520 --> 00:55:10,400
+ You have a team that's working on perception,
+
+1006
+00:55:10,400 --> 00:55:13,000
+ you have a team that's working on planning and control.
+
+1007
+00:55:13,000 --> 00:55:15,280
+ You agree early on that the message you're
+
+1008
+00:55:15,280 --> 00:55:17,120
+ going to send me from your perception system
+
+1009
+00:55:17,120 --> 00:55:18,520
+ is like the pose of the object or whatever,
+
+1010
+00:55:18,520 --> 00:55:20,640
+ and I'm going to build my whole planning and control
+
+1011
+00:55:20,640 --> 00:55:22,440
+ stack around pose.
+
+1012
+00:55:22,440 --> 00:55:25,160
+ And then I've got my state estimation stack around pose,
+
+1013
+00:55:25,160 --> 00:55:27,400
+ and I've got my simulation stack around pose.
+
+1014
+00:55:27,400 --> 00:55:29,520
+ And then someone says, oh, you know what?
+
+1015
+00:55:29,520 --> 00:55:32,720
+ Pose is really a bad thing for us to estimate for perception.
+
+1016
+00:55:32,720 --> 00:55:34,760
+ And then it takes a very long time
+
+1017
+00:55:34,760 --> 00:55:37,160
+ to sort of go through and make all of the systems
+
+1018
+00:55:37,160 --> 00:55:39,240
+ stop thinking about pose, because it's so
+
+1019
+00:55:39,240 --> 00:55:41,720
+ baked into everything we do.
+
+1020
+00:55:41,720 --> 00:55:45,160
+ So if you're starting up and you haven't already baked it in,
+
+1021
+00:55:45,160 --> 00:55:45,920
+ just don't--
+
+1022
+00:55:45,920 --> 00:55:48,120
+ you start typing pose, you know, whatever, just say,
+
+1023
+00:55:48,120 --> 00:55:50,840
+ wait a second, not in my message, not in the API.
+
+1024
+00:55:50,840 --> 00:55:52,920
+ Those things should not communicate with pose.
+
+1025
+00:55:52,920 --> 00:55:54,000
+ It's restrictive.
+
+1026
+00:55:57,600 --> 00:56:03,720
+ OK, so that pipeline, I think it is--
+
+1027
+00:56:03,720 --> 00:56:05,160
+ we'll talk about its limitations.
+
+1028
+00:56:05,160 --> 00:56:08,000
+ It's very geometric.
+
+1029
+00:56:08,000 --> 00:56:10,160
+ It does have the ability to capture semantics,
+
+1030
+00:56:10,160 --> 00:56:13,080
+ because it had human labels.
+
+1031
+00:56:13,080 --> 00:56:15,960
+ So the question really, I think, is, can you do similar things
+
+1032
+00:56:15,960 --> 00:56:18,240
+ to that, but get rid of the human labels?
+
+1033
+00:56:18,240 --> 00:56:20,080
+ What kind of tasks can you enable
+
+1034
+00:56:20,080 --> 00:56:24,800
+ without that semantic level of labeling?
+
+1035
+00:56:24,800 --> 00:56:28,280
+ Can we do some of this self-supervision kind of work
+
+1036
+00:56:28,280 --> 00:56:30,240
+ in this representation?
+
+1037
+00:56:30,240 --> 00:56:34,600
+ So people have taken key point type representations
+
+1038
+00:56:34,600 --> 00:56:36,240
+ and done tool use.
+
+1039
+00:56:36,240 --> 00:56:40,560
+ That's something that your TAs work on.
+
+1040
+00:56:40,560 --> 00:56:45,120
+ And there's hammering tasks and other tasks.
+
+1041
+00:56:45,120 --> 00:56:48,480
+ So it does, I think, extend potentially.
+
+1042
+00:56:48,480 --> 00:56:53,160
+ But at some point, it is a limited representation.
+
+1043
+00:56:53,160 --> 00:56:56,320
+ So let me tell you about a generalization of that, which
+
+1044
+00:56:56,320 --> 00:56:59,880
+ is another, I think, proposal for a category-level object
+
+1045
+00:56:59,880 --> 00:57:03,720
+ representation, which goes through dense correspondences.
+
+1046
+00:57:03,720 --> 00:57:08,520
+ And the version we did was called dense object nets.
+
+1047
+00:57:08,520 --> 00:57:12,000
+ But the core technology was done before--
+
+1048
+00:57:12,000 --> 00:57:13,960
+ not specific to manipulation, but was
+
+1049
+00:57:13,960 --> 00:57:18,360
+ done by Tanner Schmidt and Richard Dukum and Dieter Fox,
+
+1050
+00:57:18,360 --> 00:57:20,280
+ for instance.
+
+1051
+00:57:20,280 --> 00:57:23,760
+ So here's the basic plot that you have to understand
+
+1052
+00:57:23,760 --> 00:57:25,120
+ to get the gist of this.
+
+1053
+00:57:25,120 --> 00:57:29,280
+ So this is a new camera image of a hat.
+
+1054
+00:57:29,280 --> 00:57:35,960
+ This is real-time observations of the hat.
+
+1055
+00:57:35,960 --> 00:57:38,520
+ Pete, I believe, in this particular case,
+
+1056
+00:57:38,520 --> 00:57:43,200
+ had his mouse over the left image at this part of the hat.
+
+1057
+00:57:43,200 --> 00:57:45,760
+ And the correspondence problem you know well--
+
+1058
+00:57:45,760 --> 00:57:47,460
+ the correspondence problem would be given
+
+1059
+00:57:47,460 --> 00:57:49,480
+ two very different images of the hat,
+
+1060
+00:57:49,480 --> 00:57:54,400
+ try to find the same point in the other image of the hat.
+
+1061
+00:57:54,400 --> 00:57:56,440
+ So let me just start from the beginning.
+
+1062
+00:57:56,440 --> 00:57:58,360
+ So there's some at the beginning here.
+
+1063
+00:57:58,360 --> 00:58:00,200
+ This is the proposed-- this is what
+
+1064
+00:58:00,200 --> 00:58:03,320
+ the network is predicting is the same point in the hat.
+
+1065
+00:58:03,320 --> 00:58:07,000
+ And it's getting it in very different orientations.
+
+1066
+00:58:07,000 --> 00:58:08,800
+ Whatever the hat is deformed completely,
+
+1067
+00:58:08,800 --> 00:58:11,720
+ but it's still giving reliable representations of what's
+
+1068
+00:58:11,720 --> 00:58:13,600
+ the same point of the hat.
+
+1069
+00:58:13,600 --> 00:58:16,840
+ And in the middle, we have the same heat map
+
+1070
+00:58:16,840 --> 00:58:23,040
+ kind of rendering of the output of the network, which is saying,
+
+1071
+00:58:23,040 --> 00:58:25,600
+ what is it scoring all of the different possible points
+
+1072
+00:58:25,600 --> 00:58:27,480
+ in the image as being potentially
+
+1073
+00:58:27,480 --> 00:58:31,120
+ the best correspondence?
+
+1074
+00:58:31,120 --> 00:58:32,800
+ So let me tell you how this works.
+
+1075
+00:58:32,800 --> 00:58:34,760
+ I think it's another good example
+
+1076
+00:58:34,760 --> 00:58:36,800
+ of these kind of representations.
+
+1077
+00:58:36,800 --> 00:58:44,040
+ I mean, the basic--
+
+1078
+00:58:44,040 --> 00:58:45,580
+ I'll even just show you the pipeline first.
+
+1079
+00:58:45,580 --> 00:58:48,760
+ So the basic pipeline is, again, this 3D reconstruction.
+
+1080
+00:58:48,760 --> 00:58:50,640
+ So you put a brand new object.
+
+1081
+00:58:50,640 --> 00:58:51,520
+ That's another thing.
+
+1082
+00:58:51,520 --> 00:58:52,960
+ So we have shoes.
+
+1083
+00:58:52,960 --> 00:58:53,620
+ We have mugs.
+
+1084
+00:58:53,620 --> 00:58:56,000
+ We have a lot of baby toys around lab, too,
+
+1085
+00:58:56,000 --> 00:59:00,280
+ which is kind of hard to explain to fiscal.
+
+1086
+00:59:00,280 --> 00:59:03,160
+ But yeah, it's good for robots, I think.
+
+1087
+00:59:03,160 --> 00:59:07,760
+ So soft, plush toys with buckles and zippers and stuff
+
+1088
+00:59:07,760 --> 00:59:10,640
+ are great for robots.
+
+1089
+00:59:10,640 --> 00:59:12,360
+ OK, so you've got a baby toy.
+
+1090
+00:59:12,360 --> 00:59:13,760
+ You put it on your table.
+
+1091
+00:59:13,760 --> 00:59:17,360
+ You do your dense reconstruction.
+
+1092
+00:59:17,360 --> 00:59:21,360
+ So this is something that I think in a future term
+
+1093
+00:59:21,360 --> 00:59:23,440
+ deserves a lecture on just dense reconstruction.
+
+1094
+00:59:23,440 --> 00:59:28,360
+ It's basically simultaneous localization for manipulation.
+
+1095
+00:59:28,360 --> 00:59:30,520
+ But we've said over and over again
+
+1096
+00:59:30,520 --> 00:59:32,600
+ that you have this ability to fuse point clouds
+
+1097
+00:59:32,600 --> 00:59:36,560
+ into a consistent representation using sine distance functions.
+
+1098
+00:59:36,560 --> 00:59:39,640
+ And you get these beautiful meshes out just
+
+1099
+00:59:39,640 --> 00:59:42,920
+ by scanning with your 3D scanner.
+
+1100
+00:59:42,920 --> 00:59:46,440
+ So that, as an intermediate signal,
+
+1101
+00:59:46,440 --> 00:59:49,040
+ allows you to train this representation, which
+
+1102
+00:59:49,040 --> 00:59:50,600
+ is these dense descriptors.
+
+1103
+00:59:50,600 --> 00:59:52,640
+ So how do I train dense descriptors?
+
+1104
+00:59:52,640 --> 01:00:18,880
+ the formulation here is I'm going
+
+1105
+01:00:18,880 --> 01:00:23,800
+ to take an image in-- again, it'll
+
+1106
+01:00:23,800 --> 01:00:28,800
+ be my RGB image width, height by 3.
+
+1107
+01:00:28,800 --> 01:00:30,880
+ I'm going to pour it into my neural network.
+
+1108
+01:00:30,880 --> 01:00:37,160
+ You could call it your latent representation
+
+1109
+01:00:37,160 --> 01:00:39,040
+ or intermediate representation or whatever
+
+1110
+01:00:39,040 --> 01:00:40,160
+ you want to think of it as.
+
+1111
+01:00:40,160 --> 01:00:43,760
+ But I'm going to project the pixels in the image
+
+1112
+01:00:43,760 --> 01:00:46,280
+ into some descriptor space.
+
+1113
+01:00:46,280 --> 01:00:47,960
+ And the thing you get out when you do that
+
+1114
+01:00:47,960 --> 01:00:53,720
+ is hopefully-- not that, but yeah, that's too bad.
+
+1115
+01:00:53,720 --> 01:00:55,360
+ You get nice colorful images.
+
+1116
+01:00:55,360 --> 01:00:56,560
+ We'll see different examples.
+
+1117
+01:00:56,560 --> 01:01:00,600
+ But you'll see if you choose d to be 3,
+
+1118
+01:01:00,600 --> 01:01:03,520
+ then you can actually just render it again as an RGB image.
+
+1119
+01:01:03,520 --> 01:01:05,400
+ And what you'd like to see is somehow
+
+1120
+01:01:05,400 --> 01:01:09,680
+ that if I show many different poses of the object,
+
+1121
+01:01:09,680 --> 01:01:13,080
+ that it will have a consistent--
+
+1122
+01:01:13,080 --> 01:01:14,720
+ the same color will be associated
+
+1123
+01:01:14,720 --> 01:01:16,140
+ with the same parts of the objects
+
+1124
+01:01:16,140 --> 01:01:18,800
+ and you can move it through many different lighting conditions,
+
+1125
+01:01:18,800 --> 01:01:21,240
+ many different poses, many different deformations,
+
+1126
+01:01:21,240 --> 01:01:23,920
+ and stuff like that.
+
+1127
+01:01:23,920 --> 01:01:27,000
+ So it's just some intermediate latent representation
+
+1128
+01:01:27,000 --> 01:01:30,520
+ that should be better than working with RGB.
+
+1129
+01:01:30,520 --> 01:01:33,600
+ We're going to put it into some descriptor space, some light
+
+1130
+01:01:33,600 --> 01:01:36,080
+ pose invariant space.
+
+1131
+01:01:36,080 --> 01:01:37,840
+ And the way that we train them is
+
+1132
+01:01:37,840 --> 01:01:40,560
+ with a pixel-wise contrastive loss.
+
+1133
+01:01:40,560 --> 01:01:48,860
+ So we train this by putting in image A, image B.
+
+1134
+01:01:48,860 --> 01:01:49,940
+ It's a Siamese training.
+
+1135
+01:01:49,940 --> 01:01:56,340
+ You get two dense descriptor images out.
+
+1136
+01:01:56,340 --> 01:01:59,220
+ But you have a data set already where
+
+1137
+01:01:59,220 --> 01:02:03,060
+ you've taken many images of the same object.
+
+1138
+01:02:03,060 --> 01:02:06,140
+ You've done your dense reconstruction.
+
+1139
+01:02:06,140 --> 01:02:10,220
+ And now you can go back and say, in this image,
+
+1140
+01:02:10,220 --> 01:02:13,660
+ this pixel should be the same as, in this image,
+
+1141
+01:02:13,660 --> 01:02:15,060
+ some other pixel.
+
+1142
+01:02:15,060 --> 01:02:19,620
+ So you have matching pixels just based on your 3D reconstruction.
+
+1143
+01:02:19,620 --> 01:02:25,940
+ So from here, we have descriptor images A and B.
+
+1144
+01:02:25,940 --> 01:02:31,700
+ And then we have a list of matches
+
+1145
+01:02:31,700 --> 01:02:33,420
+ for 3D reconstruction.
+
+1146
+01:02:34,420 --> 01:02:43,780
+ And we also just make a bunch of non-matches.
+
+1147
+01:02:43,780 --> 01:02:47,420
+ So basically, for every one match
+
+1148
+01:02:47,420 --> 01:02:48,900
+ that we have in our data set, we'll
+
+1149
+01:02:48,900 --> 01:02:50,740
+ throw in a bunch of non-matches.
+
+1150
+01:02:50,740 --> 01:02:52,700
+ I think 150 is the default number.
+
+1151
+01:02:52,700 --> 01:02:55,460
+ 150 non-matches, roughly, for every one match.
+
+1152
+01:03:03,340 --> 01:03:06,900
+ And it's to the point where our lost function has got,
+
+1153
+01:03:06,900 --> 01:03:13,580
+ I think, order of a million samples per image pair.
+
+1154
+01:03:13,580 --> 01:03:16,900
+ So we're just pumping through a pretty dense version
+
+1155
+01:03:16,900 --> 01:03:19,060
+ of these two images, milking them for everything
+
+1156
+01:03:19,060 --> 01:03:23,220
+ that we can to write a lot of different--
+
+1157
+01:03:23,220 --> 01:03:26,500
+ a rich objective function for this.
+
+1158
+01:03:26,500 --> 01:03:32,180
+ And then we'd write a loss function, which basically
+
+1159
+01:03:32,180 --> 01:03:33,020
+ looks like this.
+
+1160
+01:03:33,020 --> 01:03:38,260
+ So the loss of the matches is like 1
+
+1161
+01:03:38,260 --> 01:03:44,860
+ over the number of matches of the--
+
+1162
+01:03:44,860 --> 01:03:46,260
+ you want those two to be the same.
+
+1163
+01:03:46,260 --> 01:03:54,260
+ So I'll say the neural network of image A at the match image
+
+1164
+01:03:54,260 --> 01:03:58,220
+ minus the neural network function at the image B
+
+1165
+01:03:58,220 --> 01:03:59,020
+ at the--
+
+1166
+01:03:59,020 --> 01:04:02,700
+ whatever the match pixel should be at B.
+
+1167
+01:04:02,700 --> 01:04:03,700
+ That whole thing squared.
+
+1168
+01:04:03,700 --> 01:04:13,020
+ And then you have some negative score
+
+1169
+01:04:13,020 --> 01:04:18,060
+ for non-matches, which you can write
+
+1170
+01:04:18,060 --> 01:04:19,260
+ in a bunch of different ways.
+
+1171
+01:04:19,260 --> 01:04:21,420
+ But the way in practice it gets--
+
+1172
+01:04:21,420 --> 01:04:23,260
+ it was done in that work was the non-matches.
+
+1173
+01:04:30,060 --> 01:04:34,820
+ And the idea is to only penalize--
+
+1174
+01:04:34,820 --> 01:04:36,780
+ you want to saturate your penalization.
+
+1175
+01:04:36,780 --> 01:04:40,900
+ So you don't want-- if they're too close to the same point,
+
+1176
+01:04:40,900 --> 01:04:41,420
+ that's OK.
+
+1177
+01:04:41,420 --> 01:04:42,220
+ But you want to--
+
+1178
+01:04:42,220 --> 01:04:43,100
+ let me just write it.
+
+1179
+01:04:43,100 --> 01:04:52,860
+ And I'm going to do max of 0 and some threshold
+
+1180
+01:04:52,860 --> 01:04:55,900
+ minus the neural network scores.
+
+1181
+01:04:55,900 --> 01:05:02,140
+ OK.
+
+1182
+01:05:02,140 --> 01:05:03,180
+ So I'm going to--
+
+1183
+01:05:03,180 --> 01:05:04,680
+ I want these things to be different.
+
+1184
+01:05:04,680 --> 01:05:08,500
+ So I'm going to penalize now if they're similar.
+
+1185
+01:05:08,500 --> 01:05:12,820
+ But I'm only going to penalize if they're
+
+1186
+01:05:12,820 --> 01:05:13,860
+ beyond some threshold.
+
+1187
+01:05:13,860 --> 01:05:18,140
+ I want to rule out nearby points.
+
+1188
+01:05:18,140 --> 01:05:20,780
+ And you basically add these two objectives together
+
+1189
+01:05:20,780 --> 01:05:22,980
+ to get this pixel-wise contrastive loss.
+
+1190
+01:05:22,980 --> 01:05:38,140
+, OK?
+
+1191
+01:05:38,140 --> 01:05:39,060
+ So that's it.
+
+1192
+01:05:39,060 --> 01:05:41,460
+ Find some intermediate representation
+
+1193
+01:05:41,460 --> 01:05:44,020
+ so that two views are the same.
+
+1194
+01:05:44,020 --> 01:05:47,060
+ They get the same value in this d space
+
+1195
+01:05:47,060 --> 01:05:49,700
+ when the pixels should be the same and a different value
+
+1196
+01:05:49,700 --> 01:05:53,140
+ when they should be different.
+
+1197
+01:05:53,140 --> 01:05:54,620
+ OK.
+
+1198
+01:05:54,620 --> 01:05:56,420
+ And it works surprisingly well.
+
+1199
+01:05:56,420 --> 01:05:58,780
+ OK, so you get these--
+
+1200
+01:05:58,780 --> 01:06:00,740
+ you can get potentially very sharp.
+
+1201
+01:06:00,740 --> 01:06:02,100
+ This was an old version.
+
+1202
+01:06:02,100 --> 01:06:03,020
+ This is a new version.
+
+1203
+01:06:03,020 --> 01:06:03,820
+ I've got the--
+
+1204
+01:06:03,820 --> 01:06:05,520
+ you know, Pete's mouse or whatever moving,
+
+1205
+01:06:05,520 --> 01:06:09,020
+ maybe Lucas's mouse moving over the object here.
+
+1206
+01:06:09,020 --> 01:06:11,780
+ And you can get very sharp responses
+
+1207
+01:06:11,780 --> 01:06:13,220
+ to pretty non-trivial objects.
+
+1208
+01:06:13,220 --> 01:06:19,260
+ And they're arbitrary objects.
+
+1209
+01:06:19,260 --> 01:06:20,420
+ OK, so yeah?
+
+1210
+01:06:20,420 --> 01:06:22,700
+ Did you train the network to perform this in scratch
+
+1211
+01:06:22,700 --> 01:06:25,380
+ or were you using, like, tags to train them?
+
+1212
+01:06:25,380 --> 01:06:29,100
+ Almost always ResNet backbones and stuff like this, yeah.
+
+1213
+01:06:29,100 --> 01:06:30,220
+ Yeah.
+
+1214
+01:06:30,220 --> 01:06:35,500
+ Yeah, big ResNet backbone, yeah.
+
+1215
+01:06:35,500 --> 01:06:37,940
+ Sorry, the question was, were we training from scratch?
+
+1216
+01:06:37,940 --> 01:06:40,900
+ And the answer is almost always no.
+
+1217
+01:06:40,900 --> 01:06:43,940
+ Yeah, we generate-- again, it's sort of like your point
+
+1218
+01:06:43,940 --> 01:06:44,780
+ last time.
+
+1219
+01:06:44,780 --> 01:06:48,260
+ We generate a lot of data, but in a pretty narrow band.
+
+1220
+01:06:48,260 --> 01:06:51,020
+ We do try to do things like lighting changes
+
+1221
+01:06:51,020 --> 01:06:53,940
+ and getting lots of different poses of the same object
+
+1222
+01:06:53,940 --> 01:06:57,380
+ and deform it if it's deformable and stuff like that.
+
+1223
+01:06:57,380 --> 01:06:59,980
+ But it's still very narrow compared to ImageNet, right?
+
+1224
+01:06:59,980 --> 01:07:04,940
+ And do you get a different network
+
+1225
+01:07:04,940 --> 01:07:07,820
+ for each type of object that you're using?
+
+1226
+01:07:07,820 --> 01:07:13,420
+ So this is the mystical, magical, and ad hoc,
+
+1227
+01:07:13,420 --> 01:07:14,620
+ I'd say, maybe, thing.
+
+1228
+01:07:14,900 --> 01:07:20,740
+ So we can do either class general objects.
+
+1229
+01:07:20,740 --> 01:07:23,500
+ See, these are the kind of images I was talking about.
+
+1230
+01:07:23,500 --> 01:07:27,060
+ If you choose D to be 3 and you render it as RGB,
+
+1231
+01:07:27,060 --> 01:07:29,620
+ these are different shoes, but they all
+
+1232
+01:07:29,620 --> 01:07:34,260
+ light up the same colors in the same places on the shoes.
+
+1233
+01:07:34,260 --> 01:07:35,740
+ So how did you train that?
+
+1234
+01:07:35,740 --> 01:07:38,220
+ So that was the case where you trained each shoe
+
+1235
+01:07:38,220 --> 01:07:38,900
+ independently.
+
+1236
+01:07:38,900 --> 01:07:41,260
+ So each shoe was scanned independently.
+
+1237
+01:07:41,260 --> 01:07:43,760
+ And just something out of the capacity of the network
+
+1238
+01:07:43,760 --> 01:07:47,180
+ or something, it chose to reuse the same D value.
+
+1239
+01:07:47,180 --> 01:07:50,100
+ It didn't have any incentive to use or not
+
+1240
+01:07:50,100 --> 01:07:52,780
+ use the same values, but it tends
+
+1241
+01:07:52,780 --> 01:07:55,020
+ to find representations where it uses the same color
+
+1242
+01:07:55,020 --> 01:07:57,060
+ values for the same parts of the shoes.
+
+1243
+01:07:57,060 --> 01:07:57,560
+ Yeah?
+
+1244
+01:07:57,560 --> 01:08:24,060
+ [INAUDIBLE]
+
+1245
+01:08:24,060 --> 01:08:27,540
+ So it is explicitly, for any one view of the object,
+
+1246
+01:08:27,540 --> 01:08:30,240
+ saying that these things are distinct.
+
+1247
+01:08:30,240 --> 01:08:32,360
+ Whatever pose you're scanning, whatever,
+
+1248
+01:08:32,360 --> 01:08:34,280
+ it's saying every point is distinct.
+
+1249
+01:08:34,280 --> 01:08:37,720
+ So if you had repeated buckles or whatever like that,
+
+1250
+01:08:37,720 --> 01:08:38,960
+ those are distinct.
+
+1251
+01:08:38,960 --> 01:08:40,720
+ There's a canonical frame where I'm
+
+1252
+01:08:40,720 --> 01:08:43,120
+ going to say where I am in that frame
+
+1253
+01:08:43,120 --> 01:08:44,400
+ gets a distinct descriptor.
+
+1254
+01:08:44,400 --> 01:08:46,140
+ That's the objective explicitly.
+
+1255
+01:08:46,140 --> 01:08:50,280
+ It doesn't try to find repeated structure inside it.
+
+1256
+01:08:50,280 --> 01:08:52,320
+ What's interesting is that if you train them--
+
+1257
+01:08:52,320 --> 01:08:54,460
+ in this example, we train different hats
+
+1258
+01:08:54,460 --> 01:08:56,140
+ at different times.
+
+1259
+01:08:56,140 --> 01:08:58,220
+ So if you actually train all of the same--
+
+1260
+01:08:58,220 --> 01:09:02,740
+ if you put multiple hats in the test data at the same time,
+
+1261
+01:09:02,740 --> 01:09:04,940
+ then it will distinguish--
+
+1262
+01:09:04,940 --> 01:09:08,100
+ it must learn a different representation for each hat.
+
+1263
+01:09:08,100 --> 01:09:11,020
+ So it will actually learn an instance specific.
+
+1264
+01:09:11,020 --> 01:09:12,740
+ All you have to do is throw multiple hats in
+
+1265
+01:09:12,740 --> 01:09:14,740
+ at the same scan.
+
+1266
+01:09:14,740 --> 01:09:18,740
+ If you train one hat at a time, then it somehow--
+
+1267
+01:09:18,740 --> 01:09:21,740
+ this is unfortunately black magic--
+
+1268
+01:09:21,740 --> 01:09:23,780
+ it somehow chooses to use the same representation
+
+1269
+01:09:23,780 --> 01:09:24,900
+ for the same parts of the object,
+
+1270
+01:09:24,900 --> 01:09:26,940
+ and you get these class general descriptors out.
+
+1271
+01:09:26,940 --> 01:09:27,440
+ Yeah?
+
+1272
+01:09:27,440 --> 01:09:27,940
+ [INAUDIBLE]
+
+1273
+01:09:27,940 --> 01:09:33,180
+ It's impressively good.
+
+1274
+01:09:33,180 --> 01:09:33,980
+ Yeah.
+
+1275
+01:09:33,980 --> 01:09:35,440
+ I mean, you want your training data
+
+1276
+01:09:35,440 --> 01:09:37,780
+ to include those sort of deformations, but if it does,
+
+1277
+01:09:37,780 --> 01:09:38,740
+ it's impressively good.
+
+1278
+01:09:38,740 --> 01:09:39,240
+ Yeah.
+
+1279
+01:09:39,240 --> 01:09:48,580
+ So that is a pretty--
+
+1280
+01:09:48,580 --> 01:09:49,960
+ so that's a completely self-super--
+
+1281
+01:09:49,960 --> 01:09:52,220
+ I didn't have to-- anybody had-- nobody had to go in and label
+
+1282
+01:09:52,220 --> 01:09:52,720
+ anything.
+
+1283
+01:09:52,720 --> 01:09:53,220
+ Right?
+
+1284
+01:09:53,220 --> 01:09:57,560
+ So you could think of it as just having
+
+1285
+01:09:57,560 --> 01:10:00,360
+ very dense but self-supervised key points, which
+
+1286
+01:10:00,360 --> 01:10:01,760
+ is super useful.
+
+1287
+01:10:01,760 --> 01:10:03,800
+ It doesn't give me the language to say,
+
+1288
+01:10:03,800 --> 01:10:06,440
+ you know, hang the handle on the rack.
+
+1289
+01:10:06,440 --> 01:10:09,040
+ There's nothing-- I haven't attached enough semantics
+
+1290
+01:10:09,040 --> 01:10:11,280
+ to do some of those richer specifications,
+
+1291
+01:10:11,280 --> 01:10:14,680
+ but it's sort of just sufficient to specify some tasks.
+
+1292
+01:10:14,680 --> 01:10:18,800
+ And so it lives somewhere else in that spectrum of, like,
+
+1293
+01:10:18,800 --> 01:10:21,480
+ what can I specify?
+
+1294
+01:10:21,480 --> 01:10:24,120
+ So for instance, if you just wanted to, say,
+
+1295
+01:10:24,120 --> 01:10:26,600
+ pick up the object from the tail,
+
+1296
+01:10:26,600 --> 01:10:28,840
+ the caterpillar from the tail, then
+
+1297
+01:10:28,840 --> 01:10:31,880
+ clicking in the dense descriptor image
+
+1298
+01:10:31,880 --> 01:10:35,840
+ says, I want you to grab at this descriptor value.
+
+1299
+01:10:35,840 --> 01:10:39,180
+ And that's enough to partly to specify a pick task relative
+
+1300
+01:10:39,180 --> 01:10:41,600
+ to the points of the object.
+
+1301
+01:10:41,600 --> 01:10:42,600
+ Did you have a question?
+
+1302
+01:10:42,600 --> 01:10:43,100
+ Yeah?
+
+1303
+01:10:43,100 --> 01:10:43,600
+ Yeah.
+
+1304
+01:10:43,600 --> 01:10:45,300
+ So when you say self-supervised, but you
+
+1305
+01:10:45,300 --> 01:10:47,920
+ have a known list of matches?
+
+1306
+01:10:47,920 --> 01:10:52,200
+ But the robot is doing all the data collection for itself.
+
+1307
+01:10:52,200 --> 01:10:54,840
+ There's an algorithm which does this dense reconstruction,
+
+1308
+01:10:54,840 --> 01:10:55,680
+ and it's just--
+
+1309
+01:10:55,680 --> 01:10:58,680
+ you just go through that list of data and point--
+
+1310
+01:10:58,680 --> 01:11:01,200
+ you know, saying this point projected back.
+
+1311
+01:11:01,200 --> 01:11:03,280
+ All that data is constructed automatically,
+
+1312
+01:11:03,280 --> 01:11:04,120
+ no human touching it.
+
+1313
+01:11:04,120 --> 01:11:10,560
+ So there's some tasks you can do with that representation alone.
+
+1314
+01:11:10,560 --> 01:11:11,040
+ Right?
+
+1315
+01:11:11,040 --> 01:11:11,540
+ Yeah?
+
+1316
+01:11:11,540 --> 01:11:14,240
+ So in these exchanges, do you see the robot kind
+
+1317
+01:11:14,240 --> 01:11:17,840
+ of moving around before it's [INAUDIBLE]
+
+1318
+01:11:17,840 --> 01:11:19,800
+ during a reconstruction of the object,
+
+1319
+01:11:19,800 --> 01:11:23,800
+ but can pass the [INAUDIBLE]
+
+1320
+01:11:23,800 --> 01:11:24,320
+ Good.
+
+1321
+01:11:24,320 --> 01:11:28,480
+ So it's doing significant scanning
+
+1322
+01:11:28,480 --> 01:11:30,360
+ when it's learning the dense descriptors.
+
+1323
+01:11:30,360 --> 01:11:32,200
+ Even when it's picking, you can get a--
+
+1324
+01:11:32,200 --> 01:11:34,400
+ we're doing reconstruction so you can just--
+
+1325
+01:11:34,400 --> 01:11:35,120
+ you don't have to.
+
+1326
+01:11:35,120 --> 01:11:37,880
+ If you had a partial view, and you did the dense descriptor,
+
+1327
+01:11:37,880 --> 01:11:40,600
+ and you went and grabbed, you'd be able to do something.
+
+1328
+01:11:40,600 --> 01:11:44,800
+ But if you want to have less partial views,
+
+1329
+01:11:44,800 --> 01:11:46,760
+ then that initial scan can make it more robust.
+
+1330
+01:11:46,760 --> 01:11:53,280
+ OK, and so this is to answer your question
+
+1331
+01:11:53,280 --> 01:11:55,240
+ about the centers of the boxes, right?
+
+1332
+01:11:55,240 --> 01:11:57,280
+ So you can totally do this for boxes,
+
+1333
+01:11:57,280 --> 01:11:58,840
+ and it sort of lights up, and there's
+
+1334
+01:11:58,840 --> 01:12:01,960
+ a canonical sort of dense descriptor frame for boxes,
+
+1335
+01:12:01,960 --> 01:12:03,600
+ too.
+
+1336
+01:12:03,600 --> 01:12:04,160
+ Right?
+
+1337
+01:12:04,160 --> 01:12:05,640
+ And it works pretty well in reality.
+
+1338
+01:12:05,640 --> 01:12:06,140
+ Yeah?
+
+1339
+01:12:06,140 --> 01:12:08,640
+ If you can do a 3D reconstruction
+
+1340
+01:12:08,640 --> 01:12:11,640
+ to get a 3D model of an object, and you
+
+1341
+01:12:11,640 --> 01:12:17,080
+ have a [INAUDIBLE]
+
+1342
+01:12:17,080 --> 01:12:18,880
+ So you'd like to be able-- so the question
+
+1343
+01:12:18,880 --> 01:12:22,280
+ is, if you can do a dense reconstruction in ICP,
+
+1344
+01:12:22,280 --> 01:12:24,280
+ then why are you not done?
+
+1345
+01:12:24,280 --> 01:12:28,680
+ And the point is, I'd like to, for instance,
+
+1346
+01:12:28,680 --> 01:12:31,080
+ specify the task on one model of the shoe.
+
+1347
+01:12:31,080 --> 01:12:33,960
+ So I'll scan one shoe, and I'll say, pick it up here,
+
+1348
+01:12:33,960 --> 01:12:36,480
+ and then transfer that to new shoes
+
+1349
+01:12:36,480 --> 01:12:38,360
+ that I haven't seen before.
+
+1350
+01:12:38,360 --> 01:12:41,600
+ So I want my specification and my manipulation
+
+1351
+01:12:41,600 --> 01:12:43,960
+ to generalize across the category.
+
+1352
+01:12:43,960 --> 01:12:44,800
+ So I agree with you.
+
+1353
+01:12:44,800 --> 01:12:47,400
+ For any one instance of the shoe, we could do this,
+
+1354
+01:12:47,400 --> 01:12:48,800
+ and then you could move the shoe.
+
+1355
+01:12:48,800 --> 01:12:50,760
+ I could try to reconstruct it with ICP.
+
+1356
+01:12:50,760 --> 01:12:53,720
+ But if I want the task to generalize across the shoes.
+
+1357
+01:12:53,720 --> 01:12:54,200
+ [INAUDIBLE]
+
+1358
+01:12:54,200 --> 01:12:59,960
+ I might mention them at the end.
+
+1359
+01:12:59,960 --> 01:13:02,440
+ But if you know more, that's great to know, too.
+
+1360
+01:13:02,440 --> 01:13:03,720
+ Yeah?
+
+1361
+01:13:03,720 --> 01:13:04,220
+ Yes?
+
+1362
+01:13:04,220 --> 01:13:07,160
+ So what exactly is the descriptor dimension
+
+1363
+01:13:07,160 --> 01:13:10,120
+ of how many shoes, how many you want to use?
+
+1364
+01:13:10,120 --> 01:13:12,600
+ Is it just like a-- it finds something
+
+1365
+01:13:12,600 --> 01:13:15,800
+ that's consistent across the category?
+
+1366
+01:13:15,800 --> 01:13:16,320
+ Good.
+
+1367
+01:13:16,320 --> 01:13:18,240
+ So the question is, how do you choose D?
+
+1368
+01:13:18,240 --> 01:13:21,000
+ Is there any intuition about that?
+
+1369
+01:13:21,000 --> 01:13:23,400
+ The answer might not be super satisfying.
+
+1370
+01:13:23,400 --> 01:13:28,040
+ I think even since the first paper came out,
+
+1371
+01:13:28,040 --> 01:13:34,200
+ we've had more tricks that we use for training.
+
+1372
+01:13:34,200 --> 01:13:35,840
+ They're all in the public repositories.
+
+1373
+01:13:35,840 --> 01:13:39,480
+ But it used to be that actually we
+
+1374
+01:13:39,480 --> 01:13:41,080
+ would use 3 for visualization.
+
+1375
+01:13:41,080 --> 01:13:43,580
+ And you could increase it, and you'd hope it would do better.
+
+1376
+01:13:43,580 --> 01:13:45,720
+ But it didn't do a lot better.
+
+1377
+01:13:45,720 --> 01:13:48,040
+ With a normalization trick, we basically
+
+1378
+01:13:48,040 --> 01:13:53,040
+ would push all the descriptors to be on the unit sphere.
+
+1379
+01:13:53,040 --> 01:13:56,280
+ Then we did see that as you increased D,
+
+1380
+01:13:56,280 --> 01:13:58,880
+ you'd get better and better, meaning sharper
+
+1381
+01:13:58,880 --> 01:14:01,520
+ receptive fields in the dense descriptors.
+
+1382
+01:14:01,520 --> 01:14:04,200
+ And I think 10 or 12 or something
+
+1383
+01:14:04,200 --> 01:14:07,400
+ is probably what we would be using at the end.
+
+1384
+01:14:07,400 --> 01:14:12,280
+ But it is not like analyze your system,
+
+1385
+01:14:12,280 --> 01:14:14,600
+ go through some procedure, decide what D is going to be.
+
+1386
+01:14:14,600 --> 01:14:16,200
+ It's really kind of--
+
+1387
+01:14:16,200 --> 01:14:17,000
+ maybe it's not bad.
+
+1388
+01:14:17,000 --> 01:14:21,280
+ It's a model reduction in classical system
+
+1389
+01:14:21,280 --> 01:14:21,920
+ identification.
+
+1390
+01:14:21,920 --> 01:14:24,400
+ Also, even for linear system identification,
+
+1391
+01:14:24,400 --> 01:14:27,080
+ you try a number of different--
+
+1392
+01:14:27,080 --> 01:14:28,280
+ principal component analysis.
+
+1393
+01:14:28,280 --> 01:14:30,200
+ You kind of see how many different modes
+
+1394
+01:14:30,200 --> 01:14:31,480
+ you need to describe your data.
+
+1395
+01:14:31,480 --> 01:14:34,280
+ And I think the same sort of thinking is happening here.
+
+1396
+01:14:34,280 --> 01:14:38,000
+ As I increase the dimension of my representation,
+
+1397
+01:14:38,000 --> 01:14:38,760
+ I can do more.
+
+1398
+01:14:38,760 --> 01:14:43,120
+ But at some cost, I don't have enough data to fill that space.
+
+1399
+01:14:43,120 --> 01:14:46,560
+ It's that kind of thinking.
+
+1400
+01:14:46,560 --> 01:14:50,520
+ You would like to think, given infinite data, as I increase D,
+
+1401
+01:14:50,520 --> 01:14:52,480
+ I would have only sharper images.
+
+1402
+01:14:52,480 --> 01:14:54,600
+ And I think the only thing pushing down on that
+
+1403
+01:14:54,600 --> 01:14:58,920
+ is computation time and data time, so you find a balance.
+
+1404
+01:14:58,920 --> 01:14:59,420
+ Yeah?
+
+1405
+01:14:59,420 --> 01:15:08,400
+ [INAUDIBLE]
+
+1406
+01:15:08,400 --> 01:15:12,380
+ They are projected-- so it is not
+
+1407
+01:15:12,380 --> 01:15:15,820
+ that the pixel 32 in this image and pixel 32 in this image.
+
+1408
+01:15:15,820 --> 01:15:20,100
+ It's pixel 32 in this image plus whatever pixel
+
+1409
+01:15:20,100 --> 01:15:25,100
+ that same thing in my 3D maps to in this other image.
+
+1410
+01:15:25,100 --> 01:15:32,140
+ So that's match A, match B. Yes?
+
+1411
+01:15:32,140 --> 01:15:42,620
+ [INAUDIBLE]
+
+1412
+01:15:42,620 --> 01:15:43,860
+ OK, that's a good question.
+
+1413
+01:15:43,860 --> 01:15:48,500
+ So could I do mass properties or other physical quantities
+
+1414
+01:15:48,500 --> 01:15:50,260
+ inside the dense script?
+
+1415
+01:15:50,260 --> 01:15:51,780
+ So one thing you can definitely do
+
+1416
+01:15:51,780 --> 01:15:54,660
+ is you could just take your RGB image,
+
+1417
+01:15:54,660 --> 01:15:56,860
+ turn it into the descriptor dimension.
+
+1418
+01:15:56,860 --> 01:15:59,060
+ I mean, really, even in this picture,
+
+1419
+01:15:59,060 --> 01:16:01,380
+ you could sort of think, this is an ugly space.
+
+1420
+01:16:01,380 --> 01:16:02,760
+ I turn the lights on or whatever.
+
+1421
+01:16:02,760 --> 01:16:05,220
+ The same points change color values a lot,
+
+1422
+01:16:05,220 --> 01:16:08,340
+ whereas this gives a very consistent representation.
+
+1423
+01:16:08,340 --> 01:16:12,300
+ So using this as features for something like ICP
+
+1424
+01:16:12,300 --> 01:16:13,700
+ totally makes sense.
+
+1425
+01:16:13,700 --> 01:16:15,460
+ And then if you get in the space of you've
+
+1426
+01:16:15,460 --> 01:16:17,920
+ got features that you want to correspond masses
+
+1427
+01:16:17,920 --> 01:16:20,260
+ or other things to, it could make sense.
+
+1428
+01:16:20,260 --> 01:16:25,460
+ But I do think that the dense descriptor object by itself
+
+1429
+01:16:25,460 --> 01:16:29,660
+ becomes a useful quantity for the object,
+
+1430
+01:16:29,660 --> 01:16:32,500
+ but it's trained purely on a geometric understanding
+
+1431
+01:16:32,500 --> 01:16:33,380
+ of the object.
+
+1432
+01:16:33,380 --> 01:16:35,620
+ So in fact, that is, I'd say, the limitations
+
+1433
+01:16:35,620 --> 01:16:39,780
+ of the dense descriptors is that they are completely geometric.
+
+1434
+01:16:39,780 --> 01:16:41,300
+ So Pete used to say--
+
+1435
+01:16:41,300 --> 01:16:42,020
+ what did he say?
+
+1436
+01:16:42,020 --> 01:16:44,140
+ He won't tell you when you've done frying your egg
+
+1437
+01:16:44,140 --> 01:16:45,100
+ or something like that.
+
+1438
+01:16:45,100 --> 01:16:47,860
+ You can come up with silly examples.
+
+1439
+01:16:47,860 --> 01:16:49,700
+ But even-- I mean, there's other places.
+
+1440
+01:16:49,700 --> 01:16:51,540
+ We know that there's limitations to this.
+
+1441
+01:16:51,540 --> 01:16:56,540
+ So if your object doesn't have a canonical pose,
+
+1442
+01:16:56,540 --> 01:16:59,660
+ then there's not a right answer for the dense descriptors.
+
+1443
+01:16:59,660 --> 01:17:03,700
+ So like we were playing with peeling potatoes.
+
+1444
+01:17:03,700 --> 01:17:06,180
+ Want a robot to peel potatoes, right?
+
+1445
+01:17:06,180 --> 01:17:08,060
+ There's no canonical pose for a potato.
+
+1446
+01:17:08,060 --> 01:17:09,600
+ You can rotate the potato or whatever,
+
+1447
+01:17:09,600 --> 01:17:11,860
+ and there's no reason that the dense descriptor should
+
+1448
+01:17:11,860 --> 01:17:14,980
+ have a consistently put-- like at the 43rd i,
+
+1449
+01:17:14,980 --> 01:17:16,820
+ it should be descriptor value, whatever.
+
+1450
+01:17:16,820 --> 01:17:18,260
+ And it just doesn't work for that.
+
+1451
+01:17:18,260 --> 01:17:19,660
+ It's not a good representation for something
+
+1452
+01:17:19,660 --> 01:17:22,420
+ like that, or peeling carrots, or anything that doesn't have
+
+1453
+01:17:22,420 --> 01:17:25,180
+ a canonical reference frame.
+
+1454
+01:17:25,180 --> 01:17:27,620
+ If you can't go down and say, I would put the reference frame
+
+1455
+01:17:27,620 --> 01:17:32,220
+ like this, then it's not going to be able to do it either.
+
+1456
+01:17:32,220 --> 01:17:33,260
+ It's also very just--
+
+1457
+01:17:33,260 --> 01:17:35,460
+ it's not going to capture anything about the dynamics,
+
+1458
+01:17:35,460 --> 01:17:39,380
+ really, or anything like that.
+
+1459
+01:17:39,380 --> 01:17:42,580
+ All right, let me just close out by mentioning--
+
+1460
+01:17:42,580 --> 01:17:44,660
+ these are the representations we used in the video
+
+1461
+01:17:44,660 --> 01:17:45,500
+ I showed you before.
+
+1462
+01:17:45,500 --> 01:17:48,420
+ And we'll talk more about that later.
+
+1463
+01:17:48,420 --> 01:17:51,620
+ There are a couple other really good, interesting object
+
+1464
+01:17:51,620 --> 01:17:53,140
+ representations that--
+
+1465
+01:17:53,140 --> 01:17:56,820
+ this is an early version of the Knox family,
+
+1466
+01:17:56,820 --> 01:17:59,100
+ which is normalized object coordinate
+
+1467
+01:17:59,100 --> 01:18:02,300
+ space for category level 60 object pose and size
+
+1468
+01:18:02,300 --> 01:18:03,740
+ estimation.
+
+1469
+01:18:03,740 --> 01:18:06,380
+ So this one is more explicitly saying,
+
+1470
+01:18:06,380 --> 01:18:09,700
+ take all of your CAD models, snap them
+
+1471
+01:18:09,700 --> 01:18:11,340
+ into some canonical frame.
+
+1472
+01:18:11,340 --> 01:18:13,580
+ We're going to still think about poses,
+
+1473
+01:18:13,580 --> 01:18:15,580
+ but poses plus the transformation,
+
+1474
+01:18:15,580 --> 01:18:20,180
+ the warping from the original geometry across the class
+
+1475
+01:18:20,180 --> 01:18:22,460
+ into this canonical frame.
+
+1476
+01:18:22,460 --> 01:18:24,260
+ And I can't help but see dense descriptors
+
+1477
+01:18:24,260 --> 01:18:26,220
+ when I look at these pictures, because they're
+
+1478
+01:18:26,220 --> 01:18:27,860
+ rendered in sort of the same way.
+
+1479
+01:18:27,860 --> 01:18:31,460
+ But you make-- the value that you give this,
+
+1480
+01:18:31,460 --> 01:18:34,780
+ it's not discovered by gradient descent.
+
+1481
+01:18:34,780 --> 01:18:37,740
+ It's imposed as saying, this pixel
+
+1482
+01:18:37,740 --> 01:18:41,580
+ in the squished, scaled, canonical frame
+
+1483
+01:18:41,580 --> 01:18:46,380
+ would have color value whatever.
+
+1484
+01:18:46,380 --> 01:18:47,780
+ And you can use that representation
+
+1485
+01:18:47,780 --> 01:18:49,860
+ in a lot of similar ways.
+
+1486
+01:18:49,860 --> 01:18:54,820
+ The Knox line of papers talked about doing pose estimation
+
+1487
+01:18:54,820 --> 01:18:58,260
+ even by taking your canonical frame
+
+1488
+01:18:58,260 --> 01:19:03,060
+ and basically trying to warp the images in your renderer.
+
+1489
+01:19:03,060 --> 01:19:04,380
+ That's what analysis by synthesis
+
+1490
+01:19:04,380 --> 01:19:05,940
+ is, to try to estimate the pose.
+
+1491
+01:19:05,940 --> 01:19:07,100
+ So this is a good one.
+
+1492
+01:19:07,100 --> 01:19:09,420
+ Watch right here.
+
+1493
+01:19:09,420 --> 01:19:11,100
+ You see you've got some different pose,
+
+1494
+01:19:11,100 --> 01:19:13,220
+ and you basically try to warp it through rendering
+
+1495
+01:19:13,220 --> 01:19:14,940
+ into the canonical frame.
+
+1496
+01:19:14,940 --> 01:19:17,580
+ And that gives you-- that estimates your rotation
+
+1497
+01:19:17,580 --> 01:19:20,420
+ and translation and does pose estimation.
+
+1498
+01:19:20,420 --> 01:19:23,020
+ So I didn't say much of anything about that, but Knox is--
+
+1499
+01:19:23,020 --> 01:19:26,180
+ if you think about object category level,
+
+1500
+01:19:26,180 --> 01:19:28,620
+ object representations, Knox is one of the first ones
+
+1501
+01:19:28,620 --> 01:19:29,260
+ you think about.
+
+1502
+01:19:29,260 --> 01:19:35,180
+ And there's just a lot of other good examples of people doing,
+
+1503
+01:19:35,180 --> 01:19:41,820
+ for instance, using a kind of geometry inference engine.
+
+1504
+01:19:41,820 --> 01:19:45,220
+ Let me see if I can find the right pictures here
+
+1505
+01:19:45,220 --> 01:19:46,900
+ in the middle.
+
+1506
+01:19:46,900 --> 01:19:48,340
+ Yeah, so you get some point cloud,
+
+1507
+01:19:48,340 --> 01:19:52,580
+ and you try to basically fill it in with a shape completion.
+
+1508
+01:19:52,580 --> 01:19:54,580
+ And maybe shape is just enough to do
+
+1509
+01:19:54,580 --> 01:19:56,020
+ a lot of good manipulation.
+
+1510
+01:19:56,020 --> 01:19:59,780
+ So if you have from point cloud to shape completion
+
+1511
+01:19:59,780 --> 01:20:05,060
+ to writing objectives just on shape,
+
+1512
+01:20:05,060 --> 01:20:07,980
+ that can work pretty well too.
+
+1513
+01:20:07,980 --> 01:20:12,140
+ So it's a super rich class of space
+
+1514
+01:20:12,140 --> 01:20:14,860
+ of what is the right level to represent
+
+1515
+01:20:14,860 --> 01:20:17,620
+ objects for manipulation.
+
+1516
+01:20:17,620 --> 01:20:19,940
+ I'll say again, I think it's mostly about how
+
+1517
+01:20:19,940 --> 01:20:21,380
+ do you specify the task.
+
+1518
+01:20:21,380 --> 01:20:23,540
+ That's what defines these things.
+
+1519
+01:20:23,540 --> 01:20:27,100
+ And these are insufficient for the tasks I love most
+
+1520
+01:20:27,100 --> 01:20:28,140
+ that have more dynamics.
+
+1521
+01:20:28,140 --> 01:20:30,820
+ If I wanted to tie the laces on those shoes,
+
+1522
+01:20:30,820 --> 01:20:33,420
+ it's probably going to fall short.
+
+1523
+01:20:33,420 --> 01:20:35,980
+ We've tried a little bit.
+
+1524
+01:20:35,980 --> 01:20:39,980
+ So but I hope you guys can all be contributing it.
+
+1525
+01:20:39,980 --> 01:20:41,740
+ I think this is an active area of research.
+
+1526
+01:20:41,740 --> 01:20:48,220
+ Good.
+
+1527
+01:20:48,220 --> 01:20:51,820
+ That was part two.
+
+1528
+01:20:51,820 --> 01:20:53,180
+ I guess we'll see you next time.
+
+1529
+01:20:53,180 --> 01:20:54,900
+ Sorry that the PSET's not released.
+
+1530
+01:20:54,900 --> 01:20:56,280
+ It's going to be released as soon
+
+1531
+01:20:56,280 --> 01:20:58,700
+ as I get back to my computer.
+
+1532
+01:20:58,700 --> 01:21:00,260
+ So.
+

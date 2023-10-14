@@ -1,0 +1,4440 @@
+1
+00:00:00,000 --> 00:00:07,000
+ And then I'll run a basic simulation
+
+2
+00:00:07,000 --> 00:00:08,000
+ with a couple examples.
+
+3
+00:00:08,000 --> 00:00:11,080
+ So hopefully that'll be useful.
+
+4
+00:00:11,080 --> 00:00:28,160
+ OK, let's do it.
+
+5
+00:00:29,160 --> 00:00:32,160
+ Thank you, as always, for your feedback on the surveys.
+
+6
+00:00:32,160 --> 00:00:36,160
+ Someone actually said they want more jokes.
+
+7
+00:00:36,160 --> 00:00:38,160
+ And if it wasn't an anonymous survey,
+
+8
+00:00:38,160 --> 00:00:40,160
+ I would instantly give an A for that.
+
+9
+00:00:40,160 --> 00:00:43,160
+ But unfortunately, it was anonymous,
+
+10
+00:00:43,160 --> 00:00:47,160
+ and that old person will-- but it made me happy.
+
+11
+00:00:47,160 --> 00:00:52,160
+ Today we're going to do the second half.
+
+12
+00:00:52,160 --> 00:00:56,160
+ Remember, I talked last time about a point finger.
+
+13
+00:00:56,160 --> 00:00:59,160
+ And with the promise that at some point
+
+14
+00:00:59,160 --> 00:01:00,160
+ we'd put the robot back in.
+
+15
+00:01:00,160 --> 00:01:03,160
+ And the goal today is to put the robot back in.
+
+16
+00:01:03,160 --> 00:01:06,160
+ And I'm going to do that in a few steps.
+
+17
+00:01:06,160 --> 00:01:09,160
+ I want to tell you about-- unfortunately,
+
+18
+00:01:09,160 --> 00:01:12,160
+ there's a bit of a zoo of different manipulator control
+
+19
+00:01:12,160 --> 00:01:14,160
+ ideas.
+
+20
+00:01:14,160 --> 00:01:17,160
+ They are all, I think, very related and very simple.
+
+21
+00:01:17,160 --> 00:01:21,160
+ So my task today is to try to keep that organized for you
+
+22
+00:01:21,160 --> 00:01:24,160
+ in your head on the board and try to make it
+
+23
+00:01:24,160 --> 00:01:26,160
+ so it's not confusing.
+
+24
+00:01:26,160 --> 00:01:31,160
+ And I'm going to try to do that by-- I'll put the outline here
+
+25
+00:01:31,160 --> 00:01:33,160
+ and then go back to it a couple times.
+
+26
+00:01:33,160 --> 00:01:48,160
+ So we'll do first just joint space control.
+
+27
+00:01:48,160 --> 00:01:50,160
+ And I want in joint space for you
+
+28
+00:01:50,160 --> 00:01:55,160
+ to just lock in what it would mean to do PD control, what it
+
+29
+00:01:55,160 --> 00:02:04,160
+ means to do stiffness or impedance control, what it
+
+30
+00:02:04,160 --> 00:02:06,160
+ would mean to do inverse dynamics control.
+
+31
+00:02:06,160 --> 00:02:18,160
+ And then we're going to go into Cartesian or end effector
+
+32
+00:02:18,160 --> 00:02:18,660
+ space.
+
+33
+00:02:18,660 --> 00:02:25,160
+ And we'll primarily think about what
+
+34
+00:02:25,160 --> 00:02:28,160
+ it means to be doing stiffness or impedance control there.
+
+35
+00:02:28,160 --> 00:02:34,660
+ OK.
+
+36
+00:02:34,660 --> 00:02:37,160
+ And I'll make sure I talk a little bit at the end
+
+37
+00:02:37,160 --> 00:02:39,660
+ about some limitations and extensions.
+
+38
+00:02:40,660 --> 00:02:41,160
+ OK.
+
+39
+00:02:41,160 --> 00:02:53,300
+ So they're very related ideas, very simple ideas.
+
+40
+00:02:53,300 --> 00:02:56,580
+ I hope that by the end you'll understand
+
+41
+00:02:56,580 --> 00:02:59,220
+ the difference between those and then understand really
+
+42
+00:02:59,220 --> 00:03:04,740
+ the beautiful trick about making the entire robot program
+
+43
+00:03:04,740 --> 00:03:06,860
+ the dynamics at the end effector.
+
+44
+00:03:07,300 --> 00:03:07,800
+ OK.
+
+45
+00:03:07,800 --> 00:03:13,700
+ Now last time we did it on a point finger.
+
+46
+00:03:13,700 --> 00:03:16,860
+ And just partly to review that and to build
+
+47
+00:03:16,860 --> 00:03:19,380
+ into the next one, the interesting thing
+
+48
+00:03:19,380 --> 00:03:23,340
+ about the point finger case is that your joint space
+
+49
+00:03:23,340 --> 00:03:25,740
+ is your Cartesian space.
+
+50
+00:03:25,740 --> 00:03:29,420
+ So we did, in some sense, almost--
+
+51
+00:03:29,420 --> 00:03:31,780
+ we didn't do inverse dynamics, but we did these.
+
+52
+00:03:31,780 --> 00:03:33,340
+ And I'll just write them again.
+
+53
+00:03:33,340 --> 00:03:35,460
+ And we'll launch from there.
+
+54
+00:03:35,460 --> 00:03:35,960
+ OK.
+
+55
+00:03:36,560 --> 00:03:37,060
+ So--
+
+56
+00:03:37,060 --> 00:03:53,160
+ So we thought about our robot as just being
+
+57
+00:03:53,160 --> 00:03:55,280
+ a point with some mass.
+
+58
+00:03:55,280 --> 00:03:57,200
+ OK.
+
+59
+00:03:57,200 --> 00:04:05,680
+ So the configuration of that was really just x, y, z position
+
+60
+00:04:05,680 --> 00:04:06,800
+ of that.
+
+61
+00:04:06,800 --> 00:04:08,040
+ OK.
+
+62
+00:04:08,040 --> 00:04:10,200
+ It turns out that I could have equivalently
+
+63
+00:04:10,200 --> 00:04:12,080
+ said that was the position of the finger,
+
+64
+00:04:12,080 --> 00:04:14,440
+ using my multibody notation, the position of the finger
+
+65
+00:04:14,440 --> 00:04:16,720
+ and the world coordinates.
+
+66
+00:04:16,720 --> 00:04:19,480
+ And since we're going to go back and forth between joint
+
+67
+00:04:19,480 --> 00:04:22,520
+ coordinates and end effector coordinates,
+
+68
+00:04:22,520 --> 00:04:26,120
+ it's a weird thing that in this particular example
+
+69
+00:04:26,120 --> 00:04:27,120
+ they're the same.
+
+70
+00:04:27,120 --> 00:04:27,600
+ OK.
+
+71
+00:04:27,600 --> 00:04:29,600
+ More generally, those are going to be different.
+
+72
+00:04:29,600 --> 00:04:31,760
+ And we're going to want to go back and forth between them.
+
+73
+00:04:31,760 --> 00:04:33,680
+ But I'll highlight here that they're the same
+
+74
+00:04:33,680 --> 00:04:38,240
+ and just show the various components when they're
+
+75
+00:04:38,240 --> 00:04:41,200
+ the same are very simple.
+
+76
+00:04:41,200 --> 00:04:41,700
+ OK.
+
+77
+00:04:41,700 --> 00:04:47,640
+ So the dynamics of this point finger were very simple.
+
+78
+00:04:47,640 --> 00:04:53,080
+ Just had our mass was our gravity vector.
+
+79
+00:04:53,080 --> 00:04:55,680
+ Let me write it in the slightly more general form this time.
+
+80
+00:04:55,680 --> 00:05:02,880
+ This is the gravitational vector,
+
+81
+00:05:02,880 --> 00:05:10,160
+ which for the simple robot is just 0, 0, negative m times
+
+82
+00:05:10,160 --> 00:05:13,080
+ 9.81, negative mg, if you will.
+
+83
+00:05:13,080 --> 00:05:16,600
+ OK.
+
+84
+00:05:16,600 --> 00:05:20,760
+ And then we allowed ourselves to have some fictitious forces
+
+85
+00:05:20,760 --> 00:05:21,480
+ being applied.
+
+86
+00:05:21,480 --> 00:05:27,560
+ Our actuator was coming in as a jet pack, basically,
+
+87
+00:05:27,560 --> 00:05:31,240
+ that could apply forces anywhere.
+
+88
+00:05:31,240 --> 00:05:35,440
+ And then I could potentially have some external forces that
+
+89
+00:05:35,440 --> 00:05:37,160
+ were applied at the finger.
+
+90
+00:05:37,160 --> 00:05:43,400
+ And we talked last time about how
+
+91
+00:05:43,400 --> 00:05:48,360
+ to regulate the external forces, either directly or indirectly.
+
+92
+00:05:48,360 --> 00:05:54,480
+ When you see this, by the way, the reason I always
+
+93
+00:05:54,480 --> 00:05:56,920
+ choose to write it like this-- I've said this once before.
+
+94
+00:05:56,920 --> 00:05:59,600
+ I'll say it again because we're going to build on it today here.
+
+95
+00:05:59,600 --> 00:06:01,960
+ But I want you to see this equation.
+
+96
+00:06:01,960 --> 00:06:04,720
+ And the reason I always put some terms on the right hand side,
+
+97
+00:06:04,720 --> 00:06:06,640
+ some terms on the left hand side,
+
+98
+00:06:06,640 --> 00:06:09,840
+ is because I want you to see this as just mass times
+
+99
+00:06:09,840 --> 00:06:11,280
+ acceleration on one side.
+
+100
+00:06:11,280 --> 00:06:16,280
+ And these are all the forces, right?
+
+101
+00:06:16,280 --> 00:06:19,480
+ This is the sum of the forces.
+
+102
+00:06:19,480 --> 00:06:23,560
+ So the gravity is a force, a torque.
+
+103
+00:06:23,560 --> 00:06:25,160
+ My control input is another force
+
+104
+00:06:25,160 --> 00:06:27,000
+ that's being applied on any external forces.
+
+105
+00:06:27,000 --> 00:06:29,000
+ So this is just f equals ma.
+
+106
+00:06:29,000 --> 00:06:31,000
+ And I always try to write it where
+
+107
+00:06:31,000 --> 00:06:33,120
+ I have ma on one side and force on the other side,
+
+108
+00:06:33,120 --> 00:06:35,600
+ unless we start trying to be fancier.
+
+109
+00:06:35,600 --> 00:06:39,200
+ But the original governing equations should be like that.
+
+110
+00:06:39,200 --> 00:06:48,440
+ So in joint space, there's an interesting question, first,
+
+111
+00:06:48,440 --> 00:06:52,080
+ of how do I track a trajectory?
+
+112
+00:06:52,080 --> 00:06:53,440
+ So we talked about force control,
+
+113
+00:06:53,440 --> 00:06:54,900
+ and we'll get back to force control.
+
+114
+00:06:54,900 --> 00:06:57,820
+ But let's forget about interacting with the world.
+
+115
+00:06:57,820 --> 00:07:01,040
+ Let's just say I want to move my finger around.
+
+116
+00:07:01,040 --> 00:07:03,880
+ And I spent some time, maybe, with my kinematic trajectory
+
+117
+00:07:03,880 --> 00:07:08,920
+ optimization, made a beautiful trajectory, q of t.
+
+118
+00:07:08,920 --> 00:07:11,000
+ I've got some beautiful q of t.
+
+119
+00:07:11,000 --> 00:07:13,760
+ I'll call it q desired of t.
+
+120
+00:07:13,760 --> 00:07:17,240
+ Maybe the result of trajectory optimization.
+
+121
+00:07:17,240 --> 00:07:20,620
+ [WRITING ON BOARD]
+
+122
+00:07:20,620 --> 00:07:36,980
+ There's a problem in the manipulator control world,
+
+123
+00:07:36,980 --> 00:07:38,700
+ which would just be trajectory tracking.
+
+124
+00:07:38,700 --> 00:07:44,900
+ If I have some q desired of t, how
+
+125
+00:07:44,900 --> 00:07:50,700
+ do I make it so q of t tries to track,
+
+126
+00:07:50,700 --> 00:07:52,980
+ converges on q desired of t, and maybe
+
+127
+00:07:52,980 --> 00:07:54,220
+ tracks it with high precision?
+
+128
+00:07:54,220 --> 00:08:02,340
+ And for this, I'll say the external forces
+
+129
+00:08:02,340 --> 00:08:05,700
+ are 0 for a minute.
+
+130
+00:08:05,700 --> 00:08:06,860
+ And we'll put those back in.
+
+131
+00:08:13,140 --> 00:08:16,580
+ So what is a good controller for tracking a trajectory
+
+132
+00:08:16,580 --> 00:08:19,540
+ that you might want to run on a robot?
+
+133
+00:08:19,540 --> 00:08:23,020
+ Even in the point finger case, it's just so simple
+
+134
+00:08:23,020 --> 00:08:25,020
+ that I think it's worth writing it here first,
+
+135
+00:08:25,020 --> 00:08:28,740
+ so we can see how those same ideas manifest themselves
+
+136
+00:08:28,740 --> 00:08:29,940
+ in the full case.
+
+137
+00:08:29,940 --> 00:08:34,700
+ We only have a few different cases.
+
+138
+00:08:34,700 --> 00:08:37,860
+ So the one that we've seen a few times--
+
+139
+00:08:37,860 --> 00:08:40,100
+ I feel bad for the people that have a robot directly
+
+140
+00:08:40,100 --> 00:08:42,220
+ in the way, but I guess, of all the things
+
+141
+00:08:42,220 --> 00:08:46,580
+ to be occluded by, robots are good.
+
+142
+00:08:46,580 --> 00:08:52,940
+ OK, so maybe I could do a PD control.
+
+143
+00:08:52,940 --> 00:08:55,900
+ PID control is perfectly good, too,
+
+144
+00:08:55,900 --> 00:08:57,780
+ but I'll just do PD control for now.
+
+145
+00:08:57,780 --> 00:09:07,580
+ So what if I did kp q desired minus q, kd q desired
+
+146
+00:09:07,580 --> 00:09:09,300
+ dot minus q dot?
+
+147
+00:09:10,300 --> 00:09:11,780
+ [INAUDIBLE]
+
+148
+00:09:11,780 --> 00:09:19,740
+ That's one of the systems that we've seen before.
+
+149
+00:09:19,740 --> 00:09:20,700
+ [INAUDIBLE]
+
+150
+00:09:20,700 --> 00:09:26,740
+ You're right, sorry.
+
+151
+00:09:26,740 --> 00:09:30,620
+ No, it should be plus over here.
+
+152
+00:09:30,620 --> 00:09:33,820
+ Yeah, because I put the desired in, I put a minus here.
+
+153
+00:09:33,820 --> 00:09:35,660
+ Sometimes I do q dot.
+
+154
+00:09:35,660 --> 00:09:36,780
+ It was absolutely an error.
+
+155
+00:09:36,780 --> 00:09:37,280
+ Thank you.
+
+156
+00:09:37,280 --> 00:09:38,180
+ [INAUDIBLE]
+
+157
+00:09:38,180 --> 00:09:42,320
+ Good.
+
+158
+00:09:42,320 --> 00:09:46,040
+ So by the way, this is well-defined.
+
+159
+00:09:46,040 --> 00:09:48,360
+ If I have a trajectory a priori, I
+
+160
+00:09:48,360 --> 00:09:50,480
+ could take the derivative of that trajectory,
+
+161
+00:09:50,480 --> 00:09:53,080
+ and I could have a desired velocity
+
+162
+00:09:53,080 --> 00:09:57,560
+ at every instant in time, too, if I'm tracking some trajectory.
+
+163
+00:09:57,560 --> 00:10:00,080
+ So what happens if I put this controller even
+
+164
+00:10:00,080 --> 00:10:05,680
+ into my little mass system?
+
+165
+00:10:05,680 --> 00:10:08,760
+ Let's say I have a desired trajectory that
+
+166
+00:10:08,760 --> 00:10:10,640
+ was just a sine wave or something like this.
+
+167
+00:10:10,640 --> 00:10:14,840
+ Let's say q desired of time was just, I don't know,
+
+168
+00:10:14,840 --> 00:10:16,320
+ 10 times sine of t.
+
+169
+00:10:16,320 --> 00:10:26,200
+ I could certainly figure out-- I could take the derivatives,
+
+170
+00:10:26,200 --> 00:10:27,280
+ of course, right?
+
+171
+00:10:27,280 --> 00:10:32,040
+ q dot t is just 10 cosine of t.
+
+172
+00:10:32,040 --> 00:10:33,520
+ And I could run this controller.
+
+173
+00:10:33,520 --> 00:10:38,840
+ How well will it do at tracking?
+
+174
+00:10:38,840 --> 00:10:42,440
+ What are the good and bad things about that?
+
+175
+00:10:42,440 --> 00:10:47,180
+ Assuming I've chosen pretty good values for, let's say, kp and kd,
+
+176
+00:10:47,180 --> 00:10:48,760
+ how would you expect this to perform?
+
+177
+00:10:48,760 --> 00:10:56,660
+ Yes?
+
+178
+00:10:56,660 --> 00:10:57,160
+ [INAUDIBLE]
+
+179
+00:10:57,160 --> 00:11:01,520
+ Good.
+
+180
+00:11:01,520 --> 00:11:05,880
+ So there's a question about delay,
+
+181
+00:11:05,880 --> 00:11:07,520
+ which we're going to-- that's actually
+
+182
+00:11:07,520 --> 00:11:08,840
+ the second point I want to make.
+
+183
+00:11:08,840 --> 00:11:11,440
+ So yes, there's going to be a little bit of lag here.
+
+184
+00:11:11,440 --> 00:11:13,600
+ What about even if-- what if I just
+
+185
+00:11:13,600 --> 00:11:16,120
+ said the desired trajectory was 0?
+
+186
+00:11:16,120 --> 00:11:17,160
+ What's going to happen?
+
+187
+00:11:17,160 --> 00:11:18,420
+ That's even the simplest case.
+
+188
+00:11:18,420 --> 00:11:21,040
+ What if qd was just 0?
+
+189
+00:11:21,040 --> 00:11:22,540
+ What's this controller going to do?
+
+190
+00:11:22,540 --> 00:11:28,420
+ [INAUDIBLE]
+
+191
+00:11:31,360 --> 00:11:33,840
+ It won't be 90 degrees out of phase.
+
+192
+00:11:33,840 --> 00:11:34,760
+ That's a good question.
+
+193
+00:11:34,760 --> 00:11:37,680
+ I mean, if I've chosen a critically damped thing,
+
+194
+00:11:37,680 --> 00:11:42,720
+ and I say the desired is 0-- so q desired is 0,
+
+195
+00:11:42,720 --> 00:11:46,080
+ q dot desired is 0-- then I will have
+
+196
+00:11:46,080 --> 00:11:48,720
+ a system that has a critically damped response,
+
+197
+00:11:48,720 --> 00:11:51,440
+ assuming I've chosen this.
+
+198
+00:11:51,440 --> 00:11:54,400
+ But the question is, does it get to the desired 0?
+
+199
+00:11:59,040 --> 00:12:02,920
+ And it doesn't necessarily, because there's an offset term
+
+200
+00:12:02,920 --> 00:12:05,520
+ here in the gravity.
+
+201
+00:12:05,520 --> 00:12:09,520
+ And this is fundamentally an error-driven controller.
+
+202
+00:12:09,520 --> 00:12:17,000
+ So if q equals q desired, and q dot equals q desired,
+
+203
+00:12:17,000 --> 00:12:18,920
+ then the torque is 0.
+
+204
+00:12:18,920 --> 00:12:21,960
+ And gravity is going to pull me away.
+
+205
+00:12:21,960 --> 00:12:24,680
+ It requires some error here in order
+
+206
+00:12:24,680 --> 00:12:27,600
+ to resist gravity and balance.
+
+207
+00:12:27,600 --> 00:12:29,440
+ And I made the trivial simulation
+
+208
+00:12:29,440 --> 00:12:30,440
+ just so we could see it.
+
+209
+00:12:30,440 --> 00:12:37,440
+ This is the simple case.
+
+210
+00:12:37,440 --> 00:12:40,280
+ Let's even make-- it's easy to see when I just
+
+211
+00:12:40,280 --> 00:12:42,240
+ set the amplitude to 0.
+
+212
+00:12:42,240 --> 00:12:45,560
+ If my desired trajectory is just a flat line,
+
+213
+00:12:45,560 --> 00:12:48,640
+ and I have a point mass finger, and I have gravity,
+
+214
+00:12:48,640 --> 00:12:51,440
+ and I run a PD controller, then it
+
+215
+00:12:51,440 --> 00:12:55,320
+ will converge to a steady state.
+
+216
+00:12:55,320 --> 00:12:57,560
+ But it's not necessarily going to drive the error
+
+217
+00:12:57,560 --> 00:12:58,960
+ to 0.
+
+218
+00:12:58,960 --> 00:13:02,280
+ A PID controller would drive that to 0
+
+219
+00:13:02,280 --> 00:13:04,840
+ if I put the integral term back in.
+
+220
+00:13:04,840 --> 00:13:06,960
+ But when we start tracking fast trajectories,
+
+221
+00:13:06,960 --> 00:13:09,720
+ the integral term is going to have a more complex effect.
+
+222
+00:13:09,720 --> 00:13:13,200
+ So I'm going to leave it out for now.
+
+223
+00:13:13,200 --> 00:13:15,560
+ There's a different way besides the integral term
+
+224
+00:13:15,560 --> 00:13:18,600
+ that we could take care of that.
+
+225
+00:13:18,600 --> 00:13:20,720
+ And I want you to appreciate that that actually
+
+226
+00:13:20,720 --> 00:13:23,020
+ is what happened when we wrote the stiffness controller
+
+227
+00:13:23,020 --> 00:13:24,960
+ before.
+
+228
+00:13:24,960 --> 00:13:30,520
+ So when we wrote a stiffness controller before,
+
+229
+00:13:30,520 --> 00:13:32,080
+ we wrote almost the same controller.
+
+230
+00:13:32,080 --> 00:13:46,440
+ But we also added in-- actually subtracted off--
+
+231
+00:13:46,440 --> 00:13:49,280
+ the gravity term.
+
+232
+00:13:49,280 --> 00:13:51,320
+ And we called that our stiffness control before.
+
+233
+00:13:51,680 --> 00:13:56,080
+ [WRITING]
+
+234
+00:13:56,080 --> 00:13:58,800
+ And I almost feel silly calling these things different things.
+
+235
+00:13:58,800 --> 00:14:02,040
+ In the point finger case, they're so simple.
+
+236
+00:14:02,040 --> 00:14:05,840
+ But I think this is an important idea.
+
+237
+00:14:05,840 --> 00:14:10,760
+ One thing you can do if you know the mass of your finger
+
+238
+00:14:10,760 --> 00:14:14,560
+ is you can just subtract it off.
+
+239
+00:14:14,560 --> 00:14:17,680
+ And the reason that that intellectually
+
+240
+00:14:17,680 --> 00:14:20,560
+ matches stiffness control is because then I
+
+241
+00:14:20,560 --> 00:14:26,880
+ can say that the resulting closed loop dynamics were
+
+242
+00:14:26,880 --> 00:14:34,000
+ mq double dot plus-- I'll do it like a mass spring damper.
+
+243
+00:14:34,000 --> 00:14:38,320
+ So I'm going to change my sign on that.
+
+244
+00:14:38,320 --> 00:14:39,800
+ Like Leray was looking for.
+
+245
+00:14:39,800 --> 00:14:42,760
+ This is a dot here now.
+
+246
+00:14:42,760 --> 00:14:48,160
+ q desired equals 0, in fact, if there's
+
+247
+00:14:48,160 --> 00:14:51,640
+ no external force.
+
+248
+00:14:51,640 --> 00:14:58,480
+ The PD controller has an extra nagging term from gravity.
+
+249
+00:14:58,480 --> 00:15:00,160
+ The stiffness controller, by virtue
+
+250
+00:15:00,160 --> 00:15:03,160
+ of trying to act like a spring, is actually
+
+251
+00:15:03,160 --> 00:15:05,520
+ canceling that out.
+
+252
+00:15:05,520 --> 00:15:07,540
+ But in the simple case, the only thing
+
+253
+00:15:07,540 --> 00:15:10,040
+ that's different between the stiffness controller and the PD
+
+254
+00:15:10,040 --> 00:15:12,040
+ controller is gravity compensation.
+
+255
+00:15:15,760 --> 00:15:18,240
+ And of course, if I add that gravity compensation
+
+256
+00:15:18,240 --> 00:15:24,120
+ into the simulator, then I get a nice response
+
+257
+00:15:24,120 --> 00:15:28,440
+ that will converge to the desired, when
+
+258
+00:15:28,440 --> 00:15:30,960
+ the desired is 0 at least.
+
+259
+00:15:30,960 --> 00:15:32,380
+ If I do something more interesting,
+
+260
+00:15:32,380 --> 00:15:35,680
+ like have it be the sine wave again,
+
+261
+00:15:35,680 --> 00:15:41,040
+ then this actually will do a fairly OK job at tracking.
+
+262
+00:15:41,040 --> 00:15:43,040
+ This is the orange is the desired.
+
+263
+00:15:43,040 --> 00:15:44,040
+ The blue is the actual.
+
+264
+00:15:44,040 --> 00:15:47,160
+ I started a little bit off the nominal.
+
+265
+00:15:47,160 --> 00:15:51,400
+ And although there's a little bit of lag,
+
+266
+00:15:51,400 --> 00:15:53,100
+ certainly at the beginning here, it actually
+
+267
+00:15:53,100 --> 00:15:54,100
+ does a pretty good job.
+
+268
+00:15:54,100 --> 00:15:58,320
+ I think I'd have to put up the bandwidth to see the phase.
+
+269
+00:15:58,320 --> 00:15:59,680
+ I'd have to increase the frequency
+
+270
+00:15:59,680 --> 00:16:01,280
+ to see any notable lag.
+
+271
+00:16:01,280 --> 00:16:09,120
+ OK.
+
+272
+00:16:09,120 --> 00:16:11,600
+ Turns out you can do better still.
+
+273
+00:16:11,600 --> 00:16:13,040
+ You can get around some of the lag
+
+274
+00:16:13,040 --> 00:16:16,000
+ with just one additional idea.
+
+275
+00:16:16,000 --> 00:16:16,760
+ And guess what?
+
+276
+00:16:16,760 --> 00:16:18,360
+ That additional idea is what happens
+
+277
+00:16:18,360 --> 00:16:19,960
+ in inverse dynamics control.
+
+278
+00:16:19,960 --> 00:16:23,080
+ In the point finger case, it's all extremely simple.
+
+279
+00:16:23,080 --> 00:16:38,680
+ What would you do to try to get around that lag, if you will?
+
+280
+00:16:38,680 --> 00:16:43,120
+ Which is there's an extra piece of information
+
+281
+00:16:43,120 --> 00:16:46,520
+ that we have that we haven't given our tracking controller.
+
+282
+00:16:46,520 --> 00:16:55,160
+ Which is we know arbitrary derivatives of q, right?
+
+283
+00:16:55,160 --> 00:16:57,000
+ Of q desired.
+
+284
+00:16:57,000 --> 00:17:00,360
+ If we tell it where it's going to go and give a feed forward
+
+285
+00:17:00,360 --> 00:17:06,680
+ term that uses q double dot, then we
+
+286
+00:17:06,680 --> 00:17:08,640
+ can get better tracking performance still.
+
+287
+00:17:08,640 --> 00:17:09,760
+ OK.
+
+288
+00:17:09,760 --> 00:17:36,040
+ So there's a couple ways that you could add that in.
+
+289
+00:17:36,040 --> 00:17:38,600
+ The way that it's typically done in inverse dynamics control,
+
+290
+00:17:38,600 --> 00:17:41,040
+ I wish it was exactly the thing you'd expect.
+
+291
+00:17:41,040 --> 00:17:44,840
+ But for an important reason, it's
+
+292
+00:17:44,840 --> 00:17:46,840
+ just a little different than what you'd expect.
+
+293
+00:17:46,840 --> 00:17:52,400
+ But I'm going to say it's q double dot desired.
+
+294
+00:17:52,400 --> 00:17:54,640
+ And I'm going to go ahead and multiply that mass by all
+
+295
+00:17:54,640 --> 00:17:55,520
+ of my terms here.
+
+296
+00:17:55,520 --> 00:18:00,800
+ Flipping my signs.
+
+297
+00:18:00,800 --> 00:18:08,600
+ Let's do it like this.
+
+298
+00:18:08,600 --> 00:18:14,600
+ So this is a feed forward term.
+
+299
+00:18:14,600 --> 00:18:25,520
+ And fundamentally, it's what you need
+
+300
+00:18:25,520 --> 00:18:27,960
+ to do to get around this error driven control.
+
+301
+00:18:27,960 --> 00:18:31,880
+ You want to be able to send it so that if the trajectory is
+
+302
+00:18:31,880 --> 00:18:37,160
+ on-- if your current system is exactly on the trajectory,
+
+303
+00:18:37,160 --> 00:18:40,700
+ it will get the command it needs to stay on the trajectory.
+
+304
+00:18:40,700 --> 00:18:43,560
+ You don't have to wait for error to occur to get back
+
+305
+00:18:43,560 --> 00:18:44,800
+ towards the trajectory.
+
+306
+00:18:44,800 --> 00:18:48,000
+ The way to do that is by giving instantaneous information
+
+307
+00:18:48,000 --> 00:18:51,440
+ about where that trajectory is going to go.
+
+308
+00:18:51,440 --> 00:18:53,640
+ And this is what happens in inverse dynamics control.
+
+309
+00:18:54,640 --> 00:18:55,140
+ OK.
+
+310
+00:18:55,140 --> 00:19:12,360
+ Super simple ideas, especially in the point finger case.
+
+311
+00:19:12,360 --> 00:19:14,900
+ And they're just going to map directly over
+
+312
+00:19:14,900 --> 00:19:17,320
+ to the joint, full joint robot case.
+
+313
+00:19:21,760 --> 00:19:23,960
+ And of course, I will try to convince you here
+
+314
+00:19:23,960 --> 00:19:29,100
+ that if I were to put the feed forward term in,
+
+315
+00:19:29,100 --> 00:19:30,300
+ that things get even better.
+
+316
+00:19:30,300 --> 00:19:35,600
+ That I get beautiful convergence to the nominal trajectory.
+
+317
+00:19:35,600 --> 00:19:37,260
+ And I'll stay on the nominal trajectory.
+
+318
+00:19:37,260 --> 00:19:39,640
+ I won't deviate on every oscillation.
+
+319
+00:19:39,640 --> 00:19:41,720
+ Once I'm there, I'll stay on there.
+
+320
+00:19:41,720 --> 00:19:43,440
+ It's actually easy to see that.
+
+321
+00:19:43,440 --> 00:19:44,640
+ OK.
+
+322
+00:19:44,640 --> 00:19:47,680
+ The reason to do this and have mass actually multiply my--
+
+323
+00:19:47,680 --> 00:19:52,520
+ I'm going to scale my kp and kd also by the mass.
+
+324
+00:19:52,520 --> 00:19:56,440
+ Is because then if I write out the closed loop dynamics,
+
+325
+00:19:56,440 --> 00:20:00,520
+ I can say that I have m q double dot.
+
+326
+00:20:00,520 --> 00:20:02,960
+ I can pull this whole thing on the other side here.
+
+327
+00:20:02,960 --> 00:20:07,320
+ Minus this.
+
+328
+00:20:07,320 --> 00:20:08,960
+ I'll just pull that on the other side.
+
+329
+00:20:08,960 --> 00:20:11,080
+ OK.
+
+330
+00:20:11,080 --> 00:20:15,080
+ I'll put it in spring mass damper form again.
+
+331
+00:20:15,080 --> 00:20:29,360
+ Put my damping equals 0.
+
+332
+00:20:29,360 --> 00:20:31,360
+ OK.
+
+333
+00:20:31,360 --> 00:20:35,280
+ That's the resulting equations of motion.
+
+334
+00:20:35,280 --> 00:20:41,200
+ And if I were to just call this term e,
+
+335
+00:20:41,200 --> 00:20:46,120
+ if I define e to be my error, I'll call it q minus q desired.
+
+336
+00:20:46,120 --> 00:20:51,680
+ Then I could write the same equation.
+
+337
+00:20:51,680 --> 00:20:55,520
+ You'll see this often in the multi-body manipulator control
+
+338
+00:20:55,520 --> 00:20:56,000
+ world.
+
+339
+00:20:56,000 --> 00:21:06,920
+ I could write the same equation as just a first order--
+
+340
+00:21:06,920 --> 00:21:11,240
+ a second order spring mass damper on the error.
+
+341
+00:21:11,240 --> 00:21:11,720
+ OK.
+
+342
+00:21:11,720 --> 00:21:15,560
+ So the error will converge to 0 and stay at 0.
+
+343
+00:21:15,560 --> 00:21:17,080
+ And that's beautiful.
+
+344
+00:21:17,080 --> 00:21:20,320
+ That wasn't true until I put the feedforward accelerations in.
+
+345
+00:21:20,320 --> 00:21:29,680
+ I want to make sure that these ideas are clear.
+
+346
+00:21:29,680 --> 00:21:31,880
+ Because they'll get more--
+
+347
+00:21:31,880 --> 00:21:34,520
+ same ideas, but just with more terms and the like
+
+348
+00:21:34,520 --> 00:21:38,280
+ if we go to the manipulator case.
+
+349
+00:21:38,280 --> 00:21:38,780
+ Yes.
+
+350
+00:21:38,780 --> 00:21:39,280
+ [INAUDIBLE]
+
+351
+00:21:39,280 --> 00:21:52,000
+ Excellent.
+
+352
+00:21:52,000 --> 00:21:52,760
+ Good.
+
+353
+00:21:52,760 --> 00:21:56,000
+ So the question is, what are the requirements for the controller
+
+354
+00:21:56,000 --> 00:21:58,000
+ in terms of knowing the system?
+
+355
+00:21:58,000 --> 00:22:03,440
+ So in this case, I only need to know the gravity terms.
+
+356
+00:22:03,440 --> 00:22:05,920
+ If I have a model of the gravity terms of the robot,
+
+357
+00:22:05,920 --> 00:22:08,160
+ then I can execute this controller.
+
+358
+00:22:08,160 --> 00:22:10,480
+ Here, I applied a controller that
+
+359
+00:22:10,480 --> 00:22:12,800
+ had the mass also inside it--
+
+360
+00:22:12,800 --> 00:22:14,800
+ mass and the gravity term.
+
+361
+00:22:14,800 --> 00:22:16,720
+ OK.
+
+362
+00:22:16,720 --> 00:22:20,340
+ So that does ask me to know more about my system.
+
+363
+00:22:20,340 --> 00:22:21,960
+ But you can ask an interesting question
+
+364
+00:22:21,960 --> 00:22:26,080
+ about if this is approximate, how sensitive is it?
+
+365
+00:22:26,080 --> 00:22:29,360
+ This is actually relatively not terribly sensitive.
+
+366
+00:22:32,440 --> 00:22:35,200
+ You can do an error analysis of what happens if I put m tilde in
+
+367
+00:22:35,200 --> 00:22:36,160
+ like this.
+
+368
+00:22:36,160 --> 00:22:38,680
+ If you have controllers that try to invert mass and stuff
+
+369
+00:22:38,680 --> 00:22:40,280
+ like this, it can get a lot more sensitive.
+
+370
+00:22:40,280 --> 00:22:42,080
+ There's different ways that mass can enter.
+
+371
+00:22:42,080 --> 00:22:43,440
+ This one's not as terrible.
+
+372
+00:22:43,440 --> 00:22:52,680
+ So this controller doesn't need to sense
+
+373
+00:22:52,680 --> 00:22:55,600
+ q double dot on the robot.
+
+374
+00:22:55,600 --> 00:22:57,140
+ It's just if I have a trajectory,
+
+375
+00:22:57,140 --> 00:22:59,280
+ I can differentiate it twice.
+
+376
+00:22:59,280 --> 00:23:00,440
+ That's my motion plan.
+
+377
+00:23:00,440 --> 00:23:01,480
+ I differentiate it twice.
+
+378
+00:23:01,480 --> 00:23:03,040
+ As long as I could do that, that's OK.
+
+379
+00:23:03,040 --> 00:23:05,520
+ So I don't feel that I added a new requirement in terms
+
+380
+00:23:05,520 --> 00:23:08,120
+ of sensing in that.
+
+381
+00:23:08,120 --> 00:23:10,440
+ But there is a new requirement in terms of the model.
+
+382
+00:23:10,440 --> 00:23:11,040
+ Great question.
+
+383
+00:23:11,040 --> 00:23:17,560
+ This controller is actually the one
+
+384
+00:23:17,560 --> 00:23:21,320
+ we've been mostly using in simulation.
+
+385
+00:23:21,320 --> 00:23:27,080
+ It has torques coming out in the Drake systems framework,
+
+386
+00:23:27,080 --> 00:23:27,580
+ whatever.
+
+387
+00:23:27,580 --> 00:23:30,840
+ You'll see this as the estimated state coming in,
+
+388
+00:23:30,840 --> 00:23:32,920
+ the desired state coming in, and then you
+
+389
+00:23:32,920 --> 00:23:39,120
+ can send a feedforward acceleration coming in.
+
+390
+00:23:39,120 --> 00:23:41,720
+ That's the inverse dynamics controller.
+
+391
+00:23:41,720 --> 00:23:45,400
+ You'll see that in the manipulation station stack
+
+392
+00:23:45,400 --> 00:23:46,440
+ that you've been running.
+
+393
+00:23:46,440 --> 00:23:52,240
+ But we actually don't send--
+
+394
+00:23:52,240 --> 00:23:56,400
+ we just leave this disconnected because EWO won't accept it.
+
+395
+00:23:56,400 --> 00:23:58,520
+ And I'll tell you about that at the end, maybe why.
+
+396
+00:23:58,520 --> 00:23:59,020
+ OK.
+
+397
+00:23:59,020 --> 00:24:12,740
+ If I put force back in, then it's not so different.
+
+398
+00:24:12,740 --> 00:24:14,240
+ If I were to put the force back in,
+
+399
+00:24:14,240 --> 00:24:16,240
+ then I'd get a trailing force term.
+
+400
+00:24:16,240 --> 00:24:21,320
+ And it's interesting to think about what happens
+
+401
+00:24:21,320 --> 00:24:22,440
+ if I put the force back in.
+
+402
+00:24:22,440 --> 00:24:25,760
+ Now I have a second order damped oscillator,
+
+403
+00:24:25,760 --> 00:24:28,700
+ but with some driving external force.
+
+404
+00:24:28,700 --> 00:24:30,900
+ So maybe that's still a pretty reasonable thing to do.
+
+405
+00:24:30,900 --> 00:24:40,280
+ Yeah?
+
+406
+00:24:40,280 --> 00:24:40,780
+ OK, sorry.
+
+407
+00:24:40,780 --> 00:24:41,280
+ Thanks.
+
+408
+00:24:41,280 --> 00:24:43,240
+ AUDIENCE: I think we're adding--
+
+409
+00:24:43,240 --> 00:24:46,720
+ what sensor do we use to get q double dot?
+
+410
+00:24:46,720 --> 00:24:50,680
+ Do we use just using the numerical method from position,
+
+411
+00:24:50,680 --> 00:24:53,680
+ or do we have extra sensors?
+
+412
+00:24:53,680 --> 00:24:56,880
+ Again, this is q double dot desired.
+
+413
+00:24:56,880 --> 00:24:59,320
+ Yeah, but like the--
+
+414
+00:24:59,320 --> 00:24:59,820
+ This is--
+
+415
+00:24:59,820 --> 00:25:00,680
+ Oh.
+
+416
+00:25:00,680 --> 00:25:01,600
+ Good, that's a great--
+
+417
+00:25:01,600 --> 00:25:02,160
+ great.
+
+418
+00:25:02,160 --> 00:25:05,520
+ So this is me analyzing the closed loop system.
+
+419
+00:25:05,520 --> 00:25:07,840
+ I don't have to-- this is the controller that I implement.
+
+420
+00:25:07,840 --> 00:25:09,120
+ This is what I have to type in.
+
+421
+00:25:09,120 --> 00:25:11,440
+ The result of combining my controller with physics
+
+422
+00:25:11,440 --> 00:25:12,920
+ is something that uses q double dot,
+
+423
+00:25:12,920 --> 00:25:14,760
+ because physics uses q double dot.
+
+424
+00:25:14,760 --> 00:25:16,260
+ But I don't have to implement that.
+
+425
+00:25:16,260 --> 00:25:18,040
+ What about q dot?
+
+426
+00:25:18,040 --> 00:25:19,640
+ For q dot, it's going to be--
+
+427
+00:25:19,640 --> 00:25:21,000
+ I mean, depending on the sensors,
+
+428
+00:25:21,000 --> 00:25:23,680
+ there's rotary encoders there.
+
+429
+00:25:23,680 --> 00:25:26,640
+ Derivatives-- we typically think of as positions and derivatives
+
+430
+00:25:26,640 --> 00:25:30,000
+ to be pretty clean, and we try to avoid accelerations
+
+431
+00:25:30,000 --> 00:25:32,640
+ as a general rule of thumb.
+
+432
+00:25:32,640 --> 00:25:34,320
+ You don't want to do high bandwidth control
+
+433
+00:25:34,320 --> 00:25:35,600
+ with accelerations.
+
+434
+00:25:35,600 --> 00:25:42,400
+ So EWA-- just something I was going to say later,
+
+435
+00:25:42,400 --> 00:25:45,160
+ but EWA allows you to send q desired,
+
+436
+00:25:45,160 --> 00:25:47,440
+ but it doesn't actually allow you to independently send
+
+437
+00:25:47,440 --> 00:25:51,040
+ q desired and q desired dot.
+
+438
+00:25:51,040 --> 00:25:52,200
+ I believe that's--
+
+439
+00:25:52,200 --> 00:25:56,400
+ I think they made a safety argument with that,
+
+440
+00:25:56,400 --> 00:25:57,600
+ and that somehow--
+
+441
+00:25:57,600 --> 00:26:01,920
+ if you could imagine a bad user sending inconsistent q and q
+
+442
+00:26:01,920 --> 00:26:04,360
+ desired dot, that might break their safety proof,
+
+443
+00:26:04,360 --> 00:26:05,760
+ for instance.
+
+444
+00:26:05,760 --> 00:26:08,080
+ So they instead take a sequence of q desired,
+
+445
+00:26:08,080 --> 00:26:10,960
+ and they add a little bit more delay even,
+
+446
+00:26:10,960 --> 00:26:14,680
+ and they'll take a finite differences to estimate q dot,
+
+447
+00:26:14,680 --> 00:26:16,120
+ and then send that as a command.
+
+448
+00:26:16,120 --> 00:26:18,320
+ But you're only actually allowed to talk to the robot
+
+449
+00:26:18,320 --> 00:26:20,880
+ with q desired over time.
+
+450
+00:26:20,880 --> 00:26:26,800
+ All right, so let's blow this up now.
+
+451
+00:26:26,800 --> 00:26:30,720
+ So we understand in the simple case, PD, stiffness,
+
+452
+00:26:30,720 --> 00:26:33,120
+ and inverse dynamics is just adding one thing at a time.
+
+453
+00:26:33,120 --> 00:26:33,640
+ Yeah?
+
+454
+00:26:33,640 --> 00:26:34,140
+ [INAUDIBLE]
+
+455
+00:26:34,140 --> 00:26:43,160
+ For which part?
+
+456
+00:26:43,160 --> 00:26:44,560
+ They shouldn't.
+
+457
+00:26:44,560 --> 00:26:58,960
+ The stiffness control--
+
+458
+00:26:58,960 --> 00:26:59,960
+ [INAUDIBLE]
+
+459
+00:26:59,960 --> 00:27:00,880
+ Tau g.
+
+460
+00:27:00,880 --> 00:27:02,960
+ They should both be minus tau g.
+
+461
+00:27:02,960 --> 00:27:03,720
+ Thank you.
+
+462
+00:27:03,720 --> 00:27:09,680
+ Because, yes, the tau g is on the right-hand side
+
+463
+00:27:09,680 --> 00:27:11,600
+ with the u's, so I have to subtract it out.
+
+464
+00:27:11,600 --> 00:27:14,440
+ Thank you for catching that.
+
+465
+00:27:14,440 --> 00:27:16,320
+ Too many symbols to get right on the board.
+
+466
+00:27:16,320 --> 00:27:21,080
+ OK, same recipe now, but let's do it
+
+467
+00:27:21,080 --> 00:27:22,280
+ on the manipulator equations.
+
+468
+00:27:22,280 --> 00:27:40,680
+ Remember, the dynamics that we were writing
+
+469
+00:27:40,680 --> 00:27:46,840
+ was just mass times acceleration equals
+
+470
+00:27:46,840 --> 00:27:47,840
+ the sum of the forces.
+
+471
+00:27:47,840 --> 00:27:54,120
+ The way that manifests in the manipulator equations
+
+472
+00:27:54,120 --> 00:27:59,440
+ is now my MA is just a little bit more complicated.
+
+473
+00:27:59,440 --> 00:28:02,840
+ It looks like this and this.
+
+474
+00:28:07,720 --> 00:28:10,080
+ These are-- this is now the inertial matrix.
+
+475
+00:28:10,080 --> 00:28:22,880
+ These are the Coriolis terms, but they really go together.
+
+476
+00:28:22,880 --> 00:28:25,360
+ This is-- you should think of this together as MA.
+
+477
+00:28:25,360 --> 00:28:27,840
+ If you were to change the coordinate system,
+
+478
+00:28:27,840 --> 00:28:30,000
+ then they would both change equivalently.
+
+479
+00:28:30,000 --> 00:28:32,880
+ This is MA.
+
+480
+00:28:32,880 --> 00:28:34,460
+ And then we get the sum of the forces,
+
+481
+00:28:34,460 --> 00:28:37,160
+ so you get the gravity forces, which in general
+
+482
+00:28:37,160 --> 00:28:40,880
+ are some function of the configuration.
+
+483
+00:28:40,880 --> 00:28:43,560
+ I'll assume that I've got u's everywhere,
+
+484
+00:28:43,560 --> 00:28:48,840
+ so I'll just say I can command every coordinate.
+
+485
+00:28:48,840 --> 00:28:53,560
+ And then I can have-- I'll write it as a torque now,
+
+486
+00:28:53,560 --> 00:28:54,320
+ a tau external.
+
+487
+00:28:54,320 --> 00:29:20,160
+ [WRITING ON BOARD]
+
+488
+00:29:20,160 --> 00:29:21,800
+ OK, so the first thing I want to ask
+
+489
+00:29:21,800 --> 00:29:24,880
+ is just in joint space, how should I
+
+490
+00:29:24,880 --> 00:29:26,200
+ do trajectory tracking?
+
+491
+00:29:26,200 --> 00:29:34,920
+ If I have a desired qd of t, and now I have these equations,
+
+492
+00:29:34,920 --> 00:29:38,200
+ then what's the analogous thing to do?
+
+493
+00:29:38,200 --> 00:29:40,240
+ And it follows exactly from what we do.
+
+494
+00:29:40,240 --> 00:29:47,320
+ We could do PD control, which actually
+
+495
+00:29:47,320 --> 00:29:48,480
+ looks identical in this case.
+
+496
+00:29:48,480 --> 00:29:51,760
+ It's just now-- it's identical.
+
+497
+00:29:51,760 --> 00:29:53,960
+ I shouldn't even spend my time writing it, maybe.
+
+498
+00:29:53,960 --> 00:30:06,120
+ The stiffness control also looks effectively identical.
+
+499
+00:30:06,120 --> 00:30:08,560
+ It's just canceling out a more interesting gravity term.
+
+500
+00:30:18,040 --> 00:30:23,520
+ Minus tau g, which is a function of q now.
+
+501
+00:30:23,520 --> 00:30:29,520
+ And the resulting dynamics of that
+
+502
+00:30:29,520 --> 00:30:31,960
+ are a more interesting version of what we've done before.
+
+503
+00:30:45,120 --> 00:30:48,400
+ But it's still a-- it's just a more complicated spring mass
+
+504
+00:30:48,400 --> 00:30:49,800
+ damper system.
+
+505
+00:30:49,800 --> 00:30:51,500
+ And it happens in the joint coordinates.
+
+506
+00:30:51,500 --> 00:30:57,440
+ So what does that mean is if I put a resistive force,
+
+507
+00:30:57,440 --> 00:31:00,320
+ if I push on a particular joint, I
+
+508
+00:31:00,320 --> 00:31:04,360
+ expect it to feel like a spring when it's pushing back at me.
+
+509
+00:31:04,360 --> 00:31:05,120
+ OK?
+
+510
+00:31:05,120 --> 00:31:08,640
+ And these terms are the mass of that spring mass damper system.
+
+511
+00:31:08,640 --> 00:31:11,200
+ And they're a more complicated object.
+
+512
+00:31:11,200 --> 00:31:13,040
+ But it should still feel like a-- if I
+
+513
+00:31:13,040 --> 00:31:15,000
+ were to move one joint at a time, for instance,
+
+514
+00:31:15,000 --> 00:31:16,640
+ it would feel like I'm pushing against it.
+
+515
+00:31:16,640 --> 00:31:18,140
+ And we're going to actually do that.
+
+516
+00:31:18,140 --> 00:31:19,840
+ Terry, is it OK to do it now?
+
+517
+00:31:19,840 --> 00:31:20,320
+ Yeah?
+
+518
+00:31:20,320 --> 00:31:29,360
+ Let's do the-- so I want you to at least see me feel the--
+
+519
+00:31:29,360 --> 00:31:32,920
+ we'll do the joint impedance control.
+
+520
+00:31:32,920 --> 00:31:34,080
+ OK?
+
+521
+00:31:34,080 --> 00:31:39,560
+ Now, so EWA does-- it's called joint impedance control.
+
+522
+00:31:39,560 --> 00:31:40,360
+ OK?
+
+523
+00:31:40,360 --> 00:31:42,440
+ But like I said before, it actually--
+
+524
+00:31:42,440 --> 00:31:45,000
+ it doesn't shape the mass of the robot.
+
+525
+00:31:45,000 --> 00:31:46,720
+ It only shapes the rotor mass.
+
+526
+00:31:46,720 --> 00:31:50,240
+ So unless you get to the level of modeling the rotor inertia
+
+527
+00:31:50,240 --> 00:31:53,760
+ and the elastic joints, at our level of modeling,
+
+528
+00:31:53,760 --> 00:31:56,080
+ it looks like a stiffness controller.
+
+529
+00:31:56,080 --> 00:31:56,580
+ OK.
+
+530
+00:31:56,580 --> 00:31:58,620
+ Now, let me just say something about safety here.
+
+531
+00:31:58,620 --> 00:32:03,500
+ So this is-- we're only running the very simple controller that
+
+532
+00:32:03,500 --> 00:32:05,400
+ has been actually certified.
+
+533
+00:32:05,400 --> 00:32:08,000
+ And Terry's got his hand on the big red button.
+
+534
+00:32:08,000 --> 00:32:11,040
+ But I don't advise, in general, people running up and touching
+
+535
+00:32:11,040 --> 00:32:11,960
+ powerful robots.
+
+536
+00:32:11,960 --> 00:32:13,240
+ OK?
+
+537
+00:32:13,240 --> 00:32:14,740
+ I'm going to just do this carefully.
+
+538
+00:32:14,740 --> 00:32:18,720
+ So right now, this is in joint impedance control mode.
+
+539
+00:32:18,720 --> 00:32:20,560
+ So that means if I were to apply--
+
+540
+00:32:20,560 --> 00:32:22,400
+ it's got something like a 50 newton meter,
+
+541
+00:32:22,400 --> 00:32:24,240
+ I think, was the gains we put in here.
+
+542
+00:32:24,240 --> 00:32:27,520
+ A 50 newton meter gain on any one of those joints,
+
+543
+00:32:27,520 --> 00:32:29,520
+ it's going to let me move it.
+
+544
+00:32:29,520 --> 00:32:31,440
+ I can kind of move the robot around.
+
+545
+00:32:31,440 --> 00:32:32,360
+ It's going to resist.
+
+546
+00:32:32,360 --> 00:32:34,560
+ It's going to drive itself back to this nominal joint
+
+547
+00:32:34,560 --> 00:32:35,960
+ configuration.
+
+548
+00:32:35,960 --> 00:32:38,560
+ But it's in a complicated space.
+
+549
+00:32:38,560 --> 00:32:41,040
+ The response is a complicated function
+
+550
+00:32:41,040 --> 00:32:44,160
+ of the kinematics of the robot, because every joint
+
+551
+00:32:44,160 --> 00:32:47,960
+ independently is looking like a spring.
+
+552
+00:32:47,960 --> 00:32:48,600
+ OK?
+
+553
+00:32:48,600 --> 00:32:49,560
+ It's pretty beautiful.
+
+554
+00:32:49,560 --> 00:32:52,160
+ And it feels very nice and natural and smooth,
+
+555
+00:32:52,160 --> 00:32:55,000
+ which is a testament to the hardware.
+
+556
+00:32:55,000 --> 00:32:55,500
+ OK?
+
+557
+00:32:55,500 --> 00:32:59,960
+ Good.
+
+558
+00:32:59,960 --> 00:33:01,320
+ We're going to do the other one in just a minute,
+
+559
+00:33:01,320 --> 00:33:01,840
+ if that's OK.
+
+560
+00:33:01,840 --> 00:33:02,340
+ Yeah.
+
+561
+00:33:06,960 --> 00:33:09,520
+ So that's, I think, at our level of modeling,
+
+562
+00:33:09,520 --> 00:33:13,200
+ this is kind of what we should think about EWA as doing.
+
+563
+00:33:13,200 --> 00:33:15,440
+ If you wanted a higher fidelity simulation model,
+
+564
+00:33:15,440 --> 00:33:18,680
+ if the reason your robot was failing to pick up a coffee cup
+
+565
+00:33:18,680 --> 00:33:21,840
+ was because of the dynamics of the elastic joint,
+
+566
+00:33:21,840 --> 00:33:24,680
+ then you have to go dig deeper than this.
+
+567
+00:33:24,680 --> 00:33:28,320
+ But for almost all the manipulation research I've done,
+
+568
+00:33:28,320 --> 00:33:31,160
+ you haven't had to go to that level of modeling power.
+
+569
+00:33:31,160 --> 00:33:31,660
+ OK?
+
+570
+00:33:32,660 --> 00:33:34,140
+ [CLEARS THROAT]
+
+571
+00:33:34,140 --> 00:33:41,780
+ You can do inverse dynamics control, too.
+
+572
+00:33:41,780 --> 00:33:45,820
+ And we often write it down.
+
+573
+00:33:45,820 --> 00:33:55,460
+ It's interesting, though, that EWA doesn't do it.
+
+574
+00:33:55,460 --> 00:33:58,660
+ And I think it does go back to the requirements,
+
+575
+00:33:58,660 --> 00:34:01,460
+ as you say, of what's happening.
+
+576
+00:34:01,460 --> 00:34:21,900
+ The inverse dynamics controller would send in--
+
+577
+00:34:21,900 --> 00:34:26,060
+ I'm going to take a mass times the entire signal here.
+
+578
+00:34:26,060 --> 00:34:29,780
+ I'll send in q double dot desired as my lead,
+
+579
+00:34:29,780 --> 00:34:31,300
+ my feed forward term.
+
+580
+00:34:31,300 --> 00:34:37,860
+ And I'll put inside here my kp plus kd.
+
+581
+00:34:37,860 --> 00:34:42,660
+ Outside here, I'll take my tau gravity.
+
+582
+00:34:42,660 --> 00:34:44,260
+ OK?
+
+583
+00:34:44,260 --> 00:34:48,700
+ And the result is, once again, a beautiful system.
+
+584
+00:34:48,700 --> 00:34:58,340
+ Keep switching my E dots and whatever.
+
+585
+00:34:58,340 --> 00:35:00,260
+ But it looks like this.
+
+586
+00:35:00,260 --> 00:35:03,220
+ The error dynamics in joint space
+
+587
+00:35:03,220 --> 00:35:07,500
+ will converge like a second order spring
+
+588
+00:35:07,500 --> 00:35:09,300
+ with a more complicated mass matrix.
+
+589
+00:35:09,300 --> 00:35:13,980
+ It actually has the Coriolis terms, too.
+
+590
+00:35:13,980 --> 00:35:17,060
+ Like I said, those two go together.
+
+591
+00:35:17,060 --> 00:35:19,460
+ Those are still there.
+
+592
+00:35:19,460 --> 00:35:22,700
+ But it's a more complicated mass spring damper system.
+
+593
+00:35:22,700 --> 00:35:25,780
+ But the error converges to 0.
+
+594
+00:35:25,780 --> 00:35:28,740
+ So this is a nice way to do high-end trajectory tracking
+
+595
+00:35:28,740 --> 00:35:29,240
+ control.
+
+596
+00:35:29,240 --> 00:35:31,060
+ If you had a torque-controlled robot
+
+597
+00:35:31,060 --> 00:35:34,260
+ and you wanted to do extremely accurate trajectories,
+
+598
+00:35:34,260 --> 00:35:38,140
+ then I recommend sending in the q double dot forward.
+
+599
+00:35:38,140 --> 00:35:42,820
+ I think it's only doing first derivative.
+
+600
+00:35:42,820 --> 00:35:46,180
+ It could be taking two finite derivatives, differences
+
+601
+00:35:46,180 --> 00:35:47,580
+ of my q command.
+
+602
+00:35:47,580 --> 00:35:49,420
+ But I don't think the advantage is there when
+
+603
+00:35:49,420 --> 00:35:50,780
+ you've already done a lag.
+
+604
+00:35:50,780 --> 00:35:51,740
+ So I suspect it's not.
+
+605
+00:35:51,740 --> 00:35:59,300
+ OK.
+
+606
+00:35:59,300 --> 00:36:00,620
+ So the interesting differences now
+
+607
+00:36:00,620 --> 00:36:04,380
+ become when we start thinking about how the forces enter
+
+608
+00:36:04,380 --> 00:36:10,140
+ the joint equations, the multibody equations.
+
+609
+00:36:10,140 --> 00:36:13,380
+ Because forces naturally live in Cartesian space.
+
+610
+00:36:13,380 --> 00:36:15,140
+ And everything here is in joint space.
+
+611
+00:36:15,140 --> 00:36:19,820
+ In joint space, it just looks like a more complicated finger,
+
+612
+00:36:19,820 --> 00:36:21,020
+ if you will.
+
+613
+00:36:21,020 --> 00:36:22,380
+ And everything still goes.
+
+614
+00:36:22,380 --> 00:36:24,340
+ But let's see what happens if I add forces in.
+
+615
+00:36:24,340 --> 00:36:40,220
+ [WRITING ON BOARD]
+
+616
+00:36:40,220 --> 00:36:41,900
+ I showed you once before, when we
+
+617
+00:36:41,900 --> 00:36:43,860
+ were talking about friction cones and whatever,
+
+618
+00:36:43,860 --> 00:36:48,780
+ I showed you these equations without fully justifying them.
+
+619
+00:36:48,780 --> 00:36:55,500
+ The way that forces enter the multibody equations,
+
+620
+00:36:55,500 --> 00:37:01,980
+ I wrote this down sort of quickly without justification,
+
+621
+00:37:01,980 --> 00:37:05,500
+ that it looks something like this.
+
+622
+00:37:05,500 --> 00:37:08,540
+ That I have a Jacobian transpose times f,
+
+623
+00:37:08,540 --> 00:37:10,100
+ where this is a Cartesian force.
+
+624
+00:37:16,020 --> 00:37:20,300
+ But these equations live in joint coordinates.
+
+625
+00:37:20,300 --> 00:37:30,940
+ If you have a robot with some joints and some equations
+
+626
+00:37:30,940 --> 00:37:36,980
+ of motion, and you apply a Cartesian force here,
+
+627
+00:37:36,980 --> 00:37:43,860
+ then the question is, how does it affect torques at the links?
+
+628
+00:37:43,860 --> 00:37:46,900
+ Or vice versa, if I were to apply torques to the links,
+
+629
+00:37:46,900 --> 00:37:49,020
+ what sort of force would I be applying
+
+630
+00:37:49,020 --> 00:37:50,060
+ at a point on the world?
+
+631
+00:37:50,060 --> 00:37:57,180
+ And the relationship here, which is there, but more generally,
+
+632
+00:37:57,180 --> 00:38:01,300
+ is that you have this relationship of torque
+
+633
+00:38:01,300 --> 00:38:05,420
+ is the Jacobian transpose times force.
+
+634
+00:38:05,420 --> 00:38:08,020
+ And that one I want you to remember.
+
+635
+00:38:08,020 --> 00:38:10,340
+ That's a good thing to know at parties, I guess.
+
+636
+00:38:10,340 --> 00:38:16,260
+ And it's like-- yes, I think that's core knowledge,
+
+637
+00:38:16,260 --> 00:38:16,780
+ I would say.
+
+638
+00:38:16,780 --> 00:38:22,820
+ How many people know why torque is
+
+639
+00:38:22,820 --> 00:38:24,940
+ Jacobian transpose times force?
+
+640
+00:38:24,940 --> 00:38:26,260
+ Yeah.
+
+641
+00:38:26,260 --> 00:38:28,100
+ OK, I'm going to add to your core knowledge.
+
+642
+00:38:28,100 --> 00:38:32,780
+ It's really simple.
+
+643
+00:38:32,780 --> 00:38:36,460
+ OK, it's just a power argument.
+
+644
+00:38:36,460 --> 00:38:40,540
+ So if you think about the work, actually,
+
+645
+00:38:40,540 --> 00:38:44,780
+ done at the end effector, this is the way we think about it.
+
+646
+00:38:44,780 --> 00:38:47,660
+ So if I have a robot in some configuration,
+
+647
+00:38:47,660 --> 00:38:52,500
+ I want to think about the incremental work done
+
+648
+00:38:52,500 --> 00:38:55,460
+ at this point on the end effector.
+
+649
+00:38:55,460 --> 00:38:58,620
+ Work is force times distance.
+
+650
+00:38:58,620 --> 00:39:01,620
+ This is an argument of virtual work.
+
+651
+00:39:01,620 --> 00:39:02,180
+ It's called.
+
+652
+00:39:02,820 --> 00:39:08,820
+ Work is force times distance.
+
+653
+00:39:08,820 --> 00:39:16,420
+ I'm going to compute the work done at the end
+
+654
+00:39:16,420 --> 00:39:19,180
+ effector in two different ways.
+
+655
+00:39:19,180 --> 00:39:22,300
+ I'll think about a virtual change in x,
+
+656
+00:39:22,300 --> 00:39:25,620
+ and I'll think about a virtual change in q.
+
+657
+00:39:25,620 --> 00:39:27,060
+ These are two different ways, and I
+
+658
+00:39:27,060 --> 00:39:28,980
+ should get the same answer.
+
+659
+00:39:28,980 --> 00:39:32,820
+ So the total work done by the force
+
+660
+00:39:32,820 --> 00:39:36,580
+ should have an equivalent work done by the torques.
+
+661
+00:39:36,580 --> 00:39:42,700
+ So if I say the force-- let me use my correct small f--
+
+662
+00:39:42,700 --> 00:39:47,020
+ dotted with some delta change in x
+
+663
+00:39:47,020 --> 00:39:55,740
+ must equal the torque dotted with some virtual change in q.
+
+664
+00:39:55,740 --> 00:39:58,300
+ So this is a virtual displacement in x.
+
+665
+00:39:58,300 --> 00:40:09,820
+ This is a virtual displacement in joint.
+
+666
+00:40:09,820 --> 00:40:12,500
+ This delta notation, and that's a dot product.
+
+667
+00:40:12,500 --> 00:40:23,620
+ Since we also know that delta x is related to delta q
+
+668
+00:40:23,620 --> 00:40:30,540
+ by the sum of Jacobians, then if you put this together and say
+
+669
+00:40:30,540 --> 00:40:36,780
+ it has to work for all delta q, I have f.
+
+670
+00:40:36,780 --> 00:40:39,460
+ And I'll go ahead and multiply out the transpose.
+
+671
+00:40:39,460 --> 00:40:44,500
+ I'll say f transpose equals Jacobian q.
+
+672
+00:40:44,500 --> 00:40:50,180
+ Delta q is tau transpose delta q.
+
+673
+00:40:50,180 --> 00:40:52,660
+ And this has to work for all delta q.
+
+674
+00:40:52,660 --> 00:40:55,140
+ And it is equivalent to saying tau--
+
+675
+00:40:55,140 --> 00:40:57,220
+ and I'll take a transpose on both sides--
+
+676
+00:40:57,220 --> 00:40:59,940
+ is J transpose f.
+
+677
+00:40:59,940 --> 00:41:02,860
+ So any time you want to go between a force computation
+
+678
+00:41:02,860 --> 00:41:06,460
+ at a particular point and a torque at the joints,
+
+679
+00:41:06,460 --> 00:41:08,660
+ the Jacobian is exactly the mechanism you need.
+
+680
+00:41:08,660 --> 00:41:12,260
+ It's just a Jacobian transpose.
+
+681
+00:41:12,260 --> 00:41:15,220
+ It's just an argument about virtual work.
+
+682
+00:41:15,220 --> 00:41:18,740
+ It's actually-- it was, I think, a major advance
+
+683
+00:41:18,740 --> 00:41:21,220
+ in the rigid body mechanics when people
+
+684
+00:41:21,220 --> 00:41:22,940
+ started thinking about these virtual displacements.
+
+685
+00:41:22,940 --> 00:41:24,060
+ And that's the Lambert's principle
+
+686
+00:41:24,060 --> 00:41:27,380
+ and all the good stuff, all the variational mechanics work.
+
+687
+00:41:27,380 --> 00:41:29,420
+ So there's a lot of depth there.
+
+688
+00:41:29,420 --> 00:41:32,180
+ And the reason for those annoying virtual displacements
+
+689
+00:41:32,180 --> 00:41:36,260
+ is actually really important and the like.
+
+690
+00:41:36,260 --> 00:41:39,020
+ But I think it's mixed for simple algebra.
+
+691
+00:41:39,020 --> 00:41:41,980
+ And you get tau equals Jacobian transpose times force.
+
+692
+00:41:47,860 --> 00:41:56,580
+ OK, so let's think about now trying to live in this space.
+
+693
+00:41:56,580 --> 00:41:58,420
+ Remember, the amazing thing we want
+
+694
+00:41:58,420 --> 00:42:00,220
+ to do if we're thinking about forces
+
+695
+00:42:00,220 --> 00:42:04,060
+ is we want to make the big complicated robot act like a--
+
+696
+00:42:04,060 --> 00:42:08,700
+ be able to control the forces as if it was a point finger.
+
+697
+00:42:08,700 --> 00:42:10,200
+ So given we have this relationship
+
+698
+00:42:10,200 --> 00:42:12,200
+ and we see how it enters the multibody equation,
+
+699
+00:42:12,200 --> 00:42:14,780
+ how do we make that happen?
+
+700
+00:42:14,780 --> 00:42:19,100
+ It turns out this translation between the Cartesian space
+
+701
+00:42:19,100 --> 00:42:22,260
+ and the torque space with the Jacobian transpose
+
+702
+00:42:22,260 --> 00:42:26,420
+ can actually be applied to the entire multibody equations.
+
+703
+00:42:26,420 --> 00:42:28,080
+ And the result of doing that is one
+
+704
+00:42:28,080 --> 00:42:29,940
+ of the most beautiful results on our list
+
+705
+00:42:29,940 --> 00:42:34,260
+ here, which is this idea of writing Cartesian space
+
+706
+00:42:34,260 --> 00:42:36,500
+ dynamics, task space dynamics.
+
+707
+00:42:36,500 --> 00:42:39,960
+ [WRITING ON BOARD]
+
+708
+00:43:03,540 --> 00:43:09,100
+ OK, so now my location of my finger--
+
+709
+00:43:09,100 --> 00:43:11,660
+ I'll call it an end effector more generally here.
+
+710
+00:43:11,660 --> 00:43:13,280
+ So this would be my end effector frame.
+
+711
+00:43:13,280 --> 00:43:23,700
+ We know that that is related to q by the kinematics.
+
+712
+00:43:30,620 --> 00:43:35,220
+ My velocities are related by the Jacobian.
+
+713
+00:43:35,220 --> 00:43:41,980
+ My accelerations also have the relationship,
+
+714
+00:43:41,980 --> 00:43:49,180
+ v dot of e, which we actually have multibody notation for a,
+
+715
+00:43:49,180 --> 00:43:50,380
+ calling that a.
+
+716
+00:43:50,380 --> 00:43:52,260
+ And that gives me-- if I take the derivative,
+
+717
+00:43:52,260 --> 00:43:53,780
+ time derivative one more time, I get
+
+718
+00:43:53,780 --> 00:43:58,220
+ this plus an extra term, j dot q, q dot.
+
+719
+00:43:59,220 --> 00:44:01,580
+ [WRITING ON BOARD]
+
+720
+00:44:01,580 --> 00:44:07,780
+ The tricky step here is if I take the multibody equations,
+
+721
+00:44:07,780 --> 00:44:12,180
+ solve them for q double dot, and insert them
+
+722
+00:44:12,180 --> 00:44:15,980
+ into this equation, then I actually
+
+723
+00:44:15,980 --> 00:44:18,460
+ get a new set of multibody equations.
+
+724
+00:44:18,460 --> 00:44:26,700
+ The derivations in a little bit more detail in the notes.
+
+725
+00:44:26,700 --> 00:44:28,700
+ Certainly all the terms are written out there.
+
+726
+00:44:28,700 --> 00:44:35,280
+ Keep that off just to keep it simple.
+
+727
+00:44:35,280 --> 00:44:38,240
+ [WRITING ON BOARD]
+
+728
+00:44:38,240 --> 00:44:59,520
+ What is this equation?
+
+729
+00:44:59,520 --> 00:45:05,200
+ This is the manipulator dynamics from the point
+
+730
+00:45:05,200 --> 00:45:07,680
+ of view of the end effector.
+
+731
+00:45:07,680 --> 00:45:22,080
+ This is my command input.
+
+732
+00:45:22,080 --> 00:45:30,600
+ I can just achieve this with my Jacobian transpose.
+
+733
+00:45:31,600 --> 00:45:34,040
+ [WRITING ON BOARD]
+
+734
+00:45:34,040 --> 00:45:42,080
+ And I can actually write the dynamics
+
+735
+00:45:42,080 --> 00:45:49,640
+ as it's viewed from the finger, from the end effector.
+
+736
+00:45:49,640 --> 00:45:52,080
+ And since these equations-- so this thing
+
+737
+00:45:52,080 --> 00:45:53,640
+ has the original mass matrix in it.
+
+738
+00:45:53,640 --> 00:45:55,000
+ It has a couple of Jacobians in it.
+
+739
+00:45:55,000 --> 00:45:56,300
+ It has a couple inverses in it.
+
+740
+00:45:56,300 --> 00:45:59,440
+ But it's always well-posed, assuming-- yeah,
+
+741
+00:45:59,440 --> 00:46:01,100
+ it's actually always positive definite.
+
+742
+00:46:01,100 --> 00:46:03,680
+ It has some nice properties.
+
+743
+00:46:03,680 --> 00:46:05,640
+ And all of these are just functions
+
+744
+00:46:05,640 --> 00:46:08,360
+ of the original equations and the Jacobian.
+
+745
+00:46:08,360 --> 00:46:10,200
+ It's basically the Jacobian transpose applied
+
+746
+00:46:10,200 --> 00:46:12,400
+ to all those equations.
+
+747
+00:46:12,400 --> 00:46:15,720
+ But these equations, looking at the dynamics of my robot
+
+748
+00:46:15,720 --> 00:46:17,960
+ through the lens in the coordinate system of the end
+
+749
+00:46:17,960 --> 00:46:23,040
+ effector, look so similar to what we've done before
+
+750
+00:46:23,040 --> 00:46:25,440
+ that I can use the same kind of control.
+
+751
+00:46:25,440 --> 00:46:27,760
+ In fact, I can write a stiffness controller the same way
+
+752
+00:46:27,760 --> 00:46:28,920
+ I did before.
+
+753
+00:46:28,920 --> 00:46:32,080
+ I just will cancel this out.
+
+754
+00:46:32,080 --> 00:46:36,400
+ I'll write the PD terms on this.
+
+755
+00:46:36,400 --> 00:46:42,140
+ And the resulting equations will be an end effector dynamics
+
+756
+00:46:42,140 --> 00:46:44,160
+ that looks like a spring mass damper system.
+
+757
+00:46:44,160 --> 00:46:50,120
+ That's the amazing thing.
+
+758
+00:46:50,120 --> 00:46:51,520
+ So this is Cartesian stiffness.
+
+759
+00:46:58,360 --> 00:46:59,560
+ This is the analysis.
+
+760
+00:46:59,560 --> 00:47:01,360
+ But the controller is simple.
+
+761
+00:47:01,360 --> 00:47:05,720
+ It's still just-- I'm going to do my kp.
+
+762
+00:47:05,720 --> 00:47:12,720
+ I have to modify it into the correct space.
+
+763
+00:47:12,720 --> 00:47:16,880
+ But in this coordinate system, the controller is simple.
+
+764
+00:47:16,880 --> 00:47:29,320
+ I'm going to write it as pe minus pe kd p dot e minus p
+
+765
+00:47:29,320 --> 00:47:34,400
+ dot e, and then minus this f of gravity.
+
+766
+00:47:34,400 --> 00:47:44,960
+ Now you see why I was worried about snilling you
+
+767
+00:47:44,960 --> 00:47:46,320
+ with the details.
+
+768
+00:47:46,320 --> 00:47:49,960
+ So but I hope you see, by the simple analogies,
+
+769
+00:47:49,960 --> 00:47:53,080
+ that this is really just writing the PD controller,
+
+770
+00:47:53,080 --> 00:47:55,800
+ canceling the gravity.
+
+771
+00:47:55,800 --> 00:47:57,680
+ But we're doing it in the coordinate system
+
+772
+00:47:57,680 --> 00:48:01,000
+ of the end effector dynamics.
+
+773
+00:48:01,000 --> 00:48:04,080
+ It's fantastic.
+
+774
+00:48:04,080 --> 00:48:05,120
+ Should we run it, Terry?
+
+775
+00:48:05,120 --> 00:48:05,620
+ Is that good?
+
+776
+00:48:05,620 --> 00:48:15,320
+ I showed you the KUKA folks running this early,
+
+777
+00:48:15,320 --> 00:48:16,640
+ and they looked happy.
+
+778
+00:48:16,640 --> 00:48:17,920
+ So I figured I should try it.
+
+779
+00:48:17,920 --> 00:48:18,760
+ Maybe I'll be happy.
+
+780
+00:48:18,760 --> 00:48:28,800
+ Again, this is just one of the basic certified controllers.
+
+781
+00:48:28,800 --> 00:48:32,680
+ And which one we're doing first, the translational?
+
+782
+00:48:32,680 --> 00:48:35,240
+ So the way to make this interesting
+
+783
+00:48:35,240 --> 00:48:39,840
+ is we put a different translational stiffness in x,
+
+784
+00:48:39,840 --> 00:48:41,480
+ y, and z.
+
+785
+00:48:41,480 --> 00:48:45,080
+ So I think it was 150, 250, and 50, or something like this.
+
+786
+00:48:45,080 --> 00:48:46,960
+ So one of them is going to be really--
+
+787
+00:48:46,960 --> 00:48:49,840
+ that one's a little bit--
+
+788
+00:48:49,840 --> 00:48:54,280
+ that's the 250, and then this is the 50 newton meters.
+
+789
+00:48:54,280 --> 00:48:54,780
+ Yeah?
+
+790
+00:48:54,780 --> 00:49:06,240
+ If you want to go from Cartesian back to the [INAUDIBLE]
+
+791
+00:49:06,240 --> 00:49:08,440
+ OK, there's two parts of that question.
+
+792
+00:49:08,440 --> 00:49:10,880
+ So the controller that I've written here,
+
+793
+00:49:10,880 --> 00:49:13,920
+ I can actually just command Jacobian transpose times
+
+794
+00:49:13,920 --> 00:49:15,800
+ this virtual force.
+
+795
+00:49:15,800 --> 00:49:19,200
+ So I don't have any ugly inverses in the control.
+
+796
+00:49:19,200 --> 00:49:21,680
+ But you're right, there's a null space of that control.
+
+797
+00:49:21,680 --> 00:49:24,240
+ And I should do something-- if I have more degrees of freedom
+
+798
+00:49:24,240 --> 00:49:25,760
+ than the thing I'm commanding, then I
+
+799
+00:49:25,760 --> 00:49:27,300
+ should do something in the null space
+
+800
+00:49:27,300 --> 00:49:29,880
+ to not leave that undefined.
+
+801
+00:49:29,880 --> 00:49:32,160
+ But the actual forward mapping looks good.
+
+802
+00:49:32,160 --> 00:49:34,440
+ There's no inverses in the forward mapping.
+
+803
+00:49:34,440 --> 00:49:35,440
+ So just once more.
+
+804
+00:49:35,440 --> 00:49:38,260
+ So what is also different compared to-- remember,
+
+805
+00:49:38,260 --> 00:49:40,560
+ before I was doing the joint by joint,
+
+806
+00:49:40,560 --> 00:49:42,360
+ and the response in the end effector
+
+807
+00:49:42,360 --> 00:49:44,280
+ was actually pretty complicated, because it
+
+808
+00:49:44,280 --> 00:49:45,400
+ was living in joint space.
+
+809
+00:49:45,400 --> 00:49:47,360
+ The springs were living in joint space.
+
+810
+00:49:47,360 --> 00:49:53,280
+ But now it really does feel obviously different
+
+811
+00:49:53,280 --> 00:49:55,440
+ and obviously kind of linear.
+
+812
+00:49:55,440 --> 00:49:57,160
+ I don't know if I can feel linear.
+
+813
+00:49:57,160 --> 00:49:59,520
+ But in the end effector coordinates.
+
+814
+00:49:59,520 --> 00:50:03,360
+ That's why he was happy.
+
+815
+00:50:03,360 --> 00:50:04,560
+ That's pretty good.
+
+816
+00:50:04,560 --> 00:50:09,000
+ OK, and then we can do the same thing in rotational coordinates.
+
+817
+00:50:09,000 --> 00:50:10,460
+ So all the same things work if you
+
+818
+00:50:10,460 --> 00:50:14,040
+ were to use our spatial vector notation
+
+819
+00:50:14,040 --> 00:50:15,840
+ and say that the thing I'm trying to control
+
+820
+00:50:15,840 --> 00:50:18,120
+ is not the position, but the orientation,
+
+821
+00:50:18,120 --> 00:50:21,480
+ or in general, spatial velocities and frames
+
+822
+00:50:21,480 --> 00:50:22,320
+ in the end effector.
+
+823
+00:50:22,320 --> 00:50:23,680
+ Then you can put a stiffness.
+
+824
+00:50:23,680 --> 00:50:26,960
+ You have to be a little careful at how you write stiffness.
+
+825
+00:50:26,960 --> 00:50:28,560
+ I actually cited your paper, actually,
+
+826
+00:50:28,560 --> 00:50:31,800
+ about maybe an interesting way to write a six degree of freedom
+
+827
+00:50:31,800 --> 00:50:33,680
+ stiffness.
+
+828
+00:50:33,680 --> 00:50:37,600
+ But now, if I wanted to push it sideways,
+
+829
+00:50:37,600 --> 00:50:40,980
+ he made it very stiff in the xyz direction.
+
+830
+00:50:40,980 --> 00:50:43,020
+ So that end effector wants to stay there.
+
+831
+00:50:43,020 --> 00:50:48,180
+ But it's allowed to be soft in the out of plane.
+
+832
+00:50:48,180 --> 00:50:51,500
+ And I've got a smaller moment arm to do the last one.
+
+833
+00:50:51,500 --> 00:50:56,260
+ But yeah, it's math.
+
+834
+00:50:56,260 --> 00:50:56,820
+ Math works.
+
+835
+00:50:59,820 --> 00:51:09,640
+ [INAUDIBLE]
+
+836
+00:51:09,640 --> 00:51:11,480
+ There are different ways to write the stiffness.
+
+837
+00:51:11,480 --> 00:51:13,520
+ How do you parameterize the stiffness in that box?
+
+838
+00:51:13,520 --> 00:51:16,760
+ It's just the-- does it take a--
+
+839
+00:51:16,760 --> 00:51:18,440
+ [INAUDIBLE]
+
+840
+00:51:18,440 --> 00:51:27,920
+ The orientation stiffness, is it a diagonal matrix on RPY?
+
+841
+00:51:27,920 --> 00:51:29,160
+ Yeah, I think it is.
+
+842
+00:51:29,160 --> 00:51:30,420
+ But I actually don't remember.
+
+843
+00:51:30,420 --> 00:51:32,500
+ [INAUDIBLE]
+
+844
+00:51:32,500 --> 00:51:34,940
+ Yeah, they do RPY.
+
+845
+00:51:34,940 --> 00:51:38,620
+ OK, yeah, so don't-- I won't try to get to pi over 2.
+
+846
+00:51:38,620 --> 00:51:45,340
+ Awesome.
+
+847
+00:51:45,340 --> 00:51:46,100
+ Thank you, Terry.
+
+848
+00:51:46,100 --> 00:51:51,860
+ OK, questions about that?
+
+849
+00:51:51,860 --> 00:51:59,780
+ [INAUDIBLE]
+
+850
+00:51:59,780 --> 00:52:00,280
+ Yes?
+
+851
+00:52:00,280 --> 00:52:06,940
+ [INAUDIBLE]
+
+852
+00:52:06,940 --> 00:52:07,440
+ Correct.
+
+853
+00:52:07,440 --> 00:52:12,700
+ [INAUDIBLE]
+
+854
+00:52:12,700 --> 00:52:13,880
+ Good.
+
+855
+00:52:13,880 --> 00:52:15,040
+ That's not a naive question.
+
+856
+00:52:15,040 --> 00:52:17,540
+ That's an advanced question, I would say.
+
+857
+00:52:17,540 --> 00:52:23,520
+ So remember how I said you can mix this
+
+858
+00:52:23,520 --> 00:52:25,520
+ in the hybrid position control?
+
+859
+00:52:25,520 --> 00:52:31,000
+ So EWL will actually also accept a feedforward force.
+
+860
+00:52:31,000 --> 00:52:34,120
+ We normally live in joint-- I know better what it does in
+
+861
+00:52:34,120 --> 00:52:34,620
+ joint.
+
+862
+00:52:34,620 --> 00:52:37,400
+ I assume it could also take a feedforward force in Cartesian.
+
+863
+00:52:37,400 --> 00:52:41,120
+ But actually, I'd have to look to make sure that-- we almost
+
+864
+00:52:41,120 --> 00:52:44,520
+ always use joint space control for a limitation I'll
+
+865
+00:52:44,520 --> 00:52:46,080
+ talk about in just a second.
+
+866
+00:52:46,080 --> 00:52:49,660
+ So yes, if you're in the limit, you
+
+867
+00:52:49,660 --> 00:52:53,320
+ could set kp and kd in the joint space impedance
+
+868
+00:52:53,320 --> 00:52:54,640
+ controller to 0.
+
+869
+00:52:54,640 --> 00:52:56,780
+ You can say, I know everything I should know.
+
+870
+00:52:56,780 --> 00:53:01,660
+ It will still compensate torque for you, the gravity torque.
+
+871
+00:53:01,660 --> 00:53:03,280
+ And it actually does a little bit more.
+
+872
+00:53:03,280 --> 00:53:06,880
+ It compensates friction, too, in a very clever way.
+
+873
+00:53:06,880 --> 00:53:10,520
+ But then you can command forces directly to add in.
+
+874
+00:53:10,520 --> 00:53:12,840
+ Therefore, you could do the acceleration-based stuff
+
+875
+00:53:12,840 --> 00:53:14,680
+ through that.
+
+876
+00:53:14,680 --> 00:53:18,560
+ I think the bandwidth needs to be considered.
+
+877
+00:53:18,560 --> 00:53:21,920
+ So expecting it to track super high through that force
+
+878
+00:53:21,920 --> 00:53:28,360
+ command is to maybe-- there will be limits to what you can do.
+
+879
+00:53:28,360 --> 00:53:29,600
+ Did that answer the question?
+
+880
+00:53:29,600 --> 00:53:30,100
+ Yeah?
+
+881
+00:53:30,100 --> 00:53:32,080
+ Great.
+
+882
+00:53:32,080 --> 00:53:32,600
+ OK.
+
+883
+00:53:32,600 --> 00:53:38,200
+ Yeah, so this is super powerful.
+
+884
+00:53:38,200 --> 00:53:40,320
+ There's only one thing that I don't like about it.
+
+885
+00:53:43,080 --> 00:53:44,880
+ What's the one thing I don't like about it?
+
+886
+00:53:44,880 --> 00:53:46,580
+ I kind of alluded to it in that question.
+
+887
+00:53:46,580 --> 00:53:52,120
+ I mentioned it once before, which
+
+888
+00:53:52,120 --> 00:53:53,280
+ is why it's a fair question.
+
+889
+00:53:53,280 --> 00:53:58,040
+ What's that?
+
+890
+00:53:58,040 --> 00:53:59,320
+ The null space is--
+
+891
+00:53:59,320 --> 00:54:00,960
+ I think that's manageable.
+
+892
+00:54:00,960 --> 00:54:08,360
+ So in fact, I should probably have lectured about that.
+
+893
+00:54:08,360 --> 00:54:10,080
+ Because it's sort of a thing.
+
+894
+00:54:10,080 --> 00:54:12,080
+ It's called operation space control.
+
+895
+00:54:12,080 --> 00:54:15,840
+ And the idea-- so we talked about joint centering
+
+896
+00:54:15,840 --> 00:54:19,240
+ in differential inverse kinematics.
+
+897
+00:54:19,240 --> 00:54:21,880
+ There's a joint centering-- I did put it in the notes.
+
+898
+00:54:21,880 --> 00:54:27,120
+ There's a joint centering sort of version for this.
+
+899
+00:54:27,120 --> 00:54:29,600
+ I can say it off the top of my head here.
+
+900
+00:54:29,600 --> 00:54:36,520
+ How would you do joint centering to take care of that null space?
+
+901
+00:54:41,040 --> 00:54:42,600
+ If you're normally commanding this
+
+902
+00:54:42,600 --> 00:54:54,640
+ with your command that comes from stiffness control,
+
+903
+00:54:54,640 --> 00:54:56,480
+ and you want to take care of the null space,
+
+904
+00:54:56,480 --> 00:54:58,360
+ then the standard thing people would do,
+
+905
+00:54:58,360 --> 00:55:06,600
+ would do-- this is the null space projection.
+
+906
+00:55:16,200 --> 00:55:30,040
+ And then write something like kp q desired minus q.
+
+907
+00:55:30,040 --> 00:55:30,800
+ Lots of symbols.
+
+908
+00:55:30,800 --> 00:55:35,000
+ But the point is, you could write it like a PD controller
+
+909
+00:55:35,000 --> 00:55:38,400
+ and have it in the joint coordinates
+
+910
+00:55:38,400 --> 00:55:42,720
+ and project it into the null space of this.
+
+911
+00:55:42,720 --> 00:55:44,640
+ So that's a really beautiful idea
+
+912
+00:55:44,640 --> 00:55:49,280
+ that says, in some sense-- and the way people talk about this--
+
+913
+00:55:49,280 --> 00:55:50,960
+ this is the first priority task.
+
+914
+00:55:50,960 --> 00:55:57,400
+ The torques you pick should absolutely
+
+915
+00:55:57,400 --> 00:55:59,920
+ create the virtual stiffness that you
+
+916
+00:55:59,920 --> 00:56:01,920
+ want at the end effector.
+
+917
+00:56:01,920 --> 00:56:03,720
+ But in the null space of that Jacobian
+
+918
+00:56:03,720 --> 00:56:05,760
+ and any extra degrees of freedom,
+
+919
+00:56:05,760 --> 00:56:07,360
+ then I'd like the rest of my joints
+
+920
+00:56:07,360 --> 00:56:09,720
+ to act like they're a PD controller going back
+
+921
+00:56:09,720 --> 00:56:12,400
+ to the original.
+
+922
+00:56:12,400 --> 00:56:20,040
+ And this mixing of joint space and end effector space control
+
+923
+00:56:20,040 --> 00:56:23,360
+ was originally-- it's called operational space control.
+
+924
+00:56:23,360 --> 00:56:28,200
+ And operational space control has
+
+925
+00:56:28,200 --> 00:56:33,040
+ grown into a whole rich library of ways
+
+926
+00:56:33,040 --> 00:56:38,600
+ to prioritize different tasks and constraints.
+
+927
+00:56:38,600 --> 00:56:41,000
+ There's humanoid versions of it and the like.
+
+928
+00:56:41,000 --> 00:56:43,980
+ But operational space control was originally just,
+
+929
+00:56:43,980 --> 00:56:49,320
+ let's mix joint and force into the same frame.
+
+930
+00:56:49,320 --> 00:56:49,940
+ Great question.
+
+931
+00:56:49,940 --> 00:56:52,000
+ But that wasn't my biggest concern.
+
+932
+00:56:52,000 --> 00:56:59,800
+ I have exquisite control.
+
+933
+00:56:59,800 --> 00:57:02,560
+ I can write the dynamics beautifully.
+
+934
+00:57:02,560 --> 00:57:05,740
+ But I have to know the point about which
+
+935
+00:57:05,740 --> 00:57:07,240
+ I'm going to write my dynamics.
+
+936
+00:57:07,240 --> 00:57:10,440
+ That's the thing that drives me nuts.
+
+937
+00:57:10,440 --> 00:57:14,160
+ All of this is based so heavily on the Jacobian.
+
+938
+00:57:14,160 --> 00:57:17,760
+ And it's the Jacobian that gets me from robot joint coordinates
+
+939
+00:57:17,760 --> 00:57:21,080
+ to a particular point on my robot.
+
+940
+00:57:21,080 --> 00:57:23,740
+ So if I'm in the factory or something
+
+941
+00:57:23,740 --> 00:57:26,760
+ and I'm applying forces exactly at the end of the orange knob
+
+942
+00:57:26,760 --> 00:57:30,360
+ on the robot, then life is good.
+
+943
+00:57:30,360 --> 00:57:34,280
+ I can act exactly like I want at the end of that orange knob.
+
+944
+00:57:34,280 --> 00:57:37,360
+ It's actually the center of that little orange sphere,
+
+945
+00:57:37,360 --> 00:57:39,920
+ I think, is where the coordinate system is for us today.
+
+946
+00:57:39,920 --> 00:57:40,520
+ All right.
+
+947
+00:57:40,520 --> 00:57:44,680
+ But if the robot bumps into something halfway up its elbow,
+
+948
+00:57:44,680 --> 00:57:47,320
+ then we haven't solved that problem.
+
+949
+00:57:47,320 --> 00:57:49,000
+ We haven't programmed the response
+
+950
+00:57:49,000 --> 00:57:50,720
+ that the robot's going to have if I were to go up--
+
+951
+00:57:50,720 --> 00:57:51,800
+ it's turned off right now.
+
+952
+00:57:51,800 --> 00:57:54,040
+ But if I were to go up and knock it like this,
+
+953
+00:57:54,040 --> 00:57:56,420
+ none of my math has told me what that response should be,
+
+954
+00:57:56,420 --> 00:57:59,600
+ if I programmed the response down here.
+
+955
+00:57:59,600 --> 00:58:03,400
+ And it's for that reason that we tend to live in joint space.
+
+956
+00:58:03,400 --> 00:58:05,680
+ Because if I get a perturbation anywhere,
+
+957
+00:58:05,680 --> 00:58:07,740
+ it might not have a beautiful interpretation
+
+958
+00:58:07,740 --> 00:58:08,920
+ at the end effector.
+
+959
+00:58:08,920 --> 00:58:11,200
+ But it has a logical interpretation
+
+960
+00:58:11,200 --> 00:58:12,720
+ in joint coordinates.
+
+961
+00:58:12,720 --> 00:58:15,400
+ OK?
+
+962
+00:58:15,400 --> 00:58:17,920
+ You would like to say there's a richer problem of trying
+
+963
+00:58:17,920 --> 00:58:22,480
+ to say, how would I program the response for whatever contact
+
+964
+00:58:22,480 --> 00:58:25,100
+ I happen to be experiencing?
+
+965
+00:58:25,100 --> 00:58:26,080
+ That's a rich problem.
+
+966
+00:58:26,080 --> 00:58:29,280
+ And I'll maybe jump ahead and say that, too.
+
+967
+00:58:29,280 --> 00:58:35,840
+ I have-- I didn't even show most of my videos here.
+
+968
+00:58:35,840 --> 00:58:37,080
+ OK?
+
+969
+00:58:37,080 --> 00:58:41,400
+ So there's an interesting problem of contact estimation.
+
+970
+00:58:41,400 --> 00:58:47,280
+ If we know J transpose F equals torque,
+
+971
+00:58:47,280 --> 00:58:50,880
+ then you can ask the question, if I'm feeling torques that I
+
+972
+00:58:50,880 --> 00:58:54,880
+ didn't expect at my robot, where on the robot
+
+973
+00:58:54,880 --> 00:58:58,600
+ could I have been-- did that force come from?
+
+974
+00:58:58,600 --> 00:58:59,360
+ OK?
+
+975
+00:58:59,360 --> 00:59:01,080
+ And you can imagine, if you can estimate
+
+976
+00:59:01,080 --> 00:59:04,160
+ by looking at your joint torque sensors, where
+
+977
+00:59:04,160 --> 00:59:05,880
+ on the robot you made contact, then
+
+978
+00:59:05,880 --> 00:59:08,840
+ you could program the response to interact
+
+979
+00:59:08,840 --> 00:59:12,680
+ at that point with some impedance or some stiffness.
+
+980
+00:59:12,680 --> 00:59:15,480
+ But it turns out that's a really bad problem.
+
+981
+00:59:15,480 --> 00:59:17,840
+ I think this picture was one that Pang
+
+982
+00:59:17,840 --> 00:59:20,720
+ made to try to make that point.
+
+983
+00:59:20,720 --> 00:59:25,140
+ If you are experiencing some joint torques,
+
+984
+00:59:25,140 --> 00:59:27,520
+ and you try to map that back to the possible locations
+
+985
+00:59:27,520 --> 00:59:30,300
+ on the arm, and you admit that there's
+
+986
+00:59:30,300 --> 00:59:33,920
+ a friction cone on the arm, so the location--
+
+987
+00:59:33,920 --> 00:59:36,760
+ the direction is not directly imposed by the location.
+
+988
+00:59:36,760 --> 00:59:38,360
+ It could be-- even if I'm pushing here,
+
+989
+00:59:38,360 --> 00:59:40,880
+ it could be any of these vectors.
+
+990
+00:59:40,880 --> 00:59:43,560
+ And you try to solve the inverse problem.
+
+991
+00:59:43,560 --> 00:59:46,360
+ For a particular torque, there's a bunch
+
+992
+00:59:46,360 --> 00:59:48,600
+ of places on the robot that could have possibly--
+
+993
+00:59:48,600 --> 00:59:50,280
+ this wasn't even the worst one, I think,
+
+994
+00:59:50,280 --> 00:59:51,360
+ now that I'm seeing it.
+
+995
+00:59:51,360 --> 00:59:54,000
+ But there's a lot of different locations
+
+996
+00:59:54,000 --> 00:59:56,600
+ on the robot that could have explained the same torques.
+
+997
+00:59:56,600 --> 01:00:02,160
+ And in general, I think you can make some progress.
+
+998
+01:00:02,160 --> 01:00:06,320
+ The people that have done really nice contact estimation
+
+999
+01:00:06,320 --> 01:00:08,120
+ have done it well enough that you
+
+1000
+01:00:08,120 --> 01:00:10,320
+ can stop when you're about to hit something,
+
+1001
+01:00:10,320 --> 01:00:12,840
+ but not well enough that you can program the response
+
+1002
+01:00:12,840 --> 01:00:16,920
+ at an unexpected location.
+
+1003
+01:00:16,920 --> 01:00:18,360
+ That's a hard problem, especially
+
+1004
+01:00:18,360 --> 01:00:20,200
+ if I were to allow the fact that there could
+
+1005
+01:00:20,200 --> 01:00:21,440
+ be multiple points of contact.
+
+1006
+01:00:21,440 --> 01:00:24,200
+ Then it's completely-- it gets very complicated.
+
+1007
+01:00:24,200 --> 01:00:27,080
+ People who've been asking about human-robot interaction,
+
+1008
+01:00:27,080 --> 01:00:29,580
+ if I bump up against something and it's a wall,
+
+1009
+01:00:29,580 --> 01:00:32,080
+ then the thing I should do might be very different than if I
+
+1010
+01:00:32,080 --> 01:00:34,960
+ bump up against something and it's a person in both directions.
+
+1011
+01:00:34,960 --> 01:00:36,400
+ Because actually, the person might
+
+1012
+01:00:36,400 --> 01:00:39,480
+ be trying to command me by pushing me around.
+
+1013
+01:00:39,480 --> 01:00:42,000
+ And I should be responsive, submissive, I guess,
+
+1014
+01:00:42,000 --> 01:00:44,000
+ to the human.
+
+1015
+01:00:44,000 --> 01:00:46,460
+ Or it could be other cases where I should try to get the task
+
+1016
+01:00:46,460 --> 01:00:48,160
+ done, even through some--
+
+1017
+01:00:48,160 --> 01:00:52,000
+ so it's a very, very hard problem.
+
+1018
+01:00:52,000 --> 01:00:55,300
+ I think the world is sort of agreeing
+
+1019
+01:00:55,300 --> 01:00:58,000
+ that maybe the way to solve that is with tactile skins.
+
+1020
+01:00:58,000 --> 01:00:59,380
+ And that's one of the things we're
+
+1021
+01:00:59,380 --> 01:01:02,620
+ excited about with the soft robot project at TRI
+
+1022
+01:01:02,620 --> 01:01:04,900
+ is we're trying to build sensing skins.
+
+1023
+01:01:04,900 --> 01:01:07,740
+ And I think at some point, you have
+
+1024
+01:01:07,740 --> 01:01:12,340
+ to try to estimate the contact location with a richer
+
+1025
+01:01:12,340 --> 01:01:16,100
+ set of sensors than just your joint torques.
+
+1026
+01:01:16,100 --> 01:01:17,680
+ I think we understand that the joint torques are not
+
+1027
+01:01:17,680 --> 01:01:19,840
+ going to get it done, unless you had a lot of links.
+
+1028
+01:01:19,840 --> 01:01:27,180
+ So I'd say that's the biggest limitation of this
+
+1029
+01:01:27,180 --> 01:01:32,180
+ is the impedance control, stiffness control,
+
+1030
+01:01:32,180 --> 01:01:36,340
+ end effector view of the world needs you to know
+
+1031
+01:01:36,340 --> 01:01:37,500
+ where the end effector is.
+
+1032
+01:01:37,500 --> 01:01:40,480
+ [WRITING ON BOARD]
+
+1033
+01:02:06,780 --> 01:02:12,980
+ And that's why-- so if I now go back to this one example
+
+1034
+01:02:12,980 --> 01:02:15,060
+ I talked about with key points, it's
+
+1035
+01:02:15,060 --> 01:02:17,380
+ kind of exciting to think about maybe combining
+
+1036
+01:02:17,380 --> 01:02:19,020
+ some of the tools from perception
+
+1037
+01:02:19,020 --> 01:02:22,220
+ with some of the good tools from control.
+
+1038
+01:02:22,220 --> 01:02:27,220
+ So the simplest version of this, I would say,
+
+1039
+01:02:27,220 --> 01:02:29,900
+ would be that if we're looking at a tool
+
+1040
+01:02:29,900 --> 01:02:32,300
+ and we want to apply a force at the end of the tool
+
+1041
+01:02:32,300 --> 01:02:34,980
+ instead of the end of the end effector,
+
+1042
+01:02:34,980 --> 01:02:38,300
+ if I use my key point estimation pipeline,
+
+1043
+01:02:38,300 --> 01:02:41,220
+ if I want to control a stiffness in multiple degrees of freedom,
+
+1044
+01:02:41,220 --> 01:02:43,940
+ maybe I'll have an oriented key point or a handful of key
+
+1045
+01:02:43,940 --> 01:02:47,740
+ points so that I can get the orientation of the object too.
+
+1046
+01:02:47,740 --> 01:02:51,260
+ And then if I assume the object is fixed to the hand,
+
+1047
+01:02:51,260 --> 01:02:54,820
+ I just have a slightly different end effector on my robot.
+
+1048
+01:02:54,820 --> 01:02:58,340
+ I have a Jacobian that's just slightly different,
+
+1049
+01:02:58,340 --> 01:03:00,820
+ but based on the location that came out of the key point
+
+1050
+01:03:00,820 --> 01:03:01,660
+ estimator.
+
+1051
+01:03:01,660 --> 01:03:04,420
+ And I can suddenly apply impedance or stiffness
+
+1052
+01:03:04,420 --> 01:03:08,220
+ control at the end effector of the tool.
+
+1053
+01:03:08,220 --> 01:03:10,740
+ And that's what made the examples
+
+1054
+01:03:10,740 --> 01:03:16,220
+ I showed of erasing and plugging in and things like this.
+
+1055
+01:03:16,220 --> 01:03:18,820
+ This was impedance control plus key points.
+
+1056
+01:03:18,820 --> 01:03:21,060
+ There's probably lots of potent combinations
+
+1057
+01:03:21,060 --> 01:03:22,540
+ of the different tools.
+
+1058
+01:03:22,540 --> 01:03:28,180
+ But you do need to know where the location of the contact
+
+1059
+01:03:28,180 --> 01:03:29,420
+ is in order to get that done.
+
+1060
+01:03:34,140 --> 01:03:34,860
+ OK.
+
+1061
+01:03:34,860 --> 01:03:35,580
+ Yeah.
+
+1062
+01:03:35,580 --> 01:03:37,700
+ And so what do we do on the EWA?
+
+1063
+01:03:37,700 --> 01:03:46,780
+ We are sending an only queue desired trajectory,
+
+1064
+01:03:46,780 --> 01:03:48,620
+ like I said.
+
+1065
+01:03:48,620 --> 01:03:54,940
+ And EWA's controller is differentiating.
+
+1066
+01:03:54,940 --> 01:03:56,700
+ We don't get to send the feed forward.
+
+1067
+01:04:03,100 --> 01:04:10,580
+ We tend to do joint stiffness control.
+
+1068
+01:04:10,580 --> 01:04:13,820
+ Despite the elegance of the Cartesian stuff,
+
+1069
+01:04:13,820 --> 01:04:20,020
+ the joint stiffness is more robust to unknown contacts,
+
+1070
+01:04:20,020 --> 01:04:24,540
+ I think, or more reasonable response.
+
+1071
+01:04:24,540 --> 01:04:26,940
+ Principle of least astonishment, if you will,
+
+1072
+01:04:26,940 --> 01:04:31,700
+ responses to unknown contacts.
+
+1073
+01:04:31,700 --> 01:04:40,580
+ And an important point that I maybe forgot to make,
+
+1074
+01:04:40,580 --> 01:04:43,500
+ but the difference between the stiffness control, which
+
+1075
+01:04:43,500 --> 01:04:48,180
+ is canceling out gravity, versus just a PD control,
+
+1076
+01:04:48,180 --> 01:04:50,940
+ is if I can cancel out gravity with a feed forward gravity
+
+1077
+01:04:50,940 --> 01:04:55,140
+ term, then I can choose my stiffnesses to be much softer.
+
+1078
+01:04:55,140 --> 01:04:57,340
+ I can choose kp and kd to be much smaller
+
+1079
+01:04:57,340 --> 01:04:59,780
+ if they don't have to also fight gravity.
+
+1080
+01:04:59,780 --> 01:05:05,420
+ And that's how we got compliant motion for things like opening
+
+1081
+01:05:05,420 --> 01:05:07,580
+ up the dishwasher door.
+
+1082
+01:05:07,580 --> 01:05:11,380
+ The trajectory of this was, I would say, carefully planned,
+
+1083
+01:05:11,380 --> 01:05:14,740
+ but with a highly imperfect model of where the dishwasher
+
+1084
+01:05:14,740 --> 01:05:17,780
+ door is, where the hinge on the dishwasher door was.
+
+1085
+01:05:17,780 --> 01:05:21,620
+ And we are heavily relying on the ability for that robot,
+
+1086
+01:05:21,620 --> 01:05:23,940
+ just like when I pushed it in joint space mode,
+
+1087
+01:05:23,940 --> 01:05:25,660
+ to deviate from its planned trajectory
+
+1088
+01:05:25,660 --> 01:05:27,660
+ in order to execute that task.
+
+1089
+01:05:27,660 --> 01:05:30,260
+ If it didn't, if those gains were too high,
+
+1090
+01:05:30,260 --> 01:05:31,860
+ and the robot was pulling down on this,
+
+1091
+01:05:31,860 --> 01:05:35,060
+ and it was kinematically bad, the hand could get jammed,
+
+1092
+01:05:35,060 --> 01:05:37,180
+ and things would be bad.
+
+1093
+01:05:37,180 --> 01:05:38,180
+ You'd blow a fuse.
+
+1094
+01:05:38,180 --> 01:05:39,480
+ These things are pretty robust.
+
+1095
+01:05:39,480 --> 01:05:44,300
+ Good.
+
+1096
+01:05:44,300 --> 01:05:45,640
+ Any other questions about that?
+
+1097
+01:05:45,640 --> 01:05:51,420
+ Did that lineup of--
+
+1098
+01:05:51,420 --> 01:05:53,980
+ did that organization help with the litany
+
+1099
+01:05:53,980 --> 01:05:56,100
+ of different versions?
+
+1100
+01:05:56,100 --> 01:05:56,600
+ OK.
+
+1101
+01:05:56,600 --> 01:05:59,680
+ Cool.
+
+1102
+01:05:59,680 --> 01:06:01,380
+ I don't mind ending a few minutes early.
+
+1103
+01:06:01,380 --> 01:06:04,900
+ And I actually have one other thing.
+
+1104
+01:06:04,900 --> 01:06:07,700
+ If anybody wants a Drake sticker--
+
+1105
+01:06:07,700 --> 01:06:09,580
+ someone gave me Drake stickers, and I
+
+1106
+01:06:09,580 --> 01:06:13,900
+ have laptop-sized Drake stickers and cell phone-sized Drake
+
+1107
+01:06:13,900 --> 01:06:14,860
+ stickers.
+
+1108
+01:06:14,860 --> 01:06:17,700
+ And if you guys come to class, you get to get Drake stickers.
+
+1109
+01:06:17,700 --> 01:06:20,260
+ I mean, just take one or two.
+
+1110
+01:06:20,260 --> 01:06:22,540
+ OK, see you next time.
+

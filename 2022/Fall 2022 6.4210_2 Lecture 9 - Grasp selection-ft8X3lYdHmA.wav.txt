@@ -1,0 +1,1498 @@
+ [footsteps]
+ [footsteps]
+ [footsteps]
+ [footsteps]
+ [footsteps]
+ [footsteps]
+ (mumbling)
+ (footsteps)
+ (footsteps)
+ (footsteps)
+ (footsteps)
+ (door closing)
+ (mumbling)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (door closing)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ (footsteps)
+ (mumbling)
+ - Okay, let's do it.
+ This is day two of our mini series
+ on going from one object in a bin
+ to a cluttered scene with a lot of the complexity
+ that goes along with that.
+ Just to make sure I say that,
+ I think once we get this far into the course,
+ I've learned over the years that people,
+ most people appreciate me just sort of saying,
+ okay, what have we done, what are we doing,
+ why are we doing this today?
+ So I'll try to put these up most of the time
+ if I remember it, but right, we started with saying,
+ first in the basic pick and place,
+ we said we had a single known object
+ and we even assumed we knew its pose.
+ Someone told us a priori its pose.
+ When we did the geometric perception,
+ we went to a single known object.
+ We still had the model, but we had to estimate its pose.
+ And this week we're trying to do many diverse
+ and unknown objects with unknown poses.
+ The task is relatively simple though.
+ It's just gonna be clearing the bin kind of task.
+ And that looked like this.
+ You know, it turns out I looked at this afterwards
+ and actually that's the Spock duck is right there.
+ That's the one right there.
+ You'll see it's gonna get picked up in a second here.
+ There it is, see?
+ But sometimes it goes, gets thrown.
+ And actually I wanna watch this
+ for just a second longer this time
+ because this video shows actually some of the subtleties.
+ To get the ones out of the bin,
+ it has to, you see that out of the corners,
+ it had to go in and sort of nudge things out of the side
+ because it wasn't able to find a stable grasp.
+ And then at some point it tried a few times,
+ gave up and started switching to the other side.
+ We actually got to the point
+ where we'd almost always clear all the bins.
+ And we'll do a little bit of that with you guys too,
+ talking about the sort of task level reasoning
+ and how you'd program that.
+ But we're gonna be today thinking about the easy picks,
+ the ones where we can just go in and grab
+ and don't have to do anything more sophisticated.
+ So I started this section talking a little bit
+ about contact mechanics and even contact simulation.
+ And partly because our tools are very optimized for it,
+ we're gonna start off by just dumping a bunch of things
+ in the bin, we'll dump a bunch of red bricks
+ or cheese boxes or mustard bottles into the bin.
+ And my preference would be to actually design an algorithm
+ that would solve a small optimization problem
+ to find a static equilibrium.
+ And I have a little bit of comments about that in the notes.
+ But that actually is a very hard problem to solve.
+ And it's a much easier problem
+ to just let the contact simulation engine do its work
+ and initialize things out of penetration
+ and just let physics bring you into a nice static equilibrium.
+ So we talked a little bit about that.
+ But I use that also as a chance to introduce a few
+ of the concepts from contact mechanics.
+ Most notably, normal forces,
+ the contact frame and the friction cone.
+ And we're gonna build on that today.
+ We're gonna use the friction cone idea a lot
+ 'cause we wanna think about what makes a good grasp.
+ Where should I go in and grasp in the bin?
+ And there's a few different views of this.
+ It's changed dramatically over the last 10 years.
+ But for many, many years, there was a sort
+ of the classic view.
+ In fact, I would say a lot of manipulation research
+ in robotics fell under the umbrella
+ of sort of grasp analysis or grasp optimization.
+ If you look in the handbook of robotics under grasping,
+ you find a couple nice chapters that go through.
+ I'll give you a sense of what they talk about.
+ But actually, this isn't as big of a topic anymore
+ because most of these analyses assumed a lot
+ about the object.
+ You assumed a lot of knowledge about the object.
+ And in practice, when you're getting your information
+ from a camera, you don't have enough information
+ maybe to do some of these analyses
+ that are so clean and so nice,
+ but maybe not as well-suited to the wild west
+ of a robot in the home.
+ And when the deep learning revolution started,
+ oops, I put that in the wrong place,
+ but we'll come back to that.
+ When the deep learning revolution started,
+ a different approach showed up,
+ which was we're basically going
+ to just train a deep net to basically tell me
+ where's a good place to grasp.
+ Given a point cloud coming in,
+ or an image coming in even, tell me where I should grasp.
+ And there were a handful of approaches
+ that came out around the same time that did that.
+ One was by Rob Platt and his students.
+ There was DexNet.
+ There's DexNet 4 or 5 by now,
+ but that was 2.0 was the one that was doing
+ a lot of these grasp analysis and training grasp methods.
+ There were a handful of approaches like this.
+ But they changed the picture,
+ they changed the landscape
+ of what we were seeing our robots do
+ into this sort of, instead of one known object
+ that you're trying to reason about very carefully,
+ this was the first time we started seeing videos
+ that looked more like this,
+ where the manipulation research was dump a pile of stuff,
+ random stuff, and start operating on it.
+ And that was, I think, a really important shift
+ for the field to make,
+ was to just go to the sloppy manipulation side of the world.
+ So this is roughly what I've already shown you,
+ but this was maybe the first version of that.
+ These methods took a completely deep learning approach.
+ They just trained often in simulation
+ to try to find what was a good grasp
+ and just, or use some simple heuristics to do it.
+ You'll also see it in picking sort of versions of this.
+ This is from Alberto's group
+ and part of their Amazon picking challenge.
+ They had very much the same kind of thing.
+ They had a deep network that was taking RGB images in,
+ saying these are the places on the image
+ where these are the hotspots
+ where you should probably try to pick.
+ And then a relatively simple algorithm
+ that would just go down and with suction,
+ it was very simple to just go down and suck there.
+ Okay, but this is around the same time,
+ this is Lucas, who was a student in my group.
+ We were kind of, we're saying,
+ do people, do we really,
+ that's a great problem formulation,
+ but do you actually need deep learning for that?
+ I mean, there's pretty simple strategies
+ that would do pretty much the same thing.
+ So as almost a thought experiment,
+ Lucas coded up roughly what we're gonna talk about today,
+ which is a no deep learning,
+ just geometric reasoning version of the problem.
+ And it turns out as things have evolved,
+ people often combine these two worlds.
+ So they'll use, for instance, the geometric reasoning
+ with some perfect point clouds or something in simulation
+ to give a score for the deep learning system to learn.
+ But I think you'd be surprised how far you can go
+ with just the pure geometric version of this.
+ Okay, so I wanna start digging in
+ and talk about what makes a good grasp.
+ What do we learn from our older grasp analysis,
+ and what can we take into the unknown object case?
+ And what can we, ultimately, we'll talk about
+ what do we do, how do we do it with deep learning.
+ So.
+ (tapping)
+ Okay, so the, there's of course layers of thinking
+ about the complexity of grasping.
+ The simplest case would be if you have,
+ just from kinematics alone,
+ the ability to know that you've got a good grasp.
+ So let's say a kinematic only analysis.
+ And the extreme form of this is a notion called form closure.
+ Okay, so it starts with an object of some interesting shape.
+ I guess I'm making a Z.
+ I didn't really know where that was going when I started.
+ But, okay.
+ And then, in the case of a dexterous hand,
+ I might summarize the case of my dexterous hand
+ holding this Z-like object with the location
+ of a handful of points, my fingers, okay.
+ And like we talked about last time,
+ most of our analysis is actually summarized
+ through point models of contact.
+ Okay, so I'll assume I have some fingers here.
+ In a purely kinematic analysis,
+ I'm not actually gonna think about forces at all.
+ I can ask a simple question,
+ which is have I completely caged the grasp?
+ Okay, and I'll make it formal in a second.
+ But the kinematic question would be,
+ is there any perturbation to the pose of the object
+ that I could make such that I could move
+ without causing a violation
+ of my non-penetration constraints?
+ If it is the case that no matter what I moved,
+ what I tried to do to move,
+ I would always be going into penetration
+ on one of the fingers, then I've completely caged,
+ I mean, imagine if I had fingers everywhere,
+ then it's trivial, but there's like nowhere I could move.
+ I've completely pegged this thing down.
+ There's no direction that it can move.
+ Okay, that would be called a form closure.
+ Form closure.
+ So, let me make it more precise.
+ (fingers tapping)
+ Yeah, so let me say it this way.
+ If the fingers are held fixed,
+ this is all in the object coordinate, right?
+ Or relative to the object, my fingers are fixed,
+ then the object cannot move in any direction.
+ (fingers tapping)
+ This is a very conservative notion of a successful grasp.
+ It requires me to have completely enveloped the object,
+ but this is maybe the simplest to understand.
+ And the way that you can write those conditions down,
+ we already have the language for, right?
+ So if we were to use, for instance,
+ our sine distance function, which is a function of Q, right?
+ So this would be, let's say, the sine distance
+ of the i-th contact.
+ Then you can actually check the conditions for form closure
+ by just analyzing the variations of that sine distance,
+ basically.
+ So the way it's typically written
+ in the form closure world would be,
+ let's distinguish, separate Q into Q object
+ and Q robot.
+ We'll split those two in half.
+ And I'll assume that when Q robot is fixed,
+ what I'd like to ask is,
+ if I were to make a change to Q,
+ so let me write this as Q object and Q robot now.
+ It's just a more verbose way to write that same thing,
+ just to make that distinction.
+ The question is, can I find a Q, a delta Q object
+ such that for all i, Q object plus delta Q object,
+ Q robot greater than 0
+ implies that delta Q 0 must be 0?
+ That's kind of a funny way to write it.
+ But the standard thing would be to say,
+ if my goal is to have non-penetration,
+ if my sine distances have to be greater than or equal to 0
+ at all the fingers, and my robot doesn't move,
+ if I say I'm going to consider all possible delta Qs,
+ which satisfy this non-penetration constraint,
+ if basically the only delta Q that satisfies that is 0,
+ then I've got a form closure.
+ That's the formal definition.
+ It's an enveloping bracing contact.
+ It's actually fun to think about it.
+ And if you go to the handbook of robotics kind of text,
+ you'll see all kinds of interesting cases.
+ So it's written like this.
+ This suggests that taking the gradients,
+ would be the right way to look at it,
+ to look at the gradient of these functions.
+ And if the gradient is full rank,
+ you would expect that sort of a condition would hold.
+ And that's true, but it's actually richer than that,
+ because you can find some interesting situations.
+ The classic one is the hourglass here,
+ where if I have an object that looks like this,
+ and I have fingers that are here, for instance,
+ it's possible to have a form closure,
+ but you only can see that it's a form closure
+ if you consider the curvature of the surface.
+ So this is a case where you actually have to take
+ second derivatives of those constraints
+ in order to see it.
+ Okay, so that's the sort of definition.
+ The definition is less important to me
+ that you understand than the basic concept
+ of a completely caged, this thing can't go anywhere
+ because I put my fingers rock solid, the object can't move.
+ Okay, but that's not gonna get us
+ where we wanna be here, right?
+ 'Cause that would require you to somehow
+ get under the object completely.
+ That's not what's happening here.
+ We're coming in from above, we're making a grasp,
+ and we wanna instead think about a less conservative version
+ of stable grasping.
+ So let's loosen up a little bit
+ and think about static analysis next.
+ So we're gonna, you could think about this
+ as basically the limit where I've said
+ the fingers have to do the work without friction helping.
+ If the frictionless case,
+ this thing is still guaranteed to be stable.
+ But if I go to full statics analysis
+ and I think about friction cones,
+ then I can loosen my requirements and just say,
+ as long as the friction cone is getting the job done,
+ the contacts with the help of friction,
+ then I can still call myself a stable grasp, okay?
+ So we're gonna go from form closure to force closure,
+ if you guys have heard that,
+ but let me do it through the path of contact wrenches.
+ So this is gonna be a statics analysis.
+ Do you understand when I say that, right?
+ So there's kinematics, there's dynamics,
+ which is F equals MA,
+ and you have large accelerations or whatever.
+ And there's statics, which is somehow in between,
+ which you do think about forces,
+ but you assume your accelerations are zero.
+ You're looking for static equilibrium kind of conditions.
+ So we could go to full dynamics.
+ In fact, we should go to full dynamics,
+ but we have a nice stepping stone here to go through statics.
+ Okay, so we're gonna think about,
+ if I now have point contacts with friction cones,
+ what can I say about the total stability,
+ robustness of the grasp I've got myself?
+ To do that, I wanna go through
+ the slightly more general form of the friction cone,
+ which is the contact wrench, okay?
+ You remember your spatial velocity.
+ We already talked about one important spatial quantity,
+ the spatial velocity.
+ These things in general have components for rotational,
+ you know, angular momentum, angular velocity in this case,
+ as well as the translational,
+ and an algebra that goes with it, right?
+ Well, today we're gonna use the spatial forces, okay?
+ So now we have,
+ and it's notation heavy again,
+ but this one, I'm tempted to just do this
+ and say that you're good,
+ but you don't have forces relative,
+ you know, in a relative coordinate system.
+ You do have forces that are applied at a certain point.
+ So in order to distinguish it from that,
+ the monogram notation uses this notation,
+ which I'll spell out here,
+ which is force on body A
+ applied at,
+ applied at P,
+ and then expressed in C.
+ (marker tapping)
+ Okay.
+ What's important is that it has an algebra,
+ and it has six components, once again.
+ It has a torsion, you know, a torque, a moment,
+ all in the same world,
+ and it has the translational force.
+ (marker tapping)
+ Right, so in 3D, it's a six by one vector.
+ All of these spatial vectors have similar algebras, right?
+ So for instance, if I wanna change the expressed in frame,
+ I can do that with a rotation matrix.
+ That's the common operator on that.
+ The way I change the point that it's applied to
+ is a pretty simple thing,
+ which I hope is kind of familiar.
+ So if I had a force being applied to a body here,
+ and I wanted to instead summarize it
+ as a force being applied here,
+ so I wanted to change, if this was P, and this was Q,
+ and I wanted to change and write F applied to body A at Q,
+ how can I write that as a function
+ of the force applied at P?
+ I don't expect you to answer,
+ but I give you a minute to think for a second.
+ (marker tapping)
+ Probably gonna involve a vector, the vector P to Q, right?
+ This is P, Q, like that.
+ The forces, if I apply a force here,
+ the forces, I could have applied them anywhere,
+ the X, Y, Z positions, right?
+ Those are just the same.
+ So if I break this down in my coordinates here,
+ the forces that are here are just little f, A, P, yeah.
+ This is the same.
+ But if I apply a force here that had zero torque,
+ for instance, then up here, it looks like a force,
+ but it also provides a torque.
+ And that torque is gonna be just the cross product, right?
+ So the cross product of this with this
+ is gonna be the torque.
+ I could summarize the same force as a force plus torque here
+ as I could summarize it with just a force here.
+ And that's just our basic cross product force computation.
+ So just to get it right, I get tau A, P,
+ plus from Q to P, cross f, A, P, looks like that.
+ Okay, I think I got my signs right.
+ That's an important point.
+ If you don't love statics, that's okay.
+ But just to say, any force that I'm applying
+ anywhere on the body, a spatial force,
+ I can summarize that as if I was,
+ I can apply exactly the equivalent force on the body
+ at a different point.
+ You know, I could have applied it here
+ with a different torque and force as I applied here,
+ and it would have exactly the same effect on the body.
+ Right?
+ And in particular, when I sum all of them up,
+ their total contribution, I could summarize
+ their total contribution of many forces
+ as a single force and moment at a particular point.
+ I could just put them into the same coordinate system
+ and then just add them together.
+ You can add these forces together.
+ That's part of the algebra.
+ Okay, so let's think about how to think
+ about our friction cone.
+ Any questions about that?
+ Let's think about how to reason about different friction
+ cones and different robustness, now
+ that we have that basic language of spatial forces,
+ and we're reminded there's probably a cross product
+ involved.
+ By the way, this cross product shows up
+ in the transformations of spatial velocity, too.
+ I heard that maybe we didn't get that through on the problem
+ set, that a lot of people got that one wrong on the problem
+ set, that people didn't use the cross product thing.
+ So we'll probably post a little-- that one
+ was-- we'll post a little summary
+ of what's the right answer to make sure people get it.
+ But yeah, these cross products are
+ standard fare in spatial notations,
+ whenever you're mixing rotations with translations.
+ OK, so well, let's even start with a familiar case.
+ We talked about-- remember that example
+ where we said the box was on the ramp,
+ and I had a box with a couple little feet in it,
+ so that I knew exactly where the contact forces were.
+ Box with mass m, and we said we had friction cones
+ that looked like this.
+ And then we had a mass-- a force of gravity
+ applied at the center of mass like this.
+ You guys remember that notation, right?
+ The normal force was here.
+ The friction force was being applied possibly
+ in these directions, and the constraint
+ from Coulomb friction was that the magnitude of the friction
+ force is scaled by the magnitude of the normal force.
+ So the question about whether this thing
+ can be in static equilibrium could
+ be written as, can I find such that mg, which I've
+ written in a spatial force would actually be 0 torque and mg.
+ This would be applied at the center of mass, for instance.
+ So I said force applied to A at the center of mass.
+ We'll call it this.
+ Can I find an equal and opposite set
+ of forces at the contacts that would sum up and equal this?
+ So maybe as an optimization problem, say,
+ can I find the forces at the contact points
+ i such that the sum of the contacts i equals mg,
+ and the torques in general, too?
+ [WRITING ON BOARD]
+ I'm trying to find a balance between these things.
+ And it turns out that the geometry of making
+ these sums match, that the summing forces is easy.
+ Summing friction cones also turns out to be easy.
+ It turns out that if I wanted to find these forces subject
+ to the F of Ci inside the friction cone-- I
+ don't know if I said that well enough.
+ This thing becomes non-zero because
+ of the coordinate transform.
+ But if you want to say, is there a force that's
+ inside the friction cone that will resist this,
+ you could write that as a very simple optimization problem.
+ Find me some forces subject to their constraints
+ so that the sums match.
+ But I also was trying to say last time,
+ there's a beautiful geometric picture of this.
+ We said if that vector lands inside the friction cone,
+ then there's a static equilibrium.
+ And if it doesn't land inside the friction cone,
+ then there's not.
+ So I want to talk you through the slightly more
+ general version of that now.
+ Do people remember that statement?
+ And do you grok that statement?
+ Or should we-- if your task is to find a force that
+ has to live inside this cone, that the sum of these forces
+ has to be equal and opposite to this,
+ there's a geometry to that.
+ So you can add the sum of forces is sort
+ of the element-wise version of it.
+ But I can also say the sum of some sets
+ and ask if the sum of those sets,
+ if this vector is in the element of the sum of those sets.
+ OK, that's called the Minkowski sum in this case.
+ There's something called the Minkowski sum.
+ [TAPPING]
+ If you don't know Minkowski sum, it's fine.
+ I just want you to get the intuition.
+ But if you knew the Minkowski sum,
+ it's super useful to know how general this idea is.
+ There is a notion of, given this friction cone and this friction
+ cone, their locations in space and the basic operations
+ of the spatial operators, I can tell you
+ exactly which forces and moments I can resist at this point.
+ And the Minkowski sum of these two, if they're in line,
+ is actually just going to look like a vector like this.
+ And if the negative of this is not inside that,
+ then I'm not going to be able to resist it.
+ [TAPPING]
+ The Minkowski sum says a vector is in the Minkowski sum.
+ If I can take one element out of this vector
+ and add it with any element out of this vector
+ and get the vector I want.
+ OK, it's just a notion of set sum.
+ And the Minkowski sum allows us to summarize the entire friction
+ cone into a contact wrench set.
+ So this thing here is a contact wrench cone or set.
+ And it's a beautiful object.
+ In particular, because even for very complicated bodies
+ and very complicated friction interactions,
+ if you know the points and you know mu friction,
+ then actually this thing is still a convex set.
+ Given convex cones for your friction in known positions,
+ this is still actually a really nice object to work with.
+ So we've lifted the question of will this block slide
+ into a bigger question saying, does the force of gravity
+ live inside the contact wrench set?
+ OK.
+ [WRITING ON BOARD]
+ I feel I didn't say that super well, so please ask questions.
+ Yeah?
+ Would it be possible to step through an example of what
+ it would look like to add those two cones together?
+ Yeah, yeah, yeah.
+ OK.
+ So the question is, can I step through an example
+ of adding those two cones together?
+ The problem is in 2D on the board,
+ it's almost always trivial when you have unbounded sets.
+ But let me try.
+ Let me try to convince you that it's trivial,
+ and then maybe I can find a bounded set version of it.
+ But let's try.
+ So let's say I had a box, and I had a friction cone here,
+ and a friction cone-- I'll do the red one over here.
+ OK.
+ And let's just ignore rotations for now.
+ Let's just say ignore rotations.
+ This is because I'm making an example on the spot,
+ and I don't know how to draw torques out of the board.
+ Although the picture is actually really good.
+ All right, so we're 2D, and we're going to ignore rotations.
+ Then the question of what is the Minkowski sum--
+ if I wanted to take in, say, what forces can I resist
+ with those two frictional contacts?
+ Then the Minkowski sum of these two sets-- well, first of all,
+ because the forces just translate,
+ I could move them to the same coordinate frame
+ with no extra operations.
+ I'm just going to move this over,
+ because the forces didn't depend on the position.
+ Only the moments depended on the position.
+ And now if I ask if these two sets-- if I add those two sets
+ together in the Minkowski sense, meaning for any vector,
+ can I find a vector that's in-- one vector in this set
+ and one vector in this set that describes,
+ let's say, this vector, then the way
+ to think about the Minkowski sums
+ is to take any one set and drag the other set along with it.
+ So you're going to convolve the other sets.
+ You're going to draw, like, OK, I've got a point here,
+ but I also have a point here.
+ Like if I chose this point in the blue set,
+ I can still choose any of these points in the next set.
+ OK, so it's the shadow that gets pulled out
+ when you drag the second set across all points
+ of the first set.
+ Those are the forces that are admissible,
+ given those two friction cones.
+ And I think it's always trivial in 2D,
+ because I can get any force.
+ As long as I have a non-zero friction cone,
+ even if they're not lined up, I think
+ I could resist any force.
+ Because this is because they're infinite.
+ So basically, you could take your brick
+ and you could just squeeze the heck out of it
+ and resist any force.
+ There's no force you couldn't in this simple analysis.
+ If you allowed orientation changes,
+ if then, for instance, this, the way I've drawn it, actually,
+ if I allowed orientations, this would be susceptible to torques
+ like this, because both these forces are trying to resist
+ motion in this direction.
+ And these forces are trying to resist
+ motion in the same direction.
+ If you apply the torque like this,
+ my fingers wouldn't be able to stop you without moving.
+ So you'd actually be able to break free of me like this.
+ And what shape would that be?
+ What shape would that be?
+ The result in--
+ So it turns out-- so because the relationship
+ with forces in the Cartesian frame,
+ if I wanted to put them into the frame of the origin,
+ then I would get-- see?
+ My forces here for the cross product here
+ would be resisting things like this.
+ So that would be the vector either coming out of the board
+ or into the board.
+ There's a sign that matters here.
+ So I have a cross product like that.
+ But basically, both of these are going to put a vector--
+ let's call it out of the board.
+ And if I'm off by a sign, I apologize.
+ Both of these are going to give me
+ a cross product that's pointing out of the board.
+ So the torque that's pointing into the board--
+ I got it right.
+ I got it right.
+ Yeah.
+ Thank you.
+ The torque that's pointing into the board,
+ I would not be able to resist.
+ Because the Cartesian-- or the Minkowski sum of the two
+ vectors that are coming out of the board
+ cannot resist the vector going into the board.
+ I knew 2D is easier.
+ Yeah?
+ But that's a good question.
+ And I hope I said that OK.
+ Yes?
+ Yes?
+ This is totally directional.
+ We're talking about infinite force.
+ [INAUDIBLE]
+ Yes, great.
+ So these analysis, when I'm thinking about it as a cone,
+ so far, we're thinking about unlimited amounts of force
+ being applied.
+ Yeah.
+ There's a more sophisticated version of it,
+ where you could even have torque limits in your hand.
+ So that would imply a force limit here.
+ It would be a bounded cone.
+ OK.
+ We can do that with Jacobians and the like.
+ That's OK.
+ But there's really this beautiful geometry
+ of reasoning about all possible forces
+ that I could get out of a set of frictional contacts.
+ Now, what makes a good grasp?
+ Sorry to have taken that a little longer than I meant.
+ But what makes a good grasp?
+ What makes a good grasp is that you have a large contact wrench
+ cone, that when I put all of my frictional contacts together,
+ you're able to resist all of the possible disturbances
+ that I might have.
+ So in general, maybe I don't even know the mass of this.
+ So no matter what the mass is, I want
+ to be able to resist the force of gravity.
+ So that would mean that I'd need to have a contact wrench
+ cone that could resist arbitrary forces
+ in the vertical direction.
+ Maybe I think there's some guy that
+ comes by every once in a while and applies--
+ or forces torques in the y-axis.
+ I've got an adversary that walks into lab every Tuesday at 3
+ and applies torques around the y-axis.
+ In which case, I'd want my contact wrench cone
+ to be robust in that direction.
+ If your contact wrench cone contains
+ all possible forces and moments, then you've
+ achieved force closure.
+ That's the definition of force closure.
+ And as you can see from this simple example,
+ that it is possible.
+ It's not even that hard.
+ If you have enough fingers, in six degrees of freedom,
+ you need a handful of fingers and a lot of friction, maybe.
+ But force closure, if I can resist arbitrary spatial
+ forces.
+ Spatial forces are also called wrenches.
+ This object that is the staffed torque and force
+ is a spatial force or a wrench.
+ OK, so that's a beautiful idea.
+ Yes, please.
+ Do you need to go to any possible force
+ or forces that are behind?
+ So force closure is conservative.
+ It says you must be able to resist all possible forces.
+ If you are not able to achieve such a force closure grasp,
+ or if you have torque limits or other things on your robot,
+ then you might not be able to ask for pure force closure.
+ You might say, let me restrict my attention
+ to the forces that I think are actually
+ going to happen in this scenario.
+ Good.
+ So I hope that the high level message at least comes through
+ is that there's this contact wrench object.
+ And there's actually a beautiful geometry of it.
+ If you want to get into the optimization of contact forces,
+ there's a beautiful geometry through the Minkowski sum.
+ But there's actually also a very important lesson.
+ Actually, this picture is not so bad for telling that lesson.
+ One of the strongest lessons from this
+ is that if you want to be robust, it's pretty effective--
+ let me make it not a box.
+ Let me make it a slightly more interesting object--
+ that if I were to pick places where I could possibly
+ make contact, all things equal, if you
+ want to have a big contact wrench,
+ it's really good to choose points that are collinear
+ and pointing at each other.
+ So if I were to pick this set instead of this set,
+ these are called collinear antipodal points.
+ Antipodal because the normals associated with those points
+ are pointing the normal here and the normal here
+ are pointing like opposite poles.
+ OK?
+ And they're lined up.
+ You can write this analysis in general,
+ but this analysis tells us that all other things equal,
+ try to pick your points directly across from each other.
+ And not in arbitrary-- this is a directly across from each other,
+ but its normals might be pointing not at each other.
+ Ideally, you get your friction cones
+ pointing right at each other.
+ And that's a very robust grasp if you
+ get two points of contact, try to pick them like that.
+ Yes?
+ What point is that?
+ Because I thought just now you said
+ that it would drag across the whole shape,
+ and so wouldn't it go into the 2D space
+ or just come into the plane no matter what orientation
+ they are?
+ Yes.
+ So I think it's 2D proved to be too simple.
+ I mean, because I think even if there's no rotations,
+ then you're going to resist any translational force.
+ If you lined up, then you would be
+ able to also resist any torques.
+ But in this situation, you were not able to.
+ So I guess with orientation, it is OK.
+ This example is enough to see why it's better
+ to be like this than like this.
+ And the reason is because when they're like this,
+ those two are contributing opposite signs in the torque,
+ whereas this one, they're contributing
+ the same sign in the torque.
+ They're both torquing in the same direction around that.
+ There is some point in the body about which they contribute
+ the same sign torque.
+ It doesn't have to be the center of mass.
+ As long as there's some point on the body
+ where they contribute the same torque,
+ then you're susceptible to somebody
+ coming and applying a torque to you.
+ OK, so I think a very reasonable thing
+ to do if you want to pick up Spock the duck,
+ then is to take this important lesson from grasp analysis.
+ But that can be applied with very little knowledge
+ of the object.
+ If I want to prove that the center of mass
+ and the gravitational vector is inside a cone,
+ that requires knowledge of the center of mass.
+ That requires knowledge of the object in some sense.
+ But if I don't know that, that as a good heuristic,
+ I'm going to look for antipodal collinear points.
+ And what we're going to try to do next
+ is say if you just look at a point cloud,
+ you have no notion of what's an object, what's not an object,
+ how much they weigh.
+ But you just try to find places on the object
+ where you can get good antipodal grasps.
+ And that's a pretty darn good heuristic
+ for getting a good stable grasp.
+ And we'll see how far it goes.
+ Yeah?
+ [INAUDIBLE]
+ Oh, I see your question.
+ Well, let me make sure I understand.
+ So you're saying I picked some strange points,
+ but then I'll kind of turn my hand so that they are lined up?
+ [INAUDIBLE]
+ Good.
+ So this is not about the current force you're exerting.
+ This is about the normal of the geometry,
+ which sets limits on what forces you could possibly exert.
+ So this is the shape of the object.
+ This is not my current choice of grasping strategy-- of force.
+ Yeah?
+ OK, so let's step through-- well,
+ the next thing I'm going to do is I'm going to step through.
+ We're going to go from our point cloud.
+ We're going to figure out how to estimate some normals.
+ And we're going to apply that to doing grasp selection.
+ Yeah?
+ OK.
+ I've got some-- I've got a demo for this.
+ [SIDE CONVERSATION]
+ All right.
+ So it turns out you've already seen normal estimation
+ a little bit.
+ You saw plane fitting in your ransack problem.
+ And we're going to have you do the normal estimation details.
+ We just gave that as a method in the plane fitting.
+ But we're going to give you the problem
+ of doing normal estimation.
+ I think we picked that as one of the problems.
+ But this is the basic operation.
+ So I've got my mustard bottle.
+ OK?
+ I've got the point clouds from my mustard bottle
+ straight out of the camera.
+ And what I'd like to do is estimate the local geometry
+ of that frame.
+ And I think I've got this.
+ Yeah, OK.
+ Here's how it works, right?
+ So try to get it centered here.
+ Basically, the operation we're going to go through--
+ first, we have to process the point cloud
+ into a reasonable form to do these operations.
+ If it's too noisy, then plane fitting might be not optimal.
+ You want to do it on the densest possible point cloud.
+ And you want to do it on all the points from all the cameras.
+ So we'll step through that sequence.
+ But the basic operation is, given a point cloud,
+ I'm going to estimate its normals by fitting a plane
+ to the n nearest neighbors.
+ That plane defines the normal vector.
+ And we'll see it actually also defines
+ the directions of curvature with the same plane fitting
+ algorithm.
+ It's a very useful operation for trying
+ to decide if you're going to put your finger there or not.
+ This one is not going to have any photographs,
+ because it's got no backside.
+ But we can do it with multiple cameras.
+ We'll do better.
+ OK, so let's figure out how that works.
+ Normal estimation from point clouds.
+ So we're here.
+ Actually, the first step is just there's just some processing
+ that you have to do.
+ So the processing that I went through
+ in that particular setup was first
+ I took the point cloud that was from the cameras
+ around the bins.
+ I cropped the point cloud.
+ That's sort of an easy thing to do based on some xyz location.
+ Because the first point cloud comes in,
+ and it has the other cameras in the view.
+ It has the bins in the view.
+ This is all pretty confusing.
+ So I'm going to crop to an xyz bounding box.
+ Then we do normal estimation.
+ And the reason you do normal estimation-- let's see.
+ So let me just say what the other steps are.
+ Then I'm going to merge the point clouds
+ from multiple cameras.
+ And then I'm going to down sample the point cloud in order
+ to make it more reasonable for my grasp analysis.
+ But the order of these things is important.
+ The reason that I do normal estimation
+ before I merge the point cloud is
+ because what we're going to find out is-- I mean, you'll see--
+ is that fitting a plane to these points
+ will tell me the normal, but won't tell me
+ which direction is the normal.
+ So before I get rid of the correspondence
+ between these points and the camera,
+ I have to flip the normals towards the camera.
+ There's a simple little step saying,
+ you estimated the plane.
+ I don't know if the normal is this direction
+ or this direction.
+ But if the camera was over there,
+ then I know that the normal is going
+ to be pointing towards the camera.
+ So you need to know which points came from which camera
+ in order to do that.
+ And you prefer to do the normal estimation on the dense point
+ cloud.
+ Then you merge the point clouds into the one big thing.
+ And then you can down sample and use more efficient algorithms
+ from then on.
+ It's kind of crazy to think that we do this all the time.
+ Compute all of the normals for all of the points
+ coming in using k nearest neighbor queries
+ at all of the points.
+ This was one of those examples when
+ I started working with point clouds
+ I don't know how many years ago now.
+ I was like, no, surely you don't do it for all the points
+ all the time on every frame.
+ Yeah, they do.
+ That's just what you do.
+ You could do it on a multi-process if you want.
+ You could put it on a GPU if you want now.
+ But that is actually a surprisingly lightweight
+ computation.
+ And people just do that all the time.
+ It seems inelegant to me, but that's standard fare.
+ OK, but once we have our cropped point cloud,
+ let's just make sure-- the line fitting algorithm
+ is actually super clean and super nice.
+ So I want you to think through it with me.
+ Actually, I guess this is a good stretch time.
+ You guys want to take a quick stretch as I'm
+ about to write down the next set of equations?
+ Quick stretch.
+ People seem to still like it, the three of you that
+ are actually commenting on the-- everybody
+ should write comments.
+ And when you fill out the survey,
+ I know you're tired at the end of the problem set.
+ But I want more comments.
+ I want to hear what you think.
+ [SIDE CONVERSATION]
+ All right, let's estimate our normals.
+ How do we fit a plane to a bunch of points?
+ It's super simple.
+ This is like-- I really like how clean this is.
+ So I'm going to write it as an optimization,
+ because I always do.
+ I'm going to say I want to fit a bunch of points centered
+ around my vector p, and I want to estimate the normal vector.
+ So how am I going to define that?
+ I'm going to search for a normal vector.
+ I'll call my normal vector n.
+ And I want to find the normal-- I'm
+ going to define the normal vector is
+ over all of my nearest neighbor points, i.
+ I would like to find the vector n such
+ that the dot product between point i and my nominal p--
+ this is my point at which I'm evaluating my normal.
+ And this is my normal.
+ I want this dotted with the normal to be 0, ideally.
+ So what I'm going to do is I'm going
+ to try to minimize the squared sum of the dot products.
+ The n, which is this close to 0 dot product with all
+ of my vectors, is the one I want.
+ And I want to constrain it to be a unit vector.
+ So what's the picture you should have in your head here?
+ I've got my point of interest here.
+ I'll make it blue.
+ I have a bunch of other points in the scene
+ that are my nearest neighbors.
+ Each one of those, the vector pi minus p looks like this.
+ These are the pi's minus p's.
+ Again, it's a little rough on the board,
+ but even in 2D I can sort of do it.
+ And I want to estimate the normal vector.
+ These are pi minus p, and this is n.
+ I want the dot product of these to be 0,
+ as close to 0 as possible.
+ And of course, I'm going to get it only up to a symmetry.
+ This one should be the same equally good answer.
+ The optimization is really nice, actually, really simple.
+ The way to see it is to just rewrite this.
+ I'm going to give you the geometric version of it.
+ Of course, the answer is, again, singular value decomposition.
+ But it always is somehow.
+ I'm going to write this slightly differently.
+ I'll break that up.
+ I'll say it's the sum over i.
+ I've got the dot product is a scalar, right?
+ A vector dot with a vector, you know, times a vector.
+ That's a scalar.
+ A scalar squared.
+ I could just as well have written that, though,
+ like this.
+ This is also the scalar.
+ And I'm going to multiply that again by this other scalar
+ here.
+ This is just playing the trace trick here.
+ That's exactly the same quantity.
+ I just unrolled the squared.
+ One more step here.
+ Let me write it like this.
+ N transpose sum over i, P_i.
+ Same thing.
+ I just did a little algebraic manipulation there.
+ And we'll call this-- this is the data matrix of the day
+ here.
+ This is our data matrix.
+ There's no decision variables in there.
+ That's just what we're getting straight from the point cloud.
+ And our decision variables-- so our problem here
+ is just minimize n, n transpose, Wn subject to n equals 1.
+ Remember what we're doing.
+ We're just trying to fit a plane by finding the normal vector.
+ OK.
+ So let me draw that in 2D here.
+ I've got n1, n2.
+ I know that I want my n to be a unit vector.
+ So this is the n equals 1.
+ This thing is just a quadratic form,
+ a positive quadratic form, because it's
+ the sum of these positive things.
+ OK.
+ It's going to have-- so it's going to be a bowl centered
+ at the origin that's going to have some long axes
+ and some short axes.
+ Let me call it the long axis like this.
+ So this is like the bowl.
+ Do you see what I'm trying to draw here?
+ That's supposed to be the origin there.
+ This is n transpose Wn is some constant.
+ These are the level sets of that bowl.
+ Right?
+ Yes.
+ AUDIENCE: Is that 3D?
+ PROFESSOR: I'm trying to do it just as if I was doing it in--
+ I'm plotting two of the axes of a 3D thing, right?
+ This bowl would be coming up out of the plane towards you.
+ Think of that as a bowl where the axis coming out
+ is the cost.
+ So what's the optimal n?
+ The smallest eigenvector.
+ Is the eigenvector corresponding to the smallest
+ eigenvalue?
+ Absolutely.
+ Right?
+ So in this picture, it should be more centered.
+ But it's going to be the place where
+ the bowl is the most elongated.
+ Right?
+ Because the cost is going to go up faster in this direction
+ and up slowly in that direction, the place where it's elongated.
+ So there's two optimal answers, n star.
+ And they're right there as we expected.
+ We didn't expect to be able to pick this one or this one.
+ Both of them are optimal answers.
+ OK?
+ So it's exactly that n star is the eigenvector corresponding
+ to smallest eigenvalue of w.
+ It's the unit eigenvector.
+ Right?
+ OK.
+ So the way to estimate the normal of a point cloud
+ is just to assemble this little data matrix
+ and take some eigenvectors and eigenvalues,
+ and you've got the normal.
+ You've done your normal estimation.
+ And you can do this with a KD tree,
+ doing the data structure for nearest neighbor, for instance.
+ Pick your 30 nearest neighbors, go
+ through all the points in the point cloud,
+ and just compute your normals.
+ And that's what people do.
+ Right?
+ You get these funny looking point clouds
+ with their normal vectors, yeah?
+ All over.
+ Again, the way you pick this one or this one
+ is you have one extra operation afterwards.
+ You say my camera is over here, so I
+ have to pick the normal.
+ If the normal was pointed-- you could just
+ pick one of them arbitrarily.
+ If the normal was pointed on the inside,
+ just flip it around so it's pointing at the camera,
+ because you know you can't see behind the objects.
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ So this is just a more robust way to do this.
+ So if I had exactly two points, like you said,
+ I could do that computation.
+ But now imagine that they're noisy point clouds,
+ or it's not a perfect plane.
+ That's a great question.
+ It's not a perfect plane.
+ This is saying find the best one that
+ summarizes in a least square sense over the 30
+ nearest neighbors.
+ So it's going to be more robust to small variations
+ in the pixels, or even maybe there was a little corner
+ in the real point cloud.
+ No noise, but there's just a corner.
+ This is going to be more robust to that.
+ Great question.
+ Yeah?
+ Super interesting thing.
+ Let me just get one more in.
+ So if I were to do almost exactly the same optimization,
+ but I were to say, what if I want to maximize that over n?
+ I want to maximize my dot product.
+ So in the picture here, that's going
+ to look like this, these points over here.
+ And the exact same computation, the one
+ that's the maximal dot product is
+ the one that's the direction of least curvature.
+ So the maximum, this is the direction of least curvature.
+ And it's exactly just the eigenvalue
+ corresponding to the largest eigenvector.
+ Yeah, what's up?
+ Yeah, I was wondering if you know
+ if you'd ransacked this as well, or could you
+ just do it all?
+ Yeah, that's a good question.
+ So we did do the ransack for the plane estimation.
+ So that was an example where you really
+ want to get the normal of the table,
+ the plane estimated of the table.
+ So it was worth the extra cost of doing ransack
+ to try to get that right, for instance.
+ I think in the-- I'm just going to run this
+ over my whole point cloud.
+ We typically don't do ransack.
+ We typically would be-- I think that's just
+ sort of an arbitrary where the computation falls decision.
+ I think you're right.
+ You could do better normal estimation
+ with ransack in this step two.
+ Great question.
+ Yeah?
+ What do you mean by least curvature?
+ Least curvature.
+ So if I were to look at the side of my bunny, my Stanford
+ bunny or whatever, so I've got some point cloud here.
+ Look, view from the side.
+ It has some curvature.
+ And I've got another direction where
+ the bunny is kind of more curvy.
+ So if I were to sum up the-- I had my normal here.
+ And I have my p vectors like this.
+ So the vector of least-- and in the other axis
+ they look like this.
+ And there's more like this.
+ So the axis where it aligns the most,
+ where if I could pick a particular vector that the dot
+ product is the highest, then that's
+ going to be the one where the bunny is more flat.
+ And the one that's left over is going
+ to be the direction where you're more curvy.
+ It happens since we know this is a symmetric matrix.
+ And symmetric matrices have orthonormal, even orthogonal,
+ in this case orthogonal bases.
+ We know that even that third axis,
+ that intermediate eigenvector, has an interpretation
+ as this last axis.
+ But I think the math tells us that the dot product that
+ is maximal is the direction that's the flattest.
+ If it was completely flat, then you'd expect it.
+ You would just pick something.
+ They'd be equivalent eigenvalues.
+ OK, so let's put this all together
+ so you can sort of imagine then how I go through this step.
+ I'm going to look into the bin.
+ I'm going to crop my point cloud.
+ I'm going to run this normal estimation over.
+ I'm going to get my normals, and I'll get my curvature
+ if I wanted to use it.
+ I'll pull them all together into merged point clouds.
+ And then I'm going to downsample.
+ Downsampling is another one that-- it's
+ a relatively efficient algorithm.
+ The way people typically do it, they
+ would just make a voxel grid over your point cloud
+ and summarize all of the points that
+ landed in the same voxel as a single point.
+ That would be the standard voxelized downsampling.
+ And you can keep your normals around.
+ You average your normals, which is kind of weird.
+ But you just average your normals
+ of all the points that landed in the same voxel.
+ But they're standard algorithms.
+ And there's libraries like Open3D
+ that are just these lists of-- they
+ have all mature implementations of all the normal, the best
+ point cloud algorithms.
+ Before that, there was PCL.
+ PCL wasn't maintained for a while.
+ It looks like it's being maintained again,
+ but I don't know by whom.
+ But there are standard point cloud algorithms.
+ I went through-- we've implemented the simple ones
+ in Drake, but Drake isn't trying to cover all of these.
+ Just enough that you guys don't have to install also Open3D.
+ Because it was a big install that broke all the time.
+ So now, this is enough for us to do a basic grasp selection
+ algorithm.
+ Here's my grasp selection algorithm at work.
+ I'm going to load up my gripper, load up my scene.
+ OK.
+ I'm just hallucinating the gripper
+ and assuming I can fly around a little bit.
+ And I'm going to evaluate potential grasps
+ with no knowledge of the object by doing a little bit of point
+ cloud math.
+ So first, I've gone through, I've taken my point cloud,
+ and I've computed its normals and down sampled
+ and everything like that.
+ But now, for any potential nominal grasp,
+ I'm going to do another little small batch of point cloud
+ computations.
+ So first of all, since I want to find antipodal grasps, what
+ I'm going to do is I'm going to take the place where
+ my fingers are likely to touch, and I'm
+ going to crop the point cloud so that the red points are
+ the ones that are the points of interest.
+ OK.
+ And then if I were to have both screens up--
+ but maybe that's hard right now-- but every time I'm
+ doing this, it's actually printing a cost.
+ For every possible candidate like this,
+ it's computing a sum of the normals
+ that are in those red points.
+ Basically, it's saying I'm going to reward normals that
+ are antipodal and pointing to in the axis of my gripper.
+ And I'm going to just sum up.
+ The more normals I have that are pointing right at my gripper
+ inside those red, the better.
+ And then I add a little bit more, a few more costs.
+ These are now just very ad hoc.
+ But I want to come down from above.
+ I don't want to pick it up from inside the table.
+ And I call it infinite cost.
+ If the gripper collides with the point cloud like this,
+ that's infinite cost, or if it collides with the bins.
+ OK.
+ But the algorithm now is just going to be--
+ so I'm doing this manually so you could see.
+ And if you run the GUI yourself, you'll
+ see in the console it's printing out the costs
+ and whether it knows it's in collision or not.
+ And our grasp selection algorithm
+ for the day, which demands almost nothing
+ about the objects, is I'm just going
+ to pick a bunch of-- actually, I'm
+ going to pick a bunch of points in the point cloud,
+ put my hand around them, and then just evaluate
+ the cost.
+ I'll pick 100 of them, and I'll take the best.
+ And in this case, I'm going to just take 100 of them
+ and plot-- I think it runs.
+ I forgot to run it.
+ Yeah.
+ If I generate grasp candidates then, there we go.
+ I've got random objects falling in the bin.
+ And I just drew the five best candidates.
+ And it looks like I didn't simulate it.
+ I think the things are still falling down.
+ That was smart.
+ I let it simulate for a second.
+ It looks like it didn't quite settle.
+ And then I said, find some point clouds.
+ And it does its thing.
+ And then I just pick the best one.
+ I go ahead and grasp, wash, rinse, and repeat.
+ That's a surprisingly effective algorithm.
+ I'm going to show you by the next time
+ sort of the full version of this.
+ I'll maybe give you a preview of it now.
+ I wrote it very recently.
+ I hope it runs on this machine.
+ See how we go.
+ And I'm going to keep working on it.
+ But yeah, OK.
+ So this is basically the end-to-end demo
+ using exactly that.
+ And it will go down just using this strategy.
+ It happened to pick there on the block.
+ It'll go over using exactly the plans
+ we did before with my clearance, height, whatever.
+ It'll go drop it off in the other bin.
+ Wash, rinse, and repeat.
+ Just go back.
+ As soon as it goes down, it takes another new point cloud,
+ chooses the grasp.
+ And we'll add more and more logic to it
+ to know if it fails multiple times,
+ to give up and go to the other one.
+ So that is an antipodal grasp.
+ It's not the one I would have picked
+ if I had written a better algorithm, right?
+ There are limitations to the antipodal metric.
+ Actually, that's a great example.
+ I want to talk about the limitations
+ here in the last few minutes.
+ So why was that a ridiculous grasp?
+ What do you know that it doesn't know?
+ What's that?
+ That the corner is not stable.
+ So it was evaluating the reds, the red points.
+ They were arbitrarily close.
+ It wasn't looking like one step away from the reds, right?
+ So that's one thing you know, is that there's
+ a notion of robustness that isn't captured by that metric.
+ What's another thing?
+ Torque.
+ Center of mass, right?
+ You know you should pick objects around their center of mass
+ because it'll be able to resist more torque.
+ This is-- oops.
+ I ran into the bin.
+ That'll be fixed by Tuesday.
+ Yeah.
+ Yeah, good.
+ But yeah, so it has no notion of mass.
+ It doesn't know what the objects are, right?
+ So it has no concept that can do that.
+ And it ran into the camera.
+ All right, let me just call this a work in progress.
+ Oh, look at that.
+ That'll be better by Tuesday.
+ [INAUDIBLE]
+ Good.
+ So to what extent-- and this is actually great.
+ So there's a couple ways that what I've said
+ was inconsistent with the fact that I just said
+ you should know where the center of mass is, right?
+ So one was that-- yes, I think where you pick the object up
+ is not going to affect the motion of the arm because
+ of the gearbox thing, right?
+ So you're absolutely right.
+ The reflected inertia of the gearboxes
+ can dominate the mass.
+ So that robot's going to move mostly the same,
+ whether it's picked up a red brick, two red bricks,
+ whatever, OK?
+ Whether the red brick stays nicely inside the hand
+ is about whether the gravitational wrench
+ is inside the friction cone that you've achieved.
+ Now, there's one more point, which
+ is that I'm actually commanding that gripper
+ to have a particular amount of force, of gripping force.
+ So it's not actually an infinite friction cone.
+ It has limits on how much force it's going to apply,
+ partly because I don't want to crush Spock, right?
+ That's what I was trying to say.
+ If I don't know anything about an object,
+ then maybe grabbing it with infinite force
+ isn't a good idea, and the hand isn't
+ capable of infinite force.
+ So that is also a way that the mass
+ could matter more than the analysis we've done,
+ the clean analysis would suggest.
+ Great example.
+ Great question.
+ Yeah?
+ So in the computation that you showed,
+ there's no distinguishing between objects, right?
+ Correct.
+ I understand if two separate point clouds are connected
+ at all.
+ Spot on.
+ So there's no sense in which it knows that two separate point
+ clouds are connected.
+ Yeah, and I have an example of that.
+ Was that your point?
+ Or-- yeah.
+ Yes, so what are some limitations
+ of only using geometry?
+ And actually, did you see that one right there?
+ That was exactly your case.
+ Let me start it over again.
+ There's two objects there, and they
+ happen to have their backs kind of close,
+ and they had antipodal grasps like that.
+ But it wasn't the same object.
+ It just got it wrong, and it had no reason to-- it
+ didn't think about that.
+ It found antipodal grasps.
+ They seemed about the right width apart.
+ It went for the squeeze.
+ So people call those double picks, for instance,
+ for exactly that reason.
+ It also will do things-- like, if you run this long enough
+ and you throw things in the bin, you'll
+ see it do what we saw on the red brick,
+ but you see it in more ridiculous.
+ You'll pick up a hammer or something by the edge.
+ It has no concept of center of mass.
+ It has no concept of object.
+ So it's not great, but it's surprisingly good.
+ The other-- I'd say another big limitation of the approach
+ as I've advertised it here, and I
+ think a place where the deep learning versions really
+ do outperform, is on partial views.
+ So my point cloud is only going to see what my cameras can
+ immediately see.
+ If there's a back to the object that was occluded,
+ or I didn't have a camera over here,
+ then I've lost my ability to reason
+ about that antipodal grasp.
+ If I were to run the algorithm a bunch of times
+ and just train a network to predict this,
+ it could in some sense hallucinate
+ the back of the object.
+ And so I think these partial views are
+ one of the big places where the deep learning-based approaches
+ do outperform this.
+ But you get pretty far with just a little bit
+ of geometry processing.
+ Transparent objects, there's a couple other cases
+ where I think this doesn't work well.
+ But it's surprisingly good.
+ Cool.
+ Does that make sense?
+ Any more questions about that?
+ So the weak part, which is the part I didn't code up yet well,
+ is the higher level logic.
+ And that's what we'll talk about on Tuesday.
+ No, not Tuesday, this Thursday, because we have no class
+ next Tuesday, which says lots of time for me to fix the demo.
+ But at some point, when you start writing this higher level
+ logic of, OK, I picked it three times,
+ it's time to go try the other bin,
+ we need more machinery to start dealing with that.
+ And we'll do it next week.
+ [BLANK_AUDIO]

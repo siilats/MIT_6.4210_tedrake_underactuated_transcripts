@@ -1,0 +1,2972 @@
+1
+00:00:00,000 --> 00:00:05,260
+ Deep note and wanted GPUs we might ask and they might you know see what they
+
+2
+00:00:05,260 --> 00:00:11,960
+ can do and they might offer us some compute. Those are the best options I
+
+3
+00:00:11,960 --> 00:00:16,200
+ have in terms of you know be needing a big GPU if you want to train something
+
+4
+00:00:16,200 --> 00:00:21,960
+ deep. I mean unless you have a big graphics card at home that's that's kind
+
+5
+00:00:21,960 --> 00:00:29,840
+ of how it goes. That's a good question. I would say ask us early just so if I can
+
+6
+00:00:29,840 --> 00:00:33,480
+ get that conversation started but maybe like in your project proposal if you're
+
+7
+00:00:33,480 --> 00:00:39,760
+ thinking I might be compute limited for this you know call that out earlier. I
+
+8
+00:00:39,760 --> 00:00:48,680
+ have seen RL projects that sort of run out of time. Right you know like my
+
+9
+00:00:48,680 --> 00:00:54,720
+ learning curves aren't going down and things are due and it just takes a long
+
+10
+00:00:54,720 --> 00:01:05,320
+ time to run simulations so that is a risk with RL. We're good to go? Okay.
+
+11
+00:01:05,320 --> 00:01:13,360
+ Thank you for figuring that out under pressure. That was great. Okay so
+
+12
+00:01:13,360 --> 00:01:19,320
+ there's a important I think thing that I you know so we've been talking through a
+
+13
+00:01:19,320 --> 00:01:22,960
+ lot of a couple different almost complete solutions but I feel like
+
+14
+00:01:22,960 --> 00:01:26,080
+ there's an important piece of the puzzle that I haven't given you a good solution
+
+15
+00:01:26,080 --> 00:01:33,120
+ to yet and I want to talk through that today. So you know we've been talking
+
+16
+00:01:33,120 --> 00:01:40,040
+ this week about clutter clearing as just an example right and I would say the
+
+17
+00:01:40,040 --> 00:01:44,840
+ quick summary of our simplified bin picking strategy has been first you
+
+18
+00:01:44,840 --> 00:01:50,160
+ maybe get the hand out of the way use your cameras acquire and pre-process all
+
+19
+00:01:50,160 --> 00:01:56,680
+ the point clouds from the candidate bin right you sample and score those
+
+20
+00:01:56,680 --> 00:02:03,280
+ candidate possible candidate grasps using our antipodal metric but we have I
+
+21
+00:02:03,280 --> 00:02:07,840
+ said antipodal plus plus because it also the one I implemented threw in some
+
+22
+00:02:07,840 --> 00:02:11,840
+ preference for reaching down from above and some other things like that so it
+
+23
+00:02:11,840 --> 00:02:18,880
+ had a few other terms in the cost. Okay and then we then you would complete with
+
+24
+00:02:18,880 --> 00:02:22,560
+ the you know the recipe from from before you turn that into like a gripper
+
+25
+00:02:22,560 --> 00:02:26,800
+ trajectory that's going to go down from my current hand position to the grasp
+
+26
+00:02:26,800 --> 00:02:32,760
+ right and then you're gonna bring that over to the other bin drop it off and
+
+27
+00:02:32,760 --> 00:02:35,560
+ you'll probably you'll execute that trajectory with diff IK that's what
+
+28
+00:02:35,560 --> 00:02:39,320
+ we've given you so far there are other ways to do it but that's what that's the
+
+29
+00:02:39,320 --> 00:02:45,160
+ toolchain so far and then you're gonna you know repeat until some termination
+
+30
+00:02:45,160 --> 00:02:48,520
+ criteria or whatever and maybe at some point you start start picking up things
+
+31
+00:02:48,520 --> 00:02:51,680
+ from the other bin and putting it back so you have a closed system that can run
+
+32
+00:02:51,680 --> 00:02:58,440
+ for a long time. Now the thing that's happening here that didn't really happen
+
+33
+00:02:58,440 --> 00:03:05,120
+ given our previous assumptions is that a lot of those steps can just fail right
+
+34
+00:03:05,120 --> 00:03:11,520
+ for sometimes good reasons sometimes less good reasons but you know let's
+
+35
+00:03:11,520 --> 00:03:16,160
+ just list a little bit of what are the what are the things that could fail in
+
+36
+00:03:16,160 --> 00:03:28,160
+ that pipeline what are the steps that are sort of not guaranteed yeah yeah the
+
+37
+00:03:28,160 --> 00:03:34,360
+ grasp could just fail right so I could I could go down I mean maybe the maybe I
+
+38
+00:03:34,360 --> 00:03:37,960
+ just I closed my hand there and it slipped right out right so like a failed
+
+39
+00:03:37,960 --> 00:03:47,120
+ grasp right so it might be that right at the moment of closing the hand I could
+
+40
+00:03:47,120 --> 00:03:50,120
+ show to check if I've got something if my hand closed all the way and there's
+
+41
+00:03:50,120 --> 00:03:53,200
+ nothing you know fingers are touching each other that's a failed grasp you
+
+42
+00:03:53,200 --> 00:03:58,240
+ know the so there are sensors that will allow us to detect that you know but you
+
+43
+00:03:58,240 --> 00:04:02,920
+ can also have a tenuous grasp right and then once you start lifting or moving
+
+44
+00:04:02,920 --> 00:04:07,680
+ it slips right out right and we also talked about you know maybe I picked up
+
+45
+00:04:07,680 --> 00:04:12,120
+ the hammer by the very corner and it just sort of torqued itself out right
+
+46
+00:04:12,120 --> 00:04:26,320
+ it's not just okay that's definitely one what else can fail yeah right it could
+
+47
+00:04:26,320 --> 00:04:31,600
+ be that there's there's a good grasp that exists and I just didn't find it
+
+48
+00:04:31,600 --> 00:04:37,080
+ with my antipodal strategy because antipodal is not absolutely guaranteed
+
+49
+00:04:37,080 --> 00:04:42,720
+ to exist in in some metric or it could be that I just sampled not enough right
+
+50
+00:04:42,720 --> 00:05:02,640
+ what else could fail yeah right right so bad point clouds right reflections or
+
+51
+00:05:02,640 --> 00:05:06,160
+ transparent objects or other you know all kinds of stuff can screw up your
+
+52
+00:05:06,160 --> 00:05:14,840
+ point clouds there's another big one yeah
+
+53
+00:05:14,840 --> 00:05:25,880
+ yeah that's that's close to the one I was thinking so he says differential IK
+
+54
+00:05:25,880 --> 00:05:30,960
+ might fail right so the fact that we've separated the grasp planning from the
+
+55
+00:05:30,960 --> 00:05:36,120
+ arm limitations right if there's any workspace limitations on your arm or you
+
+56
+00:05:36,120 --> 00:05:40,840
+ know which could get subtle right if it if I have to get down and reach you know
+
+57
+00:05:40,840 --> 00:05:45,000
+ it might be that's that an over the overhead gris grasp in the back corner
+
+58
+00:05:45,000 --> 00:05:48,280
+ of the bin would be fine but if I went like this it wouldn't be fine because of
+
+59
+00:05:48,280 --> 00:05:51,720
+ the reachability of the arm and somehow because I've decoupled those two
+
+60
+00:05:51,720 --> 00:05:56,360
+ problems I could fail downstream right
+
+61
+00:05:56,360 --> 00:06:12,320
+ and the arm has additional geometry it could be I mean I could tell you it
+
+62
+00:06:12,320 --> 00:06:16,160
+ happens a lot actually that that kooka if it wants to get into the sink it's
+
+63
+00:06:16,160 --> 00:06:19,920
+ got this big old elbow right so you know you think about just the gripper getting
+
+64
+00:06:19,920 --> 00:06:23,000
+ in there but then you're gonna have a constraint coming from the elbow that
+
+65
+00:06:23,000 --> 00:06:29,080
+ you didn't reason about so so those really do happen for just joint limits
+
+66
+00:06:29,080 --> 00:06:33,080
+ but also collisions right and we could go on right so there's there's a bunch
+
+67
+00:06:33,080 --> 00:06:37,800
+ of things that that could break in this system and I think that's just a reality
+
+68
+00:06:37,800 --> 00:06:43,680
+ of having perception in there and having a relatively simple pipeline even the
+
+69
+00:06:43,680 --> 00:06:47,960
+ logic of deciding when you're done it's kind of not clear exactly when you're
+
+70
+00:06:47,960 --> 00:06:53,920
+ done you could have points still you know objects still in the bin that you
+
+71
+00:06:53,920 --> 00:06:56,840
+ just have to decide I'm never gonna get that one right it's kind of stuck in the
+
+72
+00:06:56,840 --> 00:07:00,880
+ corner my hands not gonna fit I gotta give up move on to the next one right
+
+73
+00:07:00,880 --> 00:07:05,840
+ now the full on the the TRI clutter clearing has additional skills like we've
+
+74
+00:07:05,840 --> 00:07:09,400
+ talked about sort of push things out in the corner to try to really get to zero
+
+75
+00:07:09,400 --> 00:07:14,160
+ but but if you don't have all those extra layers of you know band-aids
+
+76
+00:07:14,160 --> 00:07:19,240
+ around it that even just understanding when to give up right is something so
+
+77
+00:07:19,240 --> 00:07:22,840
+ the big thing that's changing now that I feel like I haven't given you a good
+
+78
+00:07:22,840 --> 00:07:27,100
+ solution to yet is that we can't just sort of run through a script and be
+
+79
+00:07:27,100 --> 00:07:32,360
+ happy right we're gonna have a lot of branches right okay did my scoring
+
+80
+00:07:32,360 --> 00:07:37,400
+ candidate find a good solution if not maybe I resample maybe if I've resampled
+
+81
+00:07:37,400 --> 00:07:41,840
+ ten times I give up and I move on to the next you know so there's gonna be a lot
+
+82
+00:07:41,840 --> 00:07:49,160
+ more branching a lot more checking and the like in here and even even given
+
+83
+00:07:49,160 --> 00:07:55,440
+ that I haven't told you really how to go from this sort of script into the
+
+84
+00:07:55,440 --> 00:07:59,680
+ simulation framework right so we're going to talk about you know what it
+
+85
+00:07:59,680 --> 00:08:06,640
+ means to execute that sort of a plan in a situation where you're a dynamical
+
+86
+00:08:06,640 --> 00:08:10,960
+ system and somebody's asking for an answer at 200 Hertz this is sort of
+
+87
+00:08:10,960 --> 00:08:16,320
+ procedural script the way you'd write a you know write a standard code but
+
+88
+00:08:16,320 --> 00:08:21,160
+ that's not the way we tend to write systems and that's not the way it's not
+
+89
+00:08:21,160 --> 00:08:24,440
+ the framework that sort of guarantees that you're gonna have a message ready
+
+90
+00:08:24,440 --> 00:08:29,200
+ to send to your robot every 200 Hertz so somehow somewhere there's got to be a
+
+91
+00:08:29,200 --> 00:08:33,960
+ contract which tells me how I'm gonna go from you know that kind of logic into
+
+92
+00:08:33,960 --> 00:08:39,360
+ this into this sort of tell the robot something all the time some robots will
+
+93
+00:08:39,360 --> 00:08:42,600
+ actually just power down if they haven't heard from you in five milliseconds
+
+94
+00:08:42,600 --> 00:08:47,960
+ right so okay a lot of times that contract is a little ambiguous right
+
+95
+00:08:47,960 --> 00:08:52,680
+ maybe it's if you've got a multi X you know multi process system sending
+
+96
+00:08:52,680 --> 00:08:57,080
+ message passes passing you know maybe your low-level controller is just
+
+97
+00:08:57,080 --> 00:09:00,440
+ sending a keep alive and if it doesn't hear from you for a while it'll just
+
+98
+00:09:00,440 --> 00:09:03,800
+ keep sending the last command and so you're not really worried about that
+
+99
+00:09:03,800 --> 00:09:09,320
+ contract as much and you just every once in a while send a plan over but you know
+
+100
+00:09:09,320 --> 00:09:12,520
+ when you get down into trying to make these things understand these things
+
+101
+00:09:12,520 --> 00:09:17,280
+ completely I think that contract needs to be made more explicit so we'll talk
+
+102
+00:09:17,280 --> 00:09:22,640
+ about that today I mean honestly this is a lecture I would say that I'm still
+
+103
+00:09:22,640 --> 00:09:26,680
+ getting my head around right I'm trying to decide exactly what pieces to cut out
+
+104
+00:09:26,680 --> 00:09:34,840
+ and and it's an interesting conflation of like what people like to do in AI what
+
+105
+00:09:34,840 --> 00:09:39,280
+ people like to do in control theory what programmers like to do right somehow
+
+106
+00:09:39,280 --> 00:09:45,520
+ it's like in the Venn diagram of those things and I don't actually think so you
+
+107
+00:09:45,520 --> 00:09:48,200
+ might look at this list and think oh that's kind of like a software
+
+108
+00:09:48,200 --> 00:09:52,840
+ engineering problem not a fundamental problem but I actually think it is
+
+109
+00:09:52,840 --> 00:09:58,480
+ squarely in the you know the place where AI type planning methods and the like
+
+110
+00:09:58,480 --> 00:10:02,040
+ are coming together with systems theory and I think it's really important in
+
+111
+00:10:02,040 --> 00:10:10,320
+ fundamental okay so to start off I thought I'd I do like a bit of a case
+
+112
+00:10:10,320 --> 00:10:14,120
+ study here this is I mean you've seen this before but but we can sort of dig
+
+113
+00:10:14,120 --> 00:10:19,640
+ in now and say how did we organize the behaviors on this system right I've
+
+114
+00:10:19,640 --> 00:10:26,840
+ never actually really presented that to anybody and there's some some details
+
+115
+00:10:26,840 --> 00:10:31,400
+ that I think aren't going to surprise you but maybe we'll clarify something
+
+116
+00:10:31,400 --> 00:10:36,840
+ that looks it's complicated complicated and this system I think notably was
+
+117
+00:10:36,840 --> 00:10:41,600
+ taken to a very high level of maturity so it's a fairly complex task but it's a
+
+118
+00:10:41,600 --> 00:10:45,960
+ task that worked very nearly all the time by the time we were done hammering
+
+119
+00:10:45,960 --> 00:10:50,720
+ on it okay so it's a there's a statement just of you know the way we typed it in
+
+120
+00:10:50,720 --> 00:10:54,400
+ this way is something that you can take to high levels of maturity and if you
+
+121
+00:10:54,400 --> 00:10:59,040
+ guys have done you know internships at companies that are doing this kind of
+
+122
+00:10:59,040 --> 00:11:03,200
+ work you'll see you know you might some of this stuff might look familiar it's a
+
+123
+00:11:03,200 --> 00:11:08,200
+ okay so you know the scripts that I should the script that I showed you for
+
+124
+00:11:08,200 --> 00:11:12,000
+ for bin picking you know has these different components that we've broken
+
+125
+00:11:12,000 --> 00:11:16,720
+ off and that's a common strategy so in the dish loading there are a handful of
+
+126
+00:11:16,720 --> 00:11:22,200
+ different you know primitives actions so we really decompose the big task into
+
+127
+00:11:22,200 --> 00:11:29,820
+ these notion of many primitives okay so this was like picking up a I can play
+
+128
+00:11:29,820 --> 00:11:34,160
+ them again real quick but this is picking up silverware that was pulling
+
+129
+00:11:34,160 --> 00:11:38,880
+ the silverware rack out you know and picking up the silverware opening the
+
+130
+00:11:38,880 --> 00:11:43,460
+ door is a primitive you know picking up mugs is a primitive this is the nudging
+
+131
+00:11:43,460 --> 00:11:47,160
+ it out of the out of the corner because the hands too big to pick it up when it
+
+132
+00:11:47,160 --> 00:11:51,560
+ was in the corner you know these are all composed with as different primitives
+
+133
+00:11:51,560 --> 00:12:03,200
+ okay so the language that we use behind the scenes is not strips but I think if
+
+134
+00:12:03,200 --> 00:12:08,480
+ you understand strips which is the which originally you know was the Stanford
+
+135
+00:12:08,480 --> 00:12:13,200
+ Research Institute problem solver was the originally was the name of the
+
+136
+00:12:13,200 --> 00:12:19,440
+ algorithm okay and became known for the sort of specific formal language
+
+137
+00:12:19,440 --> 00:12:23,680
+ specification which was the input format to that solver is now what people often
+
+138
+00:12:23,680 --> 00:12:31,720
+ refer to as the strips language okay this is an early sort of way to an AI
+
+139
+00:12:31,720 --> 00:12:37,440
+ approach to planning that allows you to compose multiple motion primitive or
+
+140
+00:12:37,440 --> 00:12:41,720
+ well let's say primitives we won't include the word motion yet okay and try
+
+141
+00:12:41,720 --> 00:12:46,800
+ to compose multiple behaviors in a way that's a very natural sort of planning
+
+142
+00:12:46,800 --> 00:12:54,120
+ framework okay when you think about AI planning you might think about graph
+
+143
+00:12:54,120 --> 00:12:59,120
+ search right you should think about graph search that's a star algorithms
+
+144
+00:12:59,120 --> 00:13:04,400
+ and and other kind of algorithms like this and the specification languages in
+
+145
+00:13:04,400 --> 00:13:10,240
+ strips and its successors I think bridge the gap between those sort of search
+
+146
+00:13:10,240 --> 00:13:16,200
+ algorithms and a specification language which is more about named actions with
+
+147
+00:13:16,200 --> 00:13:20,880
+ preconditions and post conditions and the like okay and it just it's a
+
+148
+00:13:20,880 --> 00:13:25,600
+ specification language that makes those planners good so the specification
+
+149
+00:13:25,600 --> 00:13:34,360
+ languages most notably here you know you itemize a set of actions okay for each
+
+150
+00:13:34,360 --> 00:13:40,040
+ each action you you talk about you know when am I allowed to take that action so
+
+151
+00:13:40,040 --> 00:13:46,120
+ it's if it's the I'm gonna pick up a silverware this time but silverware is
+
+152
+00:13:46,120 --> 00:13:49,960
+ my action right then the preconditions might be that I've got some detections
+
+153
+00:13:49,960 --> 00:13:55,840
+ of a fork right and you probably won't get detections of a fork unless the fork
+
+154
+00:13:55,840 --> 00:14:00,680
+ is exposed in press in practice actually we don't pick up forks until all the
+
+155
+00:14:00,680 --> 00:14:07,280
+ plates and all the mugs are gone because well things go weird if you you can you
+
+156
+00:14:07,280 --> 00:14:10,640
+ can find yourself in all kinds of crazy situations if you drop a fork in a mug
+
+157
+00:14:10,640 --> 00:14:15,240
+ or something like this so we we just decided to prioritize you know get the
+
+158
+00:14:15,240 --> 00:14:22,680
+ mugs and plates out and leave the forks and everything at the bottom okay the
+
+159
+00:14:22,680 --> 00:14:30,280
+ inaction causes some change in the state in the in the state of the world okay
+
+160
+00:14:30,280 --> 00:14:34,560
+ with some post conditions now this is interesting you know this is what allows
+
+161
+00:14:34,560 --> 00:14:38,180
+ you to do prediction into the future so if I were to say I currently have a
+
+162
+00:14:38,180 --> 00:14:44,120
+ detection of the of the fork in the sink after I run my fork pickup I'm gonna say
+
+163
+00:14:44,120 --> 00:14:47,840
+ that there's no fork in the sink right it's in my other the fork in my hand for
+
+164
+00:14:47,840 --> 00:14:55,440
+ instance okay and then you can specify a long-term objective like clear the bin
+
+165
+00:14:55,440 --> 00:15:00,440
+ okay as saying like there are no objects or you know the point cloud is of
+
+166
+00:15:00,440 --> 00:15:04,720
+ sufficiently sparse or something in my bin okay we're gonna see a couple
+
+167
+00:15:04,720 --> 00:15:09,480
+ examples of this but but I want to just sort of introduce this like high-level
+
+168
+00:15:09,480 --> 00:15:14,560
+ notion of separating your task into actions and using a traditional planning
+
+169
+00:15:14,560 --> 00:15:21,560
+ system to sequence those actions okay the newer versions of this are I mean
+
+170
+00:15:21,560 --> 00:15:25,360
+ not even that new right but potato is like the generalization of strips so if
+
+171
+00:15:25,360 --> 00:15:30,800
+ you hear but it'll which you will hear around campus right you may hear potato
+
+172
+00:15:30,800 --> 00:15:38,240
+ stream right but this is an active well there's there's a there's a lot of good
+
+173
+00:15:38,240 --> 00:15:44,320
+ work about this kind of planning even taken to the next level you know
+
+174
+00:15:44,320 --> 00:15:50,880
+ upstairs and listening to Masa's group for instance okay so but it'll just is a
+
+175
+00:15:50,880 --> 00:15:58,400
+ richer form of the same idea I would say it kind of generalized strips and a few
+
+176
+00:15:58,400 --> 00:16:05,800
+ of the other early programming language sort of planning specifications and in
+
+177
+00:16:05,800 --> 00:16:09,720
+ particular it allowed you to sort of factor you could there's this notion of
+
+178
+00:16:09,720 --> 00:16:14,000
+ objects that come in and instead of having just individual state variables
+
+179
+00:16:14,000 --> 00:16:17,880
+ that get listed one by one there's a little bit of a object orientedness of
+
+180
+00:16:17,880 --> 00:16:21,840
+ it the detail I don't need you to understand but basically it's the same
+
+181
+00:16:21,840 --> 00:16:25,960
+ specification same type of specification of strips generalized to be more
+
+182
+00:16:25,960 --> 00:16:31,360
+ efficient and more general you'll see the same initial state and goal
+
+183
+00:16:31,360 --> 00:16:36,760
+ specifications and the same sort of actions that are around okay and in
+
+184
+00:16:36,760 --> 00:16:43,040
+ practice you know you write these little you know specification files that that
+
+185
+00:16:43,040 --> 00:16:47,960
+ just define your predicates maybe there there's a robot in a room there's balls
+
+186
+00:16:47,960 --> 00:16:54,920
+ there's grippers okay you define actions that have preconditions and effects okay
+
+187
+00:16:54,920 --> 00:16:58,620
+ different types of pick actions preconditions and effects and these are
+
+188
+00:16:58,620 --> 00:17:09,240
+ all written as logical operators on these kind of variables and then
+
+189
+00:17:09,240 --> 00:17:13,640
+ similarly your that would be like a that would be your domain definition and then
+
+190
+00:17:13,640 --> 00:17:17,280
+ similarly you can write a planning instance where you say I need this is a
+
+191
+00:17:17,280 --> 00:17:22,160
+ new problem I have some initial conditions where I have no two rooms and
+
+192
+00:17:22,160 --> 00:17:27,160
+ four balls I have a gripper you know and I have to plan from the start to the
+
+193
+00:17:27,160 --> 00:17:35,560
+ goal okay so that's a technology that's out there and I think it it becomes
+
+194
+00:17:35,560 --> 00:17:39,600
+ essential when you're trying to compose much you know more and more complicated
+
+195
+00:17:39,600 --> 00:17:44,520
+ tasks where your decisions about what I should execute right now are conditioned
+
+196
+00:17:44,520 --> 00:17:48,600
+ on multi-step reasoning right where the reason I should pick up a fork right now
+
+197
+00:17:48,600 --> 00:17:52,980
+ is because well maybe if I the reason I pick up a mug right now is because I've
+
+198
+00:17:52,980 --> 00:17:57,120
+ already you know I want to get the rack open I'll open the rack now because I'm
+
+199
+00:17:57,120 --> 00:18:01,440
+ gonna pick up a mug next maybe that's a better example okay when your decision
+
+200
+00:18:01,440 --> 00:18:05,880
+ right now depends on multiple steps of reasoning this allows you to write that
+
+201
+00:18:05,880 --> 00:18:10,560
+ sort of branching logic in a much more compact form and leverage a planner to
+
+202
+00:18:10,560 --> 00:18:20,800
+ make those decisions for you okay so how does that look in the in the TRI
+
+203
+00:18:20,800 --> 00:18:27,120
+ disloading system okay now in fact it's it's a little unfair to say to describe
+
+204
+00:18:27,120 --> 00:18:32,680
+ it as pivotal I'm using that to simplify it it's actually a the the task planner
+
+205
+00:18:32,680 --> 00:18:36,960
+ is actually a task in motion planner that's capable of more but I think the
+
+206
+00:18:36,960 --> 00:18:42,560
+ bulk of the example here I can tell you without telling you that the full glory
+
+207
+00:18:42,560 --> 00:18:49,240
+ of that okay so it's kind of fun to like look through the code and see that
+
+208
+00:18:49,240 --> 00:18:53,720
+ actually those concepts really you know they they appear in your in your c++
+
+209
+00:18:53,720 --> 00:19:00,720
+ classes and stuff like this okay so we really do define all of the actions all
+
+210
+00:19:00,720 --> 00:19:06,920
+ of those those controls in terms of this you know action primitive interface
+
+211
+00:19:06,920 --> 00:19:12,680
+ similar to biddle right there's there's a check that's like the is candidate is
+
+212
+00:19:12,680 --> 00:19:18,040
+ like the precondition check right so you can tell it the current state you know
+
+213
+00:19:18,040 --> 00:19:22,160
+ it's I'll show you what the state is in these cases this sort of subsampled
+
+214
+00:19:22,160 --> 00:19:26,280
+ state of the world grounded state of the world if you will and it just answers
+
+215
+00:19:26,280 --> 00:19:31,760
+ the question you know each skill each primitive action answers the question
+
+216
+00:19:31,760 --> 00:19:40,680
+ yes can I run this now or not right just a Boolean outcome and then sorry the
+
+217
+00:19:40,680 --> 00:19:44,160
+ the outcomes would be if I did run this what would I what would I expect to
+
+218
+00:19:44,160 --> 00:19:50,840
+ change about the state right you can associate costs you can associate
+
+219
+00:19:50,840 --> 00:19:55,040
+ rankings with each of those that's it those are generalizations of the basic
+
+220
+00:19:55,040 --> 00:20:02,080
+ potato idea there's potato variants that include that for sure but if you want to
+
+221
+00:20:02,080 --> 00:20:06,480
+ solve you know optimize and try to pick the best action instead of just having a
+
+222
+00:20:06,480 --> 00:20:11,920
+ lot of feasible actions that those can be very important and then there's just
+
+223
+00:20:11,920 --> 00:20:15,240
+ this notion of like I'm gonna now run the skill right so each of these sort
+
+224
+00:20:15,240 --> 00:20:20,560
+ of actions has the ability to say when you can run it say what's gonna happen
+
+225
+00:20:20,560 --> 00:20:27,760
+ if you run it and run roughly and if you look through the code there's just a
+
+226
+00:20:27,760 --> 00:20:33,200
+ bunch of actions that are at this level of like you know pull out the lower rack
+
+227
+00:20:33,200 --> 00:20:41,080
+ pull out the upper rack right and this decomposition was done by humans this is
+
+228
+00:20:41,080 --> 00:20:45,800
+ a manual step this is something that is an active you know lots of people are
+
+229
+00:20:45,800 --> 00:20:51,400
+ thinking about how do you get those to come out automatically but I think a lot
+
+230
+00:20:51,400 --> 00:20:56,200
+ of people are still manually typing in those those decompositions okay and it's
+
+231
+00:20:56,200 --> 00:21:00,520
+ also sort of interesting to see the level at which these are written right
+
+232
+00:21:00,520 --> 00:21:06,560
+ so they're not the details of like twist my gripper at this you know and to this
+
+233
+00:21:06,560 --> 00:21:10,920
+ angle and then push I'll show you what those details too but you know they're
+
+234
+00:21:10,920 --> 00:21:15,440
+ more at the strategy level of like should I do this first should I do this
+
+235
+00:21:15,440 --> 00:21:20,600
+ next right the high the task level
+
+236
+00:21:20,600 --> 00:21:29,720
+ part of the reason for that is because you know the preconditions for these and
+
+237
+00:21:29,720 --> 00:21:34,720
+ even the outcomes can be written in terms of a pretty simple and abstract
+
+238
+00:21:34,720 --> 00:21:42,560
+ state of the world okay so just pulling into the code right the the state of the
+
+239
+00:21:42,560 --> 00:21:51,560
+ dish task right is a combination of disk dish washer state and dish state okay
+
+240
+00:21:51,560 --> 00:21:58,240
+ but they're basically what I want you to see here is that they're like number of
+
+241
+00:21:58,240 --> 00:22:03,640
+ times I've put them away an integer okay the number of dirty items available
+
+242
+00:22:03,640 --> 00:22:09,680
+ right they are Boolean you know is the dishwasher state known is the door open
+
+243
+00:22:09,680 --> 00:22:16,160
+ is the lower rack out okay this is us grounding some symbols into our
+
+244
+00:22:16,160 --> 00:22:19,480
+ perception there's a there's a step required to do this right is to have a
+
+245
+00:22:19,480 --> 00:22:24,160
+ perception system that can tell me if the lower rack is out or in but if we
+
+246
+00:22:24,160 --> 00:22:29,340
+ can ground that perception into a into just a Boolean classifier that we're
+
+247
+00:22:29,340 --> 00:22:33,640
+ happy with then we can start writing this higher level procedural logic and
+
+248
+00:22:33,640 --> 00:22:41,760
+ using the more sophisticated planning framework to make our decisions right
+
+249
+00:22:41,760 --> 00:22:47,200
+ even the the dish types you know are enumerated if you throw in something
+
+250
+00:22:47,200 --> 00:22:50,640
+ random it becomes unknown unless it's mug like and they might get grabbed as a
+
+251
+00:22:50,640 --> 00:22:56,920
+ mug and put in the top rack right and some of the some of the different
+
+252
+00:22:56,920 --> 00:23:07,240
+ objects have a requested location in the dishwasher right they all have like
+
+253
+00:23:07,240 --> 00:23:19,120
+ relative status as you're trying to to move through that stack so so the the
+
+254
+00:23:19,120 --> 00:23:25,640
+ decision-making there is you know it when you first turn the robot on it
+
+255
+00:23:25,640 --> 00:23:29,680
+ looks at what you know it uses its perception system to decide the current
+
+256
+00:23:29,680 --> 00:23:35,040
+ state and it will make a multi plan action using that very simple
+
+257
+00:23:35,040 --> 00:23:39,960
+ representation of state using an optimistic plan that basically says I'm
+
+258
+00:23:39,960 --> 00:23:47,000
+ gonna you know the outcome I get is success roughly and the you know it's
+
+259
+00:23:47,000 --> 00:23:52,080
+ it's a yeah it's optimistic and it's deterministic so it also assumes that
+
+260
+00:23:52,080 --> 00:23:59,480
+ you know I get what I with probability one the action is succeeds right so the
+
+261
+00:23:59,480 --> 00:24:03,120
+ way to make that that's a common assumption it's not a there are people
+
+262
+00:24:03,120 --> 00:24:06,800
+ that do belief space planning probabilistic planning planning with
+
+263
+00:24:06,800 --> 00:24:12,960
+ uncertainty and the like but this is not doing that yet and the way you then
+
+264
+00:24:12,960 --> 00:24:16,840
+ handle each outcome is that you're constantly watching if you've deviated
+
+265
+00:24:16,840 --> 00:24:21,040
+ from your plan you just replan okay works fairly well right so if you start
+
+266
+00:24:21,040 --> 00:24:25,400
+ putting your mug in and then you someone comes in this is like not as cool as
+
+267
+00:24:25,400 --> 00:24:31,120
+ kicking the robot at Boston Dynamics but it's kind of kind of similar I guess you
+
+268
+00:24:31,120 --> 00:24:37,560
+ know it will decide mid mid mid place that it needs to set down the mug
+
+269
+00:24:37,560 --> 00:24:42,160
+ reopen the dish rack pick up the mug again you know it's got this layers of
+
+270
+00:24:42,160 --> 00:24:50,160
+ complexity that come from that task level planner and it's infinitely
+
+271
+00:24:50,160 --> 00:24:53,240
+ patient right because you know you can sit there do that all day and you think
+
+272
+00:24:53,240 --> 00:24:58,280
+ about the robots gonna throw the mug at me but it never never does we didn't we
+
+273
+00:24:58,280 --> 00:25:01,240
+ didn't program that skill
+
+274
+00:25:01,240 --> 00:25:09,080
+ is that clear I mean is that there's a lot of details hidden behind there I
+
+275
+00:25:09,080 --> 00:25:14,320
+ want to give you the sense anybody have questions about yeah
+
+276
+00:25:14,760 --> 00:25:17,760
+ all right
+
+277
+00:25:17,760 --> 00:25:26,520
+ the question is how far ahead do you plan right how do you have to plan like
+
+278
+00:25:26,520 --> 00:25:31,120
+ 20 steps ahead you have to plan till like the dishwasher is clean there's
+
+279
+00:25:31,120 --> 00:25:35,920
+ there the dish the sink is clean a dishwasher is full right so we
+
+280
+00:25:35,920 --> 00:25:40,040
+ definitely don't do that because perception isn't capable of telling us
+
+281
+00:25:40,040 --> 00:25:44,040
+ the full state of the sink so we have to sort of have an incremental approach
+
+282
+00:25:44,040 --> 00:25:49,960
+ you can't sort of reason all the way to the end but the the answer to your
+
+283
+00:25:49,960 --> 00:25:55,480
+ question about how far do you look ahead is actually very subtle I'd say so you
+
+284
+00:25:55,480 --> 00:26:01,040
+ know these preconditions that say when a skill is good if they are very weak if
+
+285
+00:26:01,040 --> 00:26:05,160
+ they're like loose approximations of when you should execute that skill then
+
+286
+00:26:05,160 --> 00:26:09,720
+ then looking ahead farther will will make those stronger this is a standard
+
+287
+00:26:09,720 --> 00:26:15,480
+ thing in planning right so if you if I had for instance you know the conditions
+
+288
+00:26:15,480 --> 00:26:20,920
+ that are exactly narrowly defined which says this is you know if I were to run
+
+289
+00:26:20,920 --> 00:26:24,960
+ the plan these are the only conditions for which I would choose this skill then
+
+290
+00:26:24,960 --> 00:26:27,840
+ I would never need to run the plan I could just if it's if you know
+
+291
+00:26:27,840 --> 00:26:31,980
+ reinforcement learning like if I had the value function for instance as my
+
+292
+00:26:31,980 --> 00:26:37,360
+ precondition check then I wouldn't have to do any planning if you write weak
+
+293
+00:26:37,360 --> 00:26:41,240
+ preconditions then planning will make them stronger looking ahead will make
+
+294
+00:26:41,240 --> 00:26:45,080
+ them stronger so in practice I think we're somewhere in the middle here we
+
+295
+00:26:45,080 --> 00:26:49,960
+ take that we do plan ahead I would guess most of the time we take we take the
+
+296
+00:26:49,960 --> 00:26:53,720
+ action that we would have taken if we hadn't looked ahead but we always look
+
+297
+00:26:53,720 --> 00:26:59,480
+ ahead multiple steps in many steps just to make sure yeah
+
+298
+00:26:59,480 --> 00:27:14,840
+ yeah so if these planners were a computational burden I think we'd be
+
+299
+00:27:14,840 --> 00:27:17,960
+ playing more games about incremental replanning and the like and just you
+
+300
+00:27:17,960 --> 00:27:23,840
+ know but the discrete level planning is lightning fast and we just go ahead and
+
+301
+00:27:23,840 --> 00:27:28,640
+ plan to the end there's no reason not to for us when you start adding more of the
+
+302
+00:27:28,640 --> 00:27:32,720
+ task and motion planning features which we'll hopefully talk about in one of the
+
+303
+00:27:32,720 --> 00:27:38,200
+ boutique lectures later then then those planners can slow way down but for the
+
+304
+00:27:38,200 --> 00:27:43,280
+ simple high-level logical planning that's fine yes
+
+305
+00:27:43,280 --> 00:28:06,560
+ you are very wise so so the question was when does it actually check I do
+
+306
+00:28:06,560 --> 00:28:10,920
+ think there are a few magical places in the trajectory where it's checking where
+
+307
+00:28:10,920 --> 00:28:16,280
+ it's where it's transitioning between the lower level skills where those are
+
+308
+00:28:16,280 --> 00:28:21,320
+ the discrete times where it checks so if we had pushed at a different time it
+
+309
+00:28:21,320 --> 00:28:24,760
+ might have still gone to the top of that trajectory before setting it down right
+
+310
+00:28:24,760 --> 00:28:28,880
+ so you're absolutely right the checking well I mean the perceptions running at a
+
+311
+00:28:28,880 --> 00:28:32,640
+ higher relatively higher rate the replanning is happening at our between
+
+312
+00:28:32,640 --> 00:28:39,760
+ the macro actions now if we I think we probably could do it faster but I think
+
+313
+00:28:39,760 --> 00:28:45,520
+ for this this task that was sufficient those are good questions yeah and I'm
+
+314
+00:28:45,520 --> 00:28:55,440
+ happy to take them okay I want to make this point super clear okay which is
+
+315
+00:28:55,440 --> 00:28:59,280
+ that most of those states there was a po there were poses and a few things in
+
+316
+00:28:59,280 --> 00:29:04,560
+ there that were continuous values but most of the planning there was actually
+
+317
+00:29:04,560 --> 00:29:08,640
+ on discrete states the planner that we use is actually capable of much more but
+
+318
+00:29:08,640 --> 00:29:15,600
+ that instance that I'm telling you about was mostly discrete state integer number
+
+319
+00:29:15,600 --> 00:29:21,160
+ of times I've done things Boolean is my mug in my hand those kind of things okay
+
+320
+00:29:21,160 --> 00:29:27,320
+ planning is fast in that case when you start including continuous state then
+
+321
+00:29:27,320 --> 00:29:31,680
+ it's going to be a harder problem right and we will we will talk about that but
+
+322
+00:29:31,680 --> 00:29:38,720
+ in general things get harder fast however the notion that's a little faint
+
+323
+00:29:38,720 --> 00:29:46,040
+ on my screen but the notion of preconditions and post conditions of low
+
+324
+00:29:46,040 --> 00:29:51,080
+ level skills I think transitions very well into the continuous domain and any
+
+325
+00:29:51,080 --> 00:29:54,280
+ of you that have taken under actuated with me or will take under actuated with
+
+326
+00:29:54,280 --> 00:29:59,400
+ me know that I'm a big fan of thinking about feedback controllers in a low
+
+327
+00:29:59,400 --> 00:30:03,960
+ level even continuous state task in terms of their preconditions and their
+
+328
+00:30:03,960 --> 00:30:08,840
+ post conditions that's a you know and there's connections to Lyapunov
+
+329
+00:30:08,840 --> 00:30:13,120
+ functions from control as ways to think about those preconditions and the like
+
+330
+00:30:13,120 --> 00:30:19,120
+ so the general notion of decomposing your task into skills is I think very
+
+331
+00:30:19,120 --> 00:30:23,800
+ general reasoning about the multi-step effect of those skills and making a plan
+
+332
+00:30:23,800 --> 00:30:29,400
+ gets much more expensive okay people do it right there's something called
+
+333
+00:30:29,400 --> 00:30:32,880
+ feedback motion planning which talks about okay well if I was in this the
+
+334
+00:30:32,880 --> 00:30:40,160
+ inside of this skill this funnel so that I maybe didn't say clearly enough so I'm
+
+335
+00:30:40,160 --> 00:30:44,440
+ thinking of this imagine this is like q1 in this axis and q2 right the joint
+
+336
+00:30:44,440 --> 00:30:50,000
+ angles or the continuous pose of my object right and the preconditions I
+
+337
+00:30:50,000 --> 00:30:54,480
+ could draw as a subset a continuous subset of state space saying these in
+
+338
+00:30:54,480 --> 00:31:01,760
+ these continuous values when q1 is and you know q1 q2 are less than you know
+
+339
+00:31:01,760 --> 00:31:05,920
+ are in some ellipse for instance then I'm gonna say yes I can run the skill in
+
+340
+00:31:05,920 --> 00:31:11,320
+ that case and you say after I've run the skill they're gonna come out hopefully
+
+341
+00:31:11,320 --> 00:31:16,240
+ in a smaller set because oftentimes controllers are good and stabilizing okay
+
+342
+00:31:16,240 --> 00:31:21,800
+ and if the the continuous set that I expect to be the effect of my action
+
+343
+00:31:21,800 --> 00:31:27,800
+ fits completely inside the precondition of another set then you can imagine
+
+344
+00:31:27,800 --> 00:31:35,600
+ sequentially composing these things into more dexterous behaviors okay now this
+
+345
+00:31:35,600 --> 00:31:44,600
+ this idea is I think powering I mean so al Rizzi is now you know way up in
+
+346
+00:31:44,600 --> 00:31:48,800
+ Boston Dynamics they don't want to get his title wrong but it's very near the
+
+347
+00:31:48,800 --> 00:31:56,320
+ top of Boston Dynamics and spot is you know is under I'lls organization or
+
+348
+00:31:56,320 --> 00:32:02,280
+ well it's a complicated organization but there's I think there's a lot of funnels
+
+349
+00:32:02,280 --> 00:32:08,760
+ going around on spot okay so so I think that this this idea you know I think is
+
+350
+00:32:08,760 --> 00:32:14,480
+ making real robots do amazing things okay so so I really think this notion of
+
+351
+00:32:14,480 --> 00:32:19,080
+ programming by breaking up into small pieces and then using some level of
+
+352
+00:32:19,080 --> 00:32:23,000
+ planning to compose them is a good idea
+
+353
+00:32:23,000 --> 00:32:27,880
+ okay so let's dig in a little bit more to like what those individual skills
+
+354
+00:32:27,880 --> 00:32:35,100
+ look like okay there are some which are more like our you know just sample the
+
+355
+00:32:35,100 --> 00:32:39,400
+ point cloud there are some that are just sensing but the low-level skills for
+
+356
+00:32:39,400 --> 00:32:43,240
+ that are doing the work that I showed you are maybe the more interesting ones
+
+357
+00:32:43,240 --> 00:32:50,720
+ and we can step through them right so I should have started this from the top
+
+358
+00:32:50,720 --> 00:32:54,360
+ right so you can watch we're gonna approach such them that the mug is in
+
+359
+00:32:54,360 --> 00:32:57,960
+ view of the wrist camera now the wrist cameras got a good view now you see a
+
+360
+00:32:57,960 --> 00:33:03,000
+ little bit of adjustment that's the visual servoing using ICP right the
+
+361
+00:33:03,000 --> 00:33:07,560
+ iterative closest point to make sure your your scan matches the data and
+
+362
+00:33:07,560 --> 00:33:12,000
+ you're gonna get the pose you expected to get then you insert to grasp close
+
+363
+00:33:12,000 --> 00:33:17,440
+ your hand retract move to pre place when you drop it down you see that the force
+
+364
+00:33:17,440 --> 00:33:23,400
+ is you know there's force thresholds to determinate do it one more time here
+
+365
+00:33:23,400 --> 00:33:35,680
+ sorry ICP move move in retract move to pre place which is a big motion
+
+366
+00:33:35,680 --> 00:33:40,880
+ planning system there and then when it actually set it down to it sets it down
+
+367
+00:33:40,880 --> 00:33:45,680
+ and by touch right based on based on a force sensor right because if you didn't
+
+368
+00:33:45,680 --> 00:33:48,480
+ get the pose exactly what you don't want to rely on your estimation of the
+
+369
+00:33:48,480 --> 00:33:59,040
+ geometry to set it down that's how you break mugs we've broken a few okay this
+
+370
+00:33:59,040 --> 00:34:07,040
+ is my favorite one right so the the plate pickup and it is similarly I would
+
+371
+00:34:07,040 --> 00:34:10,160
+ say I should be clear that these were the original versions that we wrote we
+
+372
+00:34:10,160 --> 00:34:14,520
+ wrote handcrafted versions and now we've been doing more and more automatically
+
+373
+00:34:14,520 --> 00:34:19,920
+ learned or synthesized versions of all these tasks but I think it's important
+
+374
+00:34:19,920 --> 00:34:24,760
+ to understand the first handcrafted versions of these okay so that plate
+
+375
+00:34:24,760 --> 00:34:28,320
+ pickup is a pretty subtle one you have to potentially get your fingers between
+
+376
+00:34:28,320 --> 00:34:33,720
+ different plates in order to get it up okay lots of different thresholds okay
+
+377
+00:34:33,720 --> 00:34:38,560
+ and it is a similar but more complicated plan about approaching the plate so it's
+
+378
+00:34:38,560 --> 00:34:43,920
+ roughly in view for the wrist camera visual servo for alignment now we start
+
+379
+00:34:43,920 --> 00:34:47,160
+ stick our finger you know close our fingers to roughly the right amount
+
+380
+00:34:47,160 --> 00:34:54,600
+ insert one fingertip between the plates you know and so on and so forth right so
+
+381
+00:34:54,600 --> 00:35:01,960
+ this type of reasoning actually gets to pretty robust pretty sophisticated
+
+382
+00:35:01,960 --> 00:35:07,000
+ behaviors in fact so I like to call see one actually called there - you know
+
+383
+00:35:07,000 --> 00:35:10,680
+ there's a there's a sort of a type of person there's an attribute that people
+
+384
+00:35:10,680 --> 00:35:15,520
+ can have I have no very few of them but I would call see one a robot whisperer
+
+385
+00:35:15,520 --> 00:35:21,120
+ right it's like yeah I think different than a horse whisperer but but sort of
+
+386
+00:35:21,120 --> 00:35:25,120
+ similar in principle like the robots don't work and then see one enters the
+
+387
+00:35:25,120 --> 00:35:28,000
+ room and the robots work and they do magical things and you can't believe
+
+388
+00:35:28,000 --> 00:35:35,760
+ that someone could make a robot do that and I think it's it's a lot of intuition
+
+389
+00:35:35,760 --> 00:35:39,000
+ about what signals matter and good debugging skills and all these
+
+390
+00:35:39,000 --> 00:35:44,680
+ incredible things but as much as many cool things as we've seen from from
+
+391
+00:35:44,680 --> 00:35:48,880
+ learning these days I think I would put see one up against any of them in terms
+
+392
+00:35:48,880 --> 00:35:53,560
+ of like you show me a complicated task for a robot and I think someone a robot
+
+393
+00:35:53,560 --> 00:35:56,920
+ whisperer out there could make it work
+
+394
+00:35:56,920 --> 00:36:03,120
+ we will talk later about the learning version of it this is one that we did
+
+395
+00:36:03,120 --> 00:36:08,660
+ upstairs in robot locomotion group was a kind of a we didn't buy the sink but we
+
+396
+00:36:08,660 --> 00:36:13,160
+ did a similar task on the on the tabletop and this is a neural network
+
+397
+00:36:13,160 --> 00:36:17,840
+ controller that's doing a similar thing and one of the big differences of this
+
+398
+00:36:17,840 --> 00:36:23,480
+ controller is that it's it's going based on directly from perception so it's
+
+399
+00:36:23,480 --> 00:36:27,560
+ there's no explicit estimation of the pose or location of the plate there's
+
+400
+00:36:27,560 --> 00:36:31,040
+ even really not an explicit notion of plate anywhere it's just trained to go
+
+401
+00:36:31,040 --> 00:36:37,200
+ straight from a refined visual representation directly into the actions
+
+402
+00:36:37,200 --> 00:36:41,880
+ of the hand but it still fits into this box of thinking of it as a primitive
+
+403
+00:36:41,880 --> 00:36:47,360
+ that takes things from one set of initial conditions to another I actually
+
+404
+00:36:47,360 --> 00:36:51,560
+ will in the RL section I'm hoping to use this as a simple this is the simplest
+
+405
+00:36:51,560 --> 00:36:55,560
+ version we've done of sort of the same kind of task that you can just hammer on
+
+406
+00:36:55,560 --> 00:37:00,840
+ in simulation it's all it's even in 2d and you can just do direct policy search
+
+407
+00:37:00,840 --> 00:37:04,520
+ on that so we'll play with that later
+
+408
+00:37:04,520 --> 00:37:14,040
+ okay so I think one of the big challenges of thinking of programming
+
+409
+00:37:14,040 --> 00:37:17,840
+ the task level is that you know because there's failure conditions there's all
+
+410
+00:37:17,840 --> 00:37:20,640
+ there's all these different things that can happen you know you end up writing
+
+411
+00:37:20,640 --> 00:37:25,200
+ much more complicated code for the clutter clearing you don't actually need
+
+412
+00:37:25,200 --> 00:37:28,720
+ a full-on task planner you could just write a script with a handful of
+
+413
+00:37:28,720 --> 00:37:32,240
+ branches and you'd probably get pretty far but for something like the
+
+414
+00:37:32,240 --> 00:37:35,680
+ disloading that breaks the stack and you don't want to write that one out by hand
+
+415
+00:37:35,680 --> 00:37:40,160
+ you want to write these modular you know I think three conditions folks post
+
+416
+00:37:40,160 --> 00:37:47,360
+ conditions and use it an AI style planner to handle all that branching okay
+
+417
+00:37:47,360 --> 00:37:51,520
+ one of the challenges with that although I said that the discrete is fast it's
+
+418
+00:37:51,520 --> 00:37:56,040
+ not 200 Hertz fast necessarily so so taking these sort of long-running
+
+419
+00:37:56,040 --> 00:38:00,200
+ computations and putting them into a simulation loop I think is the next to
+
+420
+00:38:00,200 --> 00:38:05,280
+ sort of I want to I want to start bridging that gap gap how do you how do
+
+421
+00:38:05,280 --> 00:38:16,640
+ you write code sort of in the simulation loop that transition clear yeah okay so
+
+422
+00:38:16,640 --> 00:38:22,840
+ the examples I just showed you still looked like scripts right the move until
+
+423
+00:38:22,840 --> 00:38:28,000
+ you touch kind of scripts and they went down a procedural script now that's what
+
+424
+00:38:28,000 --> 00:38:32,280
+ programmers like right that's good for rapid prototyping whatever but if you're
+
+425
+00:38:32,280 --> 00:38:37,720
+ a controller a control theorist or applied controls person you don't like
+
+426
+00:38:37,720 --> 00:38:42,580
+ that representation right that's there's like bad things going on from the similar
+
+427
+00:38:42,580 --> 00:38:47,840
+ version of that that you'd see in controls are this is an original Mark
+
+428
+00:38:47,840 --> 00:38:52,920
+ Raybert hopping robot MIT leg lab hopping robot sort of the precursor to a
+
+429
+00:38:52,920 --> 00:38:56,760
+ lot of the Boston Dynamics robots now if you will and one of the things I
+
+430
+00:38:56,760 --> 00:39:02,320
+ absolutely love about it is that although it was like the most dynamic
+
+431
+00:39:02,320 --> 00:39:07,120
+ locomotion legged thing ever you know certainly in the 80s you know it was
+
+432
+00:39:07,120 --> 00:39:11,960
+ just far more dynamic and interesting than a lot of its predecessors the
+
+433
+00:39:11,960 --> 00:39:15,400
+ controller fit on a single page I could if you come into my office I'll like
+
+434
+00:39:15,400 --> 00:39:19,040
+ show you the page which has this at the top and then like the four PD
+
+435
+00:39:19,040 --> 00:39:22,240
+ controllers on the bottom half of the page it's like a small book with one
+
+436
+00:39:22,240 --> 00:39:26,440
+ page and it's and it's a beautiful description of a controller that to this
+
+437
+00:39:26,440 --> 00:39:30,000
+ day using all of the tools we have from optimization that I have from
+
+438
+00:39:30,000 --> 00:39:33,880
+ optimization theory and the like I don't have I can't make a better controller
+
+439
+00:39:33,880 --> 00:39:41,040
+ really than that it's just a beautiful like yeah very simple architecture very
+
+440
+00:39:41,040 --> 00:39:45,640
+ simple design leverages a lot of mechanical intuition a lot of you know
+
+441
+00:39:45,640 --> 00:39:51,360
+ physics based intuition but what you see over and over again when you see one or
+
+442
+00:39:51,360 --> 00:39:56,280
+ or the folks at Boston Dynamics or whoever's doing these you know these
+
+443
+00:39:56,280 --> 00:40:00,800
+ robot whispering right controllers they are very often right things that are can
+
+444
+00:40:00,800 --> 00:40:06,080
+ be spelled like a finite state machine controller okay so
+
+445
+00:40:06,080 --> 00:40:28,920
+ I would let's contrast procedural logic versus finite state machine controllers
+
+446
+00:40:34,920 --> 00:40:39,400
+ okay so do people understand what I mean by procedural logic this is like I'm
+
+447
+00:40:39,400 --> 00:40:45,680
+ gonna say you know Wow something it's something I'm gonna write sort of my
+
+448
+00:40:45,680 --> 00:40:51,200
+ standard Python C++ code I might have branches I might have whatever this is
+
+449
+00:40:51,200 --> 00:40:55,560
+ sort of the procedural logic view of the world is our sort of standard
+
+450
+00:40:55,560 --> 00:41:01,840
+ programming interface it doesn't have explicit notions of time okay it has
+
+451
+00:41:01,840 --> 00:41:07,520
+ it's just marching procedurally down and an exit and following branches and
+
+452
+00:41:07,520 --> 00:41:12,840
+ you're always on one line at a time okay it's the state way we typically write
+
+453
+00:41:12,840 --> 00:41:20,120
+ code now a finite state machine is a dynamical system you know it fits inside
+
+454
+00:41:20,120 --> 00:41:25,880
+ a mathematical or a computational framework that is different than this
+
+455
+00:41:25,880 --> 00:41:30,680
+ right it fits inside a simulation loop where you can have there's a multiple
+
+456
+00:41:30,680 --> 00:41:40,960
+ ways to write it but I might say a discrete time one would be something
+
+457
+00:41:40,960 --> 00:41:46,760
+ like my dynamical system okay but I might have multiple equations that
+
+458
+00:41:46,760 --> 00:42:01,400
+ govern me one for each state which let me call it mode so in the on the board
+
+459
+00:42:01,400 --> 00:42:05,640
+ here there's a flight mode there's a landing mode there's a compression where
+
+460
+00:42:05,640 --> 00:42:10,560
+ the leg spring is compressing there's a thrust there's an unloading mode right
+
+461
+00:42:10,560 --> 00:42:15,200
+ each one of those is implementing some sort of a differential equation or
+
+462
+00:42:15,200 --> 00:42:21,560
+ difference equation okay and then we have the edges of a finite state machine
+
+463
+00:42:21,560 --> 00:42:30,920
+ are conditioned which say I'm going to my next mode you know my I n plus one is
+
+464
+00:42:30,920 --> 00:42:43,400
+ some branching logic so it could be the same as I n or follow an edge
+
+465
+00:42:43,400 --> 00:42:47,680
+ that's not
+
+466
+00:42:47,680 --> 00:43:16,320
+ that's not the point I'm trying to make is that these are really they live in
+
+467
+00:43:16,320 --> 00:43:21,240
+ a time stepping of a dynamical system right they have a discreet miss about
+
+468
+00:43:21,240 --> 00:43:26,280
+ them where it says I'm only in one mode at a time but when I'm inside a mode
+
+469
+00:43:26,280 --> 00:43:30,920
+ I'm just a different set of dynamical dynamical system equations they can have
+
+470
+00:43:30,920 --> 00:43:33,760
+ inputs they can have outputs they could be an entire system in the way we've
+
+471
+00:43:33,760 --> 00:43:39,160
+ talked about in class okay but I'm going to transition to which one's active a
+
+472
+00:43:39,160 --> 00:43:51,080
+ way to think about this is that the total state of that controller is the
+
+473
+00:43:51,080 --> 00:43:58,160
+ states of all the individual modes plus an integer state for the mode
+
+474
+00:43:58,160 --> 00:44:00,160
+ I
+
+475
+00:44:00,160 --> 00:44:02,160
+ I
+
+476
+00:44:02,160 --> 00:44:04,160
+ I
+
+477
+00:44:04,160 --> 00:44:06,160
+ I
+
+478
+00:44:06,160 --> 00:44:08,160
+ I
+
+479
+00:44:33,960 --> 00:44:40,480
+ so when I look at this sort of a procedural recipe that is written like
+
+480
+00:44:40,480 --> 00:44:46,520
+ this but that you could potentially be written like this or it could actually
+
+481
+00:44:46,520 --> 00:44:50,720
+ be written like this where we really have a different dynamical system for
+
+482
+00:44:50,720 --> 00:44:57,320
+ approach the plate for visual servoing for us you know for closing the hand
+
+483
+00:44:57,320 --> 00:45:01,560
+ those could differ be different states in the diagram you could write it either
+
+484
+00:45:01,560 --> 00:45:09,480
+ way the reason I mean you can imagine that that if I wanted to say something
+
+485
+00:45:09,480 --> 00:45:13,560
+ formal about what's happening in the system this representation is going to
+
+486
+00:45:13,560 --> 00:45:18,400
+ give me more power to sort of analyze the dynamics of the system say something
+
+487
+00:45:18,400 --> 00:45:21,400
+ about stability say something about robustness you know use all of our
+
+488
+00:45:21,400 --> 00:45:27,280
+ stronger tools right this system is easier this is the programmers the light
+
+489
+00:45:27,280 --> 00:45:30,480
+ right if you just want to hack something together and prototype this is way way
+
+490
+00:45:30,480 --> 00:45:37,600
+ better okay now if you think about programming languages at all if you this
+
+491
+00:45:37,600 --> 00:45:42,200
+ system they if they could be mathematically equivalent then then you
+
+492
+00:45:42,200 --> 00:45:47,880
+ know the state of this system which is declared very explicitly potentially if
+
+493
+00:45:47,880 --> 00:45:51,480
+ you use something like the systems framework we use in Drake or you
+
+494
+00:45:51,480 --> 00:45:56,320
+ simulink or anything like that right you're explicitly say what X is you know
+
+495
+00:45:56,320 --> 00:46:00,760
+ you explicitly enumerate the mode that you're in and you've declared all your
+
+496
+00:46:00,760 --> 00:46:05,000
+ state and your function your your dynamics are just a function of the
+
+497
+00:46:05,000 --> 00:46:12,040
+ state and input the notion of state is much messier in a procedural code it's
+
+498
+00:46:12,040 --> 00:46:16,000
+ somehow like the entire stack of your thread you know you feel like if you're
+
+499
+00:46:16,000 --> 00:46:20,080
+ to hit your debugger and you do DB stack right like that somehow that's your
+
+500
+00:46:20,080 --> 00:46:24,480
+ state okay and it's a it's a useful state for programming but it's a messy
+
+501
+00:46:24,480 --> 00:46:29,680
+ state for analysis okay so I do think this is one of the big things that that
+
+502
+00:46:29,680 --> 00:46:36,200
+ is a gap is if you know taking code like this and translating it into this is a
+
+503
+00:46:36,200 --> 00:46:41,280
+ sort of a an interesting enterprise and an important one if you if you need to
+
+504
+00:46:41,280 --> 00:46:45,920
+ somehow write your system in a way that it will always talk to your robot at 200
+
+505
+00:46:45,920 --> 00:46:55,400
+ Hertz but like I said there are you know people can take that kind of a an
+
+506
+00:46:55,400 --> 00:47:04,720
+ approach this is Andy who's the video you've seen before but you know the task
+
+507
+00:47:04,720 --> 00:47:10,040
+ level behaviors here I don't know the details I know Andy I like Andy a lot
+
+508
+00:47:10,040 --> 00:47:14,480
+ but I don't know what code he wrote exactly my impression is that it is you
+
+509
+00:47:14,480 --> 00:47:20,080
+ know finite state machine like and it is extremely robust even if you know
+
+510
+00:47:20,080 --> 00:47:26,280
+ people pull the back of the robot and the like right right there's no learning
+
+511
+00:47:26,280 --> 00:47:30,200
+ at the task level here there's probably learning at the perception level this
+
+512
+00:47:30,200 --> 00:47:35,640
+ was a few years ago but you can make these things incredibly robust by
+
+513
+00:47:35,640 --> 00:47:41,360
+ writing them in this sort of like the the framework of these finite state
+
+514
+00:47:41,360 --> 00:47:49,720
+ machines success at the end right
+
+515
+00:47:49,720 --> 00:47:59,560
+ okay so you know and and this is something that people use more generally
+
+516
+00:47:59,560 --> 00:48:03,800
+ I don't think I'm not sure this package is super popular anymore but they're good
+
+517
+00:48:03,800 --> 00:48:09,240
+ in the raw stack you can find things like s Mac which is state machine right
+
+518
+00:48:09,240 --> 00:48:21,000
+ and you know this is this is a tool chain that people do use okay but you
+
+519
+00:48:21,000 --> 00:48:23,880
+ know this problem that it's trying to solve of taking something that's like a
+
+520
+00:48:23,880 --> 00:48:28,160
+ procedural code and giving it an explicit contract about having an output
+
+521
+00:48:28,160 --> 00:48:32,600
+ or a state updated every time step bridging that gap that's something that
+
+522
+00:48:32,600 --> 00:48:36,520
+ that people have dealt with for a long time so that you get one what is this
+
+523
+00:48:36,520 --> 00:48:40,760
+ picture here right so like game developers have known about this problem
+
+524
+00:48:40,760 --> 00:48:46,800
+ forever when I was a year up many years ago and I when I was an intern many
+
+525
+00:48:46,800 --> 00:48:51,160
+ years ago when I was a year up I worked at with Miss at University of Michigan
+
+526
+00:48:51,160 --> 00:48:55,700
+ with a guy who was doing AI for computer games and when I went for the summer to
+
+527
+00:48:55,700 --> 00:49:02,040
+ Microsoft Research at the time I worked on this game which was a project at
+
+528
+00:49:02,040 --> 00:49:07,020
+ Microsoft Research because it was one of the first massively distributed action
+
+529
+00:49:07,020 --> 00:49:13,240
+ games gaming zone was new and they're like you know they were doing sort of
+
+530
+00:49:13,240 --> 00:49:16,480
+ character stuff but nothing that had real-time action over the internet so it
+
+531
+00:49:16,480 --> 00:49:20,400
+ was like it was a research project I wrote the drone code so if you were like
+
+532
+00:49:20,400 --> 00:49:25,140
+ ever to play this game and you saw like a mining drones or turrets shooting at
+
+533
+00:49:25,140 --> 00:49:33,980
+ you or whatever like that yeah I was I was trying I had permission to do like
+
+534
+00:49:33,980 --> 00:49:37,640
+ an Easter egg that would like spell my name in the sky or something but I ran
+
+535
+00:49:37,640 --> 00:49:44,520
+ out of time so I don't I can't say that but the way people program these kind of
+
+536
+00:49:44,520 --> 00:49:50,140
+ things in in games is similar to what more advanced tools that people have
+
+537
+00:49:50,140 --> 00:49:55,900
+ used in robotics also right the problem with writing code in finite state
+
+538
+00:49:55,900 --> 00:50:00,980
+ machine is that as the tasks get more complicated the state machines explode
+
+539
+00:50:00,980 --> 00:50:04,960
+ they absolutely don't scale right you can get if you start you want to add
+
+540
+00:50:04,960 --> 00:50:08,980
+ just one new behavior maybe that behavior has to touch has to work in all
+
+541
+00:50:08,980 --> 00:50:14,780
+ of those different different situations all these different skills maybe you
+
+542
+00:50:14,780 --> 00:50:18,860
+ know in all of the different sequences of the robot picking something up I still
+
+543
+00:50:18,860 --> 00:50:23,580
+ want to be able to like stop and go home if something goes very wrong right and
+
+544
+00:50:23,580 --> 00:50:27,900
+ so that might mean taking every one of my states and blowing it up and blowing
+
+545
+00:50:27,900 --> 00:50:31,460
+ it up and you get these like exponential growth of number of states and it became
+
+546
+00:50:31,460 --> 00:50:37,900
+ untenable so through some amount of like you know research in academia and just
+
+547
+00:50:37,900 --> 00:50:43,180
+ hacking in game industries or something a new form of you know a new format for
+
+548
+00:50:43,180 --> 00:50:47,220
+ specifying finite state machine like things was born and that was called
+
+549
+00:50:47,220 --> 00:50:54,180
+ behavior trees right people know about behavior trees yeah there was another I
+
+550
+00:50:54,180 --> 00:51:01,220
+ guess the part of the theme there was Rod Brooks colleague here for many years
+
+551
+00:51:01,220 --> 00:51:07,060
+ and you know he was part of this sort of this push I would say from the academic
+
+552
+00:51:07,060 --> 00:51:13,060
+ side you know this was the time where Tomas and other people here Tomas was
+
+553
+00:51:13,060 --> 00:51:16,860
+ Rod's postdoc advisor so they were you know they were close but I think a lot
+
+554
+00:51:16,860 --> 00:51:20,460
+ of people were talking about AI style planning planning planning planning and
+
+555
+00:51:20,460 --> 00:51:24,900
+ Rod starts writing a series of papers like elephants don't play chess you know
+
+556
+00:51:24,900 --> 00:51:28,380
+ and intelligence without reason intelligence without representation and
+
+557
+00:51:28,380 --> 00:51:33,500
+ he started arguing that robots real robots should be programmed with like
+
+558
+00:51:33,500 --> 00:51:38,540
+ small state machines and he built this subsumption architecture it was his
+
+559
+00:51:38,540 --> 00:51:43,620
+ version at the time and that was used to program legged robots probably program
+
+560
+00:51:43,620 --> 00:51:49,780
+ Roomba right I tried to find a subsumption architecture for Roomba I
+
+561
+00:51:49,780 --> 00:51:54,060
+ didn't didn't find it but I think the early versions of Roomba were running
+
+562
+00:51:54,060 --> 00:51:58,340
+ these you know state machine like but programmed slightly differently versions
+
+563
+00:51:58,340 --> 00:52:10,260
+ of low-level controls as opposed to big planners it's interesting that his his
+
+564
+00:52:10,260 --> 00:52:14,900
+ critique of why you know the traditional approach has emphasized the abstract
+
+565
+00:52:14,900 --> 00:52:18,540
+ manipulation of symbols which whose grounding in physical reality has rarely
+
+566
+00:52:18,540 --> 00:52:23,420
+ been achieved which is totally true and at the time and whatever but it kind of
+
+567
+00:52:23,420 --> 00:52:27,260
+ has been achieved now right I mean perception kind of works I mean like
+
+568
+00:52:27,260 --> 00:52:31,140
+ completely there's abstract symbols that are still very hard but like I can find
+
+569
+00:52:31,140 --> 00:52:34,860
+ a mug you know I can ground that I could tell you if the dishwasher doors open or
+
+570
+00:52:34,860 --> 00:52:40,940
+ not right it's interesting that that I in my view is it's not solved but it's
+
+571
+00:52:40,940 --> 00:52:46,300
+ it's moved okay so behavior trees we're gonna actually have you work through a
+
+572
+00:52:46,300 --> 00:52:53,820
+ version on for the for our task on the problem set but they are they are
+
+573
+00:52:53,820 --> 00:52:58,780
+ similar in spirit to state machines but are better been designed with
+
+574
+00:52:58,780 --> 00:53:03,700
+ composition and a factor representation in mind okay so you'll see these these
+
+575
+00:53:03,700 --> 00:53:08,780
+ basic operators it's a graphical programming language effectively that
+
+576
+00:53:08,780 --> 00:53:15,540
+ that composes different so the way a behavior tree works is roughly you go
+
+577
+00:53:15,540 --> 00:53:22,060
+ down you walk down the tree on every execution you ask you know should you
+
+578
+00:53:22,060 --> 00:53:26,820
+ there's a there's basically logical ors and logical ands okay you say is this
+
+579
+00:53:26,820 --> 00:53:32,900
+ true if yes execute the action and it doesn't succeed and this is an or so
+
+580
+00:53:32,900 --> 00:53:37,460
+ maybe if it didn't succeed I'll walk down this train this chain in practice
+
+581
+00:53:37,460 --> 00:53:42,140
+ it's a simple programming language for these types of behaviors which people
+
+582
+00:53:42,140 --> 00:53:48,380
+ have had much success building libraries of behaviors if I had like a new you
+
+583
+00:53:48,380 --> 00:53:52,260
+ know way that the robot should go recharge its batteries then I could
+
+584
+00:53:52,260 --> 00:53:56,420
+ bring that recharges batteries and somehow stick it in here on my existing
+
+585
+00:53:56,420 --> 00:54:02,060
+ someone else programmed you know Roomba sort of program and it can just sort of
+
+586
+00:54:02,060 --> 00:54:07,060
+ tack into the main tree you get this logical specification that is finite
+
+587
+00:54:07,060 --> 00:54:13,860
+ state machine like but much more factored and easier to compose and I'm
+
+588
+00:54:13,860 --> 00:54:19,500
+ totally serious that people in computer games you know do this right so I wanted
+
+589
+00:54:19,500 --> 00:54:25,580
+ to you know like if you go to the Unreal Engine 4 behavior tree quick start guide
+
+590
+00:54:25,580 --> 00:54:30,860
+ right you can see how to like what was the thing here is create an enemy AI
+
+591
+00:54:30,860 --> 00:54:34,100
+ that responds to seeing the player and proceeds to chase them down right so
+
+592
+00:54:34,100 --> 00:54:40,580
+ that's got to be useful right and there's like a whole GUI in Unreal
+
+593
+00:54:40,580 --> 00:54:45,980
+ Engine for programming behavior trees right so people build pretty complicated
+
+594
+00:54:45,980 --> 00:54:52,540
+ systems out of this and they they are designed around this this fact that the
+
+595
+00:54:52,540 --> 00:54:56,900
+ game engines are stepping along at a simulation loop you have to tell me what
+
+596
+00:54:56,900 --> 00:55:09,300
+ to do at every step so how does that connect back to like the systems
+
+597
+00:55:09,300 --> 00:55:14,260
+ framework and our dynamical systems view of the world right you could just stick
+
+598
+00:55:14,260 --> 00:55:17,700
+ a behavior tree here's an example of it from a early version of the class that
+
+599
+00:55:17,700 --> 00:55:24,220
+ we did you can you can take your favorite Python behavior tree library for
+
+600
+00:55:24,220 --> 00:55:29,780
+ instance and tuck it inside a system and have the the what do they call it the
+
+601
+00:55:29,780 --> 00:55:33,980
+ blackboard of the of the behavior tree basically be declared as the state of
+
+602
+00:55:33,980 --> 00:55:38,340
+ your system and every time your dynamical system is evaluated it just
+
+603
+00:55:38,340 --> 00:55:41,540
+ walks down the behavior tree and runs the action and it fits right into the
+
+604
+00:55:41,540 --> 00:55:51,620
+ systems framework it's not in Drake master it's one of the places where I
+
+605
+00:55:51,620 --> 00:55:56,180
+ feel that we could make the full stack easier if we implemented a few of these
+
+606
+00:55:56,180 --> 00:56:05,740
+ these algorithms and made them available for people okay so there's a thing that
+
+607
+00:56:05,740 --> 00:56:11,100
+ happens here that I want to kind of land and I'm people disagree with me on this
+
+608
+00:56:11,100 --> 00:56:17,700
+ by the way this is now you know squarely on Russ's opinion of the world not what
+
+609
+00:56:17,700 --> 00:56:28,580
+ is absolute and correct but despite the knowledge and utility of writing of
+
+610
+00:56:28,580 --> 00:56:31,700
+ writing behavior trees and computer games and stuff like this a lot of
+
+611
+00:56:31,700 --> 00:56:35,660
+ people when they're writing robots don't don't use finite state machines don't
+
+612
+00:56:35,660 --> 00:56:38,820
+ use decision trees don't even necessarily use the full planning stack
+
+613
+00:56:38,820 --> 00:56:45,540
+ they will still write procedural code and I think that happened a lot because
+
+614
+00:56:45,540 --> 00:57:03,100
+ of the sort of multi-process message passing so let's say it's Ross or some
+
+615
+00:57:03,100 --> 00:57:13,940
+ other message passing it's happening inside here okay so maybe over here I
+
+616
+00:57:13,940 --> 00:57:20,460
+ have a simulation with a simulation time step and something that's working on
+
+617
+00:57:20,460 --> 00:57:28,660
+ every you know five millisecond clock okay that's going around over here maybe
+
+618
+00:57:28,660 --> 00:57:39,580
+ I have my while dirty sink right and then along the way I just sprinkle in
+
+619
+00:57:39,580 --> 00:57:54,460
+ my decisions to send and receive messages so this can work and I think
+
+620
+00:57:54,460 --> 00:57:58,180
+ the fact that the message passing and the separate multi-process view of the
+
+621
+00:57:58,180 --> 00:58:01,940
+ world has become so easy with all the you know with the way that we've
+
+622
+00:58:01,940 --> 00:58:06,620
+ architected our robotic systems these days this has become common again what I
+
+623
+00:58:06,620 --> 00:58:10,780
+ think people what I worry about we've lost that maybe most people don't worry
+
+624
+00:58:10,780 --> 00:58:17,860
+ about we've lost is that it's it it is possible but it's very difficult to get
+
+625
+00:58:17,860 --> 00:58:24,060
+ deterministic evaluations in these kind of systems okay so as soon as you start
+
+626
+00:58:24,060 --> 00:58:29,540
+ getting multiple processes that have you know arbitrary delay in message time
+
+627
+00:58:29,540 --> 00:58:33,980
+ arrival and stuff like this even just your CPU scheduling things at different
+
+628
+00:58:33,980 --> 00:58:38,900
+ times I think you don't typically run the same Ross simulation twice right I
+
+629
+00:58:38,900 --> 00:58:42,420
+ mean I think that's just not what it's built for there are message passing
+
+630
+00:58:42,420 --> 00:58:46,660
+ systems that can do extra work to enforce timing and and and give some
+
+631
+00:58:46,660 --> 00:58:50,740
+ sort of guarantees there but it's very hard actually to run the same simulation
+
+632
+00:58:50,740 --> 00:58:57,380
+ twice in that kind of a framework and I think that doesn't hurt you when you're
+
+633
+00:58:57,380 --> 00:59:01,220
+ just prototyping but when you start taking things to the next level of
+
+634
+00:59:01,220 --> 00:59:06,260
+ maturity it really starts to hurt you I think a lot of you know I think a lot of
+
+635
+00:59:06,260 --> 00:59:11,500
+ advanced users stop using some of those message passing systems because of that
+
+636
+00:59:11,500 --> 00:59:15,500
+ it's just very hard to get very repeatable very reliable you know when
+
+637
+00:59:15,500 --> 00:59:18,100
+ something doesn't work did it not work because I dropped the message or
+
+638
+00:59:18,100 --> 00:59:25,180
+ whatever you know so it was interesting to watch sort of the the process of
+
+639
+00:59:25,180 --> 00:59:29,580
+ taking and you know to work on the process of taking that dish example to
+
+640
+00:59:29,580 --> 00:59:36,700
+ maturity so it was a there was a system that was constantly running Monte Carlo
+
+641
+00:59:36,700 --> 00:59:42,540
+ tests so making random initial conditions random mugs random plates
+
+642
+00:59:42,540 --> 00:59:46,580
+ you know generating random we have like procedural dishes that would make
+
+643
+00:59:46,580 --> 00:59:51,460
+ different size but but mug like things and generates spit out CAD models right
+
+644
+00:59:51,460 --> 00:59:55,900
+ we changed lighting conditions we change all kinds of stuff okay and it was just
+
+645
+00:59:55,900 --> 01:00:00,540
+ be running over and over and over again and it got to the point where well first
+
+646
+01:00:00,540 --> 01:00:06,820
+ of all that failures in reality would match the rare failures in simulation
+
+647
+01:00:06,820 --> 01:00:11,700
+ which was pretty awesome but you'd occasionally find a failure and and then
+
+648
+01:00:11,700 --> 01:00:15,780
+ you'd have to go track it down and if it was not deterministic oh my gosh right
+
+649
+01:00:15,780 --> 01:00:18,660
+ and there's still not some number to terminate some in that particular system
+
+650
+01:00:18,660 --> 01:00:22,060
+ but we're still fighting it down because it's a it's a every bit you can get out
+
+651
+01:00:22,060 --> 01:00:30,700
+ it gets more valuable and a lot of the most subtle bugs actually happen at this
+
+652
+01:00:30,700 --> 01:00:36,420
+ behavior level I would say so this is kind of a fun one that we that we found
+
+653
+01:00:36,420 --> 01:00:43,180
+ okay so there was a piece of the initiation set the preconditions for the
+
+654
+01:00:43,180 --> 01:00:49,740
+ should I put the mug down that had an arbitrary threshold of 0.45 on the rack
+
+655
+01:00:49,740 --> 01:00:53,420
+ position of the mug of the you know somehow we have a perception system
+
+656
+01:00:53,420 --> 01:00:58,420
+ that's estimating the location of the rack and and if it's if it's out enough
+
+657
+01:00:58,420 --> 01:01:02,180
+ from 0.45 I'll continue to execute and if it was too little I would stop and set
+
+658
+01:01:02,180 --> 01:01:05,900
+ it down exactly what you were asking about before okay and then we started
+
+659
+01:01:05,900 --> 01:01:09,740
+ adding there was like the night when somebody decided oh I'm gonna add
+
+660
+01:01:09,740 --> 01:01:13,900
+ randomness to the rack perception that that matches the statistics of the
+
+661
+01:01:13,900 --> 01:01:17,100
+ randomness we got from reality it was this it's this constant battle between
+
+662
+01:01:17,100 --> 01:01:20,860
+ the people trying to make the simulator harder and those people making the robot
+
+663
+01:01:20,860 --> 01:01:27,860
+ better right so someone added rack noise okay and almost always it was fine every
+
+664
+01:01:27,860 --> 01:01:33,620
+ once in a while it would be such that the robot would start moving somewhere
+
+665
+01:01:33,620 --> 01:01:37,580
+ along the cycle it would it would trip this thing saying it was less than 0.45
+
+666
+01:01:37,580 --> 01:01:42,260
+ you go I'm gonna set it down okay but then by the time it went to decide again
+
+667
+01:01:42,260 --> 01:01:45,220
+ it's like okay the racks there so and it would basically get in this like
+
+668
+01:01:45,220 --> 01:01:49,980
+ infinite loop of going like this yeah you know like this man and it like we
+
+669
+01:01:49,980 --> 01:01:54,220
+ never would have found that without extreme testing and to be able to
+
+670
+01:01:54,220 --> 01:01:59,780
+ reproduce it you know it's just very very hard to get deterministic results
+
+671
+01:01:59,780 --> 01:02:04,700
+ out of a system that's that's doing this kind of stuff so part of the mission in
+
+672
+01:02:04,700 --> 01:02:10,780
+ getting things more things locked in in the systems framework is to just be able
+
+673
+01:02:10,780 --> 01:02:14,980
+ to run completely reliable deterministic simulations of including the whole stack
+
+674
+01:02:14,980 --> 01:02:23,260
+ to be fair the noise that was the added was a little bit crazy so it was like
+
+675
+01:02:23,260 --> 01:02:28,020
+ you know yeah the dish rack was going like that or something like this but it
+
+676
+01:02:28,020 --> 01:02:31,340
+ but so so everybody's kind of like oh yeah that's great you found me found a
+
+677
+01:02:31,340 --> 01:02:34,660
+ bug but that's never gonna happen in reality and then it happened in reality
+
+678
+01:02:34,660 --> 01:02:38,340
+ it was like one day there were someone how the the rack got a little bit stuck
+
+679
+01:02:38,340 --> 01:02:41,860
+ right around the threshold and there was very good like infinite looping and we're
+
+680
+01:02:41,860 --> 01:02:46,660
+ okay there you go it really did happen
+
+681
+01:02:46,660 --> 01:03:09,060
+ okay so yeah please yeah so so I think that gets to the question of how do you
+
+682
+01:03:09,060 --> 01:03:13,700
+ put long-running computation into like a behavior tree or a finite state machine
+
+683
+01:03:13,700 --> 01:03:17,380
+ for instance so finite state machines behavior trees will address that need
+
+684
+01:03:17,380 --> 01:03:25,940
+ but they're asked to give an answer at every time step so so the so it takes
+
+685
+01:03:25,940 --> 01:03:31,580
+ some thought right the proposal the thing we've implemented in the proposal to do
+
+686
+01:03:31,580 --> 01:03:35,540
+ more generally inside Drake is to have a system where if you have a long-running
+
+687
+01:03:35,540 --> 01:03:40,980
+ computation it just spawns a thread does that long-running computation and comes
+
+688
+01:03:40,980 --> 01:03:48,380
+ back but the the system that wraps it has the ability to you specify a
+
+689
+01:03:48,380 --> 01:03:52,660
+ distribution of possible running times okay so when you're running in
+
+690
+01:03:52,660 --> 01:03:56,700
+ simulation and you don't worry about wall clock you can allow the run you
+
+691
+01:03:56,700 --> 01:04:00,500
+ could you can have two options right you can basically let the thing return
+
+692
+01:04:00,500 --> 01:04:04,700
+ whenever it's done and then you keep executing or I can basically block and
+
+693
+01:04:04,700 --> 01:04:10,100
+ pick a random number of my of my runtime wait that long in the simulation and
+
+694
+01:04:10,100 --> 01:04:15,100
+ simulation clock and then block arbitrarily waiting for that to return
+
+695
+01:04:15,100 --> 01:04:19,620
+ and that would turn a you know you could model a stochastic amount of evaluation
+
+696
+01:04:19,620 --> 01:04:24,660
+ time in a perfectly deterministic way they might be less performant at in
+
+697
+01:04:24,660 --> 01:04:28,180
+ simulation but it would be determined deterministic so those are the kind of
+
+698
+01:04:28,180 --> 01:04:33,020
+ games that we're trying to play to get to that extra level of reliability did I
+
+699
+01:04:33,020 --> 01:04:39,540
+ say that I said that a bit complicated right so here's my main thread it's
+
+700
+01:04:39,540 --> 01:04:49,260
+ giving an answer every time step so at time this is my main thread okay now I'm
+
+701
+01:04:49,260 --> 01:04:57,100
+ gonna launch my worker thread here okay and it's a long-running computation that
+
+702
+01:04:57,100 --> 01:05:02,060
+ will ultimately change the output of my system okay so you know when it
+
+703
+01:05:02,060 --> 01:05:06,220
+ whenever it returns then the net from now on I'll have a different output from
+
+704
+01:05:06,220 --> 01:05:10,620
+ my main thread okay and here I'm just returning I'm sending the last possible
+
+705
+01:05:10,620 --> 01:05:14,540
+ output and the problem is that if I put a worker thread on a you know and I'm
+
+706
+01:05:14,540 --> 01:05:18,640
+ relying on CPU processing or CPU scheduling to let this thing sort of go
+
+707
+01:05:18,640 --> 01:05:22,220
+ and return whenever it does then it might return here it might return here
+
+708
+01:05:22,220 --> 01:05:29,540
+ might return here I don't know okay so what we do is we flip a coin you know
+
+709
+01:05:29,540 --> 01:05:32,460
+ say I've got a distribution of possible things I've ever run times I've ever
+
+710
+01:05:32,460 --> 01:05:38,780
+ seen okay I will pick a priori that this on this rollout I'm gonna say it landed
+
+711
+01:05:38,780 --> 01:05:43,300
+ at this it returned at this time okay and I will go ahead and do the worker
+
+712
+01:05:43,300 --> 01:05:50,260
+ thread but if it if it took longer than I expected I will block my main
+
+713
+01:05:50,260 --> 01:05:54,820
+ simulation thread pretend the time stopped waiting for that to return so
+
+714
+01:05:54,820 --> 01:05:59,060
+ that it returns here if it returned early that's no problem okay that way I
+
+715
+01:05:59,060 --> 01:06:02,940
+ can still have a distribution of possible return times but everything's
+
+716
+01:06:02,940 --> 01:06:08,780
+ clocked off my random seed so if someone caught me with a you know that if I just
+
+717
+01:06:08,780 --> 01:06:12,920
+ happen to run too long it's gonna hit this sort of a weird corner case I can
+
+718
+01:06:12,920 --> 01:06:18,300
+ reproduce it perfectly okay but it allow it permits for things to have long run
+
+719
+01:06:18,300 --> 01:06:24,180
+ times those are the type of games you have to play I think if there's better
+
+720
+01:06:24,180 --> 01:06:32,900
+ suggestions I'm happy okay so that was a bit of a potpourri of like how do I mix
+
+721
+01:06:32,900 --> 01:06:38,500
+ high-level behavior planning with low-level systems I would say for me
+
+722
+01:06:38,500 --> 01:06:45,700
+ there when I'm implementing a new complicated system I think if I'm
+
+723
+01:06:45,700 --> 01:06:52,020
+ rapidly prototyping something I will do procedural code wrap it up quickly and
+
+724
+01:06:52,020 --> 01:06:57,380
+ and not worry about the extra burden of specifying finite state machines or
+
+725
+01:06:57,380 --> 01:07:03,180
+ behavior trees or whatever and for simple branching logics I wouldn't even
+
+726
+01:07:03,180 --> 01:07:08,700
+ use a task planner okay if the task complexity goes up and the multi-step
+
+727
+01:07:08,700 --> 01:07:12,780
+ reasoning happens then I would bring in a task planner for that and still maybe
+
+728
+01:07:12,780 --> 01:07:16,100
+ just write it in a procedural case but not worry about all this extra stuff
+
+729
+01:07:16,100 --> 01:07:21,100
+ okay but when I start trying to get higher levels of reliability that's when
+
+730
+01:07:21,100 --> 01:07:26,100
+ I think the extra burden of going to state you know to make the explicit
+
+731
+01:07:26,100 --> 01:07:31,100
+ contract between your planning your behavior level computation and the
+
+732
+01:07:31,100 --> 01:07:34,740
+ dynamical system time step becomes essential and doing that right I think
+
+733
+01:07:34,740 --> 01:07:44,420
+ can can take you to the next level so I wish I had like you know here's the
+
+734
+01:07:44,420 --> 01:07:48,060
+ fight in most of the most of the topics we've talked about I'll be like you know
+
+735
+01:07:48,060 --> 01:07:52,140
+ here's the function you call in Drake you know here's the function most of
+
+736
+01:07:52,140 --> 01:07:58,300
+ these are not in in Drake right now they're not in many libraries one of the
+
+737
+01:07:58,300 --> 01:08:04,620
+ I mean some of even the planning stuff is GPL in most places so so finding a
+
+738
+01:08:04,620 --> 01:08:09,660
+ right you know a good like PDDL library to that if we could bring into Drake is
+
+739
+01:08:09,660 --> 01:08:15,300
+ actually non-trivial so you know this is a this is for me a still a work in
+
+740
+01:08:15,300 --> 01:08:18,380
+ progress of trying to get that so you can actually like play with the full
+
+741
+01:08:18,380 --> 01:08:25,900
+ powerful systems but I hope the concepts kind of land good okay so please do
+
+742
+01:08:25,900 --> 01:08:28,700
+ reach out with us if you have questions and you're not sure what's going on with
+
+743
+01:08:28,700 --> 01:08:34,660
+ your project you know reach out to us and next week we'll start learning
+

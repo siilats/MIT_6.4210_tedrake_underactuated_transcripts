@@ -1,0 +1,5352 @@
+1
+00:00:00,000 --> 00:00:04,120
+ And then new control, that's what roughly model-based RL is.
+
+2
+00:00:04,120 --> 00:00:06,240
+ But I think it is more than that, right?
+
+3
+00:00:06,240 --> 00:00:10,000
+ So what is new about sort of the model-based RL of the world?
+
+4
+00:00:10,000 --> 00:00:15,360
+ I think things that have really not
+
+5
+00:00:15,360 --> 00:00:19,760
+ been addressed in previous incarnations of system
+
+6
+00:00:19,760 --> 00:00:20,680
+ identification.
+
+7
+00:00:20,680 --> 00:00:23,680
+ One of them, for sure, is learning for images.
+
+8
+00:00:29,720 --> 00:00:32,240
+ That's a new thing that's working incredibly well now.
+
+9
+00:00:32,240 --> 00:00:35,240
+ It is super exciting and good.
+
+10
+00:00:35,240 --> 00:00:40,960
+ And the other thing is that I think
+
+11
+00:00:40,960 --> 00:00:43,880
+ we've transitioned in an important way
+
+12
+00:00:43,880 --> 00:00:46,200
+ from thinking about we're going to learn
+
+13
+00:00:46,200 --> 00:00:50,960
+ the model of the plant to something much more.
+
+14
+00:00:50,960 --> 00:00:52,760
+ So learn the model of the plant for me
+
+15
+00:00:52,760 --> 00:00:55,520
+ means I've got an atlas, my humanoid robot,
+
+16
+00:00:55,520 --> 00:00:58,440
+ and I want to figure out the inertias
+
+17
+00:00:58,440 --> 00:01:00,000
+ of the links of the robot.
+
+18
+00:01:00,000 --> 00:01:03,400
+ I want to learn the plant, do parameter system
+
+19
+00:01:03,400 --> 00:01:04,720
+ identification of atlas.
+
+20
+00:01:04,720 --> 00:01:08,000
+ That's an important task.
+
+21
+00:01:08,000 --> 00:01:12,240
+ But I think the call to arms here in RL
+
+22
+00:01:12,240 --> 00:01:13,600
+ is something more than that.
+
+23
+00:01:13,600 --> 00:01:18,160
+ It's something like learn an open world model, right?
+
+24
+00:01:18,160 --> 00:01:23,360
+ Learn models that can be applied generally in a kitchen,
+
+25
+00:01:23,360 --> 00:01:28,800
+ but in any kitchen, that somehow generalize to new domains,
+
+26
+00:01:28,800 --> 00:01:31,080
+ similar environments that you haven't seen before.
+
+27
+00:01:31,080 --> 00:01:33,880
+ And that is characteristically very different.
+
+28
+00:01:33,880 --> 00:01:36,400
+ In particular, we'll talk a bit about state representations.
+
+29
+00:01:36,400 --> 00:01:38,600
+ It begs fundamental questions about what
+
+30
+00:01:38,600 --> 00:01:42,720
+ is the right representation to encode these sort of models.
+
+31
+00:01:42,720 --> 00:01:51,960
+ So I'd say we've gone from thinking about plant models
+
+32
+00:01:51,960 --> 00:01:54,720
+ towards-- I don't think we're all the way there yet.
+
+33
+00:01:54,720 --> 00:02:08,920
+ But our goals are certainly to do both model-based RL
+
+34
+00:02:08,920 --> 00:02:11,640
+ and intuitive theories, which seems a little bit more
+
+35
+00:02:11,640 --> 00:02:15,480
+ specific to me, but I'll try to limit it.
+
+36
+00:02:15,480 --> 00:02:17,840
+ OK, so I want to--
+
+37
+00:02:17,840 --> 00:02:22,080
+ my goal is I would love to spend eight lectures on this,
+
+38
+00:02:22,080 --> 00:02:25,200
+ but I wanted to at least give you a teaser
+
+39
+00:02:25,200 --> 00:02:28,360
+ and hopefully encourage you to learn more or ask more questions
+
+40
+00:02:28,360 --> 00:02:30,920
+ and read more papers about this.
+
+41
+00:02:30,920 --> 00:02:33,520
+ But I want to tell you a few important lessons
+
+42
+00:02:33,520 --> 00:02:34,200
+ from system ID.
+
+43
+00:02:34,200 --> 00:02:36,720
+ So we're going to throw neural networks at this problem.
+
+44
+00:02:36,720 --> 00:02:39,120
+ That's the hallmark of model-based RL
+
+45
+00:02:39,120 --> 00:02:40,740
+ is to use neural networks to accomplish
+
+46
+00:02:40,740 --> 00:02:42,440
+ some of these amazing tasks.
+
+47
+00:02:42,440 --> 00:02:46,080
+ But I find that there's some really important lessons
+
+48
+00:02:46,080 --> 00:02:48,800
+ from system ID that can transfer into the neural network case,
+
+49
+00:02:48,800 --> 00:02:53,200
+ and I'd like to sort of highlight some of those.
+
+50
+00:02:53,200 --> 00:02:55,600
+ One of the biggest questions, which I've alluded to a few
+
+51
+00:02:55,600 --> 00:02:58,040
+ times in the term, is this question of what's
+
+52
+00:02:58,040 --> 00:02:59,640
+ the right representation for state?
+
+53
+00:02:59,640 --> 00:03:01,600
+ So we'll talk a bit about that, and then I'll
+
+54
+00:03:01,600 --> 00:03:06,040
+ talk about intuitive physics at the end of the night.
+
+55
+00:03:06,040 --> 00:03:06,540
+ OK.
+
+56
+00:03:06,540 --> 00:03:10,020
+ [SIGHS]
+
+57
+00:03:10,020 --> 00:03:33,620
+ Let me actually start when we talk about these sort
+
+58
+00:03:33,620 --> 00:03:34,860
+ of lessons from system ID.
+
+59
+00:03:34,860 --> 00:03:36,980
+ Let me actually start by showing a few slides.
+
+60
+00:03:36,980 --> 00:03:41,540
+ We had a panel not too recently, not too long ago,
+
+61
+00:03:41,540 --> 00:03:45,940
+ from one of the robotics symposiums,
+
+62
+00:03:45,940 --> 00:03:49,060
+ talking about basically deep learning models
+
+63
+00:03:49,060 --> 00:03:50,940
+ versus physics-based models.
+
+64
+00:03:50,940 --> 00:03:53,780
+ And actually, the title of the panel, which I didn't like,
+
+65
+00:03:53,780 --> 00:03:56,940
+ was "Data-Driven Models Versus Physics Models."
+
+66
+00:03:56,940 --> 00:03:59,900
+ And I took offense to that distinction,
+
+67
+00:03:59,900 --> 00:04:01,780
+ and I'll just see that in my slides.
+
+68
+00:04:01,780 --> 00:04:03,500
+ But I've got four slides that I used
+
+69
+00:04:03,500 --> 00:04:05,700
+ to set up my part of that conversation.
+
+70
+00:04:05,700 --> 00:04:07,500
+ And maybe it'll set the tone here.
+
+71
+00:04:07,500 --> 00:04:14,260
+ So I think, first of all, it was actually very striking to me
+
+72
+00:04:14,260 --> 00:04:17,820
+ to watch the series of papers, as they happen,
+
+73
+00:04:17,820 --> 00:04:21,060
+ transition from people super excited about model-free RLs--
+
+74
+00:04:21,060 --> 00:04:22,820
+ so all these things we talked about before
+
+75
+00:04:22,820 --> 00:04:26,060
+ are roughly model-free RL, which is a funny name.
+
+76
+00:04:26,060 --> 00:04:27,900
+ But roughly, it would mean that you
+
+77
+00:04:27,900 --> 00:04:30,900
+ could apply those black-box optimizations.
+
+78
+00:04:30,900 --> 00:04:35,220
+ You could apply the Q-learning to a real robot.
+
+79
+00:04:35,220 --> 00:04:38,340
+ If that data was coming from the real robot, that would be OK.
+
+80
+00:04:38,340 --> 00:04:41,140
+ The reason it's subtle is that if you're using a simulator
+
+81
+00:04:41,140 --> 00:04:43,100
+ in order to train your RL algorithm,
+
+82
+00:04:43,100 --> 00:04:46,220
+ then you've got some sort of a model.
+
+83
+00:04:46,220 --> 00:04:48,540
+ But people would tend to call that still model-free RL.
+
+84
+00:04:48,540 --> 00:04:51,180
+ If you could have applied it-- even if you did have a model,
+
+85
+00:04:51,180 --> 00:04:53,020
+ you could have applied it on the real robot,
+
+86
+00:04:53,020 --> 00:04:55,340
+ we'd call those model-free.
+
+87
+00:04:55,340 --> 00:04:58,140
+ And they started working really well a handful of years ago,
+
+88
+00:04:58,140 --> 00:05:00,980
+ but there was this striking movement back,
+
+89
+00:05:00,980 --> 00:05:04,060
+ I'd say, to model-based RL.
+
+90
+00:05:04,060 --> 00:05:06,820
+ At the 2018 CoreL conference, it was just like,
+
+91
+00:05:06,820 --> 00:05:09,100
+ oh, everybody was saying model-based RL.
+
+92
+00:05:09,100 --> 00:05:10,540
+ Model-free RL isn't good enough.
+
+93
+00:05:10,540 --> 00:05:12,500
+ Model-based RL is going to save the day.
+
+94
+00:05:12,500 --> 00:05:15,500
+ We're somewhere in the middle, I think, of what's going to be.
+
+95
+00:05:15,500 --> 00:05:18,500
+ So we did this global panel on data-driven versus physics-based
+
+96
+00:05:18,500 --> 00:05:21,300
+ models.
+
+97
+00:05:21,300 --> 00:05:25,780
+ So let me just remind you what I mean by a dynamic model.
+
+98
+00:05:25,780 --> 00:05:31,580
+ So we have inputs coming in, outputs going out.
+
+99
+00:05:31,580 --> 00:05:33,860
+ These could be your robot actuator commands, right?
+
+100
+00:05:33,860 --> 00:05:35,580
+ These can be the camera images.
+
+101
+00:05:35,580 --> 00:05:37,420
+ You can do your joint sensors, whatever.
+
+102
+00:05:37,420 --> 00:05:40,140
+ But fundamentally, the system is a map
+
+103
+00:05:40,140 --> 00:05:42,660
+ from inputs to output streams.
+
+104
+00:05:42,660 --> 00:05:45,060
+ The notion of a state, something in the middle,
+
+105
+00:05:45,060 --> 00:05:48,500
+ is something that is not required to be a system model
+
+106
+00:05:48,500 --> 00:05:50,580
+ and is only really a construction
+
+107
+00:05:50,580 --> 00:05:55,140
+ that we use to make it, to give it likes.
+
+108
+00:05:55,140 --> 00:05:56,740
+ So state space is one version of that.
+
+109
+00:05:56,740 --> 00:05:59,140
+ I showed this stuff before.
+
+110
+00:05:59,140 --> 00:06:02,460
+ Where we've been writing them down as xn plus 1 is f of x.
+
+111
+00:06:02,460 --> 00:06:05,020
+ And y is some function of your output.
+
+112
+00:06:05,020 --> 00:06:08,980
+ It's not the only one.
+
+113
+00:06:08,980 --> 00:06:11,620
+ You can take a history of inputs and outputs
+
+114
+00:06:11,620 --> 00:06:13,620
+ to predict your next output.
+
+115
+00:06:13,620 --> 00:06:17,620
+ And those are the autoregressive models.
+
+116
+00:06:17,620 --> 00:06:21,220
+ And you should think about models from mechanics
+
+117
+00:06:21,220 --> 00:06:23,780
+ or models from LSTMs, recurrent networks,
+
+118
+00:06:23,780 --> 00:06:25,460
+ as being state space models.
+
+119
+00:06:25,460 --> 00:06:27,180
+ And you should think about, for instance,
+
+120
+00:06:27,180 --> 00:06:28,860
+ if you have a feedforward network that
+
+121
+00:06:28,860 --> 00:06:31,300
+ has a history of images coming in,
+
+122
+00:06:31,300 --> 00:06:34,780
+ as autoregressive models.
+
+123
+00:06:34,780 --> 00:06:35,260
+ OK.
+
+124
+00:06:35,260 --> 00:06:39,700
+ So what does it mean to learn a model?
+
+125
+00:06:39,700 --> 00:06:42,100
+ So models come in lots of forms.
+
+126
+00:06:42,100 --> 00:06:46,260
+ I would actually say a Q function is a model, too.
+
+127
+00:06:46,260 --> 00:06:49,220
+ But it's a model that's trying to predict only one output,
+
+128
+00:06:49,220 --> 00:06:51,020
+ which is the cost to go.
+
+129
+00:06:51,020 --> 00:06:52,460
+ So you could say anything--
+
+130
+00:06:52,460 --> 00:06:53,860
+ you could actually say Q learning
+
+131
+00:06:53,860 --> 00:06:55,500
+ is doing model learning.
+
+132
+00:06:55,500 --> 00:06:57,580
+ But typically, when we talk about model-based RL,
+
+133
+00:06:57,580 --> 00:06:59,420
+ we're trying to learn something much bigger
+
+134
+00:06:59,420 --> 00:07:01,260
+ about the dynamics of the world.
+
+135
+00:07:01,260 --> 00:07:03,060
+ Something that we generalize across tasks.
+
+136
+00:07:03,060 --> 00:07:11,860
+ I want to distinguish between what would be a model class
+
+137
+00:07:11,860 --> 00:07:13,860
+ and what would be a model instance.
+
+138
+00:07:13,860 --> 00:07:17,020
+ So let's take the state space form,
+
+139
+00:07:17,020 --> 00:07:22,340
+ where I've got x is f of x and y is g of x.
+
+140
+00:07:22,340 --> 00:07:25,940
+ Theta is my parameters.
+
+141
+00:07:25,940 --> 00:07:29,940
+ So the way that I write down f and g
+
+142
+00:07:29,940 --> 00:07:32,140
+ describes a class of models.
+
+143
+00:07:32,140 --> 00:07:39,140
+ The particular parameters that I've chosen to fit
+
+144
+00:07:39,140 --> 00:07:41,220
+ are an instance of the model.
+
+145
+00:07:41,220 --> 00:07:43,140
+ So I think people confuse these two.
+
+146
+00:07:43,140 --> 00:07:45,060
+ And I want you to--
+
+147
+00:07:45,060 --> 00:07:48,100
+ I want to distinguish them today.
+
+148
+00:07:48,100 --> 00:07:50,860
+ So when people talk about what's the difference between having
+
+149
+00:07:50,860 --> 00:07:54,340
+ a deep network model versus a physics-based model,
+
+150
+00:07:54,340 --> 00:07:56,180
+ really that's more about the model class.
+
+151
+00:07:56,180 --> 00:08:00,660
+ The question is, should I prefer writing f and g down
+
+152
+00:08:00,660 --> 00:08:04,780
+ using the equations of motion from the ground,
+
+153
+00:08:04,780 --> 00:08:08,740
+ or should I use a deep network?
+
+154
+00:08:08,740 --> 00:08:12,220
+ And in some sense, that's a--
+
+155
+00:08:12,220 --> 00:08:14,740
+ at first glance, that's just a representation question.
+
+156
+00:08:14,740 --> 00:08:18,140
+ We could put all kinds of different nonlinearities
+
+157
+00:08:18,140 --> 00:08:20,660
+ in our network models.
+
+158
+00:08:20,660 --> 00:08:22,860
+ ReLU, stanchions, LSTMs, transformers,
+
+159
+00:08:22,860 --> 00:08:24,380
+ these are all architecture decisions.
+
+160
+00:08:24,380 --> 00:08:26,780
+ And maybe throwing in multibody equations
+
+161
+00:08:26,780 --> 00:08:29,260
+ is not so different than throwing in an LSTM
+
+162
+00:08:29,260 --> 00:08:31,260
+ or something like that.
+
+163
+00:08:31,260 --> 00:08:33,860
+ I think that's a useful way to think about it.
+
+164
+00:08:33,860 --> 00:08:39,140
+ But I objected, like I said, to the idea
+
+165
+00:08:39,140 --> 00:08:43,220
+ that somehow that these exercises are so different.
+
+166
+00:08:43,220 --> 00:08:46,260
+ I would say that all of the classic physicists
+
+167
+00:08:46,260 --> 00:08:50,260
+ were actually very much empirical people.
+
+168
+00:08:50,260 --> 00:08:51,980
+ And what they did, basically, is they
+
+169
+00:08:51,980 --> 00:08:56,340
+ fit very simple models to very noisy data.
+
+170
+00:08:56,340 --> 00:08:59,340
+ And they gave us this rich class of parametric models
+
+171
+00:08:59,340 --> 00:09:02,260
+ that we could fit-- that we could get to fit the new data.
+
+172
+00:09:02,260 --> 00:09:06,140
+ And I think that's something incredibly striking about that.
+
+173
+00:09:06,140 --> 00:09:11,380
+ I've gone back, and I've read all the histories of all
+
+174
+00:09:11,380 --> 00:09:12,300
+ these folks.
+
+175
+00:09:12,300 --> 00:09:18,420
+ And it really-- there's something incredible about how
+
+176
+00:09:18,420 --> 00:09:19,940
+ they did what they did.
+
+177
+00:09:19,940 --> 00:09:26,340
+ The fact that Galileo's rolling spheres down eight fine planes,
+
+178
+00:09:26,340 --> 00:09:29,100
+ and he didn't have perfect stainless steel
+
+179
+00:09:29,100 --> 00:09:32,900
+ balls or near zero friction and rolling almost forever.
+
+180
+00:09:32,900 --> 00:09:34,820
+ These are pretty noisy.
+
+181
+00:09:34,820 --> 00:09:38,140
+ And his measurements were super coarse.
+
+182
+00:09:38,140 --> 00:09:40,820
+ And somehow he made this leap.
+
+183
+00:09:40,820 --> 00:09:43,180
+ And maybe the whole field at the time,
+
+184
+00:09:43,180 --> 00:09:46,140
+ somehow they made this leap to say
+
+185
+00:09:46,140 --> 00:09:48,620
+ that the right abstraction is to think
+
+186
+00:09:48,620 --> 00:09:51,740
+ of the zero friction case and the perfect sphere that's
+
+187
+00:09:51,740 --> 00:09:52,660
+ rolling.
+
+188
+00:09:52,660 --> 00:09:55,700
+ And somehow that was this magical leap
+
+189
+00:09:55,700 --> 00:09:58,060
+ that took us to the next conceptual level.
+
+190
+00:09:58,060 --> 00:10:04,260
+ And that required something more than just the data, I think.
+
+191
+00:10:04,260 --> 00:10:07,740
+ There was something structural there that Galileo did,
+
+192
+00:10:07,740 --> 00:10:12,380
+ and Newton did again, and all these folks did.
+
+193
+00:10:12,380 --> 00:10:18,900
+ But it was very much this question of motivated
+
+194
+00:10:18,900 --> 00:10:21,940
+ by empirical data and trying to come up
+
+195
+00:10:21,940 --> 00:10:26,860
+ with the right representations that generalized broadly.
+
+196
+00:10:26,860 --> 00:10:29,100
+ I kind of joke that what would happen
+
+197
+00:10:29,100 --> 00:10:31,740
+ if Newton, back in the day, had deep learning, right?
+
+198
+00:10:31,740 --> 00:10:34,980
+ And maybe he would have just been a function approximator,
+
+199
+00:10:34,980 --> 00:10:36,180
+ and he would have been done.
+
+200
+00:10:36,180 --> 00:10:37,100
+ And then I don't know.
+
+201
+00:10:37,100 --> 00:10:40,740
+ I think the world would look pretty different right now.
+
+202
+00:10:40,740 --> 00:10:43,700
+ I mean that in a fundamental way.
+
+203
+00:10:43,700 --> 00:10:51,140
+ I think we've built our world roughly around things
+
+204
+00:10:51,140 --> 00:10:52,900
+ that we've engineered ourselves into things
+
+205
+00:10:52,900 --> 00:10:54,900
+ that we can model very well.
+
+206
+00:10:54,900 --> 00:10:57,780
+ I actually think the world would look very different.
+
+207
+00:10:57,780 --> 00:11:01,580
+ We somehow engineer things that are very rigid,
+
+208
+00:11:01,580 --> 00:11:03,300
+ because we know how to simulate them.
+
+209
+00:11:03,300 --> 00:11:04,380
+ We know how to test them.
+
+210
+00:11:04,380 --> 00:11:05,260
+ We know these things.
+
+211
+00:11:05,260 --> 00:11:09,140
+ But that's a function of our mathematics, I think,
+
+212
+00:11:09,140 --> 00:11:09,780
+ to some extent.
+
+213
+00:11:09,780 --> 00:11:11,980
+ It would be very interesting to see what would happen
+
+214
+00:11:11,980 --> 00:11:14,900
+ if we had different governing equations that rule
+
+215
+00:11:14,900 --> 00:11:16,500
+ our engineering disciplines.
+
+216
+00:11:16,500 --> 00:11:24,380
+ But I do think this is a fundamental question is,
+
+217
+00:11:24,380 --> 00:11:26,140
+ what are the right representations?
+
+218
+00:11:26,140 --> 00:11:31,380
+ How do we redo what happened back then in the Cold War
+
+219
+00:11:31,380 --> 00:11:35,740
+ Age in the 1600s, 1700s?
+
+220
+00:11:35,740 --> 00:11:37,740
+ And the question of state representation
+
+221
+00:11:37,740 --> 00:11:41,100
+ is the one I've shown a bunch of times here.
+
+222
+00:11:41,100 --> 00:11:44,220
+ What is the right representation for a task like this?
+
+223
+00:11:44,220 --> 00:11:48,780
+ This is way harder than rolling a stainless steel ball
+
+224
+00:11:48,780 --> 00:11:50,380
+ down an incline plane.
+
+225
+00:11:50,380 --> 00:11:55,300
+ And I can't help but wonder what Galileo or people
+
+226
+00:11:55,300 --> 00:11:56,300
+ would have made of this.
+
+227
+00:11:56,300 --> 00:11:58,620
+ They probably would have had something much more clever
+
+228
+00:11:58,620 --> 00:12:01,220
+ to say than what I tend to come up with.
+
+229
+00:12:01,220 --> 00:12:03,340
+ And no, it's not very good.
+
+230
+00:12:03,340 --> 00:12:08,580
+ If you think like the total rigid body
+
+231
+00:12:08,580 --> 00:12:10,340
+ position and velocity of all the pieces,
+
+232
+00:12:10,340 --> 00:12:12,620
+ that seems like a non-starter.
+
+233
+00:12:12,620 --> 00:12:15,340
+ And the picture of the pile also sort of
+
+234
+00:12:15,340 --> 00:12:17,380
+ seems like a non-starter, although there's cases
+
+235
+00:12:17,380 --> 00:12:20,020
+ where it works fairly well.
+
+236
+00:12:20,020 --> 00:12:22,020
+ The cognitive psychologist would say, of course,
+
+237
+00:12:22,020 --> 00:12:23,700
+ it's just like it's a pile of stuff.
+
+238
+00:12:23,700 --> 00:12:25,740
+ We have this notion of a pile of stuff.
+
+239
+00:12:25,740 --> 00:12:26,940
+ But what does that mean?
+
+240
+00:12:26,940 --> 00:12:28,540
+ How do I codify that?
+
+241
+00:12:28,540 --> 00:12:31,220
+ And how do I learn that?
+
+242
+00:12:31,220 --> 00:12:34,940
+ I think this is the challenge of our day.
+
+243
+00:12:34,940 --> 00:12:36,300
+ You could come up with a million.
+
+244
+00:12:36,300 --> 00:12:37,600
+ Well, actually, that's not true.
+
+245
+00:12:37,600 --> 00:12:39,540
+ I have six that I always use.
+
+246
+00:12:39,540 --> 00:12:41,420
+ People laugh at me for using the same things.
+
+247
+00:12:41,420 --> 00:12:43,020
+ I always talk about buttoning my shirt.
+
+248
+00:12:43,020 --> 00:12:44,920
+ I talk about spreading peanut butter on toast.
+
+249
+00:12:44,920 --> 00:12:46,620
+ I talk about chopping onions.
+
+250
+00:12:46,620 --> 00:12:50,700
+ I found my handful of canonical examples.
+
+251
+00:12:50,700 --> 00:12:56,500
+ But this is not a hard task for a human to do.
+
+252
+00:12:56,500 --> 00:12:59,380
+ This should not be considered a hard manipulation task.
+
+253
+00:12:59,380 --> 00:13:01,820
+ But it completely breaks the stack
+
+254
+00:13:01,820 --> 00:13:04,460
+ of everything we've talked about in class so far.
+
+255
+00:13:04,460 --> 00:13:08,420
+ If I gave you a simulator for this right now,
+
+256
+00:13:08,420 --> 00:13:09,380
+ it would be very slow.
+
+257
+00:13:09,380 --> 00:13:14,940
+ I don't know how to write a good, super inaccurate version
+
+258
+00:13:14,940 --> 00:13:15,980
+ of this.
+
+259
+00:13:15,980 --> 00:13:19,020
+ Some of the particle simulator people write might get close.
+
+260
+00:13:19,020 --> 00:13:24,420
+ But somehow, I don't think we know the right simple models
+
+261
+00:13:24,420 --> 00:13:27,580
+ for that kind of a task.
+
+262
+00:13:27,580 --> 00:13:28,940
+ Yeah?
+
+263
+00:13:28,940 --> 00:13:32,580
+ With these examples, do you think
+
+264
+00:13:32,580 --> 00:13:36,300
+ that controlling humans or using them to interact with it
+
+265
+00:13:36,300 --> 00:13:37,700
+ is that complicated?
+
+266
+00:13:37,700 --> 00:13:40,500
+ Because it doesn't seem like--
+
+267
+00:13:40,500 --> 00:13:42,900
+ actually, what they're doing in the scenes
+
+268
+00:13:42,900 --> 00:13:44,300
+ doesn't seem terribly--
+
+269
+00:13:44,300 --> 00:13:50,020
+ there's no wild manipulation happening here.
+
+270
+00:13:50,020 --> 00:13:51,540
+ That's exactly my point.
+
+271
+00:13:51,540 --> 00:13:54,900
+ So the question is, so this looks easy.
+
+272
+00:13:54,900 --> 00:13:56,500
+ There's no wild manipulation.
+
+273
+00:13:56,500 --> 00:13:59,380
+ So is what humans do a fancy thing?
+
+274
+00:13:59,380 --> 00:14:01,580
+ This is taken as an example of something
+
+275
+00:14:01,580 --> 00:14:04,020
+ that we think of as very easy.
+
+276
+00:14:04,020 --> 00:14:06,740
+ But for all of the math we've written down so far,
+
+277
+00:14:06,740 --> 00:14:08,180
+ it would be very hard.
+
+278
+00:14:08,180 --> 00:14:11,620
+ I would tend to make a very complicated simulation.
+
+279
+00:14:11,620 --> 00:14:13,940
+ I would have an extremely hard optimization
+
+280
+00:14:13,940 --> 00:14:15,260
+ problem in front of me.
+
+281
+00:14:15,260 --> 00:14:17,300
+ I'd be running hours and hours of RL
+
+282
+00:14:17,300 --> 00:14:20,980
+ to come up with something that should be tricky.
+
+283
+00:14:20,980 --> 00:14:24,500
+ So I think the journey now has to be--
+
+284
+00:14:24,500 --> 00:14:25,820
+ I'll say it over and over again.
+
+285
+00:14:25,820 --> 00:14:28,460
+ Manipulation-- most of the things we do in manipulation
+
+286
+00:14:28,460 --> 00:14:29,980
+ are easy.
+
+287
+00:14:29,980 --> 00:14:31,140
+ They really should be easy.
+
+288
+00:14:31,140 --> 00:14:32,860
+ They should be easy for an optimization.
+
+289
+00:14:32,860 --> 00:14:35,420
+ They should be easy for learning, whatever.
+
+290
+00:14:35,420 --> 00:14:37,620
+ And I don't think we know how to write them down
+
+291
+00:14:37,620 --> 00:14:40,740
+ in a way that reveals how easy they are.
+
+292
+00:14:40,740 --> 00:14:42,580
+ That's the problem.
+
+293
+00:14:42,580 --> 00:14:43,780
+ So why is that easy?
+
+294
+00:14:43,780 --> 00:14:45,100
+ Is it easy because-- maybe you'll
+
+295
+00:14:45,100 --> 00:14:46,780
+ say it's easy because the force can pull.
+
+296
+00:14:46,780 --> 00:14:52,940
+ I mean, but even the perception of how well have we
+
+297
+00:14:52,940 --> 00:14:57,100
+ done so far, have we evenly spread the peanut butter?
+
+298
+00:14:57,100 --> 00:15:00,100
+ How would you write down a cost function for that?
+
+299
+00:15:00,100 --> 00:15:01,260
+ It's hard.
+
+300
+00:15:01,260 --> 00:15:01,740
+ It's hard.
+
+301
+00:15:01,740 --> 00:15:05,500
+ We have to change the way we're thinking about these things.
+
+302
+00:15:05,500 --> 00:15:10,860
+ It's not-- let me be super clear.
+
+303
+00:15:10,860 --> 00:15:13,020
+ It's not that we don't know how to do simulations.
+
+304
+00:15:13,020 --> 00:15:14,660
+ We know how to simulate anything.
+
+305
+00:15:14,660 --> 00:15:16,380
+ I mean, you guys have been-- some of you
+
+306
+00:15:16,380 --> 00:15:19,700
+ have been bashing your heads on even rigid body simulations.
+
+307
+00:15:19,700 --> 00:15:21,860
+ But my gosh, simulations are so good.
+
+308
+00:15:21,860 --> 00:15:25,740
+ This is my favorite example of so good simulation
+
+309
+00:15:25,740 --> 00:15:28,860
+ of actually doing thermomechanical models
+
+310
+00:15:28,860 --> 00:15:29,740
+ of baking.
+
+311
+00:15:29,740 --> 00:15:34,180
+ So it's-- they actually watch bread leaven,
+
+312
+00:15:34,180 --> 00:15:36,860
+ and then it's going to split in just the right way
+
+313
+00:15:36,860 --> 00:15:37,780
+ because it was scored.
+
+314
+00:15:37,780 --> 00:15:40,460
+ This is three simple examples of bread
+
+315
+00:15:40,460 --> 00:15:41,940
+ that were scored in different ways.
+
+316
+00:15:41,940 --> 00:15:46,740
+ And if you show me anything, and I go to my dynamics friends
+
+317
+00:15:46,740 --> 00:15:49,660
+ and say, can you simulate that, they will say yes.
+
+318
+00:15:49,660 --> 00:15:51,220
+ They will definitely say yes.
+
+319
+00:15:51,220 --> 00:15:53,700
+ It might take a long time, but they can totally--
+
+320
+00:15:53,700 --> 00:15:57,180
+ we can simulate almost anything.
+
+321
+00:15:57,180 --> 00:16:00,380
+ The question is, how do I go from the task that's
+
+322
+00:16:00,380 --> 00:16:03,140
+ in front of me now, leverage all of my experience,
+
+323
+00:16:03,140 --> 00:16:04,980
+ and somehow come up with something
+
+324
+00:16:04,980 --> 00:16:06,380
+ that is that simulation?
+
+325
+00:16:06,380 --> 00:16:08,740
+ It's the real, the sim that's hurting us,
+
+326
+00:16:08,740 --> 00:16:10,540
+ not just the ability to write a simulation
+
+327
+00:16:10,540 --> 00:16:12,020
+ and one that's scoping.
+
+328
+00:16:12,020 --> 00:16:20,900
+ So there's a bunch of really important lessons, I think,
+
+329
+00:16:20,900 --> 00:16:23,460
+ from system identification.
+
+330
+00:16:23,460 --> 00:16:27,260
+ But I think one of the most important ones
+
+331
+00:16:27,260 --> 00:16:29,420
+ is just stopping to think about what
+
+332
+00:16:29,420 --> 00:16:32,540
+ makes a model class useful.
+
+333
+00:16:32,540 --> 00:16:35,900
+ So it's not just fitting the data.
+
+334
+00:16:35,900 --> 00:16:40,940
+ There are more hidden requirements than that.
+
+335
+00:16:40,940 --> 00:16:44,180
+ And I think it depends on your use case.
+
+336
+00:16:44,180 --> 00:16:47,260
+ If you're going to use a model for simulation,
+
+337
+00:16:47,260 --> 00:16:50,180
+ then you just want to generate a bunch of synthetic training
+
+338
+00:16:50,180 --> 00:16:52,700
+ data for a perception system.
+
+339
+00:16:52,700 --> 00:16:55,940
+ Or if you want to somehow score how well your policy is
+
+340
+00:16:55,940 --> 00:16:58,340
+ going to do by running lots and lots of simulations
+
+341
+00:16:58,340 --> 00:17:01,020
+ or do offline policy optimization,
+
+342
+00:17:01,020 --> 00:17:03,260
+ that is sort of like a different--
+
+343
+00:17:03,260 --> 00:17:04,220
+ that's one use case.
+
+344
+00:17:04,220 --> 00:17:06,500
+ It's an important use case.
+
+345
+00:17:06,500 --> 00:17:11,500
+ And it might ask you to expect a certain number of things
+
+346
+00:17:11,500 --> 00:17:12,900
+ from your models.
+
+347
+00:17:12,900 --> 00:17:17,540
+ It might mean that the observations that you generate
+
+348
+00:17:17,540 --> 00:17:18,540
+ are always reasonable.
+
+349
+00:17:18,540 --> 00:17:20,100
+ You'd never like to see things that
+
+350
+00:17:20,100 --> 00:17:21,800
+ are ridiculous that you would have never
+
+351
+00:17:21,800 --> 00:17:22,900
+ seen in the real world.
+
+352
+00:17:22,900 --> 00:17:27,020
+ Every simulation has rendered output
+
+353
+00:17:27,020 --> 00:17:28,440
+ that looks like something you could
+
+354
+00:17:28,440 --> 00:17:29,940
+ have seen in the real world.
+
+355
+00:17:29,940 --> 00:17:32,460
+ I think that is one requirement.
+
+356
+00:17:32,460 --> 00:17:33,740
+ It's very hard to write that.
+
+357
+00:17:33,740 --> 00:17:36,700
+ But I think you can buy one.
+
+358
+00:17:36,700 --> 00:17:39,300
+ It could be coverage, right?
+
+359
+00:17:39,300 --> 00:17:44,620
+ That somehow-- that if it could have happened in the real world,
+
+360
+00:17:44,620 --> 00:17:46,500
+ then it could have happened in my simulation.
+
+361
+00:17:47,500 --> 00:17:48,500
+ Right?
+
+362
+00:17:48,500 --> 00:17:51,700
+ That for every possible real world rollout,
+
+363
+00:17:51,700 --> 00:17:53,580
+ I could have gotten that in my simulation.
+
+364
+00:17:53,580 --> 00:17:56,300
+ Maybe that's a requirement.
+
+365
+00:17:56,300 --> 00:18:00,100
+ It could mean that it's always accurate, right?
+
+366
+00:18:00,100 --> 00:18:02,300
+ That somehow the probability of seeing
+
+367
+00:18:02,300 --> 00:18:04,940
+ this particular set of images given this action
+
+368
+00:18:04,940 --> 00:18:06,580
+ was the same in simulation and real.
+
+369
+00:18:06,580 --> 00:18:07,460
+ That's a problem.
+
+370
+00:18:07,460 --> 00:18:09,220
+ That might be more than we actually need.
+
+371
+00:18:09,220 --> 00:18:14,260
+ But I think most of these require
+
+372
+00:18:14,260 --> 00:18:18,380
+ some amount of being able to go from a lot of data
+
+373
+00:18:18,380 --> 00:18:22,260
+ into calibrating our model class into a model instance
+
+374
+00:18:22,260 --> 00:18:26,500
+ by doing the system identification step.
+
+375
+00:18:26,500 --> 00:18:28,500
+ There's many other things you could list, right?
+
+376
+00:18:28,500 --> 00:18:31,940
+ So people want generalization, the proper data.
+
+377
+00:18:31,940 --> 00:18:35,820
+ You want it to somehow be fast to run on a computer,
+
+378
+00:18:35,820 --> 00:18:37,820
+ repeatable, interpretable, debuggable.
+
+379
+00:18:37,820 --> 00:18:40,980
+ All these things matter.
+
+380
+00:18:40,980 --> 00:18:42,820
+ For model-based RL, I think it takes you
+
+381
+00:18:42,820 --> 00:18:44,340
+ on a slightly different path.
+
+382
+00:18:44,340 --> 00:18:46,940
+ So you might expect it to be reasonable
+
+383
+00:18:46,940 --> 00:18:48,460
+ and happen in generalizing, right?
+
+384
+00:18:48,460 --> 00:18:52,220
+ But if you're really going to do online planning control,
+
+385
+00:18:52,220 --> 00:18:54,180
+ this is asking something slightly different.
+
+386
+00:18:54,180 --> 00:18:57,020
+ It's saying that I have a class of models.
+
+387
+00:18:57,020 --> 00:18:59,700
+ I'm looking now at my kitchen.
+
+388
+00:18:59,700 --> 00:19:03,140
+ I need to be able to efficiently parse the world
+
+389
+00:19:03,140 --> 00:19:05,340
+ into my kitchen model in my head.
+
+390
+00:19:05,340 --> 00:19:07,860
+ My kitchen is in my head.
+
+391
+00:19:07,860 --> 00:19:11,860
+ I need to be efficient so I can be planning on it at runtime.
+
+392
+00:19:11,860 --> 00:19:14,820
+ And probably-- this is maybe implied by the efficiency--
+
+393
+00:19:14,820 --> 00:19:17,100
+ is that it probably means that I need
+
+394
+00:19:17,100 --> 00:19:20,820
+ to be somehow dialed into my task a little bit,
+
+395
+00:19:20,820 --> 00:19:24,300
+ that predicting everything possible in my image
+
+396
+00:19:24,300 --> 00:19:26,500
+ might be more than I could expect from my model.
+
+397
+00:19:26,500 --> 00:19:29,380
+ It needs to be a little bit more task-cellular.
+
+398
+00:19:29,380 --> 00:19:33,820
+ So let me-- so when I'm in my kitchen, right,
+
+399
+00:19:33,820 --> 00:19:36,660
+ and I'm chopping an onion, maybe there's
+
+400
+00:19:36,660 --> 00:19:39,340
+ like a roll of paper towels off to the side.
+
+401
+00:19:39,340 --> 00:19:42,820
+ And the paper towels have incredibly rich dynamics.
+
+402
+00:19:42,820 --> 00:19:45,180
+ Maybe it's slightly flapping in the breeze or something.
+
+403
+00:19:45,180 --> 00:19:46,420
+ I don't know.
+
+404
+00:19:46,420 --> 00:19:48,140
+ I'm not paying attention to that at all.
+
+405
+00:19:48,140 --> 00:19:50,940
+ The task that I'm doing, I'm maybe
+
+406
+00:19:50,940 --> 00:19:52,660
+ predicting with some level of accuracy.
+
+407
+00:19:52,660 --> 00:19:55,140
+ But there's a bunch of stuff happening in the scene
+
+408
+00:19:55,140 --> 00:19:57,220
+ that I'm completely ignoring.
+
+409
+00:19:57,220 --> 00:19:59,260
+ And I think that feels essential in order
+
+410
+00:19:59,260 --> 00:20:02,740
+ to have efficient and observable models.
+
+411
+00:20:07,380 --> 00:20:10,500
+ So of the class of models, state-space models
+
+412
+00:20:10,500 --> 00:20:12,740
+ do tend to be more efficient and compact.
+
+413
+00:20:12,740 --> 00:20:18,100
+ But they require some notion of state estimation.
+
+414
+00:20:18,100 --> 00:20:19,780
+ I'll talk through these in more detail.
+
+415
+00:20:19,780 --> 00:20:28,420
+ So perhaps the biggest philosophical difference,
+
+416
+00:20:28,420 --> 00:20:32,220
+ I think, between what we do on Atlas
+
+417
+00:20:32,220 --> 00:20:33,940
+ and maybe what we've been trying to do--
+
+418
+00:20:33,940 --> 00:20:36,740
+ some of us have been trying to do more in manipulation,
+
+419
+00:20:36,740 --> 00:20:38,820
+ for instance, would be to bring physics models more
+
+420
+00:20:38,820 --> 00:20:40,460
+ to manipulation--
+
+421
+00:20:40,460 --> 00:20:42,580
+ versus the pure deep learning approach
+
+422
+00:20:42,580 --> 00:20:45,780
+ with universal approximators is, I think,
+
+423
+00:20:45,780 --> 00:20:48,820
+ that it's exactly the fact that the neural networks are
+
+424
+00:20:48,820 --> 00:20:50,380
+ universal approximators.
+
+425
+00:20:50,380 --> 00:20:55,340
+ So in physics, the functions that we can write down
+
+426
+00:20:55,340 --> 00:20:57,260
+ are not arbitrary.
+
+427
+00:20:57,260 --> 00:21:00,700
+ Mechanics gives us constraints, whether there's
+
+428
+00:21:00,700 --> 00:21:03,580
+ conservation of mass, conservation of energy,
+
+429
+00:21:03,580 --> 00:21:06,660
+ friction dissipates energy, all these things.
+
+430
+00:21:06,660 --> 00:21:08,420
+ OK?
+
+431
+00:21:08,420 --> 00:21:11,020
+ And I think these constraints that give our models
+
+432
+00:21:11,020 --> 00:21:11,820
+ their structure.
+
+433
+00:21:11,820 --> 00:21:18,180
+ So they're what gives us power from an algorithmic perspective.
+
+434
+00:21:18,180 --> 00:21:22,700
+ So this is one of the big questions.
+
+435
+00:21:22,700 --> 00:21:24,980
+ And I'll return to it at the end.
+
+436
+00:21:24,980 --> 00:21:29,300
+ How do we balance the generalization power
+
+437
+00:21:29,300 --> 00:21:31,700
+ that we get and the computational leverage
+
+438
+00:21:31,700 --> 00:21:33,860
+ that we get from making assumptions
+
+439
+00:21:33,860 --> 00:21:37,620
+ and saying something that don't happen, like conservation
+
+440
+00:21:37,620 --> 00:21:43,700
+ laws, versus the general trying to fit any data
+
+441
+00:21:43,700 --> 00:21:47,620
+ power of universal function approximators?
+
+442
+00:21:47,620 --> 00:21:52,580
+ It's a tension that I don't know how to resolve completely.
+
+443
+00:21:52,580 --> 00:21:58,380
+ So this was just, like I said, the intro to that session.
+
+444
+00:21:58,380 --> 00:22:00,540
+ I basically said, I want the next Newton to come around
+
+445
+00:22:00,540 --> 00:22:02,340
+ and work on non-uniformity and get a better
+
+446
+00:22:02,340 --> 00:22:05,540
+ algorithm, because those are the challenges of our days.
+
+447
+00:22:05,540 --> 00:22:08,100
+ To have someone who comes through, I think,
+
+448
+00:22:08,100 --> 00:22:10,780
+ helps us find-- or an algorithm that comes through and helps us
+
+449
+00:22:10,780 --> 00:22:15,300
+ find the magical structure that captures
+
+450
+00:22:15,300 --> 00:22:18,620
+ the simplicity of the zero friction
+
+451
+00:22:18,620 --> 00:22:23,980
+ cases of these tasks that are really simple for humans,
+
+452
+00:22:23,980 --> 00:22:30,700
+ but are unreasonably hard for algorithms right now.
+
+453
+00:22:30,700 --> 00:22:31,700
+ OK.
+
+454
+00:22:31,700 --> 00:22:37,500
+ That was a setup.
+
+455
+00:22:37,500 --> 00:22:41,660
+ But let me try to give you some specific lessons
+
+456
+00:22:41,660 --> 00:22:43,780
+ from system IP.
+
+457
+00:22:43,780 --> 00:22:52,260
+ So it's useful to think about a handful of model classes.
+
+458
+00:22:52,260 --> 00:22:53,740
+ You have the grounding mechanics,
+
+459
+00:22:53,740 --> 00:22:59,100
+ one super useful set of models.
+
+460
+00:22:59,100 --> 00:23:01,500
+ You've seen these written down plenty of times.
+
+461
+00:23:01,500 --> 00:23:06,580
+ There's linear systems.
+
+462
+00:23:06,580 --> 00:23:14,700
+ So obviously, important structure
+
+463
+00:23:14,700 --> 00:23:16,740
+ that we know a ton about.
+
+464
+00:23:16,740 --> 00:23:18,500
+ And I think there's some important lessons.
+
+465
+00:23:18,500 --> 00:23:20,460
+ Of course, those systems that we hear about now
+
+466
+00:23:20,460 --> 00:23:24,460
+ are not well-described by linear models in general.
+
+467
+00:23:24,460 --> 00:23:29,740
+ But you can think so clearly about the linear models
+
+468
+00:23:29,740 --> 00:23:33,780
+ that a lot of the lessons there should carry over
+
+469
+00:23:33,780 --> 00:23:36,220
+ into these models.
+
+470
+00:23:36,220 --> 00:23:36,720
+ All right.
+
+471
+00:23:36,720 --> 00:24:00,100
+ So I think that the power of deep learning is undeniable.
+
+472
+00:24:00,100 --> 00:24:04,100
+ But let's see if we can bring a few ideas from these--
+
+473
+00:24:04,100 --> 00:24:07,060
+ some observations here towards this path.
+
+474
+00:24:07,060 --> 00:24:25,520
+ OK.
+
+475
+00:24:28,500 --> 00:24:29,500
+ Grounding mechanics.
+
+476
+00:24:29,500 --> 00:24:40,980
+ There's so much we know about doing system identification
+
+477
+00:24:40,980 --> 00:24:41,980
+ and grounding mechanics.
+
+478
+00:24:41,980 --> 00:24:44,980
+ OK.
+
+479
+00:24:44,980 --> 00:24:51,180
+ If you wanted to, for instance, identify
+
+480
+00:24:51,180 --> 00:25:04,940
+ the parameters of the humanoid atlas,
+
+481
+00:25:04,940 --> 00:25:09,980
+ then we typically start with some really crippling
+
+482
+00:25:09,980 --> 00:25:12,780
+ assumptions for the pigeon scenario.
+
+483
+00:25:12,780 --> 00:25:16,100
+ But let's just lay out the assumptions
+
+484
+00:25:16,100 --> 00:25:20,140
+ that these tools tend to make.
+
+485
+00:25:20,140 --> 00:25:29,300
+ If we're given a kinematic tree,
+
+486
+00:25:29,300 --> 00:25:33,100
+ so if I know what objects are in the scene,
+
+487
+00:25:33,100 --> 00:25:34,540
+ what their relations are, are they
+
+488
+00:25:34,540 --> 00:25:39,380
+ connected by a revolute joint, free bodies,
+
+489
+00:25:39,380 --> 00:25:41,900
+ are they prismatic or other way?
+
+490
+00:25:41,900 --> 00:25:42,400
+ OK.
+
+491
+00:25:42,400 --> 00:25:49,020
+ Typically, we have to know the contact geometry.
+
+492
+00:25:49,020 --> 00:25:51,500
+ So we're going to do the estimation of contact.
+
+493
+00:25:51,500 --> 00:25:56,060
+ We can try to resolve--
+
+494
+00:25:56,060 --> 00:25:57,780
+ remove any of these assumptions a bit.
+
+495
+00:25:57,780 --> 00:26:01,900
+ But given these sort of basic assumptions,
+
+496
+00:26:01,900 --> 00:26:06,420
+ and then given full state observations--
+
+497
+00:26:06,420 --> 00:26:16,580
+ so the first thing I would do if I'm going to system
+
+498
+00:26:16,580 --> 00:26:20,180
+ identify a new atlas is spend a lot of time
+
+499
+00:26:20,180 --> 00:26:23,900
+ trying to get clean estimates out
+
+500
+00:26:23,900 --> 00:26:26,380
+ of my sensors of the joint angles,
+
+501
+00:26:26,380 --> 00:26:28,380
+ the orientation of the body, and what
+
+502
+00:26:28,380 --> 00:26:30,820
+ this is the first pre-processing step.
+
+503
+00:26:33,740 --> 00:26:48,140
+ Then we have super powerful algorithms.
+
+504
+00:26:48,140 --> 00:26:50,340
+ We know what they can do.
+
+505
+00:26:50,340 --> 00:26:51,800
+ We know what their limitations are.
+
+506
+00:26:51,800 --> 00:26:54,380
+ There are some systems that we just
+
+507
+00:26:54,380 --> 00:26:57,340
+ don't have enough information to estimate
+
+508
+00:26:57,340 --> 00:26:59,900
+ all of the parameters of your mechanical system.
+
+509
+00:26:59,900 --> 00:27:02,260
+ But we know exactly what the identifiable parameters
+
+510
+00:27:02,260 --> 00:27:06,820
+ are, the unidentifiable parameters.
+
+511
+00:27:06,820 --> 00:27:08,300
+ Many use least squares.
+
+512
+00:27:08,300 --> 00:27:22,900
+ We also have a notion of optimal experiment design.
+
+513
+00:27:22,900 --> 00:27:25,380
+ [INAUDIBLE]
+
+514
+00:27:25,380 --> 00:27:40,940
+ Because I can write down exactly the parameters
+
+515
+00:27:40,940 --> 00:27:44,780
+ that I'm trying to fit, I can describe the way
+
+516
+00:27:44,780 --> 00:27:50,100
+ that they contribute to the dynamics in a linear way.
+
+517
+00:27:50,100 --> 00:27:52,980
+ I can actually write trajectory optimization algorithms
+
+518
+00:27:52,980 --> 00:27:56,060
+ that will try to move my robot in a way that
+
+519
+00:27:56,060 --> 00:28:00,460
+ is maximally informative for my parameters.
+
+520
+00:28:00,460 --> 00:28:02,540
+ This is a powerful set of tools.
+
+521
+00:28:02,540 --> 00:28:04,420
+ We're missing it in the more narrow ways,
+
+522
+00:28:04,420 --> 00:28:08,700
+ but you should know that these exist.
+
+523
+00:28:08,700 --> 00:28:13,180
+ In particular, as an example of this heuristic,
+
+524
+00:28:13,180 --> 00:28:15,300
+ least squares probably always have a data matrix
+
+525
+00:28:15,300 --> 00:28:21,180
+ that you build up from all your state samples.
+
+526
+00:28:21,180 --> 00:28:22,460
+ You could do something like--
+
+527
+00:28:22,460 --> 00:28:25,100
+ I mean, if you're done linear system identification,
+
+528
+00:28:25,100 --> 00:28:26,900
+ you might have done frequency sweeps,
+
+529
+00:28:26,900 --> 00:28:29,220
+ the kind of things that would excite
+
+530
+00:28:29,220 --> 00:28:31,060
+ and give you sufficiently rich trajectories
+
+531
+00:28:31,060 --> 00:28:32,820
+ for system identification.
+
+532
+00:28:32,820 --> 00:28:36,860
+ In the manipulation or atlas case,
+
+533
+00:28:36,860 --> 00:28:40,860
+ you might try to design a trajectory that
+
+534
+00:28:40,860 --> 00:28:43,660
+ minimizes energy in fractions of the walls,
+
+535
+00:28:43,660 --> 00:28:48,420
+ but which maximized the smallest singular value of your data
+
+536
+00:28:48,420 --> 00:28:50,060
+ matrix.
+
+537
+00:28:50,060 --> 00:28:53,940
+ That's such a powerful way to think about these things,
+
+538
+00:28:53,940 --> 00:29:00,140
+ is to try to design trajectories that maximize your information.
+
+539
+00:29:00,140 --> 00:29:01,300
+ So you should know--
+
+540
+00:29:01,300 --> 00:29:03,140
+ I'm not presenting a poll, but you
+
+541
+00:29:03,140 --> 00:29:04,660
+ should know that these things exist.
+
+542
+00:29:04,660 --> 00:29:07,100
+ I mean, this rich literature of things
+
+543
+00:29:07,100 --> 00:29:08,620
+ you can do with mechanics.
+
+544
+00:29:08,620 --> 00:29:09,120
+ OK.
+
+545
+00:29:09,120 --> 00:29:21,780
+ In linear system identification, it's even more powerful,
+
+546
+00:29:21,780 --> 00:29:25,340
+ because the model class is more constrained
+
+547
+00:29:25,340 --> 00:29:30,740
+ and we can wrap it around our little finger
+
+548
+00:29:30,740 --> 00:29:34,180
+ and do all kinds of cool things with it.
+
+549
+00:29:37,180 --> 00:29:39,180
+ In linear system identification--
+
+550
+00:29:39,180 --> 00:29:43,180
+ oh, I forgot to show an example.
+
+551
+00:29:43,180 --> 00:29:47,020
+ I put it in for the folks that are doing the catching.
+
+552
+00:29:47,020 --> 00:29:49,500
+ So just as an example, I told you
+
+553
+00:29:49,500 --> 00:29:51,300
+ we could fit atlas as parameters.
+
+554
+00:29:51,300 --> 00:29:53,020
+ But we can also--
+
+555
+00:29:53,020 --> 00:29:55,380
+ in a manipulation-specific example--
+
+556
+00:29:55,380 --> 00:29:58,460
+ I've mentioned this once before, but you
+
+557
+00:29:58,460 --> 00:30:02,140
+ could do sort of amazing throwing and catching.
+
+558
+00:30:02,140 --> 00:30:06,820
+ So this is an old paper by John Jopp, '91.
+
+559
+00:30:06,820 --> 00:30:10,620
+ This was actually in NE43, the old AI building,
+
+560
+00:30:10,620 --> 00:30:11,780
+ just up on the ninth floor.
+
+561
+00:30:11,780 --> 00:30:12,300
+ It was weird.
+
+562
+00:30:12,300 --> 00:30:16,780
+ I left the audio up here.
+
+563
+00:30:16,780 --> 00:30:17,500
+ It's kind of low.
+
+564
+00:30:17,500 --> 00:30:26,980
+ Right?
+
+565
+00:30:26,980 --> 00:30:28,020
+ '91.
+
+566
+00:30:28,020 --> 00:30:30,860
+ And it talks.
+
+567
+00:30:30,860 --> 00:30:31,860
+ I don't like it.
+
+568
+00:30:31,860 --> 00:30:32,740
+ That's pretty silly.
+
+569
+00:30:32,740 --> 00:30:34,300
+ But I don't think that's the research.
+
+570
+00:30:34,300 --> 00:30:39,020
+ But computer vision was harder back then.
+
+571
+00:30:39,020 --> 00:30:40,580
+ And they sort of didn't solve it.
+
+572
+00:30:40,580 --> 00:30:43,220
+ It's a bright red ball.
+
+573
+00:30:43,220 --> 00:30:45,780
+ And it's two foveating cameras.
+
+574
+00:30:45,780 --> 00:30:46,660
+ How does that angle?
+
+575
+00:30:46,660 --> 00:30:47,980
+ It mounts up there.
+
+576
+00:30:47,980 --> 00:30:49,580
+ And basically, they just try to--
+
+577
+00:30:49,580 --> 00:30:51,100
+ the job of the perception system is
+
+578
+00:30:51,100 --> 00:30:53,980
+ to keep the red blob in the middle of the camera.
+
+579
+00:30:53,980 --> 00:30:56,060
+ So it just turns the camera to keep the red blob
+
+580
+00:30:56,060 --> 00:30:57,260
+ in the middle of the camera.
+
+581
+00:30:57,260 --> 00:30:59,740
+ And then the angle encoders of the camera
+
+582
+00:30:59,740 --> 00:31:01,180
+ tell you where the ball is, right?
+
+583
+00:31:01,180 --> 00:31:02,300
+ In triangle.
+
+584
+00:31:02,300 --> 00:31:04,580
+ Really, I mean, that's what you do.
+
+585
+00:31:04,580 --> 00:31:05,540
+ I don't like it.
+
+586
+00:31:05,540 --> 00:31:09,380
+ OK.
+
+587
+00:31:09,380 --> 00:31:11,100
+ So that's an old throwing and catching.
+
+588
+00:31:11,100 --> 00:31:14,060
+ But this is the one I wanted to--
+
+589
+00:31:14,060 --> 00:31:15,740
+ Are they supposed to be controlling the robot
+
+590
+00:31:15,740 --> 00:31:16,380
+ in that case?
+
+591
+00:31:16,380 --> 00:31:17,140
+ That's a WAM.
+
+592
+00:31:17,140 --> 00:31:18,260
+ So that was torque control.
+
+593
+00:31:18,260 --> 00:31:19,260
+ That's a various WAM.
+
+594
+00:31:19,260 --> 00:31:20,260
+ [INAUDIBLE]
+
+595
+00:31:20,260 --> 00:31:22,940
+ But for the contact part, are they trying to move their hand
+
+596
+00:31:22,940 --> 00:31:23,940
+ to the--
+
+597
+00:31:23,940 --> 00:31:24,940
+ for the right location?
+
+598
+00:31:24,940 --> 00:31:25,440
+ Yeah.
+
+599
+00:31:25,440 --> 00:31:25,940
+ [INAUDIBLE]
+
+600
+00:31:25,940 --> 00:31:28,100
+ Yeah, basically, they do subjective matching.
+
+601
+00:31:28,100 --> 00:31:29,820
+ That paper is a good read.
+
+602
+00:31:29,820 --> 00:31:31,820
+ So I'm pumped.
+
+603
+00:31:31,820 --> 00:31:32,320
+ OK.
+
+604
+00:31:32,320 --> 00:31:36,140
+ But so yeah, they basically try to trajectory speed
+
+605
+00:31:36,140 --> 00:31:37,260
+ match the ball, right?
+
+606
+00:31:37,260 --> 00:31:38,980
+ They predict the trajectory of the ball.
+
+607
+00:31:38,980 --> 00:31:39,900
+ And they go like this.
+
+608
+00:31:39,900 --> 00:31:40,980
+ And they close their hand.
+
+609
+00:31:40,980 --> 00:31:42,060
+ OK.
+
+610
+00:31:42,060 --> 00:31:44,740
+ But the more subtle thing that's happening there in the middle--
+
+611
+00:31:44,740 --> 00:31:46,700
+ which let me show that again here.
+
+612
+00:31:46,700 --> 00:31:54,100
+ So the throw is pretty good, right?
+
+613
+00:31:54,100 --> 00:31:55,460
+ It picks up an arbitrary ball.
+
+614
+00:31:55,460 --> 00:31:59,700
+ They pick it-- it goes back once,
+
+615
+00:31:59,700 --> 00:32:01,580
+ partly to open and close the hand to make
+
+616
+00:32:01,580 --> 00:32:03,820
+ sure it's in a known location.
+
+617
+00:32:03,820 --> 00:32:05,580
+ And then it throws.
+
+618
+00:32:05,580 --> 00:32:10,540
+ And it can pick up relatively arbitrary mass balls
+
+619
+00:32:10,540 --> 00:32:12,220
+ and throw them into a little hoop
+
+620
+00:32:12,220 --> 00:32:14,140
+ all the way across the room.
+
+621
+00:32:14,140 --> 00:32:14,620
+ OK.
+
+622
+00:32:14,620 --> 00:32:16,660
+ And the way it does that--
+
+623
+00:32:16,660 --> 00:32:19,660
+ [INAUDIBLE]
+
+624
+00:32:19,660 --> 00:32:23,940
+ It does a little re-grab to get in the known location.
+
+625
+00:32:23,940 --> 00:32:26,660
+ And then shoot a basket across the room.
+
+626
+00:32:26,660 --> 00:32:28,980
+ OK.
+
+627
+00:32:28,980 --> 00:32:32,700
+ They had a parameter estimation and a multi-body parameter
+
+628
+00:32:32,700 --> 00:32:35,220
+ estimation algorithm running online.
+
+629
+00:32:35,220 --> 00:32:38,020
+ In the course of just going back,
+
+630
+00:32:38,020 --> 00:32:40,460
+ they're able to estimate the mass and the center
+
+631
+00:32:40,460 --> 00:32:43,460
+ of mass of the ball accurately enough
+
+632
+00:32:43,460 --> 00:32:46,620
+ that they can release it and throw it into a hoop across the room.
+
+633
+00:32:46,620 --> 00:32:47,120
+ Right?
+
+634
+00:32:47,120 --> 00:32:48,100
+ That's good stuff.
+
+635
+00:32:48,100 --> 00:32:50,820
+ That's good stuff, right?
+
+636
+00:32:50,820 --> 00:32:53,980
+ I mean, of course, there's lots of restrictions and assumptions.
+
+637
+00:32:53,980 --> 00:32:55,940
+ But that's pretty good.
+
+638
+00:32:55,940 --> 00:32:58,100
+ And to do it on so little data--
+
+639
+00:32:58,100 --> 00:32:59,420
+ I mean, because it's a simple--
+
+640
+00:32:59,420 --> 00:33:02,300
+ to do it on so little data and be able to mail it,
+
+641
+00:33:02,300 --> 00:33:03,780
+ I think that's super great.
+
+642
+00:33:03,780 --> 00:33:06,860
+ And I think they never actually published that paper.
+
+643
+00:33:06,860 --> 00:33:09,380
+ I had to--
+
+644
+00:33:09,380 --> 00:33:11,300
+ I was talking to Alberto Rodriguez one time.
+
+645
+00:33:11,300 --> 00:33:13,780
+ And I was like, you know John Jock's little drawing stuff?
+
+646
+00:33:13,780 --> 00:33:14,280
+ No.
+
+647
+00:33:14,280 --> 00:33:16,260
+ And then I had to ask John Jock.
+
+648
+00:33:16,260 --> 00:33:17,460
+ And he showed me this video.
+
+649
+00:33:17,460 --> 00:33:18,740
+ And I said, what paper?
+
+650
+00:33:18,740 --> 00:33:20,700
+ And he said, we never published it.
+
+651
+00:33:20,700 --> 00:33:21,200
+ Right?
+
+652
+00:33:21,200 --> 00:33:23,180
+ But he found the video for me.
+
+653
+00:33:23,180 --> 00:33:23,680
+ Right?
+
+654
+00:33:26,180 --> 00:33:28,180
+ I took out the other-- one more.
+
+655
+00:33:28,180 --> 00:33:30,660
+ I don't care.
+
+656
+00:33:30,660 --> 00:33:31,160
+ I have one.
+
+657
+00:33:31,160 --> 00:33:31,660
+ Yeah.
+
+658
+00:33:31,660 --> 00:33:34,140
+ He also has Catch Me Airplane.
+
+659
+00:33:34,140 --> 00:33:48,580
+ He doesn't throw the airplane back.
+
+660
+00:33:48,580 --> 00:33:49,960
+ That would be really interesting.
+
+661
+00:33:49,960 --> 00:33:50,460
+ But--
+
+662
+00:33:55,420 --> 00:33:58,100
+ I think you can see the foveating vision system here.
+
+663
+00:33:58,100 --> 00:34:01,220
+ Bright red tag on the top of the airplane.
+
+664
+00:34:01,220 --> 00:34:03,780
+ And then all the cameras do is try
+
+665
+00:34:03,780 --> 00:34:06,780
+ to keep that in the middle of the view.
+
+666
+00:34:06,780 --> 00:34:08,260
+ And it's an amazing thing.
+
+667
+00:34:08,260 --> 00:34:15,780
+ OK.
+
+668
+00:34:15,780 --> 00:34:21,180
+ So there's so much wealth available here.
+
+669
+00:34:21,180 --> 00:34:23,580
+ And it's tempting.
+
+670
+00:34:23,580 --> 00:34:25,540
+ I mean, for me, it's very tempting to try to bring
+
+671
+00:34:25,540 --> 00:34:27,500
+ all this into the space of manipulation.
+
+672
+00:34:27,500 --> 00:34:30,180
+ But it doesn't work with carrots.
+
+673
+00:34:30,180 --> 00:34:31,980
+ It doesn't work with peanut butter.
+
+674
+00:34:31,980 --> 00:34:35,980
+ Somehow, that breaks the stack.
+
+675
+00:34:35,980 --> 00:34:39,100
+ Linear system has a bunch of other important lessons, too.
+
+676
+00:34:39,100 --> 00:34:43,500
+ So super well understood.
+
+677
+00:34:43,500 --> 00:34:46,580
+ In general, the linear system, I think, probably still not
+
+678
+00:34:46,580 --> 00:34:48,020
+ by best.
+
+679
+00:34:48,020 --> 00:34:50,260
+ But there are good algorithms.
+
+680
+00:34:50,260 --> 00:34:55,980
+ For instance, there's an algorithm called O-column.
+
+681
+00:34:55,980 --> 00:35:00,260
+ Same column, but algorithm for linear state-space
+
+682
+00:35:00,260 --> 00:35:01,580
+ identification.
+
+683
+00:35:01,580 --> 00:35:19,260
+ And these algorithms really do--
+
+684
+00:35:19,260 --> 00:35:21,260
+ they do put out what state-space models.
+
+685
+00:35:21,260 --> 00:35:24,860
+ So it's really from U to Y.
+
+686
+00:35:24,860 --> 00:35:28,380
+ And I think they don't capture all the--
+
+687
+00:35:28,380 --> 00:35:30,860
+ I mean, a lot of the systems that we care about
+
+688
+00:35:30,860 --> 00:35:33,340
+ for the information are inherently nonlinear.
+
+689
+00:35:33,340 --> 00:35:37,780
+ But there are still important lessons.
+
+690
+00:35:37,780 --> 00:35:40,180
+ So I actually made some examples just
+
+691
+00:35:40,180 --> 00:35:43,860
+ to try to convince people that it was relevant.
+
+692
+00:35:43,860 --> 00:35:48,740
+ So to take one of the classic R and L problems of a cart pole--
+
+693
+00:35:48,740 --> 00:35:51,420
+ this is just a physical version of a car pole.
+
+694
+00:35:51,420 --> 00:35:54,020
+ So you know what a car pole is.
+
+695
+00:35:54,020 --> 00:35:58,540
+ And I took the whole column algorithm.
+
+696
+00:35:58,540 --> 00:36:03,860
+ And I generated a bunch of data around the balancing regime.
+
+697
+00:36:03,860 --> 00:36:06,460
+ But I only used key points.
+
+698
+00:36:06,460 --> 00:36:11,020
+ So I didn't tell the position of the cart or the--
+
+699
+00:36:11,020 --> 00:36:15,540
+ well, I just gave U coming in with the force on the cart.
+
+700
+00:36:15,540 --> 00:36:19,700
+ [INAUDIBLE]
+
+701
+00:36:19,700 --> 00:36:21,780
+ Y coming out with the location of the key point.
+
+702
+00:36:21,780 --> 00:36:37,340
+ And I asked it to come up with a model that looked like this.
+
+703
+00:36:43,820 --> 00:36:49,100
+ Find the ABCD that describes the dynamic of that.
+
+704
+00:36:49,100 --> 00:36:50,820
+ And one of the things you have to do,
+
+705
+00:36:50,820 --> 00:36:52,580
+ which again is an important lesson here,
+
+706
+00:36:52,580 --> 00:36:56,620
+ is you have to pick the size of X.
+
+707
+00:36:56,620 --> 00:36:59,740
+ That is a design parameter that doesn't automatically
+
+708
+00:36:59,740 --> 00:37:03,260
+ discover the dimension of X. You have to pick the size of X.
+
+709
+00:37:03,260 --> 00:37:06,980
+ And you can do things like in the linear case,
+
+710
+00:37:06,980 --> 00:37:10,300
+ you can expect monotonic improvement in performance.
+
+711
+00:37:10,300 --> 00:37:12,580
+ So you can, for instance, choose X
+
+712
+00:37:12,580 --> 00:37:14,900
+ to be one dimension, two dimensions, three dimensions,
+
+713
+00:37:14,900 --> 00:37:16,780
+ and plot the quality of the fit.
+
+714
+00:37:16,780 --> 00:37:18,780
+ And at some point, you have diminishing returns.
+
+715
+00:37:18,780 --> 00:37:20,580
+ And so you say that's the dimension
+
+716
+00:37:20,580 --> 00:37:24,260
+ of my state realization.
+
+717
+00:37:24,260 --> 00:37:26,020
+ So I thought an interesting question here
+
+718
+00:37:26,020 --> 00:37:29,060
+ would be if I show only key points for the cart pole
+
+719
+00:37:29,060 --> 00:37:31,660
+ and run the standard linear input-output system
+
+720
+00:37:31,660 --> 00:37:34,540
+ identification algorithm, can it discover the fact
+
+721
+00:37:34,540 --> 00:37:37,980
+ that there are two degrees of freedom, positions
+
+722
+00:37:37,980 --> 00:37:40,580
+ and velocities of the system?
+
+723
+00:37:40,580 --> 00:37:41,100
+ And it does.
+
+724
+00:37:41,100 --> 00:37:42,460
+ It works beautifully, of course.
+
+725
+00:37:42,460 --> 00:37:44,780
+ So you get these beautiful impulse responses
+
+726
+00:37:44,780 --> 00:37:45,980
+ in the linear regime.
+
+727
+00:37:45,980 --> 00:37:47,540
+ You run the Hohkohmen algorithm.
+
+728
+00:37:47,540 --> 00:37:51,460
+ And the singular value drops off exactly after you'd expect.
+
+729
+00:37:51,460 --> 00:37:53,500
+ And it says, yes, you have two degrees of freedom,
+
+730
+00:37:53,500 --> 00:37:55,300
+ even though I've given high dimensional
+
+731
+00:37:55,300 --> 00:37:56,460
+ in the number of key points.
+
+732
+00:37:56,460 --> 00:37:58,100
+ But I didn't tell it.
+
+733
+00:37:58,100 --> 00:37:59,900
+ Some key points were attached to this body.
+
+734
+00:37:59,900 --> 00:38:02,340
+ Some key points-- it just discovered that from data.
+
+735
+00:38:02,340 --> 00:38:09,020
+ And that's super useful.
+
+736
+00:38:09,020 --> 00:38:11,140
+ So there's very powerful tools, again,
+
+737
+00:38:11,140 --> 00:38:17,060
+ from the linear system that are potentially growing.
+
+738
+00:38:17,060 --> 00:38:18,780
+ And there's some important lessons there.
+
+739
+00:38:18,780 --> 00:38:21,180
+ So I think that choosing the state dimension
+
+740
+00:38:21,180 --> 00:38:24,420
+ and exploring like that is an important lesson.
+
+741
+00:38:24,420 --> 00:38:28,380
+ But there's other lessons, too.
+
+742
+00:38:28,380 --> 00:38:33,140
+ So let me get myself a fresh board for this.
+
+743
+00:38:33,140 --> 00:38:36,620
+ [WRITING ON BOARD]
+
+744
+00:38:36,620 --> 00:38:56,020
+ One of the important lessons, which we see in multibody,
+
+745
+00:38:56,020 --> 00:38:59,220
+ but it's more visible, I'd say, in linear system
+
+746
+00:38:59,220 --> 00:39:01,020
+ identification, is the difference
+
+747
+00:39:01,020 --> 00:39:07,500
+ between what we'll call equation error versus simulation
+
+748
+00:39:07,500 --> 00:39:08,000
+ error.
+
+749
+00:39:08,000 --> 00:39:13,980
+ OK?
+
+750
+00:39:13,980 --> 00:39:17,460
+ So there's multiple ways that we could write a cost
+
+751
+00:39:17,460 --> 00:39:20,060
+ function for system identification.
+
+752
+00:39:20,060 --> 00:39:22,180
+ Let me write these two down.
+
+753
+00:39:22,180 --> 00:39:27,140
+ So I have my beta coming in, which is just--
+
+754
+00:39:27,140 --> 00:39:31,900
+ I'll call it un and yn.
+
+755
+00:39:31,900 --> 00:39:34,660
+ And if I do some--
+
+756
+00:39:34,660 --> 00:39:37,220
+ I'll do the simpler case where I've separated out
+
+757
+00:39:37,220 --> 00:39:38,580
+ that state estimation.
+
+758
+00:39:38,580 --> 00:39:41,740
+ But I'll-- this works in the real-common case
+
+759
+00:39:41,740 --> 00:39:42,860
+ and the general case.
+
+760
+00:39:42,860 --> 00:39:47,100
+ But I'll call x hat my estimated state.
+
+761
+00:39:47,100 --> 00:39:50,540
+ [WRITING ON BOARD]
+
+762
+00:39:50,540 --> 00:40:02,340
+ There's two natural cost functions.
+
+763
+00:40:02,340 --> 00:40:05,540
+ And you'll see these in the neural network case, too.
+
+764
+00:40:05,540 --> 00:40:08,540
+ They're harder to--
+
+765
+00:40:08,540 --> 00:40:10,180
+ I think they're easier to think about.
+
+766
+00:40:10,180 --> 00:40:16,060
+ So one would be to minimize over alpha,
+
+767
+00:40:16,060 --> 00:40:19,260
+ sum over my beta of--
+
+768
+00:40:19,260 --> 00:40:21,460
+ I'll write it in a slightly more general case--
+
+769
+00:40:21,460 --> 00:40:28,260
+ f of alpha x hat un minus x hat.
+
+770
+00:40:28,260 --> 00:40:31,740
+ [WRITING ON BOARD]
+
+771
+00:40:44,340 --> 00:40:47,260
+ Simulation error, on the other hand,
+
+772
+00:40:47,260 --> 00:40:48,220
+ needs to minimize--
+
+773
+00:41:13,220 --> 00:41:15,300
+ so two different possible metrics
+
+774
+00:41:15,300 --> 00:41:18,020
+ for system identification.
+
+775
+00:41:18,020 --> 00:41:19,660
+ You see the difference here.
+
+776
+00:41:19,660 --> 00:41:23,180
+ So if I have beta coming in-- let's say
+
+777
+00:41:23,180 --> 00:41:26,780
+ I process myself into a local state estimate.
+
+778
+00:41:26,780 --> 00:41:29,100
+ Then if I were to just say I'm going
+
+779
+00:41:29,100 --> 00:41:38,540
+ to do supervised learning on this problem,
+
+780
+00:41:38,540 --> 00:41:40,080
+ the natural thing to do would be say,
+
+781
+00:41:40,080 --> 00:41:42,540
+ I'm going to accumulate in output beta for this function
+
+782
+00:41:42,540 --> 00:41:45,340
+ f, and I'm going to minimize the least squared error.
+
+783
+00:41:45,340 --> 00:41:47,340
+ And that's what this does exactly.
+
+784
+00:41:47,340 --> 00:41:52,900
+ It's going to take x, u, x n plus 1, all this data,
+
+785
+00:41:52,900 --> 00:41:55,780
+ make up a big table, and then just do b squared.
+
+786
+00:41:55,780 --> 00:42:04,380
+ That's sort of the one-step identification procedure.
+
+787
+00:42:04,380 --> 00:42:08,020
+ Simulation error is different.
+
+788
+00:42:08,020 --> 00:42:11,700
+ It says you're not allowed to use the data
+
+789
+00:42:11,700 --> 00:42:14,060
+ intermediate in my rollout.
+
+790
+00:42:14,060 --> 00:42:17,220
+ I'm going to initialize my simulation at time 0
+
+791
+00:42:17,220 --> 00:42:19,180
+ with the data.
+
+792
+00:42:19,180 --> 00:42:24,500
+ But then my cost is actually on the long-term simulation.
+
+793
+00:42:24,500 --> 00:42:27,980
+ As I roll out my model forward into time,
+
+794
+00:42:27,980 --> 00:42:39,100
+ my long-term predictions have to match my data.
+
+795
+00:42:40,100 --> 00:42:40,600
+ OK?
+
+796
+00:42:40,600 --> 00:42:47,300
+ This is a fundamental difference.
+
+797
+00:42:47,300 --> 00:42:52,780
+ This tends to lead to easier optimization problems.
+
+798
+00:42:52,780 --> 00:42:54,940
+ A lot of times, like in the linear system IP case,
+
+799
+00:42:54,940 --> 00:42:56,860
+ this would be a least squares problem.
+
+800
+00:42:56,860 --> 00:42:59,180
+ This is even harder in the linear case.
+
+801
+00:42:59,180 --> 00:43:01,740
+ OK?
+
+802
+00:43:01,740 --> 00:43:05,180
+ But we see there's some beautiful lessons
+
+803
+00:43:05,180 --> 00:43:07,660
+ that we get, even in the linear case,
+
+804
+00:43:07,660 --> 00:43:09,220
+ of the differences between these two.
+
+805
+00:43:09,220 --> 00:43:22,740
+ The big lesson here is that you can make this small.
+
+806
+00:43:22,740 --> 00:43:25,220
+ You can take your training loss to basically 0.
+
+807
+00:43:25,220 --> 00:43:29,420
+ And this is still a big--
+
+808
+00:43:35,660 --> 00:43:37,140
+ so what do I mean by that?
+
+809
+00:43:37,140 --> 00:43:54,340
+ If I have a trajectory of data, lots of trajectories of data,
+
+810
+00:43:54,340 --> 00:43:56,500
+ and I'm just trying to-- basically, at every step,
+
+811
+00:43:56,500 --> 00:44:00,420
+ I reset my data, reset my model to the true data.
+
+812
+00:44:00,420 --> 00:44:01,900
+ I make a one-step prediction.
+
+813
+00:44:01,900 --> 00:44:04,860
+ And I try to make this incremental cost small.
+
+814
+00:44:04,860 --> 00:44:06,700
+ That's the equation error.
+
+815
+00:44:06,700 --> 00:44:08,380
+ The simulation error says I'm going
+
+816
+00:44:08,380 --> 00:44:09,980
+ to roll this whole thing out, and I'm
+
+817
+00:44:09,980 --> 00:44:16,220
+ going to penalize the distance of the rollout.
+
+818
+00:44:16,220 --> 00:44:17,580
+ OK?
+
+819
+00:44:17,580 --> 00:44:19,900
+ One of the painful lessons from system identification
+
+820
+00:44:19,900 --> 00:44:24,820
+ is that you can make this one-step error small.
+
+821
+00:44:24,820 --> 00:44:27,140
+ But if you start simulating it forward,
+
+822
+00:44:27,140 --> 00:44:31,100
+ you can get a very big long-term error.
+
+823
+00:44:31,100 --> 00:44:32,740
+ Yeah?
+
+824
+00:44:32,740 --> 00:44:35,300
+ So I'm curious how that changes with the stability
+
+825
+00:44:35,300 --> 00:44:36,060
+ of the system.
+
+826
+00:44:36,060 --> 00:44:38,660
+ And in particular, if you put it in close with the controller,
+
+827
+00:44:38,660 --> 00:44:42,580
+ you can make your disturbance to output gain very small.
+
+828
+00:44:42,580 --> 00:44:43,900
+ That's spot on.
+
+829
+00:44:43,900 --> 00:44:44,580
+ Good.
+
+830
+00:44:44,580 --> 00:44:45,140
+ Yeah, sorry.
+
+831
+00:44:45,140 --> 00:44:45,980
+ Finish your question.
+
+832
+00:44:45,980 --> 00:44:48,460
+ So it seems like having a small equation error,
+
+833
+00:44:48,460 --> 00:44:49,940
+ that's just a small disturbance.
+
+834
+00:44:49,940 --> 00:44:52,820
+ And feedback cancels that out all the time.
+
+835
+00:44:52,820 --> 00:44:53,300
+ Good.
+
+836
+00:44:53,300 --> 00:44:54,460
+ So the question was, how does this
+
+837
+00:44:54,460 --> 00:44:56,060
+ relate to the stability of the system?
+
+838
+00:44:56,060 --> 00:44:58,380
+ Can you use robust stabilization?
+
+839
+00:44:58,380 --> 00:45:01,220
+ Can you take your data from a closed-loop system
+
+840
+00:45:01,220 --> 00:45:02,700
+ instead of an open-loop system?
+
+841
+00:45:02,700 --> 00:45:03,780
+ All these questions.
+
+842
+00:45:03,780 --> 00:45:08,140
+ And that is exactly the right set of questions.
+
+843
+00:45:08,140 --> 00:45:10,020
+ And I think it's crystal clear.
+
+844
+00:45:10,020 --> 00:45:13,580
+ In fact, the case in linear system identification
+
+845
+00:45:13,580 --> 00:45:18,180
+ that is the one that people watch out for
+
+846
+00:45:18,180 --> 00:45:23,140
+ is that you almost always want your data to be generated
+
+847
+00:45:23,140 --> 00:45:24,180
+ from a stable system.
+
+848
+00:45:24,180 --> 00:45:26,020
+ If you're trying to fit an unstable system,
+
+849
+00:45:26,020 --> 00:45:27,820
+ that's maybe like a no-close problem.
+
+850
+00:45:27,820 --> 00:45:29,820
+ You kind of go on and go there.
+
+851
+00:45:29,820 --> 00:45:35,020
+ So almost always try to generate data from a stable system.
+
+852
+00:45:35,020 --> 00:45:39,140
+ If you just fit the best A, B, C, and D to that data
+
+853
+00:45:39,140 --> 00:45:43,860
+ in the equation error sense, you can drive the error low.
+
+854
+00:45:43,860 --> 00:45:46,380
+ But your fit model could be unstable.
+
+855
+00:45:47,380 --> 00:45:47,880
+ Right?
+
+856
+00:45:47,880 --> 00:46:13,860
+ So in the linear system world, the mitigation for this
+
+857
+00:46:13,860 --> 00:46:17,860
+ is to actually try to do--
+
+858
+00:46:17,860 --> 00:46:20,540
+ if you want to use the one-step error,
+
+859
+00:46:20,540 --> 00:46:22,820
+ you try to put additional stability constraints
+
+860
+00:46:22,820 --> 00:46:23,900
+ on your model parameters.
+
+861
+00:46:42,340 --> 00:46:46,940
+ That can bring the quality of a fit from equation error
+
+862
+00:46:46,940 --> 00:46:50,980
+ much closer to the fit from simulation error.
+
+863
+00:46:50,980 --> 00:46:53,220
+ So that's exactly what you're looking at.
+
+864
+00:46:53,220 --> 00:46:55,740
+ Now, the challenge here, this mitigation,
+
+865
+00:46:55,740 --> 00:46:58,180
+ I don't know how to bring to neural networks.
+
+866
+00:46:58,180 --> 00:47:02,260
+ I mean, there are heuristics that people try to bring.
+
+867
+00:47:02,260 --> 00:47:07,060
+ But in general, restricting my search in the linear systems
+
+868
+00:47:07,060 --> 00:47:10,380
+ case to stable models is tractable.
+
+869
+00:47:10,380 --> 00:47:12,380
+ And I don't know how to do it if you're fitting it
+
+870
+00:47:12,380 --> 00:47:13,740
+ back to the detail of the model.
+
+871
+00:47:13,740 --> 00:47:22,340
+ So that's a lesson, I think, that we should try to embrace.
+
+872
+00:47:22,340 --> 00:47:35,500
+ I think there's another important lesson here,
+
+873
+00:47:35,500 --> 00:47:40,060
+ which is the balanced realizations.
+
+874
+00:48:05,380 --> 00:48:12,300
+ So given a bunch of data, there are many A, B, C, and D
+
+875
+00:48:12,300 --> 00:48:15,220
+ matrices that fit the data.
+
+876
+00:48:15,220 --> 00:48:19,140
+ In fact, there's a whole family of A, B, C, and D matrices
+
+877
+00:48:19,140 --> 00:48:20,540
+ that fit the data equally well.
+
+878
+00:48:20,540 --> 00:48:25,020
+ I said, what makes a good model?
+
+879
+00:48:25,020 --> 00:48:26,720
+ One of the things that makes a good model
+
+880
+00:48:26,720 --> 00:48:30,900
+ is that it should be useful for control and estimation.
+
+881
+00:48:30,900 --> 00:48:40,340
+ So how do you capture what your models could be useful
+
+882
+00:48:40,340 --> 00:48:42,020
+ for control and estimation?
+
+883
+00:48:42,020 --> 00:48:52,340
+ And it turns out that we have good understanding
+
+884
+00:48:52,340 --> 00:48:53,700
+ of that in linear systems.
+
+885
+00:48:53,700 --> 00:48:55,580
+ We talk about controllability gramming.
+
+886
+00:48:55,580 --> 00:48:58,140
+ We talk about the observability gramming.
+
+887
+00:48:58,140 --> 00:49:03,420
+ And we can embed that as a choice in our optimization
+
+888
+00:49:03,420 --> 00:49:06,580
+ algorithms and try to choose models that are explicitly
+
+889
+00:49:06,580 --> 00:49:08,020
+ controllable and observable.
+
+890
+00:49:08,020 --> 00:49:11,220
+ And we try to balance the two, actually.
+
+891
+00:49:11,220 --> 00:49:13,220
+ They're essentially the same.
+
+892
+00:49:13,220 --> 00:49:17,380
+ But I think we can see this in a very simple example.
+
+893
+00:49:17,380 --> 00:49:34,180
+ So using the equations here, my claim
+
+894
+00:49:34,180 --> 00:49:39,260
+ is if I found some E, B, and C that fits the data,
+
+895
+00:49:39,260 --> 00:49:42,140
+ then there's a whole continuum of models
+
+896
+00:49:42,140 --> 00:49:45,060
+ that fit the data just as well.
+
+897
+00:49:45,060 --> 00:49:47,020
+ Why is that?
+
+898
+00:49:47,020 --> 00:50:01,220
+ So if you take any invertible matrix, T,
+
+899
+00:50:01,220 --> 00:50:07,060
+ then if A, and B, and C, and D fit the model well,
+
+900
+00:50:07,060 --> 00:50:14,860
+ then there's another model that fits that is exactly the same.
+
+901
+00:50:14,860 --> 00:50:18,300
+ [WRITING ON BOARD]
+
+902
+00:50:18,300 --> 00:50:28,220
+ These are the similarity transforms.
+
+903
+00:50:28,220 --> 00:50:40,900
+ So what does that mean?
+
+904
+00:50:40,900 --> 00:50:43,060
+ So here's some intuition for what
+
+905
+00:50:43,060 --> 00:50:44,420
+ the similarity transforms are.
+
+906
+00:50:44,420 --> 00:50:47,580
+ So if I have only input-output data, y,
+
+907
+00:50:47,580 --> 00:50:53,060
+ and I've made some choice of A, B, and C,
+
+908
+00:50:53,060 --> 00:50:56,100
+ then certainly nobody told me what x was.
+
+909
+00:50:56,100 --> 00:50:58,700
+ I had to just pick an x.
+
+910
+00:50:58,700 --> 00:51:01,580
+ Certainly, I could just-- if x is like five numbers,
+
+911
+00:51:01,580 --> 00:51:03,620
+ I could write those numbers in a different order.
+
+912
+00:51:03,620 --> 00:51:06,740
+ I could switch x1 and x2.
+
+913
+00:51:06,740 --> 00:51:09,220
+ Clearly, that would be the same model.
+
+914
+00:51:09,220 --> 00:51:10,700
+ There's nobody who's made a choice.
+
+915
+00:51:10,700 --> 00:51:13,460
+ This is happening in an LSTM also,
+
+916
+00:51:13,460 --> 00:51:17,380
+ is that somehow the units in a recurrent network
+
+917
+00:51:17,380 --> 00:51:19,220
+ have chosen to represent some states.
+
+918
+00:51:19,220 --> 00:51:22,940
+ But you could have switched that neuron 32
+
+919
+00:51:22,940 --> 00:51:27,060
+ was being used for what neuron 31 was, and vice versa.
+
+920
+00:51:27,060 --> 00:51:31,820
+ There's always this sort of symmetry inside there.
+
+921
+00:51:31,820 --> 00:51:33,220
+ But it's even worse than that.
+
+922
+00:51:33,220 --> 00:51:35,940
+ And I think it's exposed in the linear system.
+
+923
+00:51:35,940 --> 00:51:40,060
+ I could take x and make x-- in the scalar case,
+
+924
+00:51:40,060 --> 00:51:40,900
+ it's even simpler.
+
+925
+00:51:40,900 --> 00:51:45,620
+ So let's say I just have a single variable x.
+
+926
+00:51:45,620 --> 00:51:48,260
+ x could be under the domain 0 and 1.
+
+927
+00:51:48,260 --> 00:51:50,780
+ It could be over the domain 0 and 100.
+
+928
+00:51:50,780 --> 00:51:53,460
+ It could be in the domain 0 and a million.
+
+929
+00:51:53,460 --> 00:51:57,300
+ There's nothing about input-output data
+
+930
+00:51:57,300 --> 00:52:01,340
+ that says what scale my A and B may be.
+
+931
+00:52:01,340 --> 00:52:02,300
+ My x may be.
+
+932
+00:52:02,300 --> 00:52:03,540
+ Theta should be.
+
+933
+00:52:03,540 --> 00:52:05,860
+ In fact, if I were to just multiply--
+
+934
+00:52:05,860 --> 00:52:08,500
+ take my u's, multiply them by a big number,
+
+935
+00:52:08,500 --> 00:52:09,940
+ then I might get big x's around.
+
+936
+00:52:09,940 --> 00:52:13,300
+ And I would just divide by a big number on the way out.
+
+937
+00:52:13,300 --> 00:52:14,860
+ Or if I had a--
+
+938
+00:52:14,860 --> 00:52:16,500
+ if it was a very small number, I could
+
+939
+00:52:16,500 --> 00:52:17,740
+ multiply by a very big number.
+
+940
+00:52:17,740 --> 00:52:20,220
+ There's nothing telling me to make x nicely
+
+941
+00:52:20,220 --> 00:52:21,380
+ conditioned in the middle.
+
+942
+00:52:21,380 --> 00:52:27,980
+ We see all kinds of heuristics in deep learning about--
+
+943
+00:52:27,980 --> 00:52:30,340
+ make sure you normalize your inputs and outputs,
+
+944
+00:52:30,340 --> 00:52:31,180
+ and stuff like this.
+
+945
+00:52:31,180 --> 00:52:34,820
+ I think it's the same symptom as what we're seeing here.
+
+946
+00:52:34,820 --> 00:52:36,940
+ In linear systems, we have a beautiful way
+
+947
+00:52:36,940 --> 00:52:40,300
+ to address this, which is to try to choose a balanced
+
+948
+00:52:40,300 --> 00:52:42,300
+ realization.
+
+949
+00:52:42,300 --> 00:52:54,020
+ Balanced realizations, they let controllability
+
+950
+00:52:54,020 --> 00:52:56,860
+ and observability compete.
+
+951
+00:52:56,860 --> 00:52:59,420
+ And they choose a particular A and B
+
+952
+00:52:59,420 --> 00:53:02,020
+ in the whole column algorithm, for instance.
+
+953
+00:53:02,020 --> 00:53:06,380
+ The balanced realization is one that has--
+
+954
+00:53:06,380 --> 00:53:08,260
+ the details aren't as essential, but basically,
+
+955
+00:53:08,260 --> 00:53:11,060
+ the controllability gramian and the observability gramian
+
+956
+00:53:11,060 --> 00:53:13,660
+ are both diagonal and equal.
+
+957
+00:53:13,660 --> 00:53:17,620
+ And that's what balances the model's utility
+
+958
+00:53:17,620 --> 00:53:20,500
+ for observability and controllability.
+
+959
+00:53:20,500 --> 00:53:43,140
+,
+
+960
+00:53:43,140 --> 00:53:45,660
+ And I would love to somehow capture that same--
+
+961
+00:53:45,660 --> 00:53:49,340
+ generalize that same notion of somehow the models
+
+962
+00:53:49,340 --> 00:53:51,580
+ that I want to fit to data, if I've
+
+963
+00:53:51,580 --> 00:53:54,780
+ got a more powerful function class, model class,
+
+964
+00:53:54,780 --> 00:53:57,300
+ should somehow be models that I can observe,
+
+965
+00:53:57,300 --> 00:53:59,060
+ and somehow models that I can control.
+
+966
+00:53:59,060 --> 00:54:02,420
+ And I know these symmetries are all
+
+967
+00:54:02,420 --> 00:54:05,220
+ hiding inside the deep learning models,
+
+968
+00:54:05,220 --> 00:54:07,900
+ but I don't have the same tool chain to address them.
+
+969
+00:54:07,900 --> 00:54:15,580
+ So if you map these lessons to deep learning,
+
+970
+00:54:15,580 --> 00:54:19,540
+ you can find models that achieve effectively zero training
+
+971
+00:54:19,540 --> 00:54:21,820
+ error on your data.
+
+972
+00:54:21,820 --> 00:54:24,580
+ What people always complain about in model-based RL
+
+973
+00:54:24,580 --> 00:54:27,340
+ is that they make good short-term predictions,
+
+974
+00:54:27,340 --> 00:54:29,740
+ but they don't make good long-term predictions.
+
+975
+00:54:29,740 --> 00:54:32,260
+ And that ruling thing about the long-term
+
+976
+00:54:32,260 --> 00:54:34,060
+ becomes very inefficient.
+
+977
+00:54:34,060 --> 00:54:38,020
+ I think it's lost somewhere in these notions of you
+
+978
+00:54:38,020 --> 00:54:39,340
+ can get a small--
+
+979
+00:54:39,340 --> 00:54:43,980
+ you don't have stability in the models, you can get large--
+
+980
+00:54:43,980 --> 00:54:47,460
+ even if your training error is zero,
+
+981
+00:54:47,460 --> 00:54:49,500
+ if you perturb your data a little bit,
+
+982
+00:54:49,500 --> 00:54:51,180
+ you hope your training error is epsilon.
+
+983
+00:54:51,180 --> 00:54:53,100
+ That would be the machine-learning-bound way
+
+984
+00:54:53,100 --> 00:54:54,780
+ to think about these things, is that I'm
+
+985
+00:54:54,780 --> 00:54:58,820
+ in the epsilon error of my model sense.
+
+986
+00:54:58,820 --> 00:55:02,540
+ But if I close that in a feedback loop of simulation,
+
+987
+00:55:02,540 --> 00:55:04,180
+ these errors can grow very quickly,
+
+988
+00:55:04,180 --> 00:55:06,220
+ because the system may not be stable.
+
+989
+00:55:12,780 --> 00:55:17,340
+ So a couple, I think, big lessons from system
+
+990
+00:55:17,340 --> 00:55:19,140
+ identification that we'd like to use here.
+
+991
+00:55:19,140 --> 00:55:25,780
+ Let me address the question of state representations.
+
+992
+00:55:25,780 --> 00:55:32,660
+ So in the linear case, it's just I've got to pick an x.
+
+993
+00:55:32,660 --> 00:55:35,140
+ The whole Kalman algorithm picks an x.
+
+994
+00:55:35,140 --> 00:55:41,500
+ But more generally, there's a fundamental question of,
+
+995
+00:55:41,500 --> 00:55:43,740
+ what do you use as your state?
+
+996
+00:55:43,740 --> 00:56:08,980
+ What's the state of the unknown?
+
+997
+00:56:09,780 --> 00:56:12,740
+ [STUDENT STANDING]
+
+998
+00:56:12,740 --> 00:56:20,180
+ You can try to just train an input-output model,
+
+999
+00:56:20,180 --> 00:56:22,860
+ like an LSTM, for instance, on input-output data,
+
+1000
+00:56:22,860 --> 00:56:24,580
+ and let it recover x.
+
+1001
+00:56:24,580 --> 00:56:26,380
+ That's a perfectly reasonable thing to do.
+
+1002
+00:56:26,380 --> 00:56:27,460
+ It's pretty hard.
+
+1003
+00:56:27,460 --> 00:56:35,860
+ Maybe you say x is just an image.
+
+1004
+00:56:35,860 --> 00:56:39,340
+ [STUDENT STANDING]
+
+1005
+00:56:39,340 --> 00:56:48,780
+ That's a reasonable thing to do.
+
+1006
+00:56:48,780 --> 00:57:00,820
+ But the more general notion of state
+
+1007
+00:57:00,820 --> 00:57:03,020
+ is that somehow it should be a sufficient statistic.
+
+1008
+00:57:03,300 --> 00:57:03,800
+ OK.
+
+1009
+00:57:03,800 --> 00:57:21,900
+ I have some history.
+
+1010
+00:57:21,900 --> 00:57:25,380
+ [STUDENT STANDING]
+
+1011
+00:57:25,380 --> 00:57:45,580
+ Then knowing x at time n should be
+
+1012
+00:57:45,580 --> 00:57:47,860
+ as good as knowing the whole history.
+
+1013
+00:57:47,860 --> 00:57:51,340
+ [STUDENT STANDING]
+
+1014
+00:57:51,340 --> 00:58:08,820
+ That's the ideal notion of state.
+
+1015
+00:58:08,820 --> 00:58:10,500
+ So the examples of--
+
+1016
+00:58:10,500 --> 00:58:12,540
+ you can just care about your e-lap,
+
+1017
+00:58:12,540 --> 00:58:14,340
+ then our positions and velocities.
+
+1018
+00:58:14,340 --> 00:58:17,820
+ [STUDENT STANDING]
+
+1019
+00:58:17,820 --> 00:58:29,660
+ The e-lap are sufficient to simulate--
+
+1020
+00:58:29,660 --> 00:58:31,220
+ no matter what the e-lap did before,
+
+1021
+00:58:31,220 --> 00:58:33,020
+ if you tell me its position and velocity,
+
+1022
+00:58:33,020 --> 00:58:35,620
+ I can simulate what the e-lap is going to do in the future.
+
+1023
+00:58:35,620 --> 00:58:38,340
+ There is no information from the past
+
+1024
+00:58:38,340 --> 00:58:40,660
+ that will change the way I would simulate in the future.
+
+1025
+00:58:40,660 --> 00:58:42,500
+ If you tell me the positions and velocities,
+
+1026
+00:58:42,500 --> 00:58:45,340
+ the grand genus state is a complete description.
+
+1027
+00:58:45,340 --> 00:58:48,260
+ It's a sufficient statistic to predict anything.
+
+1028
+00:58:48,260 --> 00:58:52,420
+ It's only the e, y, and the z.
+
+1029
+00:58:52,420 --> 00:58:53,820
+ More generally, those of you that
+
+1030
+00:58:53,820 --> 00:58:57,900
+ know about the Leib space plane and Pond-DPs and the like,
+
+1031
+00:58:57,900 --> 00:59:01,940
+ more generally, the sufficient statistics
+
+1032
+00:59:01,940 --> 00:59:04,660
+ are going to be some possibly distribution
+
+1033
+00:59:04,660 --> 00:59:07,460
+ over possible states, some belief state or some information
+
+1034
+00:59:07,460 --> 00:59:07,960
+ state.
+
+1035
+00:59:12,060 --> 00:59:15,860
+ So if we're going to use ML to try to discover state
+
+1036
+00:59:15,860 --> 00:59:21,820
+ representations, I think there's this question of,
+
+1037
+00:59:21,820 --> 00:59:26,260
+ to what extent can ML produce sufficient--
+
+1038
+00:59:26,260 --> 00:59:29,220
+ how do we encourage it to produce sufficient statistics?
+
+1039
+00:59:29,220 --> 00:59:31,780
+ Are there heuristics that we can use to guide it?
+
+1040
+00:59:31,780 --> 00:59:37,780
+ There's a lot of rich ideas in this case.
+
+1041
+00:59:41,900 --> 00:59:44,980
+ One example, a simple example that you might think of,
+
+1042
+00:59:44,980 --> 00:59:50,460
+ if we talk about key points in the dense object nets,
+
+1043
+00:59:50,460 --> 00:59:53,580
+ somehow we need to go from a history of images
+
+1044
+00:59:53,580 --> 00:59:57,140
+ into something that's sufficient to predict the future
+
+1045
+00:59:57,140 --> 00:59:59,460
+ performance of our system.
+
+1046
+00:59:59,460 --> 01:00:02,140
+ So a natural example, for instance,
+
+1047
+01:00:02,140 --> 01:00:06,060
+ would be to try to just use key points.
+
+1048
+01:00:06,060 --> 01:00:10,340
+ So we have a project Lucas and Yunzhu and V did
+
+1049
+01:00:10,340 --> 01:00:12,140
+ of trying to take the dense object nets
+
+1050
+01:00:12,140 --> 01:00:16,660
+ that we talked about before and just said, can we use states--
+
+1051
+01:00:16,660 --> 01:00:21,260
+ use the key points as an effective state representation
+
+1052
+01:00:21,260 --> 01:00:23,100
+ for manipulation.
+
+1053
+01:00:23,100 --> 01:00:25,540
+ So this is something that is grounded in perception.
+
+1054
+01:00:25,540 --> 01:00:29,580
+ We know how to go from RGB inputs into key points.
+
+1055
+01:00:29,580 --> 01:00:32,020
+ But we can learn much more compact models
+
+1056
+01:00:32,020 --> 01:00:35,740
+ of key point dynamics than we could from image dynamics.
+
+1057
+01:00:35,740 --> 01:00:37,100
+ So that's a pretty reasonable--
+
+1058
+01:00:37,100 --> 01:00:37,600
+ hold on.
+
+1059
+01:00:37,600 --> 01:00:49,780
+ That's only going to be useful if the tasks are observable,
+
+1060
+01:00:49,780 --> 01:00:55,340
+ if the key points are observable and the task is--
+
+1061
+01:00:55,340 --> 01:00:57,540
+ a single set of key points will only
+
+1062
+01:00:57,540 --> 01:01:01,180
+ work if the system is quasi-static.
+
+1063
+01:01:01,180 --> 01:01:02,740
+ In the history of key points, there's
+
+1064
+01:01:02,740 --> 01:01:06,340
+ a whole bunch of variations of that.
+
+1065
+01:01:06,340 --> 01:01:09,060
+ But there's, I think, a lot of interesting work
+
+1066
+01:01:09,060 --> 01:01:12,020
+ in general of trying to find these learned state
+
+1067
+01:01:12,020 --> 01:01:15,780
+ representations or trying to design visual features that
+
+1068
+01:01:15,780 --> 01:01:18,020
+ can be used in state representations.
+
+1069
+01:01:18,020 --> 01:01:27,060
+ Now, if we compare this to what we showed you--
+
+1070
+01:01:27,060 --> 01:01:30,220
+ what I showed you before, like using dense object nets
+
+1071
+01:01:30,220 --> 01:01:35,140
+ to put hats on rack and do fairly complicated tasks,
+
+1072
+01:01:35,140 --> 01:01:37,100
+ this is actually a relatively simple task.
+
+1073
+01:01:37,100 --> 01:01:43,020
+ The good thing about this work was
+
+1074
+01:01:43,020 --> 01:01:48,660
+ that the original task I told you was behavior cloning.
+
+1075
+01:01:48,660 --> 01:01:52,180
+ So basically, we had to give a lot of imitations
+
+1076
+01:01:52,180 --> 01:01:55,020
+ in order to figure out how to put a hat on a rack.
+
+1077
+01:01:55,020 --> 01:01:57,580
+ We would train a policy directly that
+
+1078
+01:01:57,580 --> 01:02:02,860
+ used the dense descriptors or the visual representation
+
+1079
+01:02:02,860 --> 01:02:05,780
+ in order to train a policy to put a hat on the rack.
+
+1080
+01:02:05,780 --> 01:02:07,280
+ And the reason that was painful is
+
+1081
+01:02:07,280 --> 01:02:09,780
+ that if you changed the objective just a little bit,
+
+1082
+01:02:09,780 --> 01:02:12,780
+ you couldn't reuse all that data.
+
+1083
+01:02:12,780 --> 01:02:17,420
+ This system, you could reuse the data.
+
+1084
+01:02:17,420 --> 01:02:18,780
+ And if you changed the objective,
+
+1085
+01:02:18,780 --> 01:02:22,220
+ you wanted to just push the box to a different location,
+
+1086
+01:02:22,220 --> 01:02:25,300
+ then you could reuse all the existing data
+
+1087
+01:02:25,300 --> 01:02:27,340
+ and just replant on the fly, giving them all.
+
+1088
+01:02:31,260 --> 01:02:33,460
+ The interesting thing, though, was that we couldn't,
+
+1089
+01:02:33,460 --> 01:02:34,140
+ at the time--
+
+1090
+01:02:34,140 --> 01:02:36,540
+ to be fair, before Lucas was trying to finish his thesis
+
+1091
+01:02:36,540 --> 01:02:39,860
+ and COVID had just hit, and we couldn't get in the lab.
+
+1092
+01:02:39,860 --> 01:02:42,220
+ So it's possible that in a normal year,
+
+1093
+01:02:42,220 --> 01:02:45,060
+ we could have gotten a lot of experiments for the hat
+
+1094
+01:02:45,060 --> 01:02:46,660
+ to work with this too.
+
+1095
+01:02:46,660 --> 01:02:52,460
+ But in this work, basically, he was
+
+1096
+01:02:52,460 --> 01:02:55,420
+ able to train networks to predict future viewpoint
+
+1097
+01:02:55,420 --> 01:02:59,940
+ dynamics, basically getting almost zero prediction error
+
+1098
+01:02:59,940 --> 01:03:01,060
+ in the short term.
+
+1099
+01:03:01,060 --> 01:03:03,580
+ And the rollouts were good, and everything was good.
+
+1100
+01:03:03,580 --> 01:03:05,140
+ But actually, the thing that was hard
+
+1101
+01:03:05,140 --> 01:03:07,180
+ was that it was still hard, given a neural network
+
+1102
+01:03:07,180 --> 01:03:10,340
+ model, with the long-term planning,
+
+1103
+01:03:10,340 --> 01:03:11,940
+ actually it was harder to do planning
+
+1104
+01:03:11,940 --> 01:03:13,780
+ on that neural network model.
+
+1105
+01:03:13,780 --> 01:03:15,220
+ The equations in the neural network
+
+1106
+01:03:15,220 --> 01:03:18,340
+ were too complicated and too fragile
+
+1107
+01:03:18,340 --> 01:03:22,780
+ to do our stronger planning ideas on.
+
+1108
+01:03:22,780 --> 01:03:25,060
+ He actually said it's interesting that, for once,
+
+1109
+01:03:25,060 --> 01:03:27,360
+ planning-- perception doesn't feel like the bottleneck
+
+1110
+01:03:27,360 --> 01:03:30,340
+ with control.
+
+1111
+01:03:30,340 --> 01:03:33,060
+ And that's the experiment for rate control.
+
+1112
+01:03:33,060 --> 01:03:35,700
+ So the control was almost always, in that case,
+
+1113
+01:03:35,700 --> 01:03:38,740
+ an end-effector position or stiffness,
+
+1114
+01:03:38,740 --> 01:03:41,580
+ but it was typically just position for those tasks
+
+1115
+01:03:41,580 --> 01:03:44,100
+ that didn't have much contact dynamics.
+
+1116
+01:03:44,100 --> 01:03:46,620
+ So it did come into contact, but that was fine.
+
+1117
+01:03:46,620 --> 01:03:49,980
+ It was about too light compared to the aim.
+
+1118
+01:03:49,980 --> 01:03:52,700
+ Action space was the end-effector position
+
+1119
+01:03:52,700 --> 01:03:53,540
+ of the aim.
+
+1120
+01:03:53,540 --> 01:03:57,140
+ And the task was specified, given a single demonstration,
+
+1121
+01:03:57,140 --> 01:03:59,420
+ just that the key points should go to this location,
+
+1122
+01:03:59,420 --> 01:04:03,500
+ for instance, and plan on the fly through the neural network
+
+1123
+01:04:03,500 --> 01:04:06,380
+ model to get to that location.
+
+1124
+01:04:06,380 --> 01:04:08,860
+ So the contact part was the fragile part?
+
+1125
+01:04:08,860 --> 01:04:10,780
+ It was just, in the case where it didn't work,
+
+1126
+01:04:10,780 --> 01:04:13,900
+ it was just not maintaining contact?
+
+1127
+01:04:13,900 --> 01:04:14,580
+ Actually, no.
+
+1128
+01:04:14,580 --> 01:04:17,180
+ So I think the planning algorithms
+
+1129
+01:04:17,180 --> 01:04:19,900
+ that people use, once you have a P-P algorithm,
+
+1130
+01:04:19,900 --> 01:04:22,820
+ are surprisingly weak, I would say.
+
+1131
+01:04:22,820 --> 01:04:26,100
+ They tend to be more like the CMA we talked about,
+
+1132
+01:04:26,100 --> 01:04:27,740
+ the black box optimization.
+
+1133
+01:04:27,740 --> 01:04:40,540
+ People would be planning with e-coms.
+
+1134
+01:04:40,540 --> 01:04:45,060
+ There's a relatively small group of people who use them.
+
+1135
+01:04:45,060 --> 01:04:48,100
+ You would think everybody did gradient descent,
+
+1136
+01:04:48,100 --> 01:04:50,940
+ but actually, it's not as common.
+
+1137
+01:04:50,940 --> 01:04:53,700
+ A lot of people think with gradient descent,
+
+1138
+01:04:53,700 --> 01:04:56,700
+ it's stuck in local minima too quickly.
+
+1139
+01:04:56,700 --> 01:05:09,980
+ So people tend to do CEM, which is a cross-entry method,
+
+1140
+01:05:09,980 --> 01:05:15,260
+ or MDPI, which is an integral.
+
+1141
+01:05:15,260 --> 01:05:16,260
+ I won't write it all out.
+
+1142
+01:05:16,260 --> 01:05:21,780
+ But it's very similar to CEM.
+
+1143
+01:05:21,780 --> 01:05:25,140
+ It's an objective function.
+
+1144
+01:05:25,140 --> 01:05:28,220
+ But these are more like the black box algorithms,
+
+1145
+01:05:28,220 --> 01:05:31,380
+ with a little bit of extra work done to--
+
+1146
+01:05:31,380 --> 01:05:35,420
+ important work done to make them use the temporal structure
+
+1147
+01:05:35,420 --> 01:05:37,980
+ of the optimal control problem.
+
+1148
+01:05:37,980 --> 01:05:43,380
+ But they are more like black box solution methods.
+
+1149
+01:05:43,380 --> 01:05:47,020
+ And at some point, they seem not to be strong enough.
+
+1150
+01:05:47,020 --> 01:05:49,180
+ Even if your network model is good,
+
+1151
+01:05:49,180 --> 01:05:52,780
+ and your rollouts are accurate in that particular work,
+
+1152
+01:05:52,780 --> 01:05:55,380
+ we felt the bottleneck was that the planning algorithm didn't
+
+1153
+01:05:55,380 --> 01:05:56,580
+ find good plans.
+
+1154
+01:05:56,580 --> 01:05:59,500
+ We did not find good paths, even though the models
+
+1155
+01:05:59,500 --> 01:06:03,500
+ were the problems in the path.
+
+1156
+01:06:03,500 --> 01:06:06,820
+ So I think there's a lot of good work
+
+1157
+01:06:06,820 --> 01:06:10,060
+ that people should be doing on making these algorithms
+
+1158
+01:06:10,060 --> 01:06:11,260
+ stronger.
+
+1159
+01:06:11,260 --> 01:06:14,100
+ And a big question that I have for myself
+
+1160
+01:06:14,100 --> 01:06:18,740
+ is, can you make stronger algorithms when the model class
+
+1161
+01:06:18,740 --> 01:06:22,260
+ is so rich?
+
+1162
+01:06:22,260 --> 01:06:25,900
+ Most of the time, we're seeing stronger algorithms apply.
+
+1163
+01:06:25,900 --> 01:06:29,740
+ It's leveraging some structure in the model class.
+
+1164
+01:06:29,740 --> 01:06:34,660
+ And so constraining the model class might help here.
+
+1165
+01:06:34,660 --> 01:06:39,620
+ And does it handicap your ability to predict?
+
+1166
+01:06:39,620 --> 01:06:41,020
+ We're going to have to find out.
+
+1167
+01:06:41,020 --> 01:07:00,020
+, You have about 40 more examples in about four minutes.
+
+1168
+01:07:00,020 --> 01:07:00,660
+ So those-- yeah.
+
+1169
+01:07:00,660 --> 01:07:01,860
+ I just feel great.
+
+1170
+01:07:01,860 --> 01:07:02,740
+ So what did they see?
+
+1171
+01:07:02,740 --> 01:07:07,740
+ Would you try the most basic image dynamics for these tasks?
+
+1172
+01:07:07,740 --> 01:07:08,740
+ What was the comparison?
+
+1173
+01:07:08,740 --> 01:07:10,220
+ Like, what did you gain?
+
+1174
+01:07:10,220 --> 01:07:19,460
+ So we did try against auto-encoder features.
+
+1175
+01:07:19,460 --> 01:07:21,300
+ The default would be to try to--
+
+1176
+01:07:21,300 --> 01:07:27,540
+ so one way that people might learn models--
+
+1177
+01:07:27,540 --> 01:07:30,420
+ I do actually have a couple of examples of this--
+
+1178
+01:07:30,420 --> 01:07:33,340
+ would be to try to say, the thing that you want to predict
+
+1179
+01:07:33,340 --> 01:07:35,380
+ is the future images that you would see.
+
+1180
+01:07:35,380 --> 01:07:38,660
+ So if you have images coming in, actions coming in,
+
+1181
+01:07:38,660 --> 01:07:40,500
+ you should find a neural network model that
+
+1182
+01:07:40,500 --> 01:07:43,140
+ can predict future images.
+
+1183
+01:07:43,140 --> 01:07:46,460
+ And you like to think of that model as being a bottleneck.
+
+1184
+01:07:46,460 --> 01:07:48,300
+ So you're trying to take a big image in.
+
+1185
+01:07:48,300 --> 01:07:50,940
+ You bring it down to a smaller latent vector z
+
+1186
+01:07:50,940 --> 01:07:52,940
+ and come back out.
+
+1187
+01:07:52,940 --> 01:07:55,460
+ And in the simplest case, you can just take the actions off
+
+1188
+01:07:55,460 --> 01:07:57,540
+ and just do an auto-encoder.
+
+1189
+01:07:57,540 --> 01:08:00,180
+ So auto-encoder models of state representations
+
+1190
+01:08:00,180 --> 01:08:01,660
+ are a reasonable thing to try.
+
+1191
+01:08:01,660 --> 01:08:05,740
+ And they're kind of the baseline that we compare against.
+
+1192
+01:08:05,740 --> 01:08:09,100
+ So in general, the key point style model,
+
+1193
+01:08:09,100 --> 01:08:13,460
+ the dense descriptors, could train and generalize--
+
+1194
+01:08:13,460 --> 01:08:15,860
+ they leveraged the additional structure
+
+1195
+01:08:15,860 --> 01:08:18,060
+ of the self-supervision.
+
+1196
+01:08:18,060 --> 01:08:20,460
+ And you could use less visual data
+
+1197
+01:08:20,460 --> 01:08:24,620
+ to train features that generalize more interpreted.
+
+1198
+01:08:24,620 --> 01:08:29,300
+ I think it's one of a class of these kind of representations
+
+1199
+01:08:29,300 --> 01:08:32,500
+ that can leverage additional information about this thing.
+
+1200
+01:08:35,660 --> 01:08:38,660
+ Yunzu in the lab, which I have his work that I won't get to,
+
+1201
+01:08:38,660 --> 01:08:43,740
+ I'm afraid, but every time I say something like what I just
+
+1202
+01:08:43,740 --> 01:08:46,020
+ said, he comes along and makes a neural network
+
+1203
+01:08:46,020 --> 01:08:49,940
+ to predict future images in ways that blow my mind.
+
+1204
+01:08:49,940 --> 01:08:52,740
+ And I will continue to be impressed, I think,
+
+1205
+01:08:52,740 --> 01:08:53,260
+ by this.
+
+1206
+01:08:53,260 --> 01:08:56,820
+ He's got a new work for Tariq.
+
+1207
+01:08:56,820 --> 01:08:57,820
+ [INAUDIBLE]
+
+1208
+01:09:03,820 --> 01:09:07,900
+ So Yunzu's got this recent work here
+
+1209
+01:09:07,900 --> 01:09:14,140
+ of learning open-loop prediction,
+
+1210
+01:09:14,140 --> 01:09:16,060
+ learning models that can predict--
+
+1211
+01:09:16,060 --> 01:09:17,700
+ we've got a simulation based on flex,
+
+1212
+01:09:17,700 --> 01:09:22,020
+ and it's doing very complicated forward dynamics.
+
+1213
+01:09:22,020 --> 01:09:25,260
+ And he's predicting future images.
+
+1214
+01:09:25,260 --> 01:09:27,980
+ And it's ridiculously good.
+
+1215
+01:09:27,980 --> 01:09:29,820
+ And then he does model predictive control
+
+1216
+01:09:29,820 --> 01:09:33,260
+ to try to do pouring, for instance,
+
+1217
+01:09:33,260 --> 01:09:35,060
+ to have this pouring effect.
+
+1218
+01:09:35,060 --> 01:09:39,980
+ I think the challenge of these models--
+
+1219
+01:09:39,980 --> 01:09:42,100
+ I mean, you get little fuzzy images,
+
+1220
+01:09:42,100 --> 01:09:43,700
+ but that's still unbelievably--
+
+1221
+01:09:43,700 --> 01:09:45,380
+ I mean, you always compare it against--
+
+1222
+01:09:45,380 --> 01:09:46,940
+ you always are just learning the difference
+
+1223
+01:09:46,940 --> 01:09:48,420
+ between some sort of baseline image.
+
+1224
+01:09:48,420 --> 01:09:51,420
+ But still, this is ridiculously good predictions
+
+1225
+01:09:51,420 --> 01:09:54,580
+ of future images.
+
+1226
+01:09:54,580 --> 01:09:56,540
+ The challenge in these kind of models, I think,
+
+1227
+01:09:56,540 --> 01:09:58,740
+ is that they tend to be fairly narrow.
+
+1228
+01:09:58,740 --> 01:10:03,220
+ And you have to play games like restricting your planning
+
+1229
+01:10:03,220 --> 01:10:08,180
+ algorithm to search where the data was generated.
+
+1230
+01:10:08,180 --> 01:10:10,860
+ So that's a common--
+
+1231
+01:10:10,860 --> 01:10:13,180
+ Abhishek mentioned that too, right?
+
+1232
+01:10:13,180 --> 01:10:17,500
+ He said, how do you restrict your search in the policy space
+
+1233
+01:10:17,500 --> 01:10:20,020
+ to stay near the data?
+
+1234
+01:10:20,020 --> 01:10:23,540
+ We see this over and over again in model-based RL,
+
+1235
+01:10:23,540 --> 01:10:25,740
+ in particular, because if you learn a deep model
+
+1236
+01:10:25,740 --> 01:10:27,940
+ and it has arbitrary representational power
+
+1237
+01:10:27,940 --> 01:10:30,700
+ and narrow data, then the first thing that happens--
+
+1238
+01:10:30,700 --> 01:10:31,700
+ I'm going to stop that.
+
+1239
+01:10:31,700 --> 01:10:35,140
+ But the first thing that happens when you do planning
+
+1240
+01:10:35,140 --> 01:10:38,260
+ is the planner will ultimately exploit--
+
+1241
+01:10:38,260 --> 01:10:40,220
+ I mean, you're almost asking your planner
+
+1242
+01:10:40,220 --> 01:10:41,340
+ to exploit your model.
+
+1243
+01:10:41,340 --> 01:10:43,460
+ So if your model has small errors
+
+1244
+01:10:43,460 --> 01:10:46,500
+ and those errors happen to imply to the model
+
+1245
+01:10:46,500 --> 01:10:49,060
+ that it can do a good job at control,
+
+1246
+01:10:49,060 --> 01:10:51,500
+ it'll walk arbitrarily far away from your data
+
+1247
+01:10:51,500 --> 01:10:53,580
+ in order to accomplish the task.
+
+1248
+01:10:53,580 --> 01:10:56,260
+ So having a model that simulates well
+
+1249
+01:10:56,260 --> 01:10:57,620
+ is actually one requirement.
+
+1250
+01:10:57,620 --> 01:11:00,180
+ Having a model that can live up to the scrutiny
+
+1251
+01:11:00,180 --> 01:11:02,180
+ of an optimization algorithm attacking it
+
+1252
+01:11:02,180 --> 01:11:05,060
+ is a higher request.
+
+1253
+01:11:05,060 --> 01:11:06,980
+ So it's less of a problem-- optimization
+
+1254
+01:11:06,980 --> 01:11:09,780
+ is less of a problem in the key point-based models?
+
+1255
+01:11:09,780 --> 01:11:17,140
+ Generalization, I would say, is--
+
+1256
+01:11:17,140 --> 01:11:20,780
+ so in the extreme case of taking multibody models,
+
+1257
+01:11:20,780 --> 01:11:22,780
+ we don't worry much about generalization, right?
+
+1258
+01:11:22,780 --> 01:11:25,580
+ Because if I fit the masses and moments of inertia
+
+1259
+01:11:25,580 --> 01:11:27,460
+ in some place and I put the system
+
+1260
+01:11:27,460 --> 01:11:29,020
+ in a very different state, I still
+
+1261
+01:11:29,020 --> 01:11:31,940
+ expect the model to be reasonable.
+
+1262
+01:11:31,940 --> 01:11:35,140
+ It generalizes very well over the state space.
+
+1263
+01:11:35,140 --> 01:11:38,260
+ Full image-based things I expect to be very narrow.
+
+1264
+01:11:38,260 --> 01:11:40,580
+ Key points, I think, are somewhere in the middle.
+
+1265
+01:11:40,580 --> 01:11:42,540
+ They're only suitable for some tasks.
+
+1266
+01:11:42,540 --> 01:11:44,620
+ But they did leverage some--
+
+1267
+01:11:44,620 --> 01:11:47,740
+ I mean, they can capture rigid body approximation.
+
+1268
+01:11:47,740 --> 01:11:50,220
+ Key points are sufficient to estimate a pose
+
+1269
+01:11:50,220 --> 01:11:51,980
+ if you needed to do that.
+
+1270
+01:11:51,980 --> 01:11:53,660
+ So they're somewhere in the middle.
+
+1271
+01:11:53,660 --> 01:11:56,180
+ They can be exploited for sure, especially
+
+1272
+01:11:56,180 --> 01:11:57,580
+ if it's a deep network predicting
+
+1273
+01:11:57,580 --> 01:11:59,340
+ the forward roll-offs of a key point.
+
+1274
+01:11:59,340 --> 01:12:03,660
+ But I do think it implies some structure that generalizes
+
+1275
+01:12:03,660 --> 01:12:04,160
+ better.
+
+1276
+01:12:04,160 --> 01:12:14,180
+ OK, I didn't get to talk about intuitive physics.
+
+1277
+01:12:14,180 --> 01:12:16,500
+ I'm sorry that I didn't have it as well.
+
+1278
+01:12:16,500 --> 01:12:23,580
+ But I would actually say that this
+
+1279
+01:12:23,580 --> 01:12:26,500
+ is what's lighting me up right now, this question of,
+
+1280
+01:12:26,500 --> 01:12:28,580
+ what are the right--
+
+1281
+01:12:28,580 --> 01:12:31,540
+ I mean, things that are easy for humans--
+
+1282
+01:12:31,540 --> 01:12:33,060
+ spreading peanut butter on toast.
+
+1283
+01:12:33,060 --> 01:12:35,940
+ I did a couple of fun examples I have in the slides
+
+1284
+01:12:35,940 --> 01:12:37,420
+ I think you want to look, right?
+
+1285
+01:12:37,420 --> 01:12:44,420
+ But there are lots of tasks that humans are good at
+
+1286
+01:12:44,420 --> 01:12:46,780
+ and our models find incredibly hard.
+
+1287
+01:12:46,780 --> 01:12:48,740
+ One of the simple--
+
+1288
+01:12:48,740 --> 01:12:50,980
+ a fun example is--
+
+1289
+01:12:50,980 --> 01:12:52,180
+ hold up over here.
+
+1290
+01:12:52,180 --> 01:12:54,780
+ Yeah, this one, right?
+
+1291
+01:12:54,780 --> 01:12:56,780
+ So if I said a simple experiment,
+
+1292
+01:12:56,780 --> 01:12:59,140
+ like a psychological experiment from intuitive physics,
+
+1293
+01:12:59,140 --> 01:13:01,260
+ say, which of these matches--
+
+1294
+01:13:01,260 --> 01:13:08,940
+ has the object on top drink from the cloth?
+
+1295
+01:13:08,940 --> 01:13:10,860
+ If I wanted to put that in a simulator
+
+1296
+01:13:10,860 --> 01:13:13,700
+ and do an accurate simulation or a predict,
+
+1297
+01:13:13,700 --> 01:13:16,740
+ and then compare the error in the pixel space of some
+
+1298
+01:13:16,740 --> 01:13:20,100
+ and all of that system, that's ridiculously hard
+
+1299
+01:13:20,100 --> 01:13:23,460
+ for all the tools that I've been working on.
+
+1300
+01:13:23,460 --> 01:13:26,380
+ And humans are super good at it.
+
+1301
+01:13:26,380 --> 01:13:29,020
+ Babies are relatively good at this task.
+
+1302
+01:13:29,020 --> 01:13:33,180
+ Babies are good at understanding that objects don't move
+
+1303
+01:13:33,180 --> 01:13:36,740
+ until they talk.
+
+1304
+01:13:36,740 --> 01:13:42,300
+ But six-year-olds are actually-- and probably I am not good at--
+
+1305
+01:13:42,300 --> 01:13:45,140
+ if you ask me to predict the parabolic trajectory of a ball
+
+1306
+01:13:45,140 --> 01:13:47,740
+ flying through the air, which is trivial in the sense
+
+1307
+01:13:47,740 --> 01:13:51,860
+ of Newton's mechanics, we're actually really bad at that.
+
+1308
+01:13:51,860 --> 01:13:54,060
+ So there's a fundamental disconnect
+
+1309
+01:13:54,060 --> 01:13:56,460
+ at the way humans generalize, I think,
+
+1310
+01:13:56,460 --> 01:14:00,940
+ and the way our physics-based models generalize.
+
+1311
+01:14:00,940 --> 01:14:01,940
+ And it's a mystery.
+
+1312
+01:14:01,940 --> 01:14:06,180
+ Terry was asking me earlier, he says,
+
+1313
+01:14:06,180 --> 01:14:07,860
+ computers are good at a lot of things.
+
+1314
+01:14:07,860 --> 01:14:11,980
+ Why would you make them worse, more like a human?
+
+1315
+01:14:11,980 --> 01:14:14,580
+ And if humans are bad at some things,
+
+1316
+01:14:14,580 --> 01:14:16,620
+ like predicting the trajectory of a ball,
+
+1317
+01:14:16,620 --> 01:14:20,900
+ why would you ever handicap your algorithm to be worse?
+
+1318
+01:14:20,900 --> 01:14:22,900
+ And I don't want to handicap the algorithm,
+
+1319
+01:14:22,900 --> 01:14:27,940
+ but I do wonder if you have to give up something.
+
+1320
+01:14:27,940 --> 01:14:29,660
+ I think it's a big question, right?
+
+1321
+01:14:29,660 --> 01:14:31,940
+ What is the model class that allows
+
+1322
+01:14:31,940 --> 01:14:33,860
+ us to generalize so well in the home,
+
+1323
+01:14:33,860 --> 01:14:37,980
+ and do reasonable things, load the dishwasher,
+
+1324
+01:14:37,980 --> 01:14:40,860
+ and fit the relatively little data,
+
+1325
+01:14:40,860 --> 01:14:43,820
+ watch somebody do a task, and be able to do it ourselves?
+
+1326
+01:14:43,820 --> 01:14:45,860
+ What is that model class?
+
+1327
+01:14:45,860 --> 01:14:46,540
+ I don't know.
+
+1328
+01:14:46,540 --> 01:14:48,420
+ I don't think it's a deep network.
+
+1329
+01:14:48,420 --> 01:14:50,900
+ And I don't think it's the Lagrangian mechanics
+
+1330
+01:14:50,900 --> 01:14:54,340
+ with the rigid body tree given to you.
+
+1331
+01:14:54,340 --> 01:14:56,620
+ There's something else missing, right?
+
+1332
+01:14:56,620 --> 01:14:59,380
+ And I think this is a big-- this is what's lighting up right
+
+1333
+01:14:59,380 --> 01:14:59,880
+ now.
+
+1334
+01:14:59,880 --> 01:15:04,180
+ I think I'm on the quest to try to understand that state
+
+1335
+01:15:04,180 --> 01:15:05,860
+ representation question.
+
+1336
+01:15:05,860 --> 01:15:08,780
+ That's the big one.
+
+1337
+01:15:08,780 --> 01:15:10,780
+ OK.
+
+1338
+01:15:10,780 --> 01:15:13,860
+ Please ask us all your questions on the floor.
+

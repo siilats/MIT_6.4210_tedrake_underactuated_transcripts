@@ -1,0 +1,1449 @@
+ This is a quick trick that I just mentioned here.
+ But do you know, this is not a Drake specific thing.
+ This is just a GitHub thing.
+ And I guess Microsoft, I think, bought GitHub.
+ I'm not wrong about that.
+ But if you have any GitHub URL, you
+ have just GitHub open in your browser,
+ and you want to search the code, browse the code,
+ just replace the GitHub with GitHub 1S,
+ and it'll pull up a Visual Studio client in your browser.
+ And you can just quickly search and whatever.
+ So if you want to quickly poke around in the source code
+ for Drake, even if you're not super comfortable in C++,
+ there's often use cases of all the different methods
+ are all searchable inside there.
+ And even the C++ and Python syntax is not very different,
+ possibly to a fault. Good.
+ OK, so today I want to launch into the bigger conversation
+ about control for manipulation.
+ We started it by talking about manipulator control last time.
+ But I want to go from manipulator control last time
+ to the more full discussion of feedback
+ control for manipulation.
+ And let me make sure that distinction is clear,
+ because it looks kind of the same words.
+ Let me just make sure my intent is clear,
+ even if you might recommend some better words for it.
+ But when we were talking about manipulator control,
+ this was only controlling the robot.
+ And that was important.
+ That made a lot of things a lot easier.
+ Remember, we were using-- the reason
+ I call it manipulator control is it
+ leans so heavily on the manipulator equations, which
+ was just my mass times acceleration equals
+ the sum of the forces, which looked like mq v dot.
+ It has a particular form in the manipulator equations,
+ but something like this.
+ Or this was the mass times acceleration terms.
+ This is gravity force.
+ This was maybe damping or friction or other things.
+ Importantly, this was my torque input.
+ These were maybe my contact forces
+ or other applied forces that were
+ described in a Cartesian frame.
+ OK, and we worked with those equations a bunch last time.
+ You could also-- I mean, so I hope
+ you see that as mass times acceleration
+ is the sum of the forces.
+ You could also see this as just a differential equation, which
+ looks like f of xu, where my x is q and v.
+ And so this is just the equation for x dot.
+ This is half of the equation for x dot.
+ So you could say I would write this as-- that equation
+ is similarly v dot is f of qvu.
+ The other one that I need is that q dot is just v.
+ And that together is my upside down x dot.
+ OK, but there's a bunch of things
+ that this distinction of only control the robot
+ was baked into what we did there.
+ So in particular, the way I've written it here,
+ I had that the dimension of q equals the dimension of v,
+ at least for my revolute joint robots,
+ equals the dimension of u.
+ And even more than that, just the way I wrote in u
+ is it entered linearly like this.
+ Well, it always enters linearly, but there's
+ no modifiers there.
+ So it just came in.
+ And you can use any u to directly control v, v dot.
+ So that-- I teach a whole class on the difference
+ between fully actuated and underactuated,
+ but that makes these equations a fully actuated system.
+ And it's a particularly easy one to control in that form.
+ For instance, we saw that PD control worked.
+ We saw inverse dynamics control, stiffness control.
+ We saw a bunch of things that worked pretty easily, in part
+ because I had u that had direct control on v dot.
+ Also, this was one important point.
+ A second important point is that MQ and all these other terms
+ were known, or at least estimated, pretty well.
+ Let's say estimated well.
+ OK.
+ In practice, we have good system identification tools
+ that if I have an EWA or a Frank or some other robot,
+ I can move it around a little bit.
+ I can get very accurate estimates of M.
+ And in fact, KUKA has done that for us.
+ And they are doing the low level control that's
+ canceling that out for us.
+ OK, there are things that can make that control a little
+ easier, like torque limits and-- sorry,
+ a little more interesting, like torque limits or other bits.
+ But out of the box, that was a class of control problems
+ that we know a lot about and we have very good solutions for.
+ We can command fast trajectories and track them very accurately.
+ We can control contact forces pretty accurately.
+ But that is not representative of the bigger problem
+ of feedback control for manipulation.
+ So the bigger problem is to not just control
+ the state of the robot, but to control
+ the state of the robot and, more importantly,
+ the state of the world.
+ And a lot of those assumptions that
+ were fundamental in the way we wrote our controllers
+ become no longer true.
+ And I want to spend a little time talking about the ways
+ that those are not true and the ways that those complicate
+ control.
+ OK, so whereas before we had x.
+ Was-- let me just say q robot, maybe,
+ and v robot was our state before.
+ Now we're going to at least something
+ that has, in that example, the state of the brick
+ in the state space.
+ But unfortunately, our u is still just u robot.
+ I picked up more degrees of freedom
+ that I'm trying to control, but I didn't actually
+ pick up more actuators by which to control it.
+ OK, so that is now another differential equation,
+ which I could write as my same sort of v dot is f of q v u.
+ It's still a differential equation in all of those,
+ but the dimension of q is now greater, strictly greater,
+ than the dimension of u.
+ And that makes control a lot more interesting, a lot harder.
+ So that's where you come into underactuated systems.
+ OK, but that's not the only way that the problem
+ got a lot more interesting, if we start controlling--
+ trying to control the world.
+ There's a bunch more, and I just kind of want to talk through them
+ and make sure we appreciate those.
+ So even if we assume perfect perception--
+ so let's ignore the perception problem for a second.
+ So let's say that I have a perception system that's
+ reading my cameras or whatever, my perception system that's
+ outputting some estimate of my state.
+ And perfect perception for me means that x hat is just outputting x directly.
+ In simulation, we could just be using the cheat port
+ and going-- asking multibody, what is the true state?
+ OK, so still the problem is rich because it's underactuated,
+ but also because the only way-- if you look at the equations,
+ u on the robot is what you get to control.
+ Your goal is to control, let's say, q brick.
+ If you look at the way those equations come together,
+ the only way that u gets over to control q
+ is through the contact forces.
+ The equations of motion are, in some sense, decoupled.
+ They're only coupled through the contact forces.
+ So you have to do the control through the contact forces.
+ OK, so if I were to-- when I do write the equations of motion
+ for that robot plus brick system, it actually
+ still looks like the manipulator equations.
+ Those equations are still valid.
+ But there's an extra set of equations.
+ Let me put a little b underneath all of these.
+ There's a new set of equations for the brick variables.
+ You can write force equals mass times acceleration for this,
+ too.
+ You have the gravity of the brick.
+ B is for brick.
+ OK.
+ I also have the robot ones.
+ OK.
+ And the whole thing together is one big set of equations
+ that I simulate with my integration methods.
+ They are beautifully decoupled.
+ Like, as a structure you'd want in your equations
+ to make your math better and stuff like this,
+ it's beautiful that these equations actually
+ don't depend on the robot.
+ And these equations don't depend on the brick,
+ except for the one extra thing, which
+ is that the forces here on the robot at C
+ have to be equal and opposite of the forces on the brick.
+ There's one extra constraint that couples them together,
+ which is that those two are equal and opposite.
+ But if you think now, as the job--
+ like, before what we were doing, right,
+ when we were working with those equations,
+ is we would choose a u that would cancel out some dynamics,
+ put in some spring-like dynamics to make
+ it feel like an impedance or a stiffness.
+ Or there was a bunch of tricks we did.
+ Those are not readily available now,
+ because the only place that my u came in
+ was in the robot equations, my control input.
+ And the only way that those u's get through to the other side
+ is through the forces.
+ Is that clear?
+ And those forces are fickle.
+ They're subject to a friction cone constraint.
+ They turn off if you're not actually touching things.
+ That's kind of annoying.
+ You can push, but you can't pull unless you
+ got a suction gripper.
+ So this is not as direct of a way
+ to control those variables as just having a torque directly
+ on the motor.
+ And that complicates.
+ That means if I want to start having any effect on the brick,
+ I have to touch the brick.
+ I mean, that's obvious in the physical interpretation.
+ And it's visible here in the equations of motion
+ by seeing that the only way that that happens
+ is if these forces become non-zero.
+ And that's how it goes across.
+ The fact that those are not only intermittent,
+ it makes things non-smooth because they
+ go from sticking to sliding, or you weren't touching
+ and then you are touching.
+ There's all kinds of interesting stuff
+ that happens with that interface.
+ So those are two big ones.
+ We're suddenly going, if we want to control the world
+ and think about it as a feedback control problem,
+ then we have to think about it being under-actuated
+ and we have to think about the control through contact.
+ But wait, there's more.
+ It's still harder.
+ So I'm going to spend a little time making
+ you see how hard it is, and then we're
+ going to try to hopefully make it look easy again.
+ But that way, hopefully we appreciate
+ at the end why the thing that makes it look easy
+ is surprising, I would say.
+ Unfortunately, perception is not perfect.
+ So if I think about the role of my perception system that's
+ taking, let's say, cameras in perception,
+ even if I'm trying to estimate the state of both
+ the robot and the brick, the way that the perception system
+ makes errors is pretty non-trivial.
+ And you've seen that already.
+ You've seen, for instance, ICP works spectacularly well,
+ and then it doesn't.
+ And it's not that this is a little bit off,
+ but it would just give you complete garbage on one frame
+ if it loses track, for instance.
+ And that's true of many camera-based perception
+ systems.
+ They can often work spectacularly well,
+ but then fail catastrophically.
+ So a lot of our traditional controls,
+ you might try to say that this variable maybe
+ has Gaussian noise on it or something like that.
+ And you could think about this as part of a Kalman filter
+ framework.
+ You know that.
+ But perception systems make very non-Gaussian types of errors.
+ In particular, if you have a linear Gaussian system,
+ if my equations happens to be linear
+ and my noise happened to be Gaussian,
+ those are not linear equations.
+ Those are non-linear equations.
+ And hidden inside there, there's sines and cosines and the like.
+ They're not linear.
+ And the system was Gaussian, then I
+ could say that if x hat was just sort of the expected
+ value of x already, we're in pretty good shape.
+ And maybe I have to also-- I want
+ the variance for linear Gaussian.
+ You don't actually need even the variance.
+ But maybe the variance of x can be a useful thing
+ to estimate, too.
+ And even though those equations are not linear Gaussian,
+ if you're just controlling the robot but not the object,
+ then we saw cases where we could use feedback
+ to make the equations look very linear.
+ And in fact, these linear Gaussian tools
+ that have grown up in control theory
+ work really pretty well for a robot.
+ It's pretty reasonable to think about estimating
+ just the mean of the joint positions and velocities
+ and possibly having a covariance of the joints and joint
+ velocities.
+ But once you add in the brick, all bets are off.
+ Because suddenly you're going-- your only sensors measuring
+ the brick, unless you're in a strangely instrumented
+ environment, are like your cameras, maybe your contact
+ sensors and the like.
+ And those are not sensors that give you sort of nice Gaussian
+ noise properties.
+ And you remember that, right?
+ So we talked about, for instance,
+ when we were talking about perception,
+ the types of uncertainty you might have of a perception.
+ I was going to bring a coffee mug down.
+ I forgot.
+ But if you can see the handle of the mug,
+ then maybe you have pretty small uncertainty.
+ But even if your sensors were perfect
+ and your perception system was doing as best as it possibly
+ could, if the handle of the mug is not visible to you,
+ then you cannot estimate the orientation of the mug
+ with absolute certainty.
+ You have to somehow communicate that I only
+ know the orientation of the mug up to some uncertainty
+ ellipses.
+ Partial observability also causes non-Gaussian uncertainty.
+ How many people know what a POMDP is?
+ A partially observable Markov decision process.
+ If you like POMDPs, you could just say it's a POMDP, right?
+ I'm not advertising this as a path of happiness.
+ So if you don't know what a POMDP is, you're all good.
+ It's useful to-- I mean, I do think
+ the language of POMDPs is very powerful
+ and helps us understand the problem.
+ But I'm not going to give a whole lecture on it right now.
+ OK, right.
+ But more generally, if I think of my system as a POMDP--
+ I'll give you the language.
+ It's a partially observable Markov decision process.
+ It's a fancy way to say that I have a dynamical system that
+ has some stochasticity, and I don't get to see all
+ of the states directly.
+ OK.
+ But for those of you that do know what a POMDP is,
+ I want to connect to that real quick.
+ And I think in general, in the general POMDP case,
+ what we should say is that the output of our perception system
+ should be not just x, but a whole probability
+ distribution over x.
+ And that's the kind of thing that COSNET tries to output,
+ and a lot of perception systems these days will try to output.
+ This would be like a probability distribution or a belief
+ distribution over x.
+ From the mathematics of partially observable Markov
+ decision processes, we know that that is a reasonable answer.
+ That's a complete answer.
+ If I can put out an entire probability distribution,
+ and if I can write a controller that
+ can consume that entire distribution
+ and make good decisions, then we know
+ that is sufficient for making optimal decisions,
+ even in a partially observable setting.
+ But this requirement of outputting
+ an entire probability distribution
+ is a large requirement.
+ And in particular, designing a controller
+ that can reason about that is very hard.
+ OK.
+ It's also sort of interesting that it's not--
+ I'm going to say it, I guess, later.
+ But having a perception system that
+ gives me the complete output of all the possible states
+ of the world is sufficient to make optimal decisions.
+ But over and over and over again,
+ we've seen people write great controllers,
+ like spot opening the door, or I call them the robot whisperers,
+ write incredible controllers that do not
+ use this as an input, but use a much smaller
+ amount of information from the observations as input.
+ So even though this is sufficient to be optimal,
+ it's probably a lot more than you need.
+ And that's an important big theme.
+ So this is a mathematically powerful tool chain,
+ but it's probably more than we really need or want.
+ I would say, though, that even the POMDP language,
+ as I've written it there, can be insufficient for the manipulation
+ problem, because it made one particular-- there's
+ one place where it has a weakness.
+ Everything is a POMDP, I give you that.
+ But it's a POMDP in some state space.
+ And if I've chosen some representation of my state, x,
+ and written a probability distribution over x,
+ I may or may not have gotten the right state.
+ So even P of x might not capture the true state.
+ and this is a-- I actually mean this
+ in a deep and important way.
+ I'm not trying to be flippant about it.
+ I think most of the control theory that we've done
+ or sort of in life is assumed that we know at least what
+ the state representation is.
+ That you know that, for instance, the joint angles
+ of my robot, the joint velocities of my robot,
+ the quaternion plus translation that specifies
+ the pose of the brick plus its spatial velocities,
+ that that is the right state.
+ And if I write a distribution over state,
+ then I can solve that.
+ Then I've somehow solved the problem.
+ But that broke down when we started
+ thinking about category level manipulation.
+ As soon as you say you have uncertainty
+ about the geometry of the object,
+ then again, suddenly, where does the uncertainty
+ about the geometry fit in x if I just
+ had x being the positions and velocities?
+ So x somehow needs to encode uncertainty about geometry.
+ [WRITING ON BOARD]
+ Maybe even uncertainty about the mass.
+ Not for that particular type of task.
+ You didn't need to know the mass.
+ You just needed to know the geometry, really.
+ But certainly there is tasks like the force control tasks
+ we talked about where the mass estimates are
+ important and the like.
+ And this is, I think, maybe one of the biggest things
+ that we've done.
+ We've railroaded ourselves a little bit
+ in the sort of classic control.
+ For robots, we say, OK, we're going
+ to estimate a distribution over the possible joint positions
+ and velocities, world positions and velocities.
+ And we haven't sort of naturally encoded geometry and mass
+ uncertainty and the like.
+ So people are really excited these days about,
+ let's say, well, maybe I've got an implicit representation
+ of geometry.
+ And maybe if I have a nerf or a sine distance function
+ or something like this, and I can
+ use that in my state representation,
+ then I can somehow write controllers
+ that work for many geometries.
+ And that's a huge, big topic that's hugely important.
+ But even that can fail.
+ So even if I had a beautiful way to write x with positions,
+ velocities of the robot, and the brick,
+ and then I have the geometry included and the mass included,
+ there's still-- I have only a handful of examples
+ that I always use.
+ But now, what if I'm just doing this?
+ OK, I could write positions and velocities of all the pieces,
+ but the number of pieces is breaking.
+ And the contact mechanics, that's hard stuff.
+ That's kind of like, if I start writing that down and asking
+ about the dynamics, how they evolve,
+ and the state space evolves and stuff,
+ that just kind of breaks down.
+ The way we would write that control problem breaks down.
+ Makes my multi-body head explode.
+ This one does too, right?
+ I mean, if I want to do--
+ I consider this like a pinnacle of manipulation.
+ We all do it a couple times a day.
+ But that's incredible.
+ But what is the state of the shoelace?
+ Yes?
+ Do you have the answer?
+ That would be amazing.
+ I'm sorry, Rob.
+ [INAUDIBLE]
+ OK, great.
+ Awesome.
+ So let me come back to that.
+ I'll just do my three things, then I'll
+ come back and try to answer that.
+ So when you get to deformable objects,
+ then suddenly the state representation question
+ gets really rich again too.
+ So we use methods from finite elements and stuff.
+ There's ways to represent the state in order
+ to simulate it, of course.
+ But is that the right state to build a controller?
+ I always talk about spreading peanut butter on toast.
+ There's a few of them I feel I kind of capture
+ most of the things.
+ What is the state of the peanut butter?
+ That's ridiculous, right?
+ But that task should be very easy.
+ The way we've typically written down feedback control
+ makes it seem extremely hard.
+ And people clearly have these strategies
+ where you can kind of feel when the peanut butter clumps up.
+ And there's a lot of, I think, tactile feedback
+ in there, visual feedback that's happening.
+ Probably there's not a finite element or granular media
+ model of the peanut butter in my head.
+ And the last one I always talk about is buttoning my shirt.
+ So this is a how-to button your shirt.
+ But if you think about what is required for control,
+ we button our shirts all the time.
+ But probably the first step of buttoning my shirt
+ should not be to completely estimate
+ the entire state of my shirt.
+ I have probably a very nice local policy
+ that works with feedback on my fingers or whatever.
+ It's not very visual, I don't think.
+ OK, so there's something that the mature view of control
+ isn't doing.
+ And that's what I want to talk about today.
+ So Robby, to your question, why is it-- did I say it's a POMDP
+ instead of an MDP?
+ I think there are versions of the manipulation problem
+ that-- and maybe when I put the red brick with cameras
+ all around, I think an MDP would probably
+ describe that very well.
+ But if I were to take my coffee mug and occlude it,
+ put it behind here, then suddenly
+ partial observability has a very physical manifestation.
+ And it happens all the time in manipulation.
+ If I have a hand and I go to pick something up,
+ the hand almost always occludes my head-mounted sensors.
+ It's really annoying.
+ It's like the time where you want the information the most,
+ you've occluded yourself.
+ And so people say, oh, I'll put a camera on my hand.
+ But then cameras get blind when you put them
+ too close to an object.
+ So partial observability, even if the world
+ didn't start with occlusions and the like,
+ it's a real problem in manipulation.
+ So I think POMDP is the more general framework for that.
+ Thank you for asking.
+ It's good.
+ OK, so maybe you get my point.
+ It's a hard control problem, even
+ if you knew the state space.
+ You probably have to think about uncertainty
+ over that state space.
+ And guess what?
+ We don't know the state space.
+ It's a lot of interesting problems.
+ And even trying to know the state space
+ seems like a tall ask.
+ OK, so what do we do about it?
+ The hope is that some of these tools for machine learning
+ are going to help out.
+ And they've done incredible things
+ over the last few years.
+ And they've kind of come in from the other end.
+ So this is maybe coming from the multibody equations
+ up and adding all the complexity.
+ And there's another set of tools that have come from--
+ let's start with just images and start working back
+ towards control.
+ And I would say the field is kind of working this way
+ and working this way.
+ And we haven't quite met in the middle yet.
+ But I'm optimistic.
+ We're pointing at each other and coming more and more together.
+ So if I'm going to do machine learning for it,
+ what's the machine learning problem that I need to solve?
+ So if I think about the multibody case again,
+ let's just distinguish a couple of the different control
+ approaches.
+ So if I have my plant here, I'll do it
+ in block diagram language.
+ And I have y here.
+ These are my cameras, for instance, my sensors.
+ More generally, cameras.
+ The way I've always talked about this
+ is that I have some internal state inside my system.
+ You have some inputs.
+ You have some outputs.
+ That's exactly what Drake makes you say.
+ I've got some state dynamics.
+ I've got an output.
+ I've got an input.
+ The output of the, let's say, the manipulation station
+ is like the cameras.
+ And you typically don't have direct access to x.
+ And that's what I'm doing with my perception system.
+ And maybe I'm outputting something like x hat.
+ This is my planning and control.
+ But I'll just write control for now.
+ That goes to u and around.
+ So I would call this state estimation
+ plus full state feedback architecture,
+ where this is my state estimate and this is my full state
+ feedback here, which takes x hat as an input.
+ The POMDP belief space planning in the language
+ of the diagrams here is a superset of that.
+ But if I think about my perception
+ outputting an entire probability distribution over x,
+ then I have to write some controller that
+ knows how to take that, do something more than just assume
+ I have x given to me, but I've got an entire distribution
+ over x.
+ This is what I get in my sort of POMDP belief space
+ architecture.
+ Belief space is just another name
+ for my estimate over x, my probability distribution.
+ And in both of these settings, the perception system
+ maybe could be a Bayes filter, if you know about filters.
+ Or a Kalman filter is a simple version of a Bayes filter,
+ just to connect those words, if those are
+ something you've thought about.
+ But like I said, this is more than you need for control.
+ And I remind us of the controller
+ that was written for this is extremely robust.
+ It sort of has a sense that someone could push me
+ with a hockey stick implicitly.
+ And it's an incredibly good controller.
+ I don't know that it's optimal in any way,
+ but it's highly functional.
+ And it is not trying to estimate a full belief
+ over the possible environments.
+ It's not trying to estimate with high accuracy
+ the angle of the door handle or the door.
+ Using a much smaller summary, Andy and colleagues--
+ I know it's very distracting-- wrote a beautiful controller
+ that used the sensors more directly.
+ They didn't try to estimate the full state of the world.
+ And it works really well.
+ So there's some sense, I think, which
+ is that that picture makes the problem look too hard.
+ So the way we want to think about it today,
+ to sort of launch into our further discussion
+ about control, is to go to the other extreme
+ and appreciate that there's another extreme here, which
+ is, what if I just take my plant--
+ I have my observations coming out y--
+ and I'm going to go directly from y to u,
+ even if these are cameras.
+ And I'll call this output feedback.
+ It's not my name.
+ It's an output feedback control, as opposed to the state
+ feedback control.
+ When y are pixels, or camera images, let's say, u are torques.
+ People like to call it pixels to torques.
+ It's a really funny-- a lot of people say pixels to torques.
+ Some people say it like, it's awesome, pixels to torques.
+ And some people are like, pixels to torques
+ would be the thing no one should ever do.
+ So it's a highly volatile term.
+ But pixels to torques for self-driving
+ sounds kind of scary.
+ But it's a very powerful possible framework.
+ And in particular, if this is a kind of a high rate--
+ if this controller updates frequently,
+ then I would also call it a visual motor policy.
+ In the manipulation space, we'll call these visual motor
+ policies.
+ And that's kind of a weird caveat
+ that I'm putting in there.
+ But I just want to distinguish it from--
+ you could make a diagram that looks a little bit like that,
+ that would be a little bit more of a sense, plan, act,
+ classical architecture.
+ And the type of policies I want to think about today
+ are ones that are looking at the camera all the time
+ and constantly making decisions.
+ [WRITING ON BOARD]
+ So this, of course, should just encompass those.
+ I could take both of those, write a diagram around it,
+ and call it an output feedback.
+ And that's true.
+ But I think this version of the picture
+ opens up the door to different architectures that
+ don't impose that structure.
+ So that's the big question is, what
+ is the right architecture for that kind of-- how should we
+ write that down?
+ How should we describe that output feedback policy?
+ And then how do we find its parameters?
+ Once we choose a class of possible output feedback
+ policies, how do we find those parameters?
+ Is that setup clear?
+ [WRITING ON BOARD]
+ The exciting thing, of course, would
+ be if we can go from y to u without ever having
+ to pick an x.
+ As soon as a human picks an x to represent
+ our intermediate computation in, we've
+ assumed something about the state,
+ and it's not going to spread peanut butter and toast.
+ And that-- I don't actually like peanut butter and toast.
+ But there's something similar to that
+ that I would like a robot to do.
+ OK, here's my opening bid.
+ What if we just say I want my output
+ to be a direct mapping from-- whoops.
+ You could have told me.
+ How about that?
+ A direct mapping from camera images, let's say,
+ directly to torques.
+ And that seems like the architectures
+ that know how to take camera images as input
+ tend to be neural.
+ So I'll go ahead and say that's a neural network.
+ Probably a deep net, convolutional,
+ or whatever architecture you like.
+ OK.
+ This architecture, if we were to just write
+ a function of a feedforward network that
+ goes from an image in to a control torque out,
+ the control theorists would call that a static output feedback.
+ [WRITING ON BOARD]
+ Like for a linear system, it would
+ look like instead of negative kx,
+ if you thought about this, it's something
+ that looks like this.
+ Would be a direct linear mapping from observations to inputs.
+ And it turns out, although control theory
+ knows a lot about the static output feedback problem,
+ most of what they know is that it's hard.
+ That even finding this for a linear optimal control problem,
+ finding that k is actually an NP-hard problem.
+ So that's not a good sign.
+ But there is a lot known about it.
+ But let's ignore for a minute the fact
+ that maybe finding the optimal parameters are hard.
+ We'll come back to that.
+ But let's just say, what is this class of policies
+ capable of doing?
+ Let's say I had an oracle that would just tell me,
+ these are the weights that are the best
+ controller in this class.
+ You've chosen a number of layers,
+ a number of activation units, and stuff like that.
+ And then I'm just going to tell you what the weights
+ and biases should be.
+ The best possible.
+ What can that do?
+ And what can't it do?
+ What can it do?
+ What can't it do?
+ [INAUDIBLE]
+ It can't deal with occlusion.
+ So if you had a frame that-- if you said,
+ reach for the red brick, and I put the red brick, let's say,
+ behind my laptop screen, then that
+ would be uncertainty or something,
+ control through contact.
+ If I had the red brick behind my laptop screen,
+ I said, go ahead and pick it up, then that kind of controller
+ doesn't have any mechanism to sort of reason about what
+ should it do to pick that up.
+ If you were to watch me take the red brick
+ and put it down there, then you would
+ know there's a red brick there.
+ But if your controller is only able to look
+ at the most recent image in order to make its decisions,
+ it doesn't have that power that you have.
+ It has no memory, no history.
+ So despite the incredible power of deep networks,
+ a deep network-- there's a bunch of things
+ that this isn't going to be able to do.
+ Occlusions is a good one.
+ What's another one?
+ Even if there's no occlusions, there's
+ some things this can't do.
+ Let's say, why is an image?
+ Almost all of you are throwing things, or catching things,
+ or smashing things.
+ You can't get mass.
+ So that's right.
+ I mean, so really, any dynamics.
+ So you could argue that you could get a mass
+ from a statics point of view.
+ You could know from a static equilibrium type analysis
+ something about mass.
+ But you can't know velocity, for instance.
+ So if I show you a single frame of a ball,
+ and I show you another frame of a ball,
+ and you're only thinking about that,
+ the fact that it's coming towards me or away from me
+ is completely-- I'm oblivious.
+ Yes?
+ [INAUDIBLE]
+ Perfect, yes.
+ So there's a natural-- that's a great question.
+ So Jenny says, what if I have a history?
+ So this would be my second bid.
+ Would be, what if I said that u at time n
+ is a function of the image at time n,
+ but maybe a image at time n minus 1, maybe some n minus m,
+ or something like that?
+ So that you could do.
+ You could even also do some occlusions.
+ Although, if I take the red brick, and I show it to you,
+ and I put it behind here, you better
+ pick it up in less than m steps.
+ Otherwise, you're going to forget.
+ So but certainly, 2 should be enough,
+ depending on how noisy things are, to estimate a velocity.
+ And more than 2 maybe would allow
+ you to estimate a velocity more robustly,
+ because you'd have enough to estimate covariances
+ and the like.
+ OK.
+ So this is great.
+ So this is also something that we
+ know a lot about from more general systems theory.
+ This would be a finite impulse response model.
+ There's different names for it, but if it was a linear system,
+ it would be a finite impulse response model, FIR.
+ People remember FIR filters and the like from-- you
+ take signals and systems?
+ Yeah?
+ Right, you could call it a moving average filter,
+ or something like that.
+ OK?
+ And we know what it can do and what it can't do.
+ In particular, it's got a finite impulse.
+ It won't remember things more than capital M,
+ and you have to make an M. When Y is an image,
+ that could get expensive if M gets too big.
+ So for long horizon tasks, this might not be a good choice.
+ But for short horizon tasks, it's a perfectly good way
+ to take and give some limited form of memory
+ to a neural network, feedforward neural network
+ architecture.
+ But I also really like this, because even though you might
+ not think of it this way, when I start thinking about it
+ this way-- and maybe not if I called it a neural network
+ with an image in and whatever-- but when I write it this way,
+ and I think of it as an impulse response filter,
+ then you realize that this is actually just an opening--
+ even this one is true.
+ This is a dynamical system.
+ What I want you to start thinking about
+ is that the control policy should
+ be a dynamical system, right?
+ It's a dynamical system that takes
+ a time series of Y's in, outputs a time series of U's.
+ And U equals pi of Y is one form.
+ This is another form.
+ But more generally, you could make an IR filter,
+ an infinite impulse response filter.
+ You can do a state space model.
+ And that's exactly what's happening in the neural network
+ world too.
+ And I just want to make sure you see it that way.
+ Because we know a lot about what each of those models
+ can and can't do.
+ And sometimes that gets a little bit
+ hidden in the weights of the neural network, for instance.
+ So you could do an IIR filter, like a simple change that's
+ an infinite impulse response filter.
+ Or more generally, be called an autoregressive moving
+ average with exogenous inputs.
+ Oh my god, I'm not going to write that.
+ But RMAX, people say, that's like a cool thing
+ to say at parties, right?
+ This would be like an RMAX system
+ that would say, if I wanted to say that U of n--
+ if you want something to have an infinite impulse response,
+ you want it to have arbitrary history.
+ It turns out you don't have to do much more than that.
+ Jenny's proposal was good.
+ And I can just change it just a little bit.
+ And maybe she even meant this.
+ But if I also put in U of n minus 1,
+ and then Y of n minus 1, U of n minus 2,
+ if I just cycle back my outputs, then that system--
+ it depends, of course, on the weights, whatever--
+ that system can have an infinite impulse response.
+ That's a neural architecture you could pick
+ that would have more representational power
+ than that, from finite to infinite.
+ And the linear systems equivalent of that
+ is super well understood.
+ More generally, you could write a state space model.
+ [WRITING ON BOARD]
+ Where you could say that U of neural network is--
+ let me call it that U of n is a function of X of n.
+ And X of pi n plus 1 is some other function of pi n
+ with Y coming in.
+ I could have a neural network that has an internal state.
+ And I could allow that state to evolve
+ with another neural network, for instance.
+ And then I could just have my output
+ be a function of that state.
+ That would be a state space model.
+ Linear state space models are AX plus BU stuff, standard fair.
+ And that's just what a recurrent neural network is doing.
+ For instance, if you know what LSTMs are,
+ long short-term memory.
+ Yeah?
+ That's just another representation
+ of a dynamical system.
+ And it has representational power.
+ It similarly has infinite impulse responses.
+ And it can have a long history.
+ That's most notable here is if I compare this versus this,
+ this has the representational power
+ to remember things for arbitrary durations.
+ So if I take that red brick and I put it behind my laptop,
+ then you could just say, I'm going to devote one of the Xs
+ to remember that guy put a red brick behind the laptop.
+ And a year later, you come back and say,
+ I remember where that red brick is.
+ Because you've given yourself that power of memory.
+ This is a scratch pad for memory.
+ And it can evolve in beautiful continuous equations.
+ It can be a less beautiful neural network,
+ but still exceptionally powerful.
+ But those are standard things.
+ The Kalman filter state estimation
+ that I talked about here fits into this model.
+ If I said that x hat, I'd call it x pi here.
+ That is certainly similar.
+ But it's way cooler if x pi doesn't have any presupposition
+ that x pi should be an estimate of the original state.
+ If no human said what x hat is, but the learning system
+ decided to use x however it needed
+ to reproduce the input/output of the system.
+ So this suddenly, if we ask how do you
+ find the parameters of this input/output system,
+ whether it's static, FIR, IIR, or state space,
+ then that becomes a second question.
+ And a good answer to this would be one
+ where you don't have to say what x hat is, or what x pi is.
+ OK?
+ The simplest form of this would be an imitation learning form.
+ OK?
+ In particular, I would say imitation learning,
+ broadly speaking, slightly oversimplification.
+ But I'd say there's two big classes of imitation learning.
+ One is inverse optimal control.
+ And that's not what I'm going to talk about now.
+ But I don't want to pretend that I'm talking about all of-- oops.
+ That was pretty funny.
+ Revealed my biases, I guess.
+ [LAUGHS]
+ And the other one I'll call behavior cloning.
+ OK?
+ Just to say that-- I mean, imitation learning also
+ is called learning from demonstrations.
+ There's a bunch of buzzwords, but they're all the same thing.
+ Roughly.
+ Sometimes you'll just see LFB.
+ OK?
+ But let's think about the behavior cloning
+ version of the problem.
+ Behavior cloning is actually an old idea that-- I went back
+ and looked where it started.
+ I found '95.
+ You know, it's an old idea.
+ It's cool now.
+ But it's an old idea of a 1995 paper, just behavior cloning.
+ And really, this is a simple approach where you say,
+ I'm going to treat control design as basically
+ a system identification or a simple supervised learning
+ problem.
+,
+ So if I have a human, let's say, that's
+ trying to control my system, and I have a policy here
+ that I'm trying to fit.
+ It's a dynamic output feedback policy.
+ If I watch the human operate the task,
+ and I record the y's and the u's,
+ you know, the actions that the human took
+ and the observations that they had available,
+ then I can try to do supervised learning to make
+ the policy do the same thing.
+ When it's a recurrent network policy,
+ it's a slightly more interesting supervised learning problem,
+ but we know a lot about how to train recurrent networks
+ for sequence learning like this.
+ So I don't think many people would
+ say this is a final answer, but this is a really interesting
+ way to start looking at the problem.
+ And in particular, I think it lets us sort out
+ a lot of the architectural questions of how should we
+ represent our policy?
+ How valuable is it to use cameras at 10 hertz
+ versus 1/10 of a hertz?
+ Yeah, every 10 seconds, right?
+ And asks a lot of those questions.
+ But a natural question for this, before I
+ get into the details of how we do that,
+ is how do you even get that input, right?
+ So for robots and mobile manipulation and manipulation,
+ as deep learning started getting good,
+ people started coming up with more and more clever ways
+ to capture humans doing the task where
+ you didn't want to watch-- if I watched a human doing this,
+ like on YouTube, if I want to watch a human rolling dough,
+ that is a hard problem still to map from a human's control
+ torques and a human's real observations
+ into a robot actions.
+ It's much easier if you can get a human to operate the robot.
+ And then you watch directly the torques
+ that are being applied from the human's controller.
+ And maybe if you give the human exactly the inputs
+ that the robot's getting, then now you
+ have exactly the input/output data that goes to the human.
+ And you can try to just turn that into a supervised learning
+ problem.
+ The people have been making cooler and cooler versions
+ of this.
+ How many people know that the X-Prize, the Avatar X-Prize
+ happened this weekend?
+ Yeah?
+ Right?
+ How cool is that?
+ So just this weekend-- so the X-Prize
+ is like they make these grand challenges about improving
+ the world.
+ And they picked a robot example this year.
+ And it just happened on Friday and Saturday.
+ I won't play the whole thing.
+ But it happens that the way it worked
+ was they had roboticists that were the judges.
+ This is my friend Jerry Pratt, who's driving.
+ This is the winning company.
+ He was the best driver, apparently,
+ and had the system that won by Sven Benke and company.
+ [VIDEO PLAYBACK]
+ - --and will involve a lot of operator skills to complete.
+ - OK, so there's this whole mock setup
+ where he had to drive up.
+ He was only given even the context of the task
+ by talking to somebody who told him
+ what the rules of the game were.
+ He says, you're going to have to go over here.
+ You're going to have to pick up the cylinder.
+ And only one of the cylinders is heavy
+ and should be placed on this other spot.
+ So you have to actually use your force feedback
+ through the avatar in order to know how to complete the task.
+ There was another one, he says, where
+ you're going to pick up some moon rocks or something.
+ And one of them has a particular texture.
+ And you have to put the one with a particular texture over here.
+ And there was a series of pretty complicated things.
+ And-- I'll forward a bit.
+ He talked for a long time, I guess.
+ - If you haven't noticed, it's pretty quick on the commute.
+ That was the HOV lane.
+ So they've got right through--
+ - I'll try to turn that guy off.
+ Yeah.
+ Yeah, so this is the one where he had to pick up something
+ that was a particular weight.
+ And he's strapped into a series of-- that was too light,
+ so he threw it away.
+ OK.
+ Now he picks up the next one.
+ But he's driving-- these are actually just two panda robots
+ that are in kind of like gravity comp mode.
+ So they can be used like this, like a teach mode.
+ And he's got an exoskeleton hand.
+ And he's driving this thing around and doing
+ super complicated tasks, right, with force feedback,
+ haptic feedback.
+ And he completed the entire course.
+ I don't think they were sure that anybody
+ was going to complete the entire course.
+ But he did, and they did, and they did extremely well.
+ So you should go back and watch the long version of that.
+ One of them that I really like, there
+ was actually an entry by Northeastern that came in third.
+ That-- Northeastern, just across the river.
+ They had this awesome setup with a dexterous hand here.
+ And this is in their lab, but they did very well
+ in the competition too.
+ Similar things.
+ Pick up the heavy thermos.
+ He's able to do all kinds of stuff.
+ He like shakes hands.
+ OK, he shakes hands.
+ And off to the side, this is what it looks like, right?
+ He's seeing through the robot eyes
+ and wearing this cool exoskeleton.
+ [INAUDIBLE]
+ It's awesome, right?
+ I want one of those in my lab.
+ They're super cool.
+ If we have time at the end, I'll show you my version.
+ Not as cool, but you can use it on DeepNote.
+ It's a crowdsourced teleoperation,
+ which is a thing, by the way.
+ People have started companies saying,
+ we're just going to crowdsource tele-op
+ and learn how to control your factories, for instance.
+ I think that's a super interesting business model.
+ OK, so let me tell you a little bit
+ about maybe how you would architect that visual motor
+ policy and how you do some of this behavior cloning.
+ So there's a kind of a canonical architecture for these things.
+ You tend to have two components.
+ You have your image coming in, and you
+ have some big, deep network, like a ResNet, whatever,
+ something that's trained on ImageNet,
+ pre-trained on ImageNet, for instance,
+ and is good at going from pixels through millions of units
+ into some other representation.
+ And there's a lot of different choices
+ for how you pick the output representation.
+ We've talked a bit about the rise
+ of self-supervised learning as a way
+ to maybe train a feature representation z.
+ You could just look at objects from two different angles
+ and label them to be the same.
+ And somehow, that can self-supervise a network
+ to represent something important about the scene.
+ But your choice of z, that's where
+ all the interesting work is.
+ People are asking, what is the right z for manipulation?
+ But it's interesting that because
+ of the computational burden of training a perception system
+ and because of the wealth of just purely perceptual training
+ data, people typically separate out
+ that massive perception system from a relatively much smaller
+ policy representation.
+ So the neural network that goes from z
+ and maybe my joint encoders of my robot into my torques
+ tends to be like a three-layer network with 255 units.
+ So I kind of joke when people talk about deep reinforcement
+ learning or whatever, but then they only use three layers.
+ It drives me crazy.
+ But that's a very standard architecture.
+ In fact, I would say--
+ I've talked to people, and I said,
+ how many hidden layers do you use?
+ How big is your-- what's your architecture or whatever?
+ And they're like, well, jeez, we started using three layers
+ and 255 units like six years ago, and we never changed it.
+ It's just kind of baked in.
+ All the papers use exactly the same architecture.
+ OK, that is the architecture that did the kind of stuff
+ I showed you early on.
+ This was an imitation learning pipeline
+ that made super rich visual motor policies for doing things
+ like putting hats on a rack, picking up the plates,
+ switching sugar boxes, or whatever.
+ And compared to the previous-- this
+ was the first one we had done.
+ Other people had been doing visual motor stuff,
+ but this is the one that really convinced me.
+ I had to do it ourselves, right?
+ But the robustness that you get out of a demo like that,
+ compared to things that are estimating
+ the location of the sugar box, which tends to happen only
+ when you don't have conclusions, and then maybe you
+ make a long-term plan and you execute,
+ this is using high-rate feedback from the cameras,
+ trained with imitation learning, which everybody, I would say,
+ thinks that's an initial startup thing, but not a-- well,
+ some people would say it's a long-term answer.
+ But when you're in the lab and you're pushing the shoe
+ and it's pushing back, and it's so compelling.
+ It is so much more compelling than the things we've done
+ before, right?
+ Where if someone came up and moved the shoe,
+ the robot would be like, still pick up
+ where the shoe used to be.
+ And then it would go through the entire task
+ and drop off the shoe.
+ And everybody's there like, the shoe is still on the table.
+ The airball robot videos are less with this.
+ Less.
+ Yes?
+ Why is it that everyone is using such small networks,
+ whether it's simple science?
+ They seem to be enough.
+ So the question was, why are people
+ using such small networks?
+ So I think in reinforcement learning,
+ that was a choice made early in reinforcement learning.
+ And I think the computational cost of getting enough samples
+ to train a bigger policy network might be significant.
+ So I think if you can get away with a small network--
+ and people have now seen that those small networks are
+ very capable.
+ So there hasn't been a huge push to make them bigger.
+ I think a lot of the heavy work is coming
+ from the perceptual side.
+ I think even in this imitation learning setting,
+ we're often in a setting where we
+ have large corpus of visual data.
+ And relatively, you want to minimize the number
+ of demonstrations required.
+ So having less expressive power in the policy
+ can be seen as an advantage.
+ Yeah?
+ Is there any difficulties in getting enough imitation data
+ to sample the full spectrums?
+ Yes.
+ But if they go--
+ I'm imagining it seems too good, maybe,
+ and doesn't get them the same interest value.
+ That's a great question.
+ So yeah.
+ So the question is, how do your demonstrations get coverage?
+ There's two aspects of that, I would say.
+ You want-- and I'll maybe even cover it a little bit
+ at the end.
+ But having a good enough demonstrator
+ is important, because if someone is a little bit random
+ and they take--
+ from the same image, they take two different actions,
+ then that is annoying.
+ It's not described as a function.
+ You have to learn multimodal representations and things
+ like that.
+ And that's a real problem.
+ The other question that you're talking about
+ is, if the human is only demonstrating
+ the sunny day behavior, then--
+ there's a very famous paper about this called Dagger,
+ which they made the point on a Mario Kart driving game.
+ But you're driving along in Mario Kart.
+ You're training.
+ It's by Drew Bagnell and Ross and a few other people.
+ Yeah, if you drive along and you only
+ see examples of the Mario Kart staying
+ in the middle of the road, and then as soon as you go,
+ your training data was just a little bit--
+ you didn't fit perfectly.
+ You slightly-- or you find a new situation.
+ You're a little bit off the side of the road,
+ and you never saw data when you're
+ driving off the side of the road.
+ And it just goes, whoosh, right off the end.
+ And so the Dagger strategy, an older strategy
+ of teacher forcing, would be that you tend to not only
+ collect demonstrations, stop.
+ You would collect demonstrations,
+ fit an initial policy, and then allow the demonstrator
+ to try to correct the policy and have
+ a blended control for a little bit,
+ and then eventually let go.
+ So you allow the policy to make some mistakes.
+ The human now has corrective actions.
+ That's one of many several answers
+ to this sort of trying to get coverage
+ of the relevant distribution.
+ And that's a response to not trying
+ to cover every state, because that would be a hard problem.
+ Great question.
+ [INAUDIBLE]
+ So in that particular work, we used the dense correspondences
+ I told you about before as our Z.
+ So we would actually train dense descriptors,
+ like you did in your problem set.
+ And then we would identify a few not key points,
+ not labeled semantic key points, but just picked
+ a few random points in the color space, in D,
+ and then turn them into XYZ with our correspondence function.
+ We would use that for our lower level.
+ And that turned out to be, I think--
+ we tried to analyze against the other alternatives,
+ and it generated robust controllers
+ and lots of-- at a category level.
+ This is what it looked like.
+ So Pete had a mouse teleop at the time.
+ He was really good at it, actually.
+ But we did a couple different versions of it.
+ But on the order of 50 to 100 demonstrations,
+ Pete would just do in lab, flip a lot of shoes.
+ It was actually super useful, if anybody's
+ thinking about imitation learning for their project
+ or anything, to just set up the entire imitation learnings
+ pipeline in simulation, where it wasn't demanding
+ human users' input at all.
+ He wrote a simple controller in simulation
+ that used the full state feedback.
+ And then he just tried to clone that.
+ And make sure that that all worked.
+ And then you had unlimited demonstrations
+ for free, basically.
+ And you just tried to make sure that you
+ could capture the task.
+ It was using a recurrent network.
+ It needed a recurrent network for some of these tasks.
+ Although, even tasks where we felt
+ like technically a static feedback controller
+ would have worked well, we still saw better performance
+ from a recurrent network.
+ And this is sort of, Karamek, to your question,
+ is the generalization power of this.
+ So machine learning folks will talk about generalization
+ versus extrapolation.
+ There's absolutely no claims here of extrapolation.
+ So generalization would be kind of,
+ you're interpolating within the data set that you've seen.
+ And extrapolation would be, you're
+ able to do something beyond what you've seen in the data set.
+ And very much, the sort of every way
+ we could think of to make a two-dimensional plot,
+ you could kind of make the convex hull of the training
+ data.
+ And the robot worked really well when it was in the convex hull
+ and not so well when it was outside the convex hull.
+ And these demonstrations, I think
+ they were so compelling in lab.
+ And this is how we do dough rolling, for instance, at TRI.
+ And these are places where, again, a few years ago,
+ I wouldn't have even had an answer
+ to the question of, what's the state representation for dough?
+ How would I write a feedback controller for dough?
+ Or for noodles?
+ We haven't done peanut butter yet,
+ but we did do sauce spreading.
+ Again, this is kind of the peanut butter, right?
+ This is apparently how real chefs spread sauce.
+ It looked a little weird to me, but we actually
+ studied some chefs and then did it.
+ This is work by Siu-Wan Feng at TRI.
+ And that's a representational question
+ I wouldn't know how to answer, but we're still
+ getting good controllers out.
+ It's interesting.
+ This just came out the other day, so I put it in.
+ There's an article by one of the leads
+ at Google Brain for robotics.
+ He's talking about the push and pull
+ between reinforcement learning and behavior cloning.
+ And so BC is behavior cloning.
+ And then BC methods started to get good, really good.
+ These are links to all his papers.
+ So good that our best manipulation system today
+ uses mostly BC with a sprinkle of reinforcement learning
+ on top to perform high level action selection.
+ Today, less than 20% of our research investment
+ is on reinforcement learning.
+ It's actually the research runway for BC-based methods
+ feels more robust.
+ That's not what people would have predicted,
+ I think, a year ago.
+ Andy Zhang gave a talk here at MIT.
+ You hosted it, right?
+ He had-- the whole talk was good,
+ but the second slide was just-- captured this so well,
+ the imitation learning.
+ He says, how to make a rock star behavior cloning
+ demo on a real robot.
+ These are the steps.
+ First of all, collect your own expert data.
+ Don't trust anybody else to make it perfect.
+ So this is about multimodal demonstrations
+ and some of the subtleties you just asked about.
+ Avoid no action data.
+ That's a weird thing to say.
+ Try not to have anything in your data set
+ where you're not moving, because your robot will get stuck.
+ That's kind of-- it seems like something's wrong
+ with our formulation.
+ If I accidentally pause in my demonstration data,
+ everything breaks.
+ Still not working?
+ Collect more data, right?
+ Until extrapolation becomes interpolation.
+ And the last one's real, right?
+ It says, train and test on the same day,
+ because your setup might change tomorrow.
+ But given that-- and these, by the way, I linked to the seminar
+ and he's in slides.com, too, so you can even see his slides.
+ Yeah, but that's real, right?
+ So if you follow steps one through four,
+ you can make some of the best robot demos
+ that anybody's seen, right?
+ But it is important to understand its limitations.
+ He also talks about the hunger for data.
+ So some of the simpler demonstrations
+ were in the order 50.
+ He's got some really nice implicit behavior.
+ Someone's doing a project on implicit behavior cloning.
+ Some of my favorite examples of these feedback policies
+ for contact.
+ But that was an order 500 expert demonstrations.
+ And then some of the rich ones where
+ you're picking up and moving berries and stuff
+ was up to 5,000 expert demonstrations.
+ All right, so this is an opening discussion about control.
+ And I think exceptionally cool that you can do--
+ you can get a taste of what good control would look like.
+ We've learned that high rate feedback from cameras,
+ we didn't know how much we were missing it
+ until we saw what it could do.
+ And I think behavior cloning is a short-term path to study it.
+ And it works incredibly well on real robots,
+ given those caveats.
+ I would say, for me, it's a tool to study the problem
+ and come from the other direction
+ as I move up from understanding why underactuated and control
+ through contact and whatever is hard.
+ The misnomer that I don't want you to walk away
+ with this lecture from-- so the possible impression I could
+ give, but I don't want to give-- is that because the problem is
+ hard, you need to use learning.
+ That is one way to do it.
+ If I give you the equations of motion
+ and they're just complicated, there's
+ nothing about that that says you have to use learning.
+ I think the representational power of deep networks
+ is awesome.
+ But it's not clear you have to take samples in order
+ to optimize them.
+ There's many different ways to optimize them.
+ And we'll explore that over the next few weeks.
+ OK, I'm going to call it, but I'm
+ going to show you-- if anybody wants to stick around
+ for a minute, I did try-- in case some of you
+ found it useful for your projects,
+ I made it so you could play with game pads through MeshCat.
+ I'm going to play with a game pad through MeshCat
+ for just a few seconds as we wrap up.
+ All right, I'll actually do the non-manipulation one first,
+ because I think it's fun.
+ OK, this is-- OK, to be honest, I did it first because-- I
+ mean, I love you guys, but my kid
+ wanted to use it for FIRST Robotics.
+ So I was like, oh yeah, I thought hard
+ about the problem she was having.
+ I was like, you should use Drake, which is crazy.
+ That's totally-- but I was like, oh, I can help you,
+ but I'll do it in Drake.
+ OK, so this is a mecanum wheel base, right?
+ And it's simulating with the full physics.
+ So those are just ellipses.
+ The only way that it's applying torque--
+ it's applying torques to motors, doing velocity feedback
+ on the wheels.
+ And the only way it moves through the world
+ is through the contact forces between the mecanum wheels
+ and whatever.
+ And it's fun.
+ It's just fun to do that.
+ And you don't have to install Drake.
+ You just go on DeepNote.
+ And I mean, anybody can write a GameStick controller.
+ The only thing that was a little clever about it
+ is that we did it in JavaScript and plummet back
+ through the web sockets, because the JavaScript is
+ the only thing that you're running on your machine
+ when you're running on DeepNote.
+ So the only thing that could touch the gamepad
+ is the Meshcat browser.
+ Meshcat's listening for the gamepad if you wanted to
+ and allowing you to do that.
+ So then, of course, after I did that, I thought, oh,
+ I should do the manipulation station.
+ And I just added to the back of the-- so
+ if you want to use this for your projects or anything,
+ I made the manipulation station.
+ Teleop have one more version.
+ If you have a gamepad, pretty much any gamepad should work,
+ I think.
+ It's a pretty standard interface.
+ Oops, I forgot to press a button.
+ So you have to opt in with JavaScript.
+ It won't just read your gamepad without doing anything.
+ So you press the button once.
+ OK, here's the standard manipulation station.
+ Now I can drive it around with my gamepad.
+ I was saying, I don't know if it's like the-- there's
+ a bunch of tricks for mapping gamepad robustly
+ to real commands.
+ I've implemented maybe half of them or something.
+ I'm really bad at this.
+ I don't know if it's my brain to the gamepad that's bad
+ or the gamepad to the thing, but it's really hard to do.
+ OK, but I can definitely pick up a red brick.
+ It's not that bad.
+ So you guys could use this and make it better, hopefully.
+ Oh, I missed.
+ [LAUGHTER]
+ Yay.
+ Fun.
+ Not quite as cool as like avatar, but useful maybe.
+ I'm happy to take a couple questions.
+ I have to run today, but otherwise I'll
+ see you guys next week.
+ [BLANK_AUDIO]

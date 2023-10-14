@@ -1,0 +1,1039 @@
+ So it's motion planning week.
+ There's a lot of cool tools in motion planning.
+ I think it's a pretty rich and well-developed subject.
+ We're breaking it up into two pieces.
+ We'll talk about the optimization viewpoint today, and we'll talk about sort of the randomized
+ algorithm sampling-based strategies on Thursday.
+ Let me just start, though, by talking a little bit about projects.
+ We sent a couple of piazza posts about it.
+ So I mean, the basic details-- so thank you for submitting the pre-proposals.
+ I had a blast reading them.
+ I think we all had a blast reading them.
+ Some of you guys are really ambitious and wrote really good proposals.
+ So thank you for that.
+ Please, everybody, do submit again, even if the feedback-- I said this on piazza-- but
+ even if the feedback was like, you're good to go, just submit it again so we have the
+ one canonical place where everybody's full proposals are.
+ And if you do just have to touch up a few things, add a few details for us, then just
+ do it with some sort of track changes so we don't read and have to find exactly what you
+ changed.
+ But I think a lot of them were in very, very good shape.
+ We're going to try to support you through that project.
+ We're going to turn down the p-sets.
+ They're not going to be as heavy now.
+ We'll try to be more in project mode.
+ We'll be available if you want to ask questions.
+ I think certainly on piazza, if you need to reach out to us, please do reach out to us.
+ If you have questions about Drake, you can post on the Drake sites too.
+ Then you'll have even more people to answer questions.
+ Actually, I wanted to make sure that people know something good has happened recently
+ in Drake.
+ You can actually just pip install Drake now, or apt install Drake.
+ That's actually been there for a while.
+ But if you decide that DeepNote isn't quite enough for you to do the full debugging that
+ you need for your project, and you want to do local installs, we can help you through
+ that.
+ I think it's gotten easier depending on exactly what platform you're on.
+ It could be as easy as pip install Drake, which I'm super excited about.
+ That was a long time, a lot of work behind it.
+ But in general, I think there's a couple of different workflows you could decide that
+ works well.
+ I'm more interested to hear if you think DeepNote's exactly the right tool for your
+ group project.
+ That would be really interesting for me to find out.
+ It's kind of built for that.
+ But if you like hitting breakpoints and doing all the things you've got in an IDE on your
+ desktop, then I could see how it's not quite what you want.
+ I'd be very interested to see how you guys decide.
+ Yeah?
+ If you run locally, does Meshcat work the same way?
+ So if you run locally, Meshcat should just work the same way.
+ In fact, you'll see if you look carefully today, you'll just say local host instead
+ of the DeepNote URL.
+ The start Meshcat script checks if you're on DeepNote and does the right thing.
+ So, yeah, Meshcat should work everywhere.
+ Good.
+ Yeah, there's also a bunch of things that -- a few of you got feedback from me, for
+ instance, saying like this thing that you would want could work.
+ We might have to help you through that, like the writing example I put.
+ If some of you wanted to write on paper, there's a lot of things that we kind of have code
+ lying around somewhere to do that in the simulation in Drake, and we can help you.
+ Someone wanted to throw objects that would require aerodynamics, and that's actually
+ not too hard to add in.
+ But I'm trying to now -- for me, I'm in the mode where I'm like, let me figure out what
+ features people most need and try to knock them off, and so please -- if you think there's
+ like something that you really need for your project, you're not sure if it's there or
+ not, that's a really good time to ask me and get that on my list, and I'll try to knock
+ off as many of them as I can.
+ Actually, it was totally random, but a few people were talking about painting or writing
+ or wiping or whatever, and almost by accident, you know, Terry in the lab was writing a paper
+ he submitted last night, and I come in and he was writing -- like the robot was writing
+ in lab last night when he was making this paper and writing this paper.
+ He thought that was a good example for his force control with the soft tactile sensors.
+ And if you've noticed a lot of robotic videos at MIT, always do something where, you know,
+ we've had quadrotors flying at high speeds through obstacles that happen to be shaped
+ like MIT.
+ We've got like, you know, carrots moving around the table that end up looking in piles like
+ MIT, and if you're handwriting, you have to write MIT.
+ But that's actually a pretty cool project.
+ He's got one of these Puno soft bubble grippers showing that he could do force control just
+ by watching the deflection -- by the cameras inside, watching the deflection of the bubbles
+ was sufficient to act like either a stiffness or a force control right at the end effector
+ without using the KUKA's joint torque sensors.
+ So anyways, you know, I think writing is possible.
+ Many of you kind of asked or implied that you'd like to get onto hardware.
+ I think if you are able to show us in simulation and you're far enough along, we do have robots
+ upstairs that I'm willing to try to, you know, let you guys run things.
+ Someone wanted to throw darts on the hardware, that one, and I'm a little afraid of, but,
+ you know, that's maybe paper airplanes are safer.
+ You know, but within reason, you know, if you're not going to break everything, there
+ are robots available.
+ And the idea is that you really, if you're able to run in simulation, it's almost just,
+ you know, pull that one away, put the real robot in and the code works.
+ There's a bunch of setup, but the code should actually mostly work.
+ Okay, any big questions about, you know, projects, how that's going, administrative parts of
+ projects or?
+ Oh yeah, we're going to -- we're trying to figure out -- there's a few of us and a lot
+ of you, so we're trying to figure out exactly how much we could like require a face-to-face
+ check-in because that's, I think, a great way.
+ So we're going to do that at least once, you know, we're aiming for the week of November
+ 15th, which is, you know, before Thanksgiving, you know, enough time for you to get things
+ going from now.
+ So we're going to try to schedule, we'll put a sign up for you guys to sort of fill in
+ and pick a time to sit with us.
+ But we're also going to ask little questions on the P-set just to kind of say, you know,
+ we'd love to see, you know, can you just give us a snapshot showing you've got your simulator
+ working because if you don't have your simulator working, you know, then things start getting,
+ you know, late in the term.
+ So we'll try to guide you with a few of our survey questions on the P-set, but one big
+ check-in.
+ So I think that means you should really reach out if you want to, you know, ask more questions
+ because I think some of you could benefit from talking more.
+ Good.
+ Okay.
+ So let's talk about motion planning.
+ So we've already, you know, we've done the simple version of motion planning where we
+ just designed a handful, hand-designed a handful of end-effector configurations.
+ You know, we called inverse kinematics maybe, or we found some initial way, actually I guess
+ we just took the initial pose of the robot and we just started interpolating with differential
+ IK, right, to get down and to move through them.
+ And that works fairly well, but as the world, remember the theme is that the world is getting
+ more cluttered, more constrained, and we have to think more about both of our perception
+ system but also the plans that come out of our robots.
+ So today we're going to try to embrace the more rich versions of planning trajectories,
+ which is going to be ultimately the goal is to have a trajectory in Q, the joint angles
+ of the robot.
+ Q is a function of T that is going to satisfy a bunch of constraints, avoiding obstacles,
+ reaching to the mug, you know, doing all the, you know, opening the door.
+ Okay.
+ There's a bunch of tools that will be available for that, but actually a lot of it starts
+ with just understanding more deeply the inverse kinematics problem, right.
+ So we've talked about inverse kinematics a few times.
+ We talked about the differential view of inverse kinematics.
+ We've talked about writing optimization problems that would take clutter and try to pull them
+ out of penetration, which in some sense is the simple version of the inverse kinematics
+ problem.
+ But there's a lot more that you can do in this sort of space of writing optimizations
+ to solve inverse kinematics.
+ And if we understand that and understand some of the geometry that we're up against with
+ our solvers, then actually the rest of it follows pretty quickly.
+ The trajectory version of that as an optimization follows pretty quickly.
+ I think a lot of the work here is understanding what you can do and what's hard to do in the
+ kinematics space.
+ Okay.
+ So let me walk over here.
+ So we've talked about it a few different ways, right.
+ We said that in general maybe we have a pose of the gripper, which is some forward kinematics
+ of our joint angles Q. And of course inverse kinematics would be to try to find some form
+ of the inverse map, which may or may not be unique, may or may not have a solution.
+ But if we want a function that takes the pose of the end effector in and returns Q.
+ Now, this is the simple version of it.
+ If we really have just, let's say, one end effector constraint.
+ You'll see why I think of it that way in a second.
+ Then there's opportunities to do a lot of nice work in trying to invert that mapping.
+ In particular, for the standard robot arm, very commonly we have six degree of freedom
+ arms or more common than seven degree of freedom arms.
+ And the standard sort of just like what we have with the KUKA, there's sort of a standard
+ revolute joint up the arm configuration that accounts for a lot of the different arms that
+ you can get out there.
+ Of course, the exact kinematics, the lengths of the links, the positions of the joints
+ are a little bit different.
+ But the kinematic topology is very sort of characteristic across a lot of arms.
+ So people, of course, have for decades spent a lot of time thinking about the right way
+ to solve the inverse kinematics problem.
+ There's a special case of six degree of freedom arms where this, if you have six degree of
+ freedom arms, then Q lives in R6.
+ And we know that there are some parameterizations of pose, row, pitch, yaw, x, y, z that could
+ have six numbers.
+ And so for the special case of six degrees of freedom, we can actually know that there's
+ a finite number of solutions.
+ And we can potentially enumerate them all.
+ And those solutions can be written in essentially closed form.
+ It involves a bunch of trigonometry.
+ It's actually really-- the study of kinematics is the study of polynomials, actually.
+ You might be surprised to hear that, I guess.
+ But we see a lot of like L1 sine theta 1 plus L2 sine theta 1 plus theta 2.
+ So you see a bunch of sines and cosines lying around when you write your kinematics.
+ If I'm writing like the position of my end effector, it might be something like this.
+ So there's a lot of sines and cosines.
+ But you can always do a change of variables that turns those into polynomials.
+ You can change sine into s and the like.
+ And the way maybe to convince you is that really the fundamental idea here is we have
+ rigid bodies.
+ And the rigid body assumption says that the distance between these points is a constant.
+ So P1 minus P2 squared, which is a polynomial in those joints, is some constant.
+ The distance constraint is a polynomial constraint.
+ And in fact, you can write the fact that if there's two joints and they're connected by
+ a revolute joint, then you could write that as an extra constraint saying point P1 on
+ link 2 has to be in the same place as point P2 on link 1.
+ That can be written as a polynomial constraint.
+ So what you end up with when you think about the detailed mathematical solutions of these
+ equations, you end up with actually a list of polynomials.
+ And the study of this is actually in the study of algebraic geometry, typically numerical
+ algebraic geometry, which is the study of basically trying to find the zeros of a bunch
+ of polynomials.
+ And there are serious tools out there for that, both mathematical tools and numerical
+ tools for algebraic geometry.
+ And there's a book that I cite in the notes that I just think is awesome, where they have
+ effectively closed form solutions for these ridiculous complicated serial chains of four
+ bar linkages or Stewart Go platforms, which are the ones that have a bunch of different
+ legs on springs.
+ And they're all crazy kinematics.
+ I actually put one in the slides, I think, here.
+ And this is kind of a four bar linkage.
+ But if you think about the path that the links follow when you rotate the joints, they follow
+ these pretty crazy curves.
+ But those curves, because they are the solution to a set of polynomials, you can actually
+ do numerical algebraic geometry to solve, even design the kinematics of your manipulators.
+ And this was a big aspect of robotics decades ago.
+ It's one of the earlier things that people studied carefully in robotics.
+ It's really interesting to understand those tools, if anybody cares.
+ So I mean, one of the ways that you find-- like the way that this paper finds the zeros
+ for a large set of polynomial equations of high degree is you typically-- you can look
+ at your complicated equations, you can put an upper bound on the total number of roots
+ of the polynomial system.
+ You make the unit circle that has that many zeros around it, which is a trivial polynomial
+ system where you know exactly where the zeros are.
+ And then you basically morph the trivial polynomials into your polynomials with a continuation.
+ Basically just like you say, let's say, my trivial polynomial where I know all the zeros
+ are plus 1 minus alpha times my interesting polynomial.
+ Interesting.
+ OK.
+ And you change alpha from being 1 to being 0.
+ And you watch, you track where all the zeros of the polynomials are.
+ And these are called continuation methods.
+ And there's a whole science of this, I guess.
+ And you end up writing tools that do variable precision arithmetic.
+ Doubles aren't good enough.
+ You have to do however many degrees of precision in order to track zeros that go arbitrarily
+ close together and then split, and they're complex.
+ Anyways, there's a lot to be known about kinematics.
+ There's also, in the specific case of 6 degree of freedom arms and 7 degree of freedom arms,
+ those tools have been bottled up pretty effectively.
+ So you don't actually have to study anything about polynomials.
+ You can just download the software and call IKFast or something and use the benefits of
+ that.
+ And IKFast is a popular open source version of this, which provides the closed form solutions
+ for 6 degree of freedom manipulators.
+ And that works so well that if you have a 7 degree of freedom manipulator, you just
+ sample a bunch in the last link and ask the 6 degree of freedom for a solution.
+ And this is just fast enough because it's closed form that people do that.
+ And if you're a floating base robot, you might sample around it and just use the 6 degree
+ of freedom solution a lot.
+ Sorry, I got a little carried away with my kinematics.
+ But I think there's good stuff to know here.
+ And I cite it, but we're not going to dig into more details than that.
+ But I want you to realize that this is somehow not what I mean when I say inverse kinematics.
+ This is from Q to one end effector constraint.
+ And that is inverse kinematics.
+ But there's a much richer version of the inverse kinematics problem, where if I want to pick
+ up a mug and simultaneously avoid putting my elbow in the table-- and actually, I don't
+ care exactly the pose of my hand relative to the mug.
+ As long as I'm somewhere where my fingers are going to get a good grip on the mug, that's
+ a different specification than having an exact pose constraint.
+ And these non-penetration of my arms into the table, we know a little bit about that.
+ You can write that as a non-penetration constraint.
+ So we're going to generalize this into the optimization-based solutions and get a bigger
+ tool that can solve a lot of problems.
+ It's very analogous to the way we generalized our differential IK to add more and more constraints
+ like velocity limits, acceleration limits.
+ We're going to do the same thing for the actual kinematics, the inverse kinematics problem.
+ And this is a tool that we've used a lot over the years, this philosophy, maybe, that we've
+ used a lot over the years.
+ Even on Atlas, this was a core tool.
+ If you think about Atlas, like in our differential IK, we had this comfortable configuration
+ that was our happy place for Atlas.
+ So the objective was always be as close to this as possible.
+ But then you'd start adding constraints, like I'd like my end effector to be in a certain
+ position.
+ I have joint limits.
+ I have collision avoidance.
+ In Atlas and also in other manipulation, you might need that your hand stays where your
+ cameras can see.
+ That's what the gaze constraints were.
+ It's particularly important on Atlas because the first version of Atlas they gave us, so
+ the cameras could see here and the hands could reach here.
+ You couldn't quite see your hands.
+ It was just like, I don't know.
+ They just didn't think about that part of the problem very much.
+ So you had a kinematic workspace that was a little too small and just barely in the
+ camera.
+ So we spent all of our time trying to make sure we were only doing things where we could
+ see.
+ For a humanoid, you want to make sure that when you're in the solutions, you're not requiring
+ the feet to slide around in order to reach something.
+ So you put your feet stay put.
+ You want your center of mass to be over your support polygon.
+ These are all just constraints that you can put directly on Q.
+ In most cases, they are inequality constraints on Q. And if you can put them all into a solver,
+ then you can solve these big problems potentially.
+ What you'll find out is you can solve these at basically interactive rates.
+ And that's what this video showed.
+ This is real time.
+ That was the plan.
+ But you'll see there's a little interactive marker here.
+ And you'll see Pat just pulling the hand around and adjusting some constraints.
+ And it's just solving in real time.
+ And that was back when computers were slow.
+ All of these things are available.
+ So you should just look that there's a library of these constraints.
+ You can add position constraints, saying I've got a point in frame B should correspond with
+ a point in frame A with lower bounds and upper bounds.
+ We'll use that one in a minute.
+ You can add orientation constraints on two points in two different frames-- or two different
+ frames being at a different orientation relative to each other with some bound on theta.
+ You can add your days constraints, which is really just like this point needs to be inside
+ the cone.
+ The minimum distance constraints are the non-penetration constraints.
+ You can add just a bunch of these different-- there's a rich library of constraints.
+ And that's just wrappers that build up, that call the right queries in multi-body plant
+ and just give you a mathematical program.
+ And then you hit Solve.
+ And it'll solve those problems for you most of the time.
+ It can get stuck.
+ We'll talk about its limitations.
+ So I told you, I think, about the big robot in the little car.
+ So one of the big jokes was that they gave us this huge 400-pound robot.
+ And then they gave us a little Polaris.
+ And they said, the big robot has to drive the little car.
+ So we spent a long time even figuring out how to get the robot into the car.
+ And it turned out the only way it could actually get under the steering column was if it drove
+ from the passenger seat and put its foot across and used its left foot to drive and its left
+ arm.
+ And then it had to get out of the car, which was a real doozy.
+ But we solved all that with this interactive inverse kinematics, where we were dropping
+ on-- you can see multiple pose constraints.
+ And we'd play around.
+ And that's how we worked out.
+ You can see we didn't have a CAD model for the Polaris.
+ But we just took point cloud scans and started working with that.
+ And just as a human, we played with this until we understood what happened.
+ Now, if you watch super closely at what was just happening there, watch the elbow.
+ It was actually pretty good that time.
+ Again, this one you'll see.
+ He was trying to turn the steering wheel there.
+ First of all, the foot's sliding around a little bit, even when he was turning the hand.
+ And even the-- you'll see the elbow kind of jumps a little bit.
+ So we'll write down the optimization.
+ But it's interesting that the solver can solve these really hard problems.
+ But sometimes you haven't specified them well enough.
+ Sometimes it's solving it approximately.
+ So it's not really guaranteed that a small change in your problem will lead to a small
+ change in Q. You can do your best to ask for that.
+ But compared to differential IK, these are more global solutions.
+ But they are not necessarily smooth solutions.
+ So it was very rare that we would go straight from this and immediately send the real-time
+ output of the solver directly to the robot, because the robot might jump around in order
+ to do that.
+ We would tend to filter it and check it before we sent it down.
+ And this is just another example.
+ But the great thing about this is it's really not robot-specific.
+ You could put any different-- this was just 10 minutes of effort.
+ You put in a different robot in, and you could immediately start making trajectories and
+ plans for a very different robot.
+ This was the NASA humanoid.
+ So we're going to try to generalize this with those richer formulations.
+ I want to think about what that solver has to do, because it's going to make you appreciate,
+ I think, the problem we're asking for solutions for.
+ So let me use a toy problem here, which is-- actually, let me do one more thing before
+ I do that.
+ Sorry, Rachel.
+ I actually have all of this coded up so you can play with it, I hope.
+ And you will.
+ So for the EWA in the notebook that I just updated to DeepNote and pushed to DeepNote
+ this morning, you can just do this interactive kinematics.
+ This is it running in my system.
+ I forgot to delete the example I ran before.
+ So basically the same demo.
+ I didn't draw the interactive markers, but I have all the sliders here.
+ So you can do the same thing.
+ You can move your end effector around.
+ It looks a lot like what we did with the kinematic teleop before, but now we're solving the full
+ inverse kinematics problem instead of solving the differential inverse kinematics problem.
+ So that should all just work.
+ Now I want to make that point, though, that this is solving a bigger version of the problem.
+ So let me just throw a obstacle in the middle here.
+ And let's just look at what's happening here.
+ So every time I move a slider, it's making this new inverse kinematics problem.
+ It's adding the position and orientation constraints, just saying the pose is exactly what I'm asking
+ for in the slider.
+ And then it says add minimum distance, basically saying that I'm not in penetration.
+ The links of the robot are not in penetration with that column I just put in front of the
+ robot.
+ And other than that, it's just calling solve, basically.
+ I set the last-- or I set the comfortable q as the initial guess.
+ And I put that q minus q desired-- q nominal as the cost.
+ So it's trying to prefer the sort of default position, but otherwise solve that problem.
+ And now I put it in a position here where it's kind of annoying.
+ There's a column right in front of my robot.
+ Don't do this to your robot.
+ It is annoying.
+ But now if I move this around, it's all good if I go that way.
+ What's going to happen if I go this way?
+ So if I go right in the middle, you'll see IK failure.
+ It's doing its best effort.
+ It's actually trying to do a good job.
+ But it's claiming that it can't satisfy the constraints exactly.
+ But if I keep going, it actually snaps to the other side and proceeds.
+ So that is something you would never have gotten out of the differential IK.
+ It would have gotten stuck there.
+ It would have refused to go to the other side.
+ But this is solving the full inverse kinematics less well.
+ It's a non-convex optimization.
+ It's not guaranteed to succeed.
+ The differential one would find an answer if it existed.
+ But it can solve this bigger version of the problem.
+ There's a very important point I want to make here,
+ which is that you should add the minimal possible constraints.
+ So the philosophy that we have in the group-- so I would say,
+ in general, I would say the philosophy that I would recommend
+ here is keep your cost function simple.
+ So for us, it's almost always minimize q, q minus q nominal
+ squared.
+ So I've got my comfortable position of the EWA.
+ I'm just using this like my joint centering.
+ And then add the least restrictive constraints you can.
+, OK?
+ So like I said, if you're reaching for a mug,
+ you might have-- it might be that you must pick up
+ the mug from exactly this orientation.
+ But rarely is that the case.
+ Typically, you have some freedom in your choice
+ of exactly how to pick up the mug
+ if you can leverage that all the way through your pipeline.
+ Things are going to be better.
+ So let me make that point with another of these examples
+ here, OK?
+ This one is going to-- oh, I forgot to stop this one.
+ This time, it's trying to grasp the cylinder, OK?
+ So I actually stopped.
+ I'm not commanding.
+ If you look at the code here, the pose
+ that I'm sending in from the sliders
+ is now setting the cylinder's position, not the robot's
+ position, not the robot's hand.
+ And then I'm just saying, B, I'm going-- we'll
+ write this on the board in a second here.
+ We're going to constrain the hand relative to the cylinder.
+ But I can tell-- all I care about
+ is that the cylinder is somehow in the hand.
+ I don't care about the orientation
+ of the hand around the cylinder.
+ And I don't even care about where on the cylinder.
+ In this toy example, I don't care where along the cylinder.
+ So I can write much less restrictive constraints
+ if I embrace that extra ambiguity.
+ So if I move the cylinder in x, then the robot's
+ going to do a good job.
+ You see that the orientation is changing in order
+ to satisfy that constraint.
+ If I move it in y, when I get to the end,
+ it's going to chase because it's constrained to stay
+ along the thing in y.
+ But if I move this way, it's happy.
+ There are multiple solutions, so sometimes it jumps.
+ But that's a much less restrictive constraint
+ to add on the end effector.
+ And any time you can express with less constraints
+ the same problem, you win.
+ Your solver is going to have a better chance.
+ You'll be happier with the results.
+ You'll be able to add more other interesting constraints.
+ I am continually impressed, too, by just the collision avoidance
+ capabilities of this.
+ That's the-- it's going to dance around, try to chase.
+ I actually even have a version of this.
+ If you set grasp cylinder to false
+ when you're playing with it, then it's like--
+ just tries to avoid the stick.
+ And you can make it limbo and stuff.
+ But I won't do that here.
+ So how do I-- what are these two constraints
+ that I wrote do?
+ How do you write that version of the constraint?
+ There's many ways to write it.
+ I chose to add it with two position constraints.
+ So how did I do that?
+ So basically, I have the gripper in this frame,
+ where this-- if you remember the gripper's coordinates--
+ sorry, Rachel-- you remember the gripper's coordinates,
+ where it's kind of annoying, but x is the-- it's RGB, right?
+ x, y, z.
+ So if I draw this from the side, then this
+ is going to be my z-coordinate.
+ This is going to be my y-coordinate.
+ And what I want to say is that basically all I care about
+ is that the cylinder is somewhere like this.
+ I chose to say, let's pick a point in the gripper frame.
+ Pick one right here.
+ You'll see the numbers.
+ It's like 0.1 down, 0.02 to the side.
+ And I picked another point in the gripper frame.
+ And I just said both of those points
+ must be exactly on the center line of the cylinder.
+ My claim is that that's a version of that rotation.
+ I basically wanted to say I put a rotation around the center.
+ You know, the middle of the hand can rotate arbitrarily
+ around this.
+ And it also gave me a convenient way
+ to say that those points actually
+ are on the line segment of the cylinder,
+ so it didn't go off the end.
+ Is that picture clear?
+ OK.
+ If I were to look at the gripper from the other dimension,
+ it's saying that those points are right
+ in the middle of the gripper here.
+ There's two of them directly there.
+ They have to be dead center here.
+ So because that's x, y, z, that really just came up
+ as being in the code that the gripper frame--
+ there's a point in the gripper frame, which is down one
+ in y, which is positive y right there.
+ And then I did to the left in z and to the right in z.
+ And both of those have to be somewhere on the cylinder
+ where the x--
+ so the cylinder is--
+ coordinate frame is the long axis of the cylinder is in z.
+ So this is saying that exactly on the center
+ line of the cylinder, exactly on the center line of the cylinder
+ in the x and y, and in z, it's anywhere
+ along the length of the cylinder.
+ That's a really rich way to specify the dynamics.
+ And it's important-- or to the kinematics, I'm sorry.
+ And it's important for things like reaching
+ into tight spaces where you get very, very constrained
+ very fast.
+ Does that example make sense?
+ OK, so let's do something a little bit more fancy.
+ Let's make the robot now--
+ I can even put it up here, I guess.
+ Let's think about the robot reaching into a set of shelves.
+ So I want to think about this problem for a little bit.
+ Now, the reason I want to think about this problem
+ is I had to think for a while about what
+ would be an interesting geometric problem where
+ I could plot everything.
+ So what I did here was I--
+ this is a three-link KUKA.
+ I froze all of the joints that were out of plane.
+ And I just kept the ones that were aligned with this axis.
+ And we're going to only think about--
+ the robot actually can't rotate.
+ This version of the robot can't rotate.
+ So now I've got Q1, Q2, and Q3.
+ And I can make 3D plots for you.
+ And I want to think about what the collision geometry
+ engine and our optimizer is up against.
+ If we just say-- you see, I put a little target inside here.
+ And I said, reach the sphere.
+ Reach into the shelf and reach the sphere.
+ And how do we do that?
+ I want you to appreciate the richness of configuration
+ space.
+ [ Writing on Board ]
+ So the configuration space is the set of queues.
+ In this case, the set of queues that avoid collision, you know, the standard name would
+ be the admissible queues for this robot, which avoid penetration.
+ In this case, it's respect joint limits, avoid collisions.
+ Our optimizer is hunting inside the configuration space of the problem.
+ And it's a potentially very challenging space.
+ So let's just even, for a simpler problem, a two-link I can draw on the board.
+ It's also-- you'll almost always hear us call it C space, short for configuration space.
+ So I'll take a two-link robot, my standard sort of two-link robot, theta 1, theta 2.
+ I'm going to pretend that there's no collision geometries here or here.
+ And I'll just make a sphere collision geometry with radius r at the hand, OK, just because
+ I can do all that on the board here.
+ And I'm going to stick it in sort of like it's reaching into a shelf.
+ But I'll put it between some walls here.
+ So this is length 1, this is length 2.
+ And that was supposed to be right dead between the walls.
+ But you'll humor me and pretend that was symmetric.
+ Those are both w.
+ And I'd like to ask, what are the admissible theta 1's and theta 2's?
+ What's the admissible q's?
+ And the punchline is it's not a simply described set.
+ We'll animate it in a second here.
+ But it's got sines and cosines floating around in it.
+ In fact, it's not hard at all to solve this one.
+ In this case, the kinematics, the center position here, is really just L sine theta 1, L1 plus
+ L2 sine theta 1 plus theta 2.
+ That gets me to the position in the middle at that point of the hand.
+ And because there's a sphere geometry here, in that one particular special case, I can
+ just think of-- I can take the sphere away and just move the wall in by radius r and
+ get the same answer.
+ So this has got to be less than the wall minus r and greater than the wall plus r.
+ And that's my configuration space for the simplest possible picture I could possibly
+ draw.
+ And it's already interesting and hard.
+ So not super hard, but foreshadowing, let's say.
+ You can think about what happens just in the simplest case, then it gets pretty complicated
+ pretty fast.
+ So if I start moving that wall around, then the overlap here-- I've drawn each of my constraints
+ in different colors.
+ So the overlap region is the valid configuration space.
+ That's the limit of my plotting ability in this program.
+ If I move it around, those look-- when it's small, you could almost say, well, that could
+ almost look like I could approximate those with lines and have a nice convex constraint
+ or something like that.
+ But it's really not a convex constraint.
+ These are curvy lines.
+ The set is interesting and rich.
+ If I go too far, it starts wrapping around on itself.
+ So what is that?
+ That's when the arm goes up again around the top, and it's wrapping around.
+ They're valid solutions like that.
+ Of course, if I move the wall too small, then I've got no solutions.
+ But it's a rich space.
+ If I now take the same idea, and what I want to plot is the configuration space of the
+ three-link arm reaching into the cupboard, this is what it looks like.
+ Sort of.
+ I can approximate it with like a merchant cubes, and it's kind of scary and bad.
+ So let's just even-- you can run this in your notebook too if you want to play with it.
+ So let me-- OK, it looks the same.
+ I was worried that it looked out of date.
+ Let me turn off the collision constraint first and first just draw this grasp constraint,
+ the green region.
+ So the green region already looks pretty cool and crazy.
+ So what is that?
+ This, by the way, is just my initial comfortable configuration.
+ The x, y, and z-axes here are my q1, q2, q3 of the robot.
+ Why is the successful set of grasps ignoring collisions look like that?
+ Do you have a sense for what that geometry is doing?
+ Why does it look like this sort of ring?
+ There's joint limits.
+ It would go all the way around if it didn't have joint limits chopping it off.
+ What is that axis if I were to walk along that annulus or whatever?
+ Yeah?
+ >> Does that look like the elbow moving?
+ >> But it's in the plane.
+ So a lot of times the elbow would walk out of plane.
+ So I hear you, but it's not this one.
+ It's in the plane.
+ I mean, the elbow is involved, so that's correct.
+ But I think that's not the most important feature.
+ >> The grasp is when the supposedly going through that shelf?
+ >> No, the shelf is not drawn.
+ This is as if there was no shelf.
+ I'm just trying to reach with my 3-link for that sphere.
+ I disabled the shelf constraint for a second.
+ Yeah?
+ >> Isn't it better to do that at the same time because you have 3 links, so you can
+ have multiple solutions?
+ >> Yeah, so what are the multiple solutions?
+ I didn't specify a position constraint.
+ Well, sorry, I actually did specify a position constraint, but a sort of low rank.
+ It's not a pose constraint.
+ All I said was that the center of the sphere was in the middle of my fingers.
+ >> So is it only the elbow?
+ >> I mean, yes.
+ So I think maybe I have to-- so of course, the elbow is involved.
+ But it's really-- it's the hand rotating around all the different possible configurations.
+ And the arm will reach or not reach based on-- I think I can draw it better than I can
+ say it.
+ So if I have the-- there's kind of a solution here.
+ But there's also a solution with the hand sort of coming down from on top that maybe
+ it has to go a little bit more like this.
+ And there's also probably a solution like this where the hand is coming from this way,
+ and maybe it's a little bit more like this.
+ It's this kind of-- I think of it as the hand orientation that's really being rich, if you
+ will.
+ OK?
+ OK, so that's already a little bit quirky.
+ It's just I've only got three links.
+ I've got to reach this sphere.
+ So that sends this annulus of possible constraints.
+ But then if you take the KUKA geometry-- by the way, I think every time I plot something
+ like this, I, again, once again, thank my geometry friends because there's a lot of
+ stuff going on in all these geometry engines behind the scenes.
+ But it can solve these hard problems where it's checking if the KUKA's approximated geometry
+ intersects with the shelf, which was a simple geometry.
+ And the way I plotted this was I made-- in XYZ, I made a huge grid.
+ And every point of the grid, I called the collision checker.
+ And I able to either 0 or 1.
+ And then I called the marching cubes algorithm, which tries to find the level sets.
+ It's trying to draw a smooth curve that interpolates between the 0s and the boundary between 0
+ and 1.
+ And for like, if you have a sign distance function of the bunny, it gives you these
+ beautiful things out.
+ When you have the configuration space-- and I sampled it a little coarsely because it
+ already takes a long time to run-- it gives you these gross things out, especially with
+ the truncations.
+ It's not closed.
+ But that's what it looks like.
+ Crazy.
+ So this is the problem that we're going to be trying to solve for paths inside.
+ We're going to try to find sets of cues that walk along inside this geometry.
+ That's the problem.
+ Even if I just solve the-- yeah, please.
+ Are the initial and the full [INAUDIBLE]
+ Are they what?
+ Are they connected by [INAUDIBLE]
+ The initial guess was this blue region.
+ Let's see.
+ Initial guess was that blue region.
+ And the IK solution is like hiding-- let me see if I can-- well, I turned the grasp constraint
+ up, turned the collision.
+ That's the solution.
+ It's inside the grasp, the successful constraint, which is what you'd want.
+ And it's hiding down here inside that.
+ We're not done.
+ I like my visualizations here.
+ So OK.
+ No, not this way.
+ This is what the-- if you write the optimization problem that you're asking it to solve, this
+ minimize-- wherever I just erased it, I guess-- but minimize q minus q desired, subject to
+ nothing from my arm is inside the shelf.
+ And the point in my hand is here, is within some tolerance of here.
+ I had to make it a little bit of a tolerance.
+ That's why you got a whole annulus instead of just a line.
+ This is the optimization problem that it's faced with.
+ Let me see if I can get it here.
+ So I've got my cost function, which is the simple small q minus q desired.
+ So that's a nice quadratic form.
+ But it's nestled inside these nasty constraints.
+ And the optimal solution is hiding right down in there.
+ I did a beautiful job solving it.
+ But that's the local landscape.
+ Even better, this is the global landscape.
+ This is what I fed it.
+ Here's the cost and constraints that I gave to SNOPT.
+ Now you can see-- so first of all, props to SNOPT for finding this in the middle of there.
+ It might not have found the optimal one.
+ It's possible that it's in the wrong trough or something like that.
+ So not guaranteed to find the global optimum, but props for finding any of them.
+ And it's not going to guarantee that it'll find that.
+ You could have come up with another similar setup, and SNOPT might have failed to find
+ a solution even though it existed, because it was hiding in one of these little canyons.
+ But that's the kind of geometry we're throwing at these solvers.
+ OK, so I think we understand-- I hope we-- if you feel like the sort of rich inverse
+ kinematics, it's just adding more types of constraints to the type of optimizations we've
+ already been writing.
+ But the big difference compared to just the poses and everything is we're really living
+ in this configuration space of the arm, curvy, complicated landscapes.
+ The inverting the forward kinematics is a lot of non-linear, non-convex constraints.
+ OK, like I said, if you've got that, then you're almost done.
+ So if I wanted to now reach into the shelf, what I need to do is take my initial conditions,
+ which was-- the initial-- let's say the robot was in the initial-- actually, the initial
+ guess was in penetration, so I had to move it out a little bit.
+ And I just need to find a series of points that gets me from the initial conditions,
+ never runs into the shelf, and finds my way to the goal.
+ Now again, if I over-specify the goal, if I say-- if I were to, for instance, solve
+ the inverse kinematics problem once, take the solution, and then try to find a trajectory,
+ that is potentially a harder problem than finding a trajectory that still has all the
+ flexibility of the problem given to it.
+ So if I draw this configuration space again-- so I had this sort of interesting-- you know,
+ configuration space.
+ This was the good region.
+ And I have some initial guess here, like initial configuration.
+ I'll call it q0.
+ And I've got some target here, which is-- as the picture shows, I've got some set of
+ possible targets that are all admissible, right?
+ q goal here.
+ And the task now is to basically-- the kinematic trajectory optimization problem is find a
+ bunch of q's by solving multiple inverse kinematics problems simultaneously that somehow parameterize
+ a path that gets me somewhere-- lands me somewhere in the goal.
+ Right?
+ Now, they can't be completely independent.
+ I'm going to need something that sort of connects the two-- the points together.
+ But this is the most important idea.
+ OK?
+ So now, instead of where I was doing minimize q, q minus q0 squared, now I'm going to minimize
+ over a whole bunch of q's.
+ I'll say q-- say k equals 0 to capital-- maybe k is a bad-- on the board.
+ OK?
+ I'm going to try to find many q's simultaneously-- q0 to n, n minus 1.
+ Subject to a bunch of constraints, right?
+ I'd like that for all n, qn is out of collision-- satisfies joint limits.
+ OK?
+ And then I'd say that at least one of them is inside my goal region, which for me was
+ that the position is within some ball of the middle of the gripper.
+ And we're almost done.
+ We've done a lot of the work here.
+ OK?
+ If you just solve this, though-- maybe I also have to say, sorry, q0 is my initial guess--
+ or my initial configuration.
+ If I just solve this, then I might get a solution that puts like almost all the q's here and
+ one q down here, right?
+ Or all the q's down here somehow and just one point up there.
+ I need something that somehow relates these together.
+ OK?
+ And there's different ways to do that.
+ The most natural way, I think, is to somehow put a constraint saying you can't move too
+ much-- if you start thinking about this as time, and you say I'm going to take five seconds
+ to go from here to here, and I have a velocity limit, then that constrains those points to
+ be somehow close enough together.
+ Joint velocity limits.
+ So you could say qn plus 1 minus qn is less than-- maybe even every element of it-- qi
+ is less than q dot max.
+ Something like that.
+ I missed the times t, right?
+ OK.
+ Yes?
+ I was just saying the-- so this would be joint 0, 1, or 2.
+ So this would be for each joint.
+ I could do-- I have some joint limit for each joint.
+ You could do it a total velocity if you wanted, but I just did it one at a time, which is
+ a more standard-- where the place where the constraints come in.
+ Thank you for asking.
+ This is enough to do reasonable trajectory optimization.
+ OK?
+ The extra bonus stuff is about asking for-- trying to parameterize continuum solutions
+ through here a little bit better.
+ OK?
+ So if you want this to be described by a trajectory that maybe has some smoothness properties,
+ if you'd like to do extra work saying that even between the points, I don't leave my
+ joint limits or joint velocity limits or whatever, then we're going to do a little extra work
+ in the last part of lecture here to try to put those into a trajectory formulation.
+ OK?
+ But the key idea really is that I'm solving many IK problems simultaneously, and I'm doing
+ some work to just put some constraints across those different points to make them mutually
+ consistent.
+ This is-- I mean, this is the same thing in, for instance, autonomous driving or other
+ places where you're doing trajectory optimization, right?
+ I think the constraints-- the shape of the constraints you get in manipulation tends
+ to be richer, and so maybe a little bit more emphasis on the kinematics constraints.
+ But the philosophy of this trajectory optimization is similar.
+ I will put-- it's different than what we tend to talk about in underactuated, if you have
+ taken or will take underactuated with me.
+ I'm emphasizing the kinematic nature of this optimization.
+ And the choices we make in terms of the trajectory parameterizations are going to be different
+ in the kinematic trajectory case, where I'm more worried about saying I'm not in collision,
+ and I don't have to put on dynamic constraints on the trajectories.
+ I'm going to make slightly-- I'm going to have different preferences on how I specify
+ those constraints.
+ OK?
+ But the tool chain is-- at this level, I've described it so far-- is actually very general,
+ right?
+ You can make airplanes land on a perch, and you can do all kinds of cool stuff.
+ OK.
+ So let's think about how to specify this now in terms of a trajectory.
+ How do we parameterize a trajectory?
+ I'm being inclined towards the middle board, but I promised I would stay here.
+ Old habits die hard.
+ Trajectory parameterizations.
+ We've already seen a few of them, right?
+ There's actually-- there's a whole bunch of different ways to parameterize a trajectory,
+ right?
+ We used piecewise polynomials when we were parameterizing the end effector translation.
+ We used quaternion slurp to parameterize the orientation changes.
+ Do you remember?
+ If you look inside the piecewise polynomial classes inside Drake or other trajectory library
+ kind of things, you'll find all kinds of-- even in the class of saying, I'm going to
+ have a piecewise polynomial, there's just so many choices.
+ There's a standard cubic spline.
+ There's Hermite splines.
+ Most of them are implemented.
+ All the ones that we find useful.
+ You can do Chebyshev polynomials.
+ You can do-- there's a lot of choices.
+ The ones we did before made the choice where if I specified from t, and I had some nominal
+ configurations t, q at t3, q at t4, for instance, a lot of these parameterizations try to find
+ a path that goes through all the points that I've specified, and maybe has some-- they
+ have different properties in terms of smoothness up to some derivative.
+ You might want to constrain the derivative at the end effect-- at the end point, or there's
+ different ways to spell that.
+ There's lots of different polynomials you could choose of certain degree that will go
+ through a set of points.
+ And a lot of the variation there is just picking the way that you choose that.
+ We tend to not use those-- I think there's a slightly better choice for kinematic trajectory
+ optimization when you have joint limits, and velocity limits, and acceleration limits.
+ There's a different family that I think is probably in most cases the winner, which is
+ the Bézier curves.
+ I think it's I-E-R, right?
+ Bézier splines, B-splines.
+ They are also polynomials, but they're parameterized a bit differently.
+ You don't think of them as being parameterizing directly the coefficients of a simple polynomial
+ expansion, or you don't think of them as being points that you try to go through.
+ They're parameterized a little bit differently.
+ But they have some properties that are super nice for doing this kind of motion planning.
+ People hear about B-splines before?
+ Yeah?
+ Bézier splines, right?
+ So people feel comfortable with them?
+ I find many fewer people say yes to that second question.
+ Even people who use them a lot, actually, I think the notation is a little bit cumbersome.
+ There's a sense of what they're doing, and then there's the details, which are ugly to
+ get right, in my opinion.
+ Maybe I just don't understand them well enough.
+ But it's just a slightly different way to parameterize a curve through time.
+ The parameters are-- you have your break points.
+ There's an additional thing, the not points, if you know, but I'm going to de-emphasize
+ that detail for now.
+ The break points and the control points.
+ So let me draw two pictures here, one of them in configuration space, Q1 and Q2, and one
+ of them in time.
+ And I'll just write Q1 here.
+ Just pick one of them.
+ So I'd like to have a bunch of samples in time, which I'll say Tk, Tk plus 1, and so
+ on, Tk plus n, let's say.
+ These are my break points, my breaks.
+ And then I have my trajectory Q that will evolve in time.
+ But different from this, I'm not going to parameterize directly the points that it travels
+ through in time.
+ Instead I'm going to sprinkle some control points in the configuration space.
+ So I'll do Qk, Qk plus 1, plus 2, all the way up.
+ I'm going to have a bunch of control points in my configuration space.
+ And there's a particular polynomial basis, the B-spline basis, which has some beautiful
+ properties, which says that in the configuration space-- I need more colors of chalk.
+ In the configuration space, there's a super useful geometric quantity, which is sort of
+ the bounding box-- or sorry, the convex hull of my control points.
+ And one property that it has is the convex hull property, which says that the trajectory
+ here that comes out, it will not go through those points directly, but it will be inside
+ the convex hull of those points.
+ So it has a super useful convex hull property.
+ It also has this very nice locality property.
+ So more precisely, if I'm at some sample point in the middle of my trajectory, there is a
+ finite set of control points before and after me for which I'm in their convex hull.
+ And that set moves in a sliding window as I move through time.
+ And the number of points that define that convex set is the order of my spline.
+ Just a bunch of terminology, but I think what I want you to get essentially is that this
+ is a good choice, first and foremost, because it has this convex hull property.
+ Why is that important?
+ So if I have joint limits, if I pick sample points in Q and I parameterize with a lot
+ of the standard polynomials, there's not a guarantee that my interpolated trajectory
+ doesn't do something like this, which badly violates my joint limits.
+ In the B-splines, you do have that guarantee.
+ As long as all of the points, the control points, satisfy your joint limit constraints,
+ then the entire trajectory, the continuous time trajectory at all times, it stays inside
+ the convex hull.
+ More valuable.
+ There's a locality property, which people normally emphasize, but I think I've made
+ the point enough.
+ And then I think the other one that's super useful for us is there's a derivative-- are
+ also B-splines, time derivative, and they are B-splines where the control points still
+ enter linearly.
+ They're nice B-splines.
+ So for joint velocity limits or acceleration inequalities, like limits, bounding box kind
+ of limits, you can put them in a convex way onto this parameterization.
+ They're easy constraints to guarantee that your joint velocity over all times stays inside
+ your joint velocity limits and your acceleration stays inside your acceleration limits.
+ So the picture down here is you end up specifying a handful of times.
+ The transcription looks almost exactly the same as this.
+ It's just that the cues that I'm going to think about here are parameterizing-- they
+ are the control points of my trajectory.
+ They might look a little different.
+ And what I get is that each local convex hull I stay inside of, and that convex hull moves
+ on each sample to be a different thing.
+ I don't know if I did the geometry carefully enough, but each segment stays inside.
+ So I'm not parameterizing-- the cues in this optimization are not the actual points on
+ the path.
+ They are the-- they define these moving bounding boxes that gets me through that tunnel.
+ Like I said, this is just the extra richness in order to guarantee that whole path stays
+ inside the configuration-- sorry, the bounding box constraints.
+ So question for you-- how does it do on these non-penetration constraints?
+ Does that bounding box property protect me from non-penetration constraints?
+ Unfortunately not, because these curves, these active constraints that are coming from the
+ collisions can be sort of arbitrarily curvy.
+ So even if I have points that are-- if I had a bounding or a convex hull that was here,
+ and I choose trajectories that stay inside that because they all satisfy my joint limits,
+ it could be that my configuration space obstacle snuck inside there.
+ So for q less than or equal to q max, q dot less than or equal to q dot max, q double
+ dot less than or equal to q double dot max, these are all bounding box constraints.
+ This stuff works great.
+ It's awesome.
+ It's not quite enough to save you from collisions with the complex geometries.
+ But it's still a good-- it's still, I think, a natural choice because of these benefits.
+ Now for those of you that have taken underactuated, let me just call out that the reason this
+ is maybe not as a good choice for the dynamics, you can imagine I'm parameterizing sort of--
+ I'm not parameterizing the exact trajectory.
+ So if I wanted to say the slope of this line at a certain point is exactly this, if I had
+ an equality constraint on the dynamics, q double dot is exactly f of x, u, or whatever,
+ then that's not naturally expressed here.
+ This is really about knocking out regions.
+ So when you have big inequality constraints, that's the natural thing.
+ But once you have this sort of library of B-splines, which we have libraries of B-splines,
+ you can construct a lot of interesting things.
+ For instance, if you'd like the initial trajectory to have zero velocity and to be at a certain
+ exact point, which we said we wanted to start at the current position of the robot, I don't
+ have to be wishy-washy and have it be inside some region.
+ If I just put-- if I have a k-order spline, if I put k points on top of myself at the
+ beginning, then there is a first cell, which has a convex hull, which is a point.
+ And I can put my initial conditions directly inside that point.
+ And I can even leave with a small velocity, with a zero velocity, and interpolate up.
+ So there's a lot of richness in this parameterization.
+ You just have to work through it.
+ In practice, we have kinematic trajectory optimization classes that you can call.
+ They take some of the same constraints that you saw in inverse kinematics.
+ You load them up, and you solve these sort of problems.
+ One more point I want to make here.
+ So let's say we're doing something like this.
+ So I've got a trajectory.
+ When I see this, I almost said my point too quickly.
+ But when I see this, I see this broken up into a handful of different trajectories.
+ There's the reach down until I touch.
+ There's close the hand and then move the arm, the mug, through the world.
+ And then maybe I'll move again.
+ You could imagine solving that as one big optimization problem, but people often don't.
+ And let me illustrate why.
+ So the worst case is the plate.
+ The collision geometries change when you pick up an obstacle.
+ So classic first dishwasher video is like, you reach down, you pick up a plate, you go--
+ sorry, didn't mean to scare you.
+ And you just move your hand through, and your hand is perfectly collision free.
+ And you've got a broken plate in your hand.
+ So you really have to think about-- we tend to think about composing.
+ You can solve them jointly, but we think about explicitly composing the segment which has
+ collision constraints based on just the hand up until a contact, the grasp, and then moving
+ with the collision of geometry of the plate welded to the hand in the grasp that I've
+ chosen.
+ So this is the standard thing.
+ Make sure that is collision free.
+ Let go.
+ Now it will stay fixed in its final location.
+ And then do that again.
+ That's a little bit-- that's limiting.
+ This is the same way in-- we talk about choosing your footsteps in a certain order or whatever
+ in underactuated.
+ But that's a limiting constraint that I have to pre-specify exactly the order.
+ If I wanted to pick up two plates, maybe one with the left hand, one with the right hand,
+ it gets a little bit more annoying.
+ Do I-- did I have to pick up the left one first or the right one first?
+ Or if I'm doing it with a dexterous hand, you start getting more subtle.
+ So it gets limiting.
+ But for a two-finger gripper picking up a single object, that's a pretty good assumption.
+ You can solve all of those trajectories simultaneously with just putting different constraints on
+ the different parts of the trajectory.
+ A very useful heuristic is to solve a piece of it first.
+ So the first thing you do is you solve two-- a joint inverse kinematic problem, just two
+ points.
+ You solve your pickup configuration, your put-down configuration.
+ You want to solve those at the same time because you want to find a single graph, a single
+ relative pose of the object relative to your hand that works both for picking up and putting
+ down.
+ Otherwise, you're going to find yourself-- you chose-- you made a choice picking it up,
+ and then you can't get there with the plate in my hand and this.
+ You tend to solve those jointly.
+ Once you do that, then that breaks the trajectory into pieces.
+ And I can now plan to get to that, plan to get from here to here, and plan to get the
+ other one.
+ You can parallelize all that, and it's all good.
+ It does defy what I told you-- that's exactly what I told you not to do earlier, which is
+ to try to leave as much richness in your optimizationist problem.
+ So you can do versions of that where you try to leave a little bit of space.
+ That's one way in which it's a conservative heuristic.
+ But it really makes the problem scale bigger, and it doesn't cost too much in some cases.
+ Cool.
+ I'll call that good.
+ Yeah, it's at 55.
+ So I will see you on Thursday, and we'll do--

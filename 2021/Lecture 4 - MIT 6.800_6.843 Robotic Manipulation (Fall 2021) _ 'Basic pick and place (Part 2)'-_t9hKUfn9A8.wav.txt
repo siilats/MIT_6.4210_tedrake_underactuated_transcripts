@@ -1,0 +1,975 @@
+ doing it, then it might help you in case there's any weird thing happening.
+ So basically, on DeepNote, every time I post to DeepNote, I lock in a snapshot of both
+ Drake and the manipulation repo.
+ The idea is that you could return to DeepNote, if you make a duplicate of that notebook and
+ you return to it, in four years, it'll be rock solid.
+ Like, it'll still run.
+ You can still do your quadratic programming.
+ Okay.
+ And even though I'm going to move things ahead.
+ The only consequence is, if I'm updating, you know, sometimes I do while we're talking,
+ if I get a question, that's a good thing.
+ That means you might not see the absolute version.
+ If you ever feel that the textbook is saying, oh, you should see the X, and you're not seeing
+ it, you could just duplicate the notebook again.
+ Precious concept.
+ So you can still use your stuff in four years, you know, when you are starting your manipulation.
+ Okay.
+ So and finish our first journey through making robots move.
+ The basic picture place.
+ So we remember the sketch.
+ Let me just remind you of the sketch.
+ Our goal is just to get the first robot to be doing something fairly simple, but we're
+ going to go all the way through the controller, plan trajectories, execute this motion, think
+ about the right way to execute that motion.
+ The steps to achieve that started with understanding basic kinematics.
+ Kinematic trees.
+ And I tried to tell you about the spatial algebra version of that.
+ The second step was once we had this notion of thinking about frames, even, for instance,
+ talking about the position of the hand and the orientation of the hand relative to the
+ object, we could go through and just forget about the robot for a second and just say,
+ I want my hand to visit these places in space at these times.
+ We came across, we came up with trajectories for the hand motion, starting with a sketch
+ and then just filling it out with simple interpolation.
+ And then we talked through how you could connect the gripper position with the joint angles
+ of the robot.
+ And that was the kinematics problem.
+ We're going to get into that again as we launch into the full differential inverse kinematics
+ problem today.
+ Right.
+ So that's the last piece of this puzzle now is you've got your gripper sketch, your trajectory,
+ your desired gripper positions.
+ You understand something about the mapping, at least how I could recursively compute the
+ frames from the hand up to the, you know, each joint is just another multiplication
+ through my kinematics and my spatial transforms.
+ And the question now is, and we talked, we introduced the Jacobian.
+ I'll pick back up at the Jacobian here.
+ The question is, how do we robustly execute trajectories?
+ And we're going to even get into the issues of like joint limits and velocity limits or
+ what happens when things are going not according to plan.
+ Okay.
+ So Patrick Winston always used to give talks about how to speak.
+ And he said, "Start your lecture with promise."
+ So my promise here is that I'm going to, you're going to be moving this robot and understand
+ all the pieces now into this lecture to understand how to make a robot, at least in simulation,
+ you know, do the whole thing from my sketch all the way to joint commands.
+ Okay.
+ If there's any questions from last time, I'm happy to take them.
+ Always, by the way, sometimes we've had some really great questions right after class.
+ And I thought, "Oh, I should ask that during class," because everybody wants to do that.
+ And I'll tell you, some of the questions and answers I think are, I might mention as we
+ go here.
+ Okay.
+ So, I mean, if you'll remember the mechanics that we introduced last time and the spatial
+ algebra that we introduced last time, we talked about, you know, positions and use our fancy
+ notation with superscripts all over the place, subscripts all over the place, right?
+ And we had, that would be for a relative position.
+ We had rotations.
+ We also had our pose, which put them all together.
+ Now, actually, I want to say something about this.
+ So you guys asked a perfectly good question last time about whether we ever have the expressed
+ in frame for the transform.
+ And I think, so I had to think about it, right?
+ And I said, "Yeah, sure, you could do that."
+ I couldn't actually think of a case where you do do that.
+ So I actually went through all the code and everything and all the derivations.
+ You never need that.
+ It's not wrong to put that.
+ But all of our useful quantities and all of our useful multibody computations and stuff
+ like this, you can be fine having B in this.
+ And we actually, in the code, in the notation, we basically don't support putting an expressed
+ in frame there.
+ Okay.
+ So it's not wrong, but it's just not needed.
+ Now, that's not-- when we get to, for instance, the derivative of the pose, which would be
+ a spatial velocity-- I'll try to be careful and put some-- there's a lot of Vs flying
+ around.
+ The spatial velocity was our 6 by 1, which had omega, which is our angular velocity,
+ and our V without the lines, which is our translational velocity.
+ And this, we absolutely do end up finding places where we want to talk about that being
+ expressed in a different frame.
+ And that's just the derivative of this.
+ But it turns out, this all the time, this never.
+ So we have our spatial velocities, and we will soon have spatial forces and spatial
+ accelerations and things like this.
+ But this is how far we've gotten so far.
+ Right.
+ We talked about the strangeness of the fact that even maybe just even for rotations, there
+ are many possible representations of rotation.
+ We have, for instance, Euler angles, axis angles.
+ If you know this, quaternions and axis angles are quite similar.
+ Rotation matrices.
+ But in spatial velocity, or even angular velocity, we always just have a canonical angular velocity.
+ Someone asked a great question, which was, so why are rotations bad, but rotational rates
+ OK?
+ And that's a good question.
+ There's a lot of different ways to think about why that is.
+ I think probably the most fundamental way, the reason that that happens is because angles
+ wrap around in 2 pi.
+ And velocities don't wrap around at 2 pi.
+ So if I rotate by pi, and negative pi, I'll end up at the same place.
+ Or if I run 3 pi, that's the same as pi.
+ But 100 radians per second is still different than every other positive radian per second.
+ Now in two dimensions where you can represent everything with a scalar, a single rotation,
+ that turns out to not be OK.
+ You can always do the right thing to figure out-- maybe you flip back from polar coordinates
+ to rectangular coordinates.
+ And you can always figure out the angles between two locations, even around that weirdness
+ where they wrap.
+ When you're in 3D, you have to pick some point where your math goes wrong, basically.
+ At some point, there's angles-- there are rotations that you can get to from many paths.
+ And to sort of pick a unique inverse of that without having any degeneracies is bad.
+ But angular velocities don't have this wrapping problem.
+ And they seem to be fine.
+ You can also think of it about it as being just-- it's a differential quantity.
+ So if I think about-- let's see, even in 2D, if I think about a rotation taking me around
+ the unit sphere, I'm taking any point and moving it around the unit sphere, I mean the
+ angular velocity is just a tangent on that.
+ And it's sort of well-behaved.
+ It's the wrapping that gets it.
+ We actually put a-- it's not exactly about this, but we put a problem for the slurp on
+ your homework to get you thinking about it.
+ In practice, there are many different-- but in velocities, everything collapses to one.
+ Now there are classes you could take that would spend a long time talking about the
+ different transformations between these.
+ I don't think they're meant to be as essential.
+ I think you should understand that they exist.
+ You should understand that there are times where one is better than the other.
+ And you can understand that there's-- you can look up in a textbook to go between one
+ or the other.
+ But it's more important to me to stay at that-- for this to stay at the concept level and
+ not dig into all the-- especially quaternion math is beautiful if you-- once you own it,
+ and it's terrible until you do.
+ It's like all these weird symbols to make everything work.
+ So there's another question which is going to launch us off today.
+ So I said, for instance, if I wanted-- if I had the x of the body, we could call it
+ in the world, is some forward kinematics of that body, which depends on q.
+ q remember is my vector of positions.
+ And this is my pose of the body in the world.
+ OK.
+ So there is a limiting case where I have exactly one body in the world, right?
+ And therefore, q's representation must be enough to tell me where that body in the world
+ is.
+ Always, q should be sufficient to tell me what all the bodies in the world are, where
+ they are.
+ OK.
+ For an EWA that's bolted down, all I need is the joint angles, seven numbers of the
+ different rotations of the different joints.
+ But if I have a red brick on the table, I need my-- I need enough something in q to
+ be able to eventually pull out the pose.
+ So again, we can represent that orientation however we want in this side and this side.
+ In some sense, this is just a-- when I've written it like this, I think of it as a mathematical
+ statement.
+ OK.
+ But if I write it in code, then I have to make a choice between those different representations.
+ We tend in the code, almost always, and in our derivations, q, we want it to be a vector.
+ And we're going to combine orientations with joint angles and stuff like this.
+ So here, we're going to choose quaternions for a number of reasons that will be more
+ and more obvious as we develop algorithms against this.
+ The q is often a very-- the vector quaternion version is powerful for a lot of algorithms.
+ But when we get here, on disk, if you will, when we have to make a choice, we often choose
+ rotation matrices here.
+ So in the limiting case of just having a single object in the world, the kinematics actually
+ just change the quaternions to rotation matrices.
+ OK.
+ So we want to do the opposite of that.
+ We want to go from a ban of poses in the world into joint positions.
+ We talked just at the end about how that's not necessarily a unique mapping.
+ There can be multiple q's that give the same pose in the world.
+ So just taking an inverse doesn't seem quite right.
+ Probably I want to send smooth commands to my robot.
+ So making sure that what we're doing here is not jumping around to different solutions
+ is very important.
+ So what tends to be the winning approach here is to use the differential form of the kinematics
+ in order to say, actually, if I just want to take my current pose and make a relatively
+ small change in a certain direction, then what is the incremental change in q I need
+ to make?
+ And that is well defined everywhere.
+ Well, we're going to talk about when it's defined, perfectly defined.
+ But certainly the partial derivative exists everywhere.
+ And we're going to use that to then do the inverse.
+ In particular, because we're playing this game with different representations, if I
+ want the spatial velocity of b in the world, and I'm going to use my Jacobian, which is
+ a little bit more than the partial derivative of that f, because it's also doing the change
+ of variables.
+ I'm changing between body and gripper here.
+ So I can write this as my geometric Jacobian.
+ And the thing that I wrote on the board that I hate writing on the board, it's only a straw
+ man, it's only a placeholder, is what we would conceptually like to do is something like--
+ now this is a matrix.
+ It's a position-dependent matrix.
+ But if this is a matrix times a vector, so I could potentially do something like this
+ to try to make from a desired velocity to a desired joint angle of forces.
+ But let's just think if that's even a reasonable thing to write.
+ How big is Q dot for the EWA?
+ Right.
+ There's seven joints up and down, seven joints make a lot.
+ This thing is always 6.
+ So this is a 6 by 7 matrix.
+ You're not allowed to take inverse of non-square matrices.
+ So that's why I don't even like writing this on the board.
+ But conceptually, I want you to think about it that way.
+ But this is not OK.
+ Now there's a generalization of that, many of you know, of where I can-- people use different
+ symbols for it, sometimes just plus, sometimes sharp, sometimes-- I'll just do that to make
+ it clear on the board.
+ A pseudo-inverse-- maybe I'll just do the plus, that looks good.
+ I hope that's clear enough.
+ So the inverse is not OK, but this is the pseudo-inverse.
+ How many people are comfortable with pseudo-inverse?
+ Yeah, good, some of both, right?
+ So you can think of the pseudo-inverse at one level.
+ So I used to call inverse "inv" in MATLAB.
+ Now I'm going to call "p-inv."
+ It's like a standard linear algebra tool.
+ It exists everywhere.
+ It actually has magical properties.
+ So well, first and foremost, it works even if your matrix isn't square.
+ So it's well-defined if it's not square.
+ But it's better than that.
+ So when things are not square, you could have infinitely many solutions.
+ You could have no solutions.
+ So this sort of does the right thing, but we'll define exactly what the right thing
+ is.
+ But in the case where you have infinitely many solutions, it will pick one, and it will
+ pick the one that's minimum norm and the least squares norm.
+ So it'll find the smallest solution.
+ In this case, it'd be the smallest joint velocity, which sounds pretty good, that achieves the
+ desired velocity.
+ That's good.
+ If there are no solutions, then it doesn't just fail.
+ It actually does its best effort and tries to find a dot that is as close to matching
+ this equality as possible.
+ The pseudo-inverse is awesome.
+ Yeah?
+ So is pseudo-inverse solving for an actual matrix, or is it solving for a 2 dot given
+ to you?
+ You can just call it this.
+ OK.
+ And is it-- or is it just going to call it a least square solver?
+ That's going to be the topic for today.
+ And generalizations of least squares.
+ Yeah.
+ You're--
+ OK.
+ I didn't--
+ [INAUDIBLE]
+ Can you call pn-- is pn solving the entire--
+ [INAUDIBLE]
+ --systems of equations, and just an operation on the matrix, and gives me a new matrix.
+ And the answer is pn-- pseudo-inverse just gives me a new matrix.
+ We can think about its size and everything, but it's the size that's required to make
+ that transition.
+ OK.
+ But this is actually enough to get us going.
+ So without thinking any more about it, we can actually build our control system using
+ the pseudo-inverse.
+ OK?
+ So let's just think about wiring this thing up.
+ I'm going to go over here.
+ We've got a lot of components flying around, but we've got a new one, which is our first
+ controller, which is a pseudo-inverse controller, which would be-- so this thing is going to
+ spit out-- I think of it as q dot, the EWA velocities.
+ But I'm going to think about it as the desired EWA velocities.
+ I'll just put a superscript e, so I remember that's not what's actually happening on the
+ robot right now.
+ That's what I hope to have happen on the robot.
+ OK?
+ In order to do this computation, I need the model of the robot inside here.
+ That's OK.
+ I need the current positions of the robot.
+ So I need EWA position coming in.
+ And I need my commanded V spatial velocities.
+ I can think of it as a desired again, so spatial velocity.
+ Now downstream, I have my wrapped up manipulation station, which takes in q desired, not q dot
+ desired, for reasons that are subtle, I think, but we talked about a little bit before.
+ So somewhere in here, I need one other step, which is to integrate out my desired velocities
+ and turn them into desired position commands.
+ This is some initial conditions that must be carefully
+ to match your original initial conditions of the robot.
+ Common mistake, you wire this all up, you forget to set the initial conditions of your
+ integrator, and your robot goes, whoa, at time 0, and then tries to do something reasonable.
+ But it's already-- the game is over, pretty much.
+ So we have the actual EWA positions coming out.
+ Think of it as measured EWA positions.
+ And then we have one other component that we hinted at last time, but didn't actually
+ use in the last lecture, which is the trajectory source, we call it.
+ So I'm going to do my plan sketch, come up with a spatial velocity trajectory, and put
+ that into my source.
+ That's going to feed my pseudo-inverse controller, which is going to feed an integrator, which
+ is going to feed the manipulation station.
+ Now there's one subtlety, which actually goes to one of the questions Charles asked last
+ time, what do I want to use for this?
+ Because there's two choices, natural choices.
+ I could try to take my hypothetical commanded positions, or I could use the actual positions
+ to wire that over.
+ I would think my inclination is not the real thing.
+ Why would I take a substitute?
+ But actually, most of our code is going to do this.
+ It turns out that even in simulation-- so this could be a noisy measurement.
+ There might be a reason.
+ That might be one reason.
+ But even in simulation, it's more stable to use the desired.
+ And just think of your trajectory as playing out this integrated-- I think of this thing
+ as a big system that has to happen to go through velocities in order to use this controller.
+ And really, I think of commanded poses in, commanded joints out.
+ Interestingly, you could think about this if you want.
+ But the phenomenon that you get if you wire it up to here, even in simulation, is that
+ you'll get a good solution.
+ But then in the null space, so in the multiple solution dimension, you might see your elbow
+ walk around a little bit.
+ And you'll sit there thinking, oh, I found my good solution.
+ And then you'll see, why is my elbow doing a little dance?
+ And it's just--
+ It's the subtlety of the way these things feedback with the numerical precision of the
+ integrator and stuff like that.
+ So this is actually a pretty darn good control.
+ The thing that you want to-- where does it have problems?
+ I guess some of you know where it has problems.
+ But what can be a limitation of this?
+ I just said the pseudo-inverse is magical.
+ It does the right thing almost always.
+ Multiple solutions or no solutions.
+ So it does potentially-- it does really do the best effort.
+ So if there's no solutions, it'll come up with the best possible solution.
+ Is that good enough?
+ If there's multiple solutions, it will find a solution that is the minimum norm.
+ That sounds pretty good.
+ When is it not enough?
+ Oh, sorry.
+ I didn't see your hand.
+ Maybe you run into a problem on a singularity [INAUDIBLE]
+ Right.
+ OK.
+ So what happens when this is at a singularity?
+ So, OK, what does a singularity mean?
+ I actually have tons of graphics for this.
+ But it's complicated, always.
+ So run that.
+ Open that.
+ OK.
+ So this is just the chapter notebook.
+ You can-- I hope you will run it, work hard on it.
+ OK.
+ So let's just visualize the Jacobian.
+ It's a little bit small.
+ But I guess what I want you to see is there's a bunch of numbers.
+ This has got sliders.
+ So I can open it up.
+ I can move it around.
+ I hope you will do that, moving around a little bit.
+ As I move this around, it's showing me the Jacobian-- how the Jacobian changes.
+ OK.
+ So the situation for-- if I worry about when this thing has changes from having good solutions
+ to having no solutions, for instance, or infinite solutions, what I worry about is the rank
+ of that matrix.
+ In particular, since I'm trying to find Q dot-- I will try not to walk-- but if I'm
+ trying to find Q dot, what I worry about is the row rank of this.
+ Right.
+ We said we have seven Q dots and only six desired velocities.
+ That's actually the good case, right?
+ So I might have multiple solutions.
+ What I worry about is when the rank of this gets less than six.
+ OK.
+ Now rank is a binary thing, right?
+ A matrix has some integer rank, right?
+ It's either five.
+ It's either six.
+ OK.
+ So that is great, but it's rare that you actually drop rank.
+ Your robot will break before you drop rank.
+ How about that?
+ OK.
+ What actually happens is you start to lose rank.
+ So what really happens is that as this thing approaches losing rank, the inverse gets poorly
+ conditioned.
+ You'll get very big commanded velocities out.
+ Before you actually lose rank, you'll command a ridiculous velocity on the robot, and it'll
+ hit a joint limit or a velocity limit, and it'll shut down.
+ OK.
+ So what actually matters here is not rank per se.
+ I like to plot the smallest singular value of that.
+ OK.
+ That's going to tell me how big my worst direction is in the other side.
+ It's not the condition number.
+ It's really all that matters is how big things are, not the relative between the smallest
+ and largest singular value.
+ This is when the smallest singular value goes like that, right?
+ So you can move it around, right?
+ So how can I make this thing drop?
+ So if the smallest singular value gets close to 0, that means when I try to invert it,
+ I'm going to get really big velocities.
+ What do you think I can do here?
+ What should I move around?
+ It's 0.17.
+ That's pretty-- 0.18.
+ That's pretty good right now, right?
+ Yeah.
+ Straight up, right?
+ Pretty much anything I do to straighten the arm, you can watch the numbers are going to
+ get smaller and smaller and smaller.
+ I straighten just the elbow there.
+ If I go and straighten that last-- straighten that last one, things get pretty dicey, right?
+ So whenever you-- that's an easy one.
+ There could be other singularities around, but when you're pretty extended and someone's
+ asking you to be more extended, you're going to get-- things are going to get bad, OK?
+ So I feel that singularities are-- they're a cool thing.
+ People talk a lot about them, worry about them.
+ I feel like they can be mysterious, and I don't want them to be mysterious.
+ So I tried to make this super simple example, OK?
+ So this is a two-link pendulum, OK?
+ I'm just going to make it run through a simple trajectory where it's going to its full extension.
+ We can easily derive the Jacobian here, OK?
+ But you can guess.
+ It gets singular when it gets straight.
+ So a lot of people ask, is the singularity of the Jacobian real?
+ It's a reason-- it's like you should spend some time philosophizing.
+ Are singularities real or that what-- AI surpasses human intelligence?
+ This is a singularity, not the AI singularity.
+ Are there good solutions my controller could make, or is it really just-- right?
+ So this robot is commanding a constant-- it's just-- q is just a constant number for the
+ shoulder and for the elbow.
+ It's walking in and out of singularity, no problem.
+ There's nothing blowing up, right?
+ But the Jacobian does not singular, OK?
+ So I mean, I can derive the kinematics.
+ Let me do the short version of that, OK?
+ So I think the position of the gripper, then it's just going to be-- so this is just basic
+ kinematics.
+ Stop the mesmerizing pendulum, OK?
+ If I make the-- these things just have-- I'll put this and I'll put this.
+ Call this theta 1, theta 2.
+ I'm just trying to figure out the position of that, OK?
+ I always use right-hand angles, so that would actually be a negative value there.
+ So my x position, if I'm just worried about in 2D, my x position is just a cosine of theta
+ 1.
+ My x position of this-- so that's this point here.
+ My x position of the whole thing is cosine of theta 1 plus theta 2.
+ On top of that, that's the contribution from the second link.
+ And I get a sine theta 1 plus sine theta 1 plus theta 2.
+ So I want to take the Jacobian, this case in the translational coordinates, there's
+ no change of variables.
+ There's no like orientations are weird, so I have to do some other thing.
+ It really is just the partial derivative of this matrix.
+ So the Jacobian of G just works out to be negative sine theta 1 minus sine theta 1 plus
+ theta 2 cosine.
+ It's a matrix, sorry.
+ Entry here, negative sine theta 1 plus theta 2 cosine theta 1 plus theta 2.
+ And by the way, in my simple open loop trajectory, the total-- I've designed it so that it's
+ moving exactly so that the horizontal position of the end effector is a sine wave and the
+ vertical position stays 0.
+ Simple enough.
+ I could have decided on anything, but I wanted to go through.
+ So this thing looks like 2 cosine minus t.
+ OK.
+ How does it go like that?
+ So clearly, when sine of both of those is 0, that whole row goes to 0.
+ And this matrix drops rank.
+ So when straight out, the matrix drops rank.
+ So if I was doing a controller with a pseudo inverse, things could get bad.
+ I want to really understand by the end of the lecture how they get bad and how we predict
+ them.
+ So the singularities are real.
+ It really is that the mapping between my positions, my end effector positions and my joint angles
+ gets into this terrible situation.
+ But it does not mean your robot is helpless.
+ It just means-- well, what is it?
+ Can you think about what it means?
+ So if I'm here and I want to move my hand back this way, is there any velocity I can
+ command my joint angles to move myself a velocity back?
+ What's that?
+ If I have a desired velocity here, how do I map to a desired velocity of the joint?
+ You can't.
+ The only possible velocity there is 0.
+ That's real.
+ You can't move with a velocity instantaneously.
+ But you can accelerate backwards.
+ So by choosing a joint angle that is not instantaneously achieving my velocity objective, I can move
+ out and start accelerating, get to a position where I can start commanding velocity.
+ So thinking about things only in the end effector velocity space does have foibles, if you will,
+ and quirks.
+ But it does not mean your robot is helpless.
+ It just means you have to be a little more clever.
+ Yeah?
+ [INAUDIBLE]
+ The question is, if I move everything up to acceleration space, have I just deferred
+ the problem to the next set of variables?
+ No.
+ I think it's actually better in acceleration space.
+ Now, we'd have to think about exactly what the acceleration-based controller would be
+ to give a great answer to that.
+ But you can accelerate instantaneously.
+ And you cannot command a velocity instantaneously.
+ OK, so in practice, the thing I worry about is I'm running my Jacobian-based controller.
+ I get close to dropping rank here.
+ Because maybe I don't actually want my robot to be at its very, very end.
+ If I'm just innocently choosing some trajectories, I get sort of close to this.
+ If that singular value gets close to 0, I might start commanding ridiculous velocity.
+ Even worse, since my robots are all inevitably going to be velocity-limited, and they're
+ not thinking about your control objectives, there's a downstream part of my robot that's
+ saying you commanded joint 7 to be 60 radians per second.
+ I'm going to clip that.
+ And it's not going to clip it nicely to-- it's not going to do approximately what it's
+ trying to do.
+ It's just going to saturate some of those or fault.
+ So what happens here is that your solutions start getting arbitrarily wrong, or you've
+ commanded something really bad.
+ So what we need is, even though this is good, like the pseudo-inverse is a beautiful mathematical
+ object, if we want to do our best effort knowing that there are limitations of my robot, like
+ velocity limits, like joint limits, and other things, then I haven't given-- the pseudo-inverse
+ didn't have a chance.
+ I haven't told it about that extra bits of information.
+ So we need sort of a richer version of the pseudo-inverse that can consume more information
+ about my problem specification.
+ It can consume these extra details.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, yeah, yeah.
+ That's great.
+ So the fundamental question is, hold on a second.
+ I know that torque is Jacobian transpose times a force, an end-effector force.
+ So if there's this duality here, then if I have a singularity here, aren't I going to
+ also struggle to compute a torque, right?
+ Yes.
+ I think any Jacobian-based approach is going to struggle.
+ That's true.
+ Is it true that you can't compute a torque for an arbitrary force?
+ [INAUDIBLE]
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ I will come up with an example to appease you.
+ I think that's a great question.
+ You could probably even do it here on this guy.
+ [INAUDIBLE]
+ Yeah.
+ There's absolutely that, the question.
+ But you can move it back this way, right?
+ If the--
+ [INAUDIBLE]
+ But this relationship--
+ [INAUDIBLE]
+ This is real, right?
+ This is like, go remember.
+ So why is that not showing this extra--
+ [INAUDIBLE]
+ Yeah.
+ So I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ I think that's a good question.
+ It's solving a simple optimization problem, and we're going to solve harder optimization
+ problems.
+ But the way to see this is first to just understand this original operation through the lens of
+ optimization, and then we can add in some constraints and have a more general solution.
+ Okay?
+ Okay.
+ So this is now differential inverse kinematics, right?
+ We're solidly in the differential inverse kinematics, but now as optimization.
+ All right.
+ So the way to think about what the pseudo-inverse is doing is to think about as it's trying
+ to find me some v such that-- I'm going to use a kind of a shorthand here to get started--
+ that this thing is as close as possible-- JGQ dot, yeah, is as close as possible to
+ my v.
+ I'll make it-- I'll say Q dot here.
+ I have two v's on my notes, so I'll stick with the dot.
+ Okay.
+ So this is my spatial velocity.
+ I'm super careful about that.
+ I'm trying to find Q dot such that this is as close as possible to that.
+ And this is a standard thing in linear algebra.
+ You should think of this as when people write sort of, I want to find Ax is approximately
+ equal to b.
+ I'll do a backslash operator in MATLAB, or this is sort of a shorthand.
+ It's the best-- the solution x that is-- so it makes this approximately true.
+ So how do you actually write that, right?
+ We're going to write is minimize over Q dot the least squares squared error.
+ Okay.
+ So how should you think about that?
+ I mean, even in the scalar case, it's sort of useful to think about, I guess, right?
+ So you think about Ax is approximately equal to b.
+ There's only a few things that Ax and b can do.
+ So if I have like x and y, I'm trying to make Ax equal to b.
+ I've got some slope a, right?
+ I can just compute-- this would be like my x star.
+ This would be the solution that would find me the x such that a times x equals b.
+ So what does the generalization of that look like if I think about Ax minus b squared?
+ Well, you should think about that-- colored chalk opportunity.
+ You should think about that as saying, well, I'm going to score all the different options
+ here.
+ And that quadratic form says, find me the lowest point on this curve.
+ All right.
+ So if I'm minimizing Ax minus b, it's going to minimize this curve.
+ When they're equal, it's equal to 0.
+ As they get farther apart, it goes up, right?
+ It's a quadratic form.
+ Now the interesting thing is to think about what happens if a starts getting small, right?
+ So my solutions start getting worse.
+ I need a bigger x to achieve the same b.
+ And what happens if you were to run through the math-- we'll do the vector case, but you'll
+ see that the scalar case, you get increasingly far out solutions-- x, of course, because
+ if your slope goes down, this would be a shallower slope.
+ And if I go even more shallow here, then the thing I need to get b has some [INAUDIBLE]
+ potentially.
+ And the pole is super bright.
+ OK.
+ So why is that a helpful view?
+ Because if we go into more dimensions, I'd like to be able to say how good a solution
+ is, even when it's not able to achieve the perfect solution.
+ And I want to say things like, OK, you're not allowed to go past here.
+ Like you're just not allowed to go past there.
+ But within the regime over here, pick the smallest point on the curve.
+ That's a richer class of optimizations, but it's still based on this fundamental idea
+ of first scoring all the points and then finding the minimum of them.
+ The way that you can-- so if I were to, for instance, say minimize over x this subject
+ to, let's say, x is less than or equal to 2, that would be something like that.
+ It would be a reasonable generalization of that optimization problem.
+ And we're going to use this in its full glory.
+ But this is a well-defined optimization.
+ I've made a scoring function for all of my possible x's.
+ I've said I'm limiting my search to the place where this is true.
+ Find me the lowest point.
+ That's a more robust formulation of that.
+ I'm able to put more information into that formulation.
+ So the matrix case is only a little bit more interesting, but super powerful.
+ I'm just going to minimize over x Ax minus b squared.
+ The way you do that minimization when things are unconstrained, all you have to do is you
+ take your cost function-- for these cost functions, these quadratic cost functions, all you need
+ to do is find the place where the gradient is 0, the minimum.
+ Since I know that this is a convex bowl pointing up, it's enough to just ask find any point
+ where the gradient is 0.
+ How do you do that?
+ You just take the gradient of this Ax minus b squared, which would look a little bit of
+ [INAUDIBLE] the whole thing, but it's not too hard to do.
+ You get a B transpose Ax minus x transpose A transpose B plus b squared.
+ Take the gradient of this.
+ You get 2x transpose A transpose, and you want that to be equal to 0.
+ You solve this for x.
+ You get-- well, I'll keep it in the transpose.
+ It's a little easier to see, I guess-- B transpose A A transpose A inverse.
+ And if you've ever seen the math for the pseudo inverse, this thing here is just the pseudo
+ inverse, or the transpose of the pseudo inverse.
+ That's where it comes from.
+ This is just the same as saying-- and that is why it's a function of only the matrices
+ A. It doesn't have to know about B to write A plus.
+ Because the solution is linear in B, you can separate them out.
+ So the generalization of that picture-- it's a little bit more of a test for my poor artistic
+ skills, but you should think about this as having some quadratic bowl.
+ And I had x, y, and my objective here.
+ Let's call it x2 and x1.
+ I just said there's a bunch of possible-- I'm going to take every value x.
+ I'm going to score it by this cost function, and I want to find the minimum of it.
+ The shape of that quadratic form is given by this A A transpose.
+ You can see the quadratic form is right there.
+ That's inside those parentheses.
+ So the shape of it is given by A transpose A.
+ So what happens when A starts having small singular values is that this thing starts
+ elongating just like this.
+ This picture is exactly the same.
+ And it can elongate maybe more in some directions or less in some other dimensions.
+ But this thing starts getting long and broad, and the minimum starts leaving.
+ It starts getting bigger and bigger.
+ Simple generalization of that.
+ Not simple, but a straightforward generalization of that.
+ I don't know if I'm going to say that.
+ So now, if I have limits on my problem, I can start putting boundaries in here and say,
+ still, find me the best-- let's say I don't want to cross-- this is no man's land.
+ Don't go past some reasonable velocities.
+ But within those solutions, find me the best by this score function.
+ So that would be the generalization is minimize subject to some other linear constraints.
+ It's not the only generalization, but it's the one we're going to use today.
+ A problem like this that has a convex quadratic objective and linear constraints is called
+ a quadratic program.
+ It's an important class of optimization problems.
+ This is a convex quadratic program.
+ I know that this bowl is going up.
+ Quadratic programs are not something that we think of solving with pen and paper, unless
+ they're very, very small.
+ But we have super efficient algorithms for finding them.
+ And we don't hesitate to run them on our robot at high speeds.
+ So the way that you do this, the way that you get more robust Jacobian-based controllers,
+ in my view, is you start using a richer language.
+ You say, find me the one that's doing my desired spatial velocity as closely as possible, but
+ respects the joint limits, acceleration limits, velocity limits of my robot.
+ And that's what makes these things more robust.
+ And there's more.
+ We'll talk about the last generalization.
+ The last piece of Drake, we talked about the systems framework.
+ We talked about the multi-body plant.
+ And that last big piece of Drake is basically trying to make it really easy to write problems
+ like this and connect it to the other two pieces.
+ You have a language where you basically say, I'm going to make a new optimization problem,
+ mathematical program.
+ Why do I mean-- mathematical programs, in my mind, are slightly bigger than optimization.
+ A mathematical program doesn't need to have an objective.
+ If it's a feasibility problem with no objective, you can still do a lot of mathematics.
+ But it's basically an optimization problem.
+ You declare your decision variables.
+ You can add your constraints.
+ In these cases, I've added a few two linear constraints in this way.
+ And then I add my cost function.
+ You could have done it in any order, of course.
+ And then you solve.
+ And you get out, in this case, the solution.
+ So let me try to visualize that for you.
+ Again, a little complicated, but worth it, I hope.
+ I'll find my mesh.url.
+ All right.
+ I made a 2D-- I basically took the kooka, and I froze a bunch of joints, and left only
+ two interesting joints to move around so that I could make it as similar as possible to
+ that previous example, the two-link pendulum thing.
+ And I'm going to plot the quadratic function, which is the optimization problem here that's
+ given exactly by the Jacobian.
+ I should write the Jacobian version of this here now.
+ Again, if I haven't already, it's this one here.
+ Sorry to ask you to stand here.
+ But it's this problem here, subject to a few constraints on velocities.
+ So what I plotted there is the cost function, which is this quadratic bowl in two variables
+ in this case, because that's all I can plot.
+ And then the red is my constraint.
+ The green is the optimal [INAUDIBLE] Now, already in this configuration, it's looking
+ a little dicey up against the velocity limit.
+ But let's play with that a little bit.
+ The same thing, I'm going to walk through the singularity, walk back and forth.
+ There it goes.
+ Through the singularity and back.
+ What happens when that arm's straight?
+ Is that a good enough angle for that?
+ Right?
+ Well, again, so it does actually go completely flat, well, depending on how clearly I integrate.
+ It's getting basically-- what I care about is that it's getting broader and broader and
+ broader and broader.
+ And there's a tilt to it, too.
+ So the optimal solution would have been a very, very large velocity.
+ But my constraints are saving me.
+ It's pegging itself at the limit and giving me a reasonable velocity out.
+ And you can see the Jacobians and all this.
+ See how it's going super long?
+ OK.
+ I mean, that's the simplest case I could visualize.
+ But that's what's happening when your robots are going straight.
+ In fact, it might have already happened to you.
+ If you played with the very first intro chapter differential, my little teleop example, and
+ you drove it a little too ambitiously towards the edge, it would have said, differential
+ IK is mad.
+ Basically, it's like, [MAKES NOISE] and it goes like this.
+ And it starts-- I mean, it will give solutions, but it will not match your desired velocity.
+ And you can say that there's hard limits, and it'll actually refuse to give an answer,
+ depending on what other constraints you have.
+ OK.
+ Is that clear?
+ Yeah?
+ [INAUDIBLE]
+ Yes.
+ The question was, if the actual constraints are not linear, can you-- so you can choose
+ to try to solve a harder optimization problem.
+ But the standard choice and the one we make when we're driving our EWA around-- for instance,
+ the joint limits actually would be a nonlinear function in general.
+ But we approximate it with an Euler approximation, which makes it a linear constraint.
+ Acceleration limits are actually linear.
+ I mean, for any Euler kind of integration step, position and accelerations are linear.
+ Torque limits are not linear.
+ That would have to evolve the equations of motion.
+ The linearization there is a little more dicey, but we tend to not do the torque limits here.
+ So I want you to just appreciate that this is such a powerful framework.
+ And we're going to use it more.
+ This is just a quick introduction to this idea of optimization and quadratic programming.
+ But I wrote a version here which is trying to say, get as close as possible to the subject
+ of the constraint.
+ Yes?
+ [INAUDIBLE]
+ Yeah, so the worst case here is if you're up against one limit, like on one joint, right?
+ And so maybe your second joint moves along as if nothing happened, and your first joint
+ changes, which means your hand is going off in the wrong direction.
+ So yes, we're going to eventually have feedback loops coming through this whole system, and
+ that's what's going to save us.
+ But even in this open loop framework, because we know about where the limits are, we can
+ plan for them without any direct feedback.
+ And we can at least do a better best effort in the beginning.
+ So for instance, the way that we actually-- when we run the robot, we don't run quite
+ the-- be as close as possible to your desired velocity in the least squares sense.
+ We actually do a slightly different objective.
+ We'd say you want your hand-- so you have some desired velocity.
+ Try to move your hand in the direction of that velocity.
+ You must pick joint angles that will move in the direction of that velocity.
+ And when you hit a limit, you can scale down the whole velocity, but keep the direction
+ the same, because we don't want our robot walking off into some-- away from the desired
+ trajectory.
+ Now, that's a richer formulation, but you can still make it work as a quadratic program.
+ Let me put it up and see if you can convince yourself.
+ This is the original proposal, but here's a slightly different one, which says constrain
+ me to move only in the desired direction.
+ We're going to maximize, actually, a linear objective.
+ This is actually a slightly simpler program.
+ My decision variables are going to be q dot and alpha.
+ I just want to maximize the scalar alpha subject to this idea.
+ So the desired spatial velocity is a vector.
+ I'm allowed to scale that vector, but I must choose a q dot that matches some scaled version
+ of that vector.
+ I'll make sure that alpha stays between 0 and 1.
+ And then I can still add joint velocities.
+ In fact, it's silly to write this controller.
+ Unless you have joint velocities or some other constraint, it would limit it.
+ That Roger?
+ Does that register?
+ Yeah?
+ [INAUDIBLE]
+ Yeah, no, that's good.
+ So q dot is a decision variable.
+ The objective, though, is only in terms of one of the decision variables.
+ So these are both decision variables.
+ This is a vector.
+ This is a scalar.
+ The objective is only to make alpha as big as possible.
+ But q dot is-- the problem still defines a solution for q dot because it enters here
+ in the constraints.
+ And this is an equality constraint.
+ So q dot can only live on the set of possible q dots, such that q dot times my current Jacobian
+ moves my end effector in the direction of my desired spatial velocity.
+ But it could-- so if alpha is arbitrary, then if I have q dot that's the solution, I could
+ multiply by 2.
+ It would still be a solution, right?
+ OK.
+ So I could basically take the q dot that would achieve my objective without any constraints
+ and then scale it down, shrink q dot, but all of the joints by the same scaling in order
+ to satisfy these constraints.
+ So now if I go up and I'm about to run into something, let's say I will continue to move
+ in the right direction.
+ So actually, I won't do what I just did with my hand.
+ I would just stop and say, I refuse to deviate from my desired direction.
+ I would just-- I'd rather stop completely.
+ OK.
+ And that's what's happening inside the differential IK that you'll see as the module even in the
+ first notebook when I just had the teleop.
+ And I had to make a choice of what controller to run in that teleop and what we often run
+ in the robot.
+ This is what you'll get a lot of mileage out of this in the class is just this differential
+ IK controller.
+ It takes in-- actually poses in, does the integration for you and the differentiation
+ and integration for you and runs this kind of control.
+ Questions?
+ Yeah.
+ [INAUDIBLE]
+ I think this is-- so the question is, does this not fail as gracefully?
+ I was raving about the graceful degradation of pseudo inverse.
+ The pseudo inverse, for instance-- OK, you're saying compared to this one or compared to
+ the pseudo inverse?
+ This one, I see.
+ So I've just changed what I want as a degradation in performance.
+ When I have to give up performance, you can choose what you give up.
+ In this example, it says I want you to give me a spatial velocity out that's just as close
+ as possible in the least square sense to the desired spatial velocity.
+ This one is saying I want you to give me one-- I'm willing for it to be less close in the
+ numbers as long as it stays constrained in the direction.
+ So it's just a different choice for what I say-- how I want it to degrade when it can't
+ satisfy it perfectly.
+ In both cases, when these constraints are slowing-- if I had no constraints here, what's
+ going to happen?
+ It's going to choose alpha to be 1.
+ And it's going to make q dot exactly the spatial velocity.
+ So it'll solve the problem exactly.
+ And as these constraints become active, because I'm running up against them here, then alpha
+ will have to shrink.
+ And I think of that as a very graceful degradation.
+ In this case, if there are no limits, then again, it'll find q dot exactly to satisfy
+ that-- drive this objective to 0.
+ As it comes on, it will find a different velocity, but it might make my hand move in the wrong
+ direction.
+ I mean, you get to specify how you want it to degrade.
+ That's the beauty.
+ [END OF TRANSCRIPT]
+ [BLANK_AUDIO]

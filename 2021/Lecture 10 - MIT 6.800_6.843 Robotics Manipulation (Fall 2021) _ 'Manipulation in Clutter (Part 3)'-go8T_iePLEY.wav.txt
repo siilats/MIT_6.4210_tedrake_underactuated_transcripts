@@ -1,0 +1,743 @@
+ Deep note and wanted GPUs we might ask and they might you know see what they
+ can do and they might offer us some compute. Those are the best options I
+ have in terms of you know be needing a big GPU if you want to train something
+ deep. I mean unless you have a big graphics card at home that's that's kind
+ of how it goes. That's a good question. I would say ask us early just so if I can
+ get that conversation started but maybe like in your project proposal if you're
+ thinking I might be compute limited for this you know call that out earlier. I
+ have seen RL projects that sort of run out of time. Right you know like my
+ learning curves aren't going down and things are due and it just takes a long
+ time to run simulations so that is a risk with RL. We're good to go? Okay.
+ Thank you for figuring that out under pressure. That was great. Okay so
+ there's a important I think thing that I you know so we've been talking through a
+ lot of a couple different almost complete solutions but I feel like
+ there's an important piece of the puzzle that I haven't given you a good solution
+ to yet and I want to talk through that today. So you know we've been talking
+ this week about clutter clearing as just an example right and I would say the
+ quick summary of our simplified bin picking strategy has been first you
+ maybe get the hand out of the way use your cameras acquire and pre-process all
+ the point clouds from the candidate bin right you sample and score those
+ candidate possible candidate grasps using our antipodal metric but we have I
+ said antipodal plus plus because it also the one I implemented threw in some
+ preference for reaching down from above and some other things like that so it
+ had a few other terms in the cost. Okay and then we then you would complete with
+ the you know the recipe from from before you turn that into like a gripper
+ trajectory that's going to go down from my current hand position to the grasp
+ right and then you're gonna bring that over to the other bin drop it off and
+ you'll probably you'll execute that trajectory with diff IK that's what
+ we've given you so far there are other ways to do it but that's what that's the
+ toolchain so far and then you're gonna you know repeat until some termination
+ criteria or whatever and maybe at some point you start start picking up things
+ from the other bin and putting it back so you have a closed system that can run
+ for a long time. Now the thing that's happening here that didn't really happen
+ given our previous assumptions is that a lot of those steps can just fail right
+ for sometimes good reasons sometimes less good reasons but you know let's
+ just list a little bit of what are the what are the things that could fail in
+ that pipeline what are the steps that are sort of not guaranteed yeah yeah the
+ grasp could just fail right so I could I could go down I mean maybe the maybe I
+ just I closed my hand there and it slipped right out right so like a failed
+ grasp right so it might be that right at the moment of closing the hand I could
+ show to check if I've got something if my hand closed all the way and there's
+ nothing you know fingers are touching each other that's a failed grasp you
+ know the so there are sensors that will allow us to detect that you know but you
+ can also have a tenuous grasp right and then once you start lifting or moving
+ it slips right out right and we also talked about you know maybe I picked up
+ the hammer by the very corner and it just sort of torqued itself out right
+ it's not just okay that's definitely one what else can fail yeah right it could
+ be that there's there's a good grasp that exists and I just didn't find it
+ with my antipodal strategy because antipodal is not absolutely guaranteed
+ to exist in in some metric or it could be that I just sampled not enough right
+ what else could fail yeah right right so bad point clouds right reflections or
+ transparent objects or other you know all kinds of stuff can screw up your
+ point clouds there's another big one yeah
+ yeah that's that's close to the one I was thinking so he says differential IK
+ might fail right so the fact that we've separated the grasp planning from the
+ arm limitations right if there's any workspace limitations on your arm or you
+ know which could get subtle right if it if I have to get down and reach you know
+ it might be that's that an over the overhead gris grasp in the back corner
+ of the bin would be fine but if I went like this it wouldn't be fine because of
+ the reachability of the arm and somehow because I've decoupled those two
+ problems I could fail downstream right
+ and the arm has additional geometry it could be I mean I could tell you it
+ happens a lot actually that that kooka if it wants to get into the sink it's
+ got this big old elbow right so you know you think about just the gripper getting
+ in there but then you're gonna have a constraint coming from the elbow that
+ you didn't reason about so so those really do happen for just joint limits
+ but also collisions right and we could go on right so there's there's a bunch
+ of things that that could break in this system and I think that's just a reality
+ of having perception in there and having a relatively simple pipeline even the
+ logic of deciding when you're done it's kind of not clear exactly when you're
+ done you could have points still you know objects still in the bin that you
+ just have to decide I'm never gonna get that one right it's kind of stuck in the
+ corner my hands not gonna fit I gotta give up move on to the next one right
+ now the full on the the TRI clutter clearing has additional skills like we've
+ talked about sort of push things out in the corner to try to really get to zero
+ but but if you don't have all those extra layers of you know band-aids
+ around it that even just understanding when to give up right is something so
+ the big thing that's changing now that I feel like I haven't given you a good
+ solution to yet is that we can't just sort of run through a script and be
+ happy right we're gonna have a lot of branches right okay did my scoring
+ candidate find a good solution if not maybe I resample maybe if I've resampled
+ ten times I give up and I move on to the next you know so there's gonna be a lot
+ more branching a lot more checking and the like in here and even even given
+ that I haven't told you really how to go from this sort of script into the
+ simulation framework right so we're going to talk about you know what it
+ means to execute that sort of a plan in a situation where you're a dynamical
+ system and somebody's asking for an answer at 200 Hertz this is sort of
+ procedural script the way you'd write a you know write a standard code but
+ that's not the way we tend to write systems and that's not the way it's not
+ the framework that sort of guarantees that you're gonna have a message ready
+ to send to your robot every 200 Hertz so somehow somewhere there's got to be a
+ contract which tells me how I'm gonna go from you know that kind of logic into
+ this into this sort of tell the robot something all the time some robots will
+ actually just power down if they haven't heard from you in five milliseconds
+ right so okay a lot of times that contract is a little ambiguous right
+ maybe it's if you've got a multi X you know multi process system sending
+ message passes passing you know maybe your low-level controller is just
+ sending a keep alive and if it doesn't hear from you for a while it'll just
+ keep sending the last command and so you're not really worried about that
+ contract as much and you just every once in a while send a plan over but you know
+ when you get down into trying to make these things understand these things
+ completely I think that contract needs to be made more explicit so we'll talk
+ about that today I mean honestly this is a lecture I would say that I'm still
+ getting my head around right I'm trying to decide exactly what pieces to cut out
+ and and it's an interesting conflation of like what people like to do in AI what
+ people like to do in control theory what programmers like to do right somehow
+ it's like in the Venn diagram of those things and I don't actually think so you
+ might look at this list and think oh that's kind of like a software
+ engineering problem not a fundamental problem but I actually think it is
+ squarely in the you know the place where AI type planning methods and the like
+ are coming together with systems theory and I think it's really important in
+ fundamental okay so to start off I thought I'd I do like a bit of a case
+ study here this is I mean you've seen this before but but we can sort of dig
+ in now and say how did we organize the behaviors on this system right I've
+ never actually really presented that to anybody and there's some some details
+ that I think aren't going to surprise you but maybe we'll clarify something
+ that looks it's complicated complicated and this system I think notably was
+ taken to a very high level of maturity so it's a fairly complex task but it's a
+ task that worked very nearly all the time by the time we were done hammering
+ on it okay so it's a there's a statement just of you know the way we typed it in
+ this way is something that you can take to high levels of maturity and if you
+ guys have done you know internships at companies that are doing this kind of
+ work you'll see you know you might some of this stuff might look familiar it's a
+ okay so you know the scripts that I should the script that I showed you for
+ for bin picking you know has these different components that we've broken
+ off and that's a common strategy so in the dish loading there are a handful of
+ different you know primitives actions so we really decompose the big task into
+ these notion of many primitives okay so this was like picking up a I can play
+ them again real quick but this is picking up silverware that was pulling
+ the silverware rack out you know and picking up the silverware opening the
+ door is a primitive you know picking up mugs is a primitive this is the nudging
+ it out of the out of the corner because the hands too big to pick it up when it
+ was in the corner you know these are all composed with as different primitives
+ okay so the language that we use behind the scenes is not strips but I think if
+ you understand strips which is the which originally you know was the Stanford
+ Research Institute problem solver was the originally was the name of the
+ algorithm okay and became known for the sort of specific formal language
+ specification which was the input format to that solver is now what people often
+ refer to as the strips language okay this is an early sort of way to an AI
+ approach to planning that allows you to compose multiple motion primitive or
+ well let's say primitives we won't include the word motion yet okay and try
+ to compose multiple behaviors in a way that's a very natural sort of planning
+ framework okay when you think about AI planning you might think about graph
+ search right you should think about graph search that's a star algorithms
+ and and other kind of algorithms like this and the specification languages in
+ strips and its successors I think bridge the gap between those sort of search
+ algorithms and a specification language which is more about named actions with
+ preconditions and post conditions and the like okay and it just it's a
+ specification language that makes those planners good so the specification
+ languages most notably here you know you itemize a set of actions okay for each
+ each action you you talk about you know when am I allowed to take that action so
+ it's if it's the I'm gonna pick up a silverware this time but silverware is
+ my action right then the preconditions might be that I've got some detections
+ of a fork right and you probably won't get detections of a fork unless the fork
+ is exposed in press in practice actually we don't pick up forks until all the
+ plates and all the mugs are gone because well things go weird if you you can you
+ can find yourself in all kinds of crazy situations if you drop a fork in a mug
+ or something like this so we we just decided to prioritize you know get the
+ mugs and plates out and leave the forks and everything at the bottom okay the
+ inaction causes some change in the state in the in the state of the world okay
+ with some post conditions now this is interesting you know this is what allows
+ you to do prediction into the future so if I were to say I currently have a
+ detection of the of the fork in the sink after I run my fork pickup I'm gonna say
+ that there's no fork in the sink right it's in my other the fork in my hand for
+ instance okay and then you can specify a long-term objective like clear the bin
+ okay as saying like there are no objects or you know the point cloud is of
+ sufficiently sparse or something in my bin okay we're gonna see a couple
+ examples of this but but I want to just sort of introduce this like high-level
+ notion of separating your task into actions and using a traditional planning
+ system to sequence those actions okay the newer versions of this are I mean
+ not even that new right but potato is like the generalization of strips so if
+ you hear but it'll which you will hear around campus right you may hear potato
+ stream right but this is an active well there's there's a there's a lot of good
+ work about this kind of planning even taken to the next level you know
+ upstairs and listening to Masa's group for instance okay so but it'll just is a
+ richer form of the same idea I would say it kind of generalized strips and a few
+ of the other early programming language sort of planning specifications and in
+ particular it allowed you to sort of factor you could there's this notion of
+ objects that come in and instead of having just individual state variables
+ that get listed one by one there's a little bit of a object orientedness of
+ it the detail I don't need you to understand but basically it's the same
+ specification same type of specification of strips generalized to be more
+ efficient and more general you'll see the same initial state and goal
+ specifications and the same sort of actions that are around okay and in
+ practice you know you write these little you know specification files that that
+ just define your predicates maybe there there's a robot in a room there's balls
+ there's grippers okay you define actions that have preconditions and effects okay
+ different types of pick actions preconditions and effects and these are
+ all written as logical operators on these kind of variables and then
+ similarly your that would be like a that would be your domain definition and then
+ similarly you can write a planning instance where you say I need this is a
+ new problem I have some initial conditions where I have no two rooms and
+ four balls I have a gripper you know and I have to plan from the start to the
+ goal okay so that's a technology that's out there and I think it it becomes
+ essential when you're trying to compose much you know more and more complicated
+ tasks where your decisions about what I should execute right now are conditioned
+ on multi-step reasoning right where the reason I should pick up a fork right now
+ is because well maybe if I the reason I pick up a mug right now is because I've
+ already you know I want to get the rack open I'll open the rack now because I'm
+ gonna pick up a mug next maybe that's a better example okay when your decision
+ right now depends on multiple steps of reasoning this allows you to write that
+ sort of branching logic in a much more compact form and leverage a planner to
+ make those decisions for you okay so how does that look in the in the TRI
+ disloading system okay now in fact it's it's a little unfair to say to describe
+ it as pivotal I'm using that to simplify it it's actually a the the task planner
+ is actually a task in motion planner that's capable of more but I think the
+ bulk of the example here I can tell you without telling you that the full glory
+ of that okay so it's kind of fun to like look through the code and see that
+ actually those concepts really you know they they appear in your in your c++
+ classes and stuff like this okay so we really do define all of the actions all
+ of those those controls in terms of this you know action primitive interface
+ similar to biddle right there's there's a check that's like the is candidate is
+ like the precondition check right so you can tell it the current state you know
+ it's I'll show you what the state is in these cases this sort of subsampled
+ state of the world grounded state of the world if you will and it just answers
+ the question you know each skill each primitive action answers the question
+ yes can I run this now or not right just a Boolean outcome and then sorry the
+ the outcomes would be if I did run this what would I what would I expect to
+ change about the state right you can associate costs you can associate
+ rankings with each of those that's it those are generalizations of the basic
+ potato idea there's potato variants that include that for sure but if you want to
+ solve you know optimize and try to pick the best action instead of just having a
+ lot of feasible actions that those can be very important and then there's just
+ this notion of like I'm gonna now run the skill right so each of these sort
+ of actions has the ability to say when you can run it say what's gonna happen
+ if you run it and run roughly and if you look through the code there's just a
+ bunch of actions that are at this level of like you know pull out the lower rack
+ pull out the upper rack right and this decomposition was done by humans this is
+ a manual step this is something that is an active you know lots of people are
+ thinking about how do you get those to come out automatically but I think a lot
+ of people are still manually typing in those those decompositions okay and it's
+ also sort of interesting to see the level at which these are written right
+ so they're not the details of like twist my gripper at this you know and to this
+ angle and then push I'll show you what those details too but you know they're
+ more at the strategy level of like should I do this first should I do this
+ next right the high the task level
+ part of the reason for that is because you know the preconditions for these and
+ even the outcomes can be written in terms of a pretty simple and abstract
+ state of the world okay so just pulling into the code right the the state of the
+ dish task right is a combination of disk dish washer state and dish state okay
+ but they're basically what I want you to see here is that they're like number of
+ times I've put them away an integer okay the number of dirty items available
+ right they are Boolean you know is the dishwasher state known is the door open
+ is the lower rack out okay this is us grounding some symbols into our
+ perception there's a there's a step required to do this right is to have a
+ perception system that can tell me if the lower rack is out or in but if we
+ can ground that perception into a into just a Boolean classifier that we're
+ happy with then we can start writing this higher level procedural logic and
+ using the more sophisticated planning framework to make our decisions right
+ even the the dish types you know are enumerated if you throw in something
+ random it becomes unknown unless it's mug like and they might get grabbed as a
+ mug and put in the top rack right and some of the some of the different
+ objects have a requested location in the dishwasher right they all have like
+ relative status as you're trying to to move through that stack so so the the
+ decision-making there is you know it when you first turn the robot on it
+ looks at what you know it uses its perception system to decide the current
+ state and it will make a multi plan action using that very simple
+ representation of state using an optimistic plan that basically says I'm
+ gonna you know the outcome I get is success roughly and the you know it's
+ it's a yeah it's optimistic and it's deterministic so it also assumes that
+ you know I get what I with probability one the action is succeeds right so the
+ way to make that that's a common assumption it's not a there are people
+ that do belief space planning probabilistic planning planning with
+ uncertainty and the like but this is not doing that yet and the way you then
+ handle each outcome is that you're constantly watching if you've deviated
+ from your plan you just replan okay works fairly well right so if you start
+ putting your mug in and then you someone comes in this is like not as cool as
+ kicking the robot at Boston Dynamics but it's kind of kind of similar I guess you
+ know it will decide mid mid mid place that it needs to set down the mug
+ reopen the dish rack pick up the mug again you know it's got this layers of
+ complexity that come from that task level planner and it's infinitely
+ patient right because you know you can sit there do that all day and you think
+ about the robots gonna throw the mug at me but it never never does we didn't we
+ didn't program that skill
+ is that clear I mean is that there's a lot of details hidden behind there I
+ want to give you the sense anybody have questions about yeah
+ all right
+ the question is how far ahead do you plan right how do you have to plan like
+ 20 steps ahead you have to plan till like the dishwasher is clean there's
+ there the dish the sink is clean a dishwasher is full right so we
+ definitely don't do that because perception isn't capable of telling us
+ the full state of the sink so we have to sort of have an incremental approach
+ you can't sort of reason all the way to the end but the the answer to your
+ question about how far do you look ahead is actually very subtle I'd say so you
+ know these preconditions that say when a skill is good if they are very weak if
+ they're like loose approximations of when you should execute that skill then
+ then looking ahead farther will will make those stronger this is a standard
+ thing in planning right so if you if I had for instance you know the conditions
+ that are exactly narrowly defined which says this is you know if I were to run
+ the plan these are the only conditions for which I would choose this skill then
+ I would never need to run the plan I could just if it's if you know
+ reinforcement learning like if I had the value function for instance as my
+ precondition check then I wouldn't have to do any planning if you write weak
+ preconditions then planning will make them stronger looking ahead will make
+ them stronger so in practice I think we're somewhere in the middle here we
+ take that we do plan ahead I would guess most of the time we take we take the
+ action that we would have taken if we hadn't looked ahead but we always look
+ ahead multiple steps in many steps just to make sure yeah
+ yeah so if these planners were a computational burden I think we'd be
+ playing more games about incremental replanning and the like and just you
+ know but the discrete level planning is lightning fast and we just go ahead and
+ plan to the end there's no reason not to for us when you start adding more of the
+ task and motion planning features which we'll hopefully talk about in one of the
+ boutique lectures later then then those planners can slow way down but for the
+ simple high-level logical planning that's fine yes
+ you are very wise so so the question was when does it actually check I do
+ think there are a few magical places in the trajectory where it's checking where
+ it's where it's transitioning between the lower level skills where those are
+ the discrete times where it checks so if we had pushed at a different time it
+ might have still gone to the top of that trajectory before setting it down right
+ so you're absolutely right the checking well I mean the perceptions running at a
+ higher relatively higher rate the replanning is happening at our between
+ the macro actions now if we I think we probably could do it faster but I think
+ for this this task that was sufficient those are good questions yeah and I'm
+ happy to take them okay I want to make this point super clear okay which is
+ that most of those states there was a po there were poses and a few things in
+ there that were continuous values but most of the planning there was actually
+ on discrete states the planner that we use is actually capable of much more but
+ that instance that I'm telling you about was mostly discrete state integer number
+ of times I've done things Boolean is my mug in my hand those kind of things okay
+ planning is fast in that case when you start including continuous state then
+ it's going to be a harder problem right and we will we will talk about that but
+ in general things get harder fast however the notion that's a little faint
+ on my screen but the notion of preconditions and post conditions of low
+ level skills I think transitions very well into the continuous domain and any
+ of you that have taken under actuated with me or will take under actuated with
+ me know that I'm a big fan of thinking about feedback controllers in a low
+ level even continuous state task in terms of their preconditions and their
+ post conditions that's a you know and there's connections to Lyapunov
+ functions from control as ways to think about those preconditions and the like
+ so the general notion of decomposing your task into skills is I think very
+ general reasoning about the multi-step effect of those skills and making a plan
+ gets much more expensive okay people do it right there's something called
+ feedback motion planning which talks about okay well if I was in this the
+ inside of this skill this funnel so that I maybe didn't say clearly enough so I'm
+ thinking of this imagine this is like q1 in this axis and q2 right the joint
+ angles or the continuous pose of my object right and the preconditions I
+ could draw as a subset a continuous subset of state space saying these in
+ these continuous values when q1 is and you know q1 q2 are less than you know
+ are in some ellipse for instance then I'm gonna say yes I can run the skill in
+ that case and you say after I've run the skill they're gonna come out hopefully
+ in a smaller set because oftentimes controllers are good and stabilizing okay
+ and if the the continuous set that I expect to be the effect of my action
+ fits completely inside the precondition of another set then you can imagine
+ sequentially composing these things into more dexterous behaviors okay now this
+ this idea is I think powering I mean so al Rizzi is now you know way up in
+ Boston Dynamics they don't want to get his title wrong but it's very near the
+ top of Boston Dynamics and spot is you know is under I'lls organization or
+ well it's a complicated organization but there's I think there's a lot of funnels
+ going around on spot okay so so I think that this this idea you know I think is
+ making real robots do amazing things okay so so I really think this notion of
+ programming by breaking up into small pieces and then using some level of
+ planning to compose them is a good idea
+ okay so let's dig in a little bit more to like what those individual skills
+ look like okay there are some which are more like our you know just sample the
+ point cloud there are some that are just sensing but the low-level skills for
+ that are doing the work that I showed you are maybe the more interesting ones
+ and we can step through them right so I should have started this from the top
+ right so you can watch we're gonna approach such them that the mug is in
+ view of the wrist camera now the wrist cameras got a good view now you see a
+ little bit of adjustment that's the visual servoing using ICP right the
+ iterative closest point to make sure your your scan matches the data and
+ you're gonna get the pose you expected to get then you insert to grasp close
+ your hand retract move to pre place when you drop it down you see that the force
+ is you know there's force thresholds to determinate do it one more time here
+ sorry ICP move move in retract move to pre place which is a big motion
+ planning system there and then when it actually set it down to it sets it down
+ and by touch right based on based on a force sensor right because if you didn't
+ get the pose exactly what you don't want to rely on your estimation of the
+ geometry to set it down that's how you break mugs we've broken a few okay this
+ is my favorite one right so the the plate pickup and it is similarly I would
+ say I should be clear that these were the original versions that we wrote we
+ wrote handcrafted versions and now we've been doing more and more automatically
+ learned or synthesized versions of all these tasks but I think it's important
+ to understand the first handcrafted versions of these okay so that plate
+ pickup is a pretty subtle one you have to potentially get your fingers between
+ different plates in order to get it up okay lots of different thresholds okay
+ and it is a similar but more complicated plan about approaching the plate so it's
+ roughly in view for the wrist camera visual servo for alignment now we start
+ stick our finger you know close our fingers to roughly the right amount
+ insert one fingertip between the plates you know and so on and so forth right so
+ this type of reasoning actually gets to pretty robust pretty sophisticated
+ behaviors in fact so I like to call see one actually called there - you know
+ there's a there's a sort of a type of person there's an attribute that people
+ can have I have no very few of them but I would call see one a robot whisperer
+ right it's like yeah I think different than a horse whisperer but but sort of
+ similar in principle like the robots don't work and then see one enters the
+ room and the robots work and they do magical things and you can't believe
+ that someone could make a robot do that and I think it's it's a lot of intuition
+ about what signals matter and good debugging skills and all these
+ incredible things but as much as many cool things as we've seen from from
+ learning these days I think I would put see one up against any of them in terms
+ of like you show me a complicated task for a robot and I think someone a robot
+ whisperer out there could make it work
+ we will talk later about the learning version of it this is one that we did
+ upstairs in robot locomotion group was a kind of a we didn't buy the sink but we
+ did a similar task on the on the tabletop and this is a neural network
+ controller that's doing a similar thing and one of the big differences of this
+ controller is that it's it's going based on directly from perception so it's
+ there's no explicit estimation of the pose or location of the plate there's
+ even really not an explicit notion of plate anywhere it's just trained to go
+ straight from a refined visual representation directly into the actions
+ of the hand but it still fits into this box of thinking of it as a primitive
+ that takes things from one set of initial conditions to another I actually
+ will in the RL section I'm hoping to use this as a simple this is the simplest
+ version we've done of sort of the same kind of task that you can just hammer on
+ in simulation it's all it's even in 2d and you can just do direct policy search
+ on that so we'll play with that later
+ okay so I think one of the big challenges of thinking of programming
+ the task level is that you know because there's failure conditions there's all
+ there's all these different things that can happen you know you end up writing
+ much more complicated code for the clutter clearing you don't actually need
+ a full-on task planner you could just write a script with a handful of
+ branches and you'd probably get pretty far but for something like the
+ disloading that breaks the stack and you don't want to write that one out by hand
+ you want to write these modular you know I think three conditions folks post
+ conditions and use it an AI style planner to handle all that branching okay
+ one of the challenges with that although I said that the discrete is fast it's
+ not 200 Hertz fast necessarily so so taking these sort of long-running
+ computations and putting them into a simulation loop I think is the next to
+ sort of I want to I want to start bridging that gap gap how do you how do
+ you write code sort of in the simulation loop that transition clear yeah okay so
+ the examples I just showed you still looked like scripts right the move until
+ you touch kind of scripts and they went down a procedural script now that's what
+ programmers like right that's good for rapid prototyping whatever but if you're
+ a controller a control theorist or applied controls person you don't like
+ that representation right that's there's like bad things going on from the similar
+ version of that that you'd see in controls are this is an original Mark
+ Raybert hopping robot MIT leg lab hopping robot sort of the precursor to a
+ lot of the Boston Dynamics robots now if you will and one of the things I
+ absolutely love about it is that although it was like the most dynamic
+ locomotion legged thing ever you know certainly in the 80s you know it was
+ just far more dynamic and interesting than a lot of its predecessors the
+ controller fit on a single page I could if you come into my office I'll like
+ show you the page which has this at the top and then like the four PD
+ controllers on the bottom half of the page it's like a small book with one
+ page and it's and it's a beautiful description of a controller that to this
+ day using all of the tools we have from optimization that I have from
+ optimization theory and the like I don't have I can't make a better controller
+ really than that it's just a beautiful like yeah very simple architecture very
+ simple design leverages a lot of mechanical intuition a lot of you know
+ physics based intuition but what you see over and over again when you see one or
+ or the folks at Boston Dynamics or whoever's doing these you know these
+ robot whispering right controllers they are very often right things that are can
+ be spelled like a finite state machine controller okay so
+ I would let's contrast procedural logic versus finite state machine controllers
+ okay so do people understand what I mean by procedural logic this is like I'm
+ gonna say you know Wow something it's something I'm gonna write sort of my
+ standard Python C++ code I might have branches I might have whatever this is
+ sort of the procedural logic view of the world is our sort of standard
+ programming interface it doesn't have explicit notions of time okay it has
+ it's just marching procedurally down and an exit and following branches and
+ you're always on one line at a time okay it's the state way we typically write
+ code now a finite state machine is a dynamical system you know it fits inside
+ a mathematical or a computational framework that is different than this
+ right it fits inside a simulation loop where you can have there's a multiple
+ ways to write it but I might say a discrete time one would be something
+ like my dynamical system okay but I might have multiple equations that
+ govern me one for each state which let me call it mode so in the on the board
+ here there's a flight mode there's a landing mode there's a compression where
+ the leg spring is compressing there's a thrust there's an unloading mode right
+ each one of those is implementing some sort of a differential equation or
+ difference equation okay and then we have the edges of a finite state machine
+ are conditioned which say I'm going to my next mode you know my I n plus one is
+ some branching logic so it could be the same as I n or follow an edge
+ that's not
+ that's not the point I'm trying to make is that these are really they live in
+ a time stepping of a dynamical system right they have a discreet miss about
+ them where it says I'm only in one mode at a time but when I'm inside a mode
+ I'm just a different set of dynamical dynamical system equations they can have
+ inputs they can have outputs they could be an entire system in the way we've
+ talked about in class okay but I'm going to transition to which one's active a
+ way to think about this is that the total state of that controller is the
+ states of all the individual modes plus an integer state for the mode
+ I
+ I
+ I
+ I
+ I
+ so when I look at this sort of a procedural recipe that is written like
+ this but that you could potentially be written like this or it could actually
+ be written like this where we really have a different dynamical system for
+ approach the plate for visual servoing for us you know for closing the hand
+ those could differ be different states in the diagram you could write it either
+ way the reason I mean you can imagine that that if I wanted to say something
+ formal about what's happening in the system this representation is going to
+ give me more power to sort of analyze the dynamics of the system say something
+ about stability say something about robustness you know use all of our
+ stronger tools right this system is easier this is the programmers the light
+ right if you just want to hack something together and prototype this is way way
+ better okay now if you think about programming languages at all if you this
+ system they if they could be mathematically equivalent then then you
+ know the state of this system which is declared very explicitly potentially if
+ you use something like the systems framework we use in Drake or you
+ simulink or anything like that right you're explicitly say what X is you know
+ you explicitly enumerate the mode that you're in and you've declared all your
+ state and your function your your dynamics are just a function of the
+ state and input the notion of state is much messier in a procedural code it's
+ somehow like the entire stack of your thread you know you feel like if you're
+ to hit your debugger and you do DB stack right like that somehow that's your
+ state okay and it's a it's a useful state for programming but it's a messy
+ state for analysis okay so I do think this is one of the big things that that
+ is a gap is if you know taking code like this and translating it into this is a
+ sort of a an interesting enterprise and an important one if you if you need to
+ somehow write your system in a way that it will always talk to your robot at 200
+ Hertz but like I said there are you know people can take that kind of a an
+ approach this is Andy who's the video you've seen before but you know the task
+ level behaviors here I don't know the details I know Andy I like Andy a lot
+ but I don't know what code he wrote exactly my impression is that it is you
+ know finite state machine like and it is extremely robust even if you know
+ people pull the back of the robot and the like right right there's no learning
+ at the task level here there's probably learning at the perception level this
+ was a few years ago but you can make these things incredibly robust by
+ writing them in this sort of like the the framework of these finite state
+ machines success at the end right
+ okay so you know and and this is something that people use more generally
+ I don't think I'm not sure this package is super popular anymore but they're good
+ in the raw stack you can find things like s Mac which is state machine right
+ and you know this is this is a tool chain that people do use okay but you
+ know this problem that it's trying to solve of taking something that's like a
+ procedural code and giving it an explicit contract about having an output
+ or a state updated every time step bridging that gap that's something that
+ that people have dealt with for a long time so that you get one what is this
+ picture here right so like game developers have known about this problem
+ forever when I was a year up many years ago and I when I was an intern many
+ years ago when I was a year up I worked at with Miss at University of Michigan
+ with a guy who was doing AI for computer games and when I went for the summer to
+ Microsoft Research at the time I worked on this game which was a project at
+ Microsoft Research because it was one of the first massively distributed action
+ games gaming zone was new and they're like you know they were doing sort of
+ character stuff but nothing that had real-time action over the internet so it
+ was like it was a research project I wrote the drone code so if you were like
+ ever to play this game and you saw like a mining drones or turrets shooting at
+ you or whatever like that yeah I was I was trying I had permission to do like
+ an Easter egg that would like spell my name in the sky or something but I ran
+ out of time so I don't I can't say that but the way people program these kind of
+ things in in games is similar to what more advanced tools that people have
+ used in robotics also right the problem with writing code in finite state
+ machine is that as the tasks get more complicated the state machines explode
+ they absolutely don't scale right you can get if you start you want to add
+ just one new behavior maybe that behavior has to touch has to work in all
+ of those different different situations all these different skills maybe you
+ know in all of the different sequences of the robot picking something up I still
+ want to be able to like stop and go home if something goes very wrong right and
+ so that might mean taking every one of my states and blowing it up and blowing
+ it up and you get these like exponential growth of number of states and it became
+ untenable so through some amount of like you know research in academia and just
+ hacking in game industries or something a new form of you know a new format for
+ specifying finite state machine like things was born and that was called
+ behavior trees right people know about behavior trees yeah there was another I
+ guess the part of the theme there was Rod Brooks colleague here for many years
+ and you know he was part of this sort of this push I would say from the academic
+ side you know this was the time where Tomas and other people here Tomas was
+ Rod's postdoc advisor so they were you know they were close but I think a lot
+ of people were talking about AI style planning planning planning planning and
+ Rod starts writing a series of papers like elephants don't play chess you know
+ and intelligence without reason intelligence without representation and
+ he started arguing that robots real robots should be programmed with like
+ small state machines and he built this subsumption architecture it was his
+ version at the time and that was used to program legged robots probably program
+ Roomba right I tried to find a subsumption architecture for Roomba I
+ didn't didn't find it but I think the early versions of Roomba were running
+ these you know state machine like but programmed slightly differently versions
+ of low-level controls as opposed to big planners it's interesting that his his
+ critique of why you know the traditional approach has emphasized the abstract
+ manipulation of symbols which whose grounding in physical reality has rarely
+ been achieved which is totally true and at the time and whatever but it kind of
+ has been achieved now right I mean perception kind of works I mean like
+ completely there's abstract symbols that are still very hard but like I can find
+ a mug you know I can ground that I could tell you if the dishwasher doors open or
+ not right it's interesting that that I in my view is it's not solved but it's
+ it's moved okay so behavior trees we're gonna actually have you work through a
+ version on for the for our task on the problem set but they are they are
+ similar in spirit to state machines but are better been designed with
+ composition and a factor representation in mind okay so you'll see these these
+ basic operators it's a graphical programming language effectively that
+ that composes different so the way a behavior tree works is roughly you go
+ down you walk down the tree on every execution you ask you know should you
+ there's a there's basically logical ors and logical ands okay you say is this
+ true if yes execute the action and it doesn't succeed and this is an or so
+ maybe if it didn't succeed I'll walk down this train this chain in practice
+ it's a simple programming language for these types of behaviors which people
+ have had much success building libraries of behaviors if I had like a new you
+ know way that the robot should go recharge its batteries then I could
+ bring that recharges batteries and somehow stick it in here on my existing
+ someone else programmed you know Roomba sort of program and it can just sort of
+ tack into the main tree you get this logical specification that is finite
+ state machine like but much more factored and easier to compose and I'm
+ totally serious that people in computer games you know do this right so I wanted
+ to you know like if you go to the Unreal Engine 4 behavior tree quick start guide
+ right you can see how to like what was the thing here is create an enemy AI
+ that responds to seeing the player and proceeds to chase them down right so
+ that's got to be useful right and there's like a whole GUI in Unreal
+ Engine for programming behavior trees right so people build pretty complicated
+ systems out of this and they they are designed around this this fact that the
+ game engines are stepping along at a simulation loop you have to tell me what
+ to do at every step so how does that connect back to like the systems
+ framework and our dynamical systems view of the world right you could just stick
+ a behavior tree here's an example of it from a early version of the class that
+ we did you can you can take your favorite Python behavior tree library for
+ instance and tuck it inside a system and have the the what do they call it the
+ blackboard of the of the behavior tree basically be declared as the state of
+ your system and every time your dynamical system is evaluated it just
+ walks down the behavior tree and runs the action and it fits right into the
+ systems framework it's not in Drake master it's one of the places where I
+ feel that we could make the full stack easier if we implemented a few of these
+ these algorithms and made them available for people okay so there's a thing that
+ happens here that I want to kind of land and I'm people disagree with me on this
+ by the way this is now you know squarely on Russ's opinion of the world not what
+ is absolute and correct but despite the knowledge and utility of writing of
+ writing behavior trees and computer games and stuff like this a lot of
+ people when they're writing robots don't don't use finite state machines don't
+ use decision trees don't even necessarily use the full planning stack
+ they will still write procedural code and I think that happened a lot because
+ of the sort of multi-process message passing so let's say it's Ross or some
+ other message passing it's happening inside here okay so maybe over here I
+ have a simulation with a simulation time step and something that's working on
+ every you know five millisecond clock okay that's going around over here maybe
+ I have my while dirty sink right and then along the way I just sprinkle in
+ my decisions to send and receive messages so this can work and I think
+ the fact that the message passing and the separate multi-process view of the
+ world has become so easy with all the you know with the way that we've
+ architected our robotic systems these days this has become common again what I
+ think people what I worry about we've lost that maybe most people don't worry
+ about we've lost is that it's it it is possible but it's very difficult to get
+ deterministic evaluations in these kind of systems okay so as soon as you start
+ getting multiple processes that have you know arbitrary delay in message time
+ arrival and stuff like this even just your CPU scheduling things at different
+ times I think you don't typically run the same Ross simulation twice right I
+ mean I think that's just not what it's built for there are message passing
+ systems that can do extra work to enforce timing and and and give some
+ sort of guarantees there but it's very hard actually to run the same simulation
+ twice in that kind of a framework and I think that doesn't hurt you when you're
+ just prototyping but when you start taking things to the next level of
+ maturity it really starts to hurt you I think a lot of you know I think a lot of
+ advanced users stop using some of those message passing systems because of that
+ it's just very hard to get very repeatable very reliable you know when
+ something doesn't work did it not work because I dropped the message or
+ whatever you know so it was interesting to watch sort of the the process of
+ taking and you know to work on the process of taking that dish example to
+ maturity so it was a there was a system that was constantly running Monte Carlo
+ tests so making random initial conditions random mugs random plates
+ you know generating random we have like procedural dishes that would make
+ different size but but mug like things and generates spit out CAD models right
+ we changed lighting conditions we change all kinds of stuff okay and it was just
+ be running over and over and over again and it got to the point where well first
+ of all that failures in reality would match the rare failures in simulation
+ which was pretty awesome but you'd occasionally find a failure and and then
+ you'd have to go track it down and if it was not deterministic oh my gosh right
+ and there's still not some number to terminate some in that particular system
+ but we're still fighting it down because it's a it's a every bit you can get out
+ it gets more valuable and a lot of the most subtle bugs actually happen at this
+ behavior level I would say so this is kind of a fun one that we that we found
+ okay so there was a piece of the initiation set the preconditions for the
+ should I put the mug down that had an arbitrary threshold of 0.45 on the rack
+ position of the mug of the you know somehow we have a perception system
+ that's estimating the location of the rack and and if it's if it's out enough
+ from 0.45 I'll continue to execute and if it was too little I would stop and set
+ it down exactly what you were asking about before okay and then we started
+ adding there was like the night when somebody decided oh I'm gonna add
+ randomness to the rack perception that that matches the statistics of the
+ randomness we got from reality it was this it's this constant battle between
+ the people trying to make the simulator harder and those people making the robot
+ better right so someone added rack noise okay and almost always it was fine every
+ once in a while it would be such that the robot would start moving somewhere
+ along the cycle it would it would trip this thing saying it was less than 0.45
+ you go I'm gonna set it down okay but then by the time it went to decide again
+ it's like okay the racks there so and it would basically get in this like
+ infinite loop of going like this yeah you know like this man and it like we
+ never would have found that without extreme testing and to be able to
+ reproduce it you know it's just very very hard to get deterministic results
+ out of a system that's that's doing this kind of stuff so part of the mission in
+ getting things more things locked in in the systems framework is to just be able
+ to run completely reliable deterministic simulations of including the whole stack
+ to be fair the noise that was the added was a little bit crazy so it was like
+ you know yeah the dish rack was going like that or something like this but it
+ but so so everybody's kind of like oh yeah that's great you found me found a
+ bug but that's never gonna happen in reality and then it happened in reality
+ it was like one day there were someone how the the rack got a little bit stuck
+ right around the threshold and there was very good like infinite looping and we're
+ okay there you go it really did happen
+ okay so yeah please yeah so so I think that gets to the question of how do you
+ put long-running computation into like a behavior tree or a finite state machine
+ for instance so finite state machines behavior trees will address that need
+ but they're asked to give an answer at every time step so so the so it takes
+ some thought right the proposal the thing we've implemented in the proposal to do
+ more generally inside Drake is to have a system where if you have a long-running
+ computation it just spawns a thread does that long-running computation and comes
+ back but the the system that wraps it has the ability to you specify a
+ distribution of possible running times okay so when you're running in
+ simulation and you don't worry about wall clock you can allow the run you
+ could you can have two options right you can basically let the thing return
+ whenever it's done and then you keep executing or I can basically block and
+ pick a random number of my of my runtime wait that long in the simulation and
+ simulation clock and then block arbitrarily waiting for that to return
+ and that would turn a you know you could model a stochastic amount of evaluation
+ time in a perfectly deterministic way they might be less performant at in
+ simulation but it would be determined deterministic so those are the kind of
+ games that we're trying to play to get to that extra level of reliability did I
+ say that I said that a bit complicated right so here's my main thread it's
+ giving an answer every time step so at time this is my main thread okay now I'm
+ gonna launch my worker thread here okay and it's a long-running computation that
+ will ultimately change the output of my system okay so you know when it
+ whenever it returns then the net from now on I'll have a different output from
+ my main thread okay and here I'm just returning I'm sending the last possible
+ output and the problem is that if I put a worker thread on a you know and I'm
+ relying on CPU processing or CPU scheduling to let this thing sort of go
+ and return whenever it does then it might return here it might return here
+ might return here I don't know okay so what we do is we flip a coin you know
+ say I've got a distribution of possible things I've ever run times I've ever
+ seen okay I will pick a priori that this on this rollout I'm gonna say it landed
+ at this it returned at this time okay and I will go ahead and do the worker
+ thread but if it if it took longer than I expected I will block my main
+ simulation thread pretend the time stopped waiting for that to return so
+ that it returns here if it returned early that's no problem okay that way I
+ can still have a distribution of possible return times but everything's
+ clocked off my random seed so if someone caught me with a you know that if I just
+ happen to run too long it's gonna hit this sort of a weird corner case I can
+ reproduce it perfectly okay but it allow it permits for things to have long run
+ times those are the type of games you have to play I think if there's better
+ suggestions I'm happy okay so that was a bit of a potpourri of like how do I mix
+ high-level behavior planning with low-level systems I would say for me
+ there when I'm implementing a new complicated system I think if I'm
+ rapidly prototyping something I will do procedural code wrap it up quickly and
+ and not worry about the extra burden of specifying finite state machines or
+ behavior trees or whatever and for simple branching logics I wouldn't even
+ use a task planner okay if the task complexity goes up and the multi-step
+ reasoning happens then I would bring in a task planner for that and still maybe
+ just write it in a procedural case but not worry about all this extra stuff
+ okay but when I start trying to get higher levels of reliability that's when
+ I think the extra burden of going to state you know to make the explicit
+ contract between your planning your behavior level computation and the
+ dynamical system time step becomes essential and doing that right I think
+ can can take you to the next level so I wish I had like you know here's the
+ fight in most of the most of the topics we've talked about I'll be like you know
+ here's the function you call in Drake you know here's the function most of
+ these are not in in Drake right now they're not in many libraries one of the
+ I mean some of even the planning stuff is GPL in most places so so finding a
+ right you know a good like PDDL library to that if we could bring into Drake is
+ actually non-trivial so you know this is a this is for me a still a work in
+ progress of trying to get that so you can actually like play with the full
+ powerful systems but I hope the concepts kind of land good okay so please do
+ reach out with us if you have questions and you're not sure what's going on with
+ your project you know reach out to us and next week we'll start learning

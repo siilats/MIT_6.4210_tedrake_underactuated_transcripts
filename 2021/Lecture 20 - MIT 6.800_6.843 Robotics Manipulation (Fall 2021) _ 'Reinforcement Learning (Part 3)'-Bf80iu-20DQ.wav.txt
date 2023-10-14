@@ -1,0 +1,1408 @@
+ A lot of people are already traveling,
+ but I'm happy to be here.
+ So we're going to do sort of the last of our three RL lectures,
+ although maybe we'll do a little bit
+ of the model-based version of RL in one of the boutique lectures.
+ But I want to--
+ first of all, especially since there's a few less of us,
+ I think if you guys have any questions whatsoever about RL,
+ you can ask me anything, any time.
+ But Abhishek, in particular, promised
+ that I would fill in a few details,
+ and I fully intend to do that, connecting
+ some of the ideas we talked about already,
+ from policy search and BlackBock optimization
+ to the actor-critic kind of ideas that he talked about
+ and why that can help with sample efficiency.
+ But I also want to talk through just a couple
+ of specific examples and maybe even discuss
+ some of the ongoing work to understand when RL works
+ and why it works when it does work.
+ OK, so let's start.
+ Of course, having said that, I should
+ wait to see if there's any questions.
+ Anybody have general questions on what
+ we've talked about so far or Abhi's lecture?
+ Well, any time.
+ Please say anything.
+ OK, so let's just think about what we've said about RL so far.
+ So I started off with a picture of RL as BlackBox optimization.
+ And I tried to draw some pictures of how
+ zero-order methods, methods that don't
+ rely on any analytical gradient calculations of the plant,
+ or they just rely on samples of the--
+ or rollouts from your simulator, have different properties.
+ Some of them can be desirable, right?
+ So if we think about some general cost landscape,
+ but maybe it's got lots of jagged stuff right here,
+ and I want to do an optimization on it,
+ then my gradients might be locally not very informative.
+ But sample-based algorithms could potentially
+ take samples and estimate the local curvature very nicely
+ and very robustly.
+ So that's one of the ideas we've put out there.
+ We talked about, very quickly--
+ I want to connect the dots again a little bit--
+ the policy gradient idea.
+ So I think of this as doing, let's say, direct policy
+ search.
+ So I'm going to search directly in the parameters
+ of the policy.
+ For instance, if I have some policy with parameters theta,
+ and I want to search directly in theta,
+ I could do it with these kind of tools, right?
+ Even if theta is buried in a long-term optimization
+ where I want to try to minimize the sum
+ over some long-term rewards where
+ these are the rollouts of some simulation, right?
+ So if I write it more carefully here,
+ these are the fundamental equations of optimal control
+ and certainly of RL.
+ Now, the way I've written it, that
+ looks like a constrained optimization.
+ If I want to minimize this over theta, for instance,
+ that looks like some constrained optimization.
+ But because these equations are easily
+ solved away by just forward simulating
+ from some initial conditions, you
+ can do this with an unconstrained optimization
+ and black box methods.
+ The policy gradient family of algorithms, in particular,
+ combines some sample-based optimization
+ with analytical gradients of the policy.
+ [TYPING]
+ Which makes total sense, right?
+ If you have a neural network in the middle as your policy,
+ and we know very well how to-- we
+ have very efficient implementations of backprop
+ that run on GPUs.
+ So we should be able to leverage those gradients.
+ But if we don't know f, and we don't maybe
+ know the loss function, then it might
+ make sense to do some sort of black box optimization
+ to take care of these things and some analytical gradients
+ for the policy.
+ And that's the type of algorithms that you
+ explored on your homework and that Abhi
+ was starting to talk about in his lectures
+ in the policy gradient and actor-critic space.
+ [TYPING]
+ These are the reminders so far, right?
+ Abhi talked about a couple big ideas.
+ I mean, he talked about how to specify objectives
+ in the real world, right?
+ The imitation learning side of--
+ or sorry, the inverse reinforcement learning
+ side of imitation learning.
+ He talked about multitask RL, how
+ you can keep the data collection going if you learn--
+ don't just train it to open a door.
+ Train it to open a door and close a door,
+ and then you can get this continuous cycle of learning.
+ And even if you can't open a door yet,
+ you can make systems that do that very well.
+ But he talked about data efficiency, too,
+ as a major challenge for getting RL to work in the real world.
+ And there were a couple ideas that he brought up
+ that we want to follow up on today, right?
+ So he talked about actor-critic variance of policy gradient,
+ which can optimize faster.
+ They can be lower--
+ can provide lower variance estimates of the gradient.
+ And he also talked about Q-learning,
+ and in particular, off-policy and experience replay
+ kind of ideas.
+ And I think he actually said on his slide--
+ Russ will fill in the details on some of these things.
+ So there we go.
+ Thank you.
+ So to talk through this, I want to use a running example.
+ So you remember this example that I cooked up
+ from the force control lecture, where we had first a force
+ controller that did this very careful.
+ And I could put it on a tele-op, and I could have it-- oh,
+ stay inside the friction cone, rotate the Cheez-It box
+ up on the corner.
+ Right?
+ And then we talked about stiffness control
+ and how once we had the stiffness control,
+ there was actually an open-loop trajectory.
+ You could just close your eyes and move the finger
+ through this cycle, and it would very robustly flip that box up
+ with the thinking of the programming the virtual spring.
+ Right?
+ So what I was doing last night, I decided to code up
+ with stiffness control, this as an RL problem,
+ and throw some of the popular algorithms at it,
+ PPO and SAC and the like.
+ And you would think--
+ I even said, the control parameterization
+ of stiffness control should help RL, too.
+ So I want to work through that as an example here.
+ This is, I think, a good example for today.
+ So the first question is, which RL algorithm should we use?
+ And if you look down the list--
+ so we are in the space of--
+ this is what our algorithms are available in the main stable
+ baselines 3 repo.
+ So the categories here are your action space.
+ So we're in the box place where we have continuous actions.
+ All these other ones are discrete actions,
+ but we have continuous actions if we want to have a--
+ let me even write it down here.
+ So my box flip up example, B0 in the standard RL case.
+ So I'll set up my actions to be the xy position
+ for stiffness control, the virtual finger.
+ All right.
+ Now, if you remember, the stiffness control
+ in its full glory, when your robot is a point finger,
+ it looks almost like PD control.
+ It's PD control plus gravity comp.
+ So that sounds fancy.
+ It is fancy in its generality, but for a point finger,
+ it's kind of just PD control.
+ So we're not doing anything super special there.
+ My observations-- we can have a couple
+ of different variants of it, but let's start with just
+ the full state feedback.
+ So that's got the box state plus the finger state.
+ So that's in the plane xy theta x dot y dot theta dot.
+ The finger state is just-- since it's a sphere,
+ I've only given it the two degrees of freedom.
+ But it adds up.
+ Even though it's a super simplified problem,
+ it's still got a lot of state variables.
+ And it's not approachable by our brute force
+ gridding the state space kind of approaches.
+ So we need some sort of neural network kind
+ of function approximators in the middle.
+ My reward now is going to be something about the box angle.
+ I want the box to be flipped up.
+ And then I'll have something about low effort
+ to try to discourage the finger from going totally nuts.
+ And there's actually a few other please
+ don't go totally nuts terms that I put in.
+ Nothing's scary.
+ It's just like damping.
+ In general, I'm allergic to trying to tune cost functions,
+ possibly to a fault. But my videos look more janky.
+ And then in the OpenAI Gym case, I'm
+ just going to terminate if time is greater than 10
+ or my multibody plant crashed, which
+ I don't feel bad about that because this
+ is a game about trying to-- I mean,
+ I could set the time step of the simulator small enough
+ that it would never crash.
+ But I would be paying a price for simulations
+ that are reasonable.
+ And I actually want to discourage simulations
+ that are unreasonable.
+ So I think aggressively want to choose my step size
+ to be large, put myself in a regime
+ where some of the rollouts will crash,
+ and tell it it's bad to crash.
+ Yeah?
+ So when you're trying to do a continuous simulation
+ in a framework like RL where you want to have steps
+ and you get a reward in each step,
+ how do you set the RL step size versus your Euler condition
+ step size?
+ That's awesome.
+ So the question is, there's a subtlety
+ if you've got your RL step size.
+ The gym step function takes some amount of step,
+ has some step size.
+ And then I have a continuous dynamical system underneath
+ that I'm using integration for.
+ I think those are often very different.
+ In general, the step that you need in your gym
+ is like your control frequency.
+ I chose it to be large, like 0.1,
+ even though I'm going to simulate under the hood
+ at a millisecond or something like this.
+ I started cheating it up to be a few milliseconds.
+ But it's down in the physics dynamics regime
+ in order to do proper time stepping.
+ But I'm-- and in general, the Drake gym end
+ will just call the integrator.
+ So whatever systems you have, continuous or discrete
+ or whatever, it will simulate them
+ with whatever resolution you care about for whatever
+ the gym time step is, which is typically high.
+ Great question.
+ OK, so given we have these continuous actions,
+ I mean, that's an action space that's small enough
+ that I could discretize.
+ So I could use a few of the other algorithms
+ if we chose to discretize the action space.
+ But I think in the spirit of making
+ it work for non-point fingers, let's
+ stick to the continuous action space.
+ That's where we normally are for robotics.
+ So there aren't that many choices.
+ It rules out a lot of the--
+ well, let's see.
+ The combination of wanting to do continuous actions
+ and multiprocessing rules out a lot of the algorithms.
+ And that's, I think, true.
+ I think there are a few algorithms that
+ tend to be very popular because they
+ can handle continuous actions and handle multiprocessing.
+ In particular, PPO is a very popular choice,
+ I think, for those reasons.
+ So if you look at, for instance, the OpenAI learning dexterity
+ paper, PPO has become the default reinforcement learning
+ algorithm at OpenAI because of its ease of use
+ and good performance.
+ I think in particular in the multiprocessing case.
+ So when you don't care about data,
+ you're going to do massive multithreaded stuff.
+ Then PPO tends to be the tool of choice.
+ I think if you care about data and you're
+ doing it on a real robot, people will
+ tend to prefer SAC or one of the other variants that
+ is using replay and experience in order
+ to be more data efficient.
+ But we're in simulation world right now,
+ so we're going to continue to see this trend.
+ This is recent.
+ I meant to show this last week.
+ This is the recent result from Pulkit and his group,
+ which won the best paper award at Coral.
+ Congratulations to them.
+ And it's a nice generalization of the original OpenAI work,
+ where it's doing maybe more general, if you will,
+ in-hand reorientation.
+ But it also does it upside down in unstable configurations.
+ So I would encourage you to read that paper,
+ but that's not really what we're talking about yet.
+ I just wanted to emphasize that it's also using PPO.
+ And you see, in the context of the last lecture,
+ I was going to point out the impressive evaluations
+ that they did.
+ OK, so I told you packages like stable baselines
+ have gotten pretty good.
+ Stable baselines 3, it's really pretty darn easy
+ to implement these algorithms now,
+ to try a suite of these algorithms on the simulator.
+ So I made a little box flip up environment
+ with the Drake Gym environment wrapper.
+ And it's like three lines, really,
+ to start running PPO on it.
+ Admittedly, you can probably do better
+ than picking the absolute default
+ arguments of everything.
+ But I'm making a point here, right?
+ So I'm really just going to use the default MLP policy, which,
+ by the way, is this--
+ the fact that that is even a thing is interesting, right?
+ That almost every paper that uses MLP policies
+ has the same architecture always.
+ And it's a small network.
+ So when people talk about deep RL,
+ and then they always use a three-layer network
+ with 255 hidden units, it's like, that doesn't match.
+ OK, and then it's only, again, a few steps
+ to run the actual simulation once you get it out.
+ You can just ask the model for the--
+ this is the policy coming out.
+ It's very simple and very clean.
+ My cost function is, like I said, it's the box angle.
+ I put a little disincentive to have a large box velocity,
+ angular velocity, disincentive for effort,
+ and finger velocity.
+ And then I'll show you why there's a 10 there in a minute.
+ OK, so I put this in there.
+ My machine at home is bigger than my little laptop here.
+ It's got, like, 56 effective cores.
+ So I'm like, I'll run it on 48 of them.
+ That way, I can still tell it to stop if it goes badly,
+ or leave a few cores for the cursor.
+ OK, so I ran it last night.
+ And I woke up this morning to see what it did.
+ And this is what it does.
+ So it's going to reset every 10 seconds.
+ Sorry.
+ It kind of solves the problem.
+ The box always ends up in a configuration
+ that I guess I asked for.
+ But this is also--
+ it's sort of classic RL, right?
+ I mean, this is what you expect and what you see.
+ I immediately thought, I could make that better.
+ And I definitely can.
+ But like I said, I'm kind of allergic to cost function
+ tuning.
+ And it takes a lot of time, actually,
+ I think, to go from this step to, like, it looks beautiful.
+ I think there's a lot of cost for lower returns.
+ But it's awesome.
+ I mean, it solved this problem with very little handholding.
+ I could tell you, I had three bugs
+ that I had to work through, which are kind of funny.
+ But I'll tell you about them in a second.
+ OK, and it's got a very robust, if terrifying,
+ to run on a real robot policy.
+ OK?
+ Question?
+ Yeah.
+ When you see RL policy jittering like that,
+ do you worry that it's exploiting
+ hard facts and simulations that show up
+ in terms of high velocity impact?
+ Yeah, so it ran to convergence.
+ I mean, so this is what--
+ the curves kind of go up.
+ And then they flutter around a lot.
+ It'll get confused for a little while to come back, right?
+ So I don't claim that this is terminated exactly
+ at the best policy that PPO ever saw.
+ This is just whatever was at when I woke up this morning.
+ OK.
+ And so let me just--
+ so why the heck is the finger kind of going around like this
+ after the box is up, right?
+ My cost function was clearly said,
+ don't move if you don't need to, right?
+ So in any sense of doing a good job of optimization,
+ it's clearly not even at a local minimum.
+ I mean, there shouldn't be any problem with it
+ having to do the same policy, but then once the box is up,
+ just set the velocity to zero.
+ So there's something weird kind of going on there.
+ Maybe it's just entering states that weren't trained enough
+ or whatever, right?
+ It just didn't visit enough.
+ And your question-- sorry to get a roundabout answer here.
+ So do I worry about it exploiting?
+ I think there's a very explicit way it started exploiting,
+ which I'm going to tell you in a second.
+ But in general, I think--
+ I mean, there's two features.
+ There's one thing, which is that because we haven't put
+ any biases on our policy, right?
+ We haven't sort of put any priors, let me call it,
+ on the policy.
+ It's easy to be in a place where it's never visited before
+ and take an insane action.
+ I do worry about that a lot, right?
+ We haven't said what you should do everywhere
+ in any rigorous way.
+ The other thing, which is people often
+ talk about in terms of value alignment, for instance,
+ is that I think it's very hard to write a cost
+ function that fully captures--
+ if it did optimize the cost function.
+ But I think there's a lot of things
+ that we encode in our robot solutions, which are subtle
+ and they're implied, like don't move your finger
+ at incredible velocities.
+ It's somehow implied in most of my optimizations
+ in a way that maybe I've parameterized myself out
+ of that.
+ And by virtue of having not specifically specified it
+ in these problems, it will find those solutions,
+ unless you tell it not to.
+ So yeah, Leslie Kelbling talks about the-- what did she call
+ it--
+ background utilities, for instance.
+ She says, you can tell the robot to put the dishes from the sink
+ into the dishwasher, but you also
+ have to tell it, like, never throw a mug through the window
+ and never stick your finger in a light socket.
+ There's all these things that we have in our head
+ from common sense that we haven't told the robot not
+ to do them.
+ And if you just let it go in the simulator,
+ it's going to do those things.
+ And when you see real robot videos saying
+ they learned to do something and they never threw their fist
+ through the door or whatever, then you have to ask,
+ why didn't it happen?
+ And how much reward engineering did you
+ do in order to make that not happen?
+ This code is all--
+ I'm trying to make it run better in notebooks,
+ but otherwise it's going to be pushed.
+ OK, so yeah, use the stiffness control.
+ You'll see, if you look at the code,
+ that we do have some mechanisms right inside multi-body plant
+ to set random distribution so that it is easy to do.
+ It's doing multiprocessing using subprocesses.
+ If this was my research project and I
+ wanted to make it run faster or whatever,
+ there's lots of things I could do, for instance.
+ Right now, it's very, very many of the 10-second simulations
+ sort of do something interesting for a second
+ and then find themselves in some sort of fixed point.
+ And I just keep simulating for nine more seconds.
+ And I should not do that.
+ I should just truncate the simulation.
+ But I'm just-- let it go.
+ There's some funny bugs, right?
+ So the first one, which is just classic for me,
+ was I wrote down all my functions.
+ And I wrote them down as cost functions
+ because I'm an optimal control person, not a reinforcement
+ learning person.
+ And it's like, wow, this looks like it's
+ doing exactly the opposite of what I wanted to do.
+ And in fact, it was doing exactly the opposite
+ of what I wanted it to do.
+ So now you'll see my code says reward equals negative cost
+ on the last line.
+ OK, that's just my bad.
+ When I did that, there was kind of a funny subtle thing,
+ which was I had this early termination.
+ If the simulation went unstable, I would stop the simulation.
+ And that made sense when I had costs and I was minimizing.
+ But when I flipped the cost upside down,
+ now if it got an early termination,
+ it would receive less cost.
+ So it did a very good thing for a while.
+ It started learning how to flip the box up or whatever.
+ But it slowly started discovering that if I crash,
+ I don't incur much cost.
+ So I woke up or I came back after dinner or whatever,
+ and it's like, it's crashing all the time.
+ Why is it every time--
+ it's reporting so many crashes.
+ And it had explicitly been told by me to crash.
+ So it's pretty good at finding the bugs in your simulator
+ if that's what you wanted to do.
+ But to be clear, that cost function is not tuned.
+ It's really just-- that's what I--
+ so I added the 10 just so that every step
+ got some positive reward.
+ And then it subtracted from 10 any costs.
+ But as long as it was encouraged to keep taking steps,
+ then that resolved that problem.
+ But these are just not tuned at all.
+ Like, those are the first numbers I typed in, always.
+ And you could do much better.
+ OK, yeah?
+ You mentioned about how sometimes, like,
+ if you enter a state where, like, the system
+ has to go through all this medicine before,
+ like, you use that wacky action.
+ Do you know of any ways of fixing that?
+ So the question is, how do you fix
+ the problem of getting wacky actions when you enter a state?
+ Right.
+ I mean, Abhi did mention one idea.
+ So I think there's a couple ideas there.
+ First of all, you could try to somehow put a prior
+ on your policy so that it does reasonable things.
+ And then maybe the neural network only learns something
+ in addition to a reasonable controller.
+ That would be one way to do it.
+ The one that Abhi talked about was
+ about restricting your policy to take actions that
+ would keep you near your data.
+ So if you say, I've seen some amount of--
+ there's states that I've seen, there's
+ states that I know I haven't seen.
+ You can either keep track of them explicitly,
+ or you can keep track of them implicitly
+ with a couple different approaches.
+ Ensemble networks is one way people do that.
+ And you could try to ask your controller
+ to stay near the data in safe territory,
+ even if that could be conservative.
+ But that comes up-- there's a lot of different--
+ I've seen that from the very control side.
+ I've seen that from the talk last Thursday.
+ And that's another idea.
+ I mean, the other one, I think, would
+ be to try to visit aggressively all the states,
+ somehow to try to--
+ I mean, there's a good sense of what these distributions are.
+ They're very hard to write down, of course.
+ But there's the distribution that you're exploring.
+ There's the distribution that you would have
+ under the optimal policy.
+ And your goal in learning should be
+ to try to sample from the distribution that's
+ relevant to the optimal policy.
+ So there are various ways to try to do that quickly.
+ The default way would just be you get some distribution
+ from your bad policy, and it extremely slowly
+ walks towards your good policy.
+ Anything you can do to try to get the relevant data faster
+ can also address this problem.
+ So that's-- sorry, three big things.
+ But in the extreme case, so if I'm
+ trying to do swing up for a cart pole or an acrobat
+ or something like this, the random policy
+ always visits these states for a really long time.
+ It takes a long, long time with random exploration
+ to ever finally decide to get up here.
+ But if you can do something like start it up here a bunch,
+ then you can skew the distribution
+ to be the relevant states more quickly.
+ I hope I don't discourage questions
+ by being long-winded in my answers.
+ OK.
+ So let's just look a little under the hood of PPO.
+ I don't want to give the full derivation.
+ But this is right from the PPO paper,
+ since I picked PPO and used it for that.
+ The first thing you'll see is effectively
+ the equation you saw in the talk last Thursday
+ and in your problem set.
+ This is the advantage function.
+ This is the log probability of the gradient,
+ the gradient of the log probabilities, which
+ is the reinforce idea, roughly.
+ OK.
+ There's also some sort of complicated-looking KL
+ divergence-type terms that come from TRPO.
+ But if you look, there's actually--
+ despite that being emphasized in the paper, in the end,
+ they say there's two versions of the algorithm.
+ One of them uses that complicated KL divergence-type
+ thing, and one of them doesn't.
+ It just does standard actor-critic and clips.
+ And that's actually what people use.
+ So actually, PPO, I think, in the end,
+ is very much like the old-school actor-critic algorithm, which
+ I know best from--
+ the original actor-critic papers were back in '99
+ by Condon and Tsiklis.
+ And they did beautiful analysis of the convergence
+ of those algorithms.
+ OK.
+ So that's an example that I hope motivates
+ us to understand a little bit more about actor-critic
+ algorithms.
+ And the actor in actor-critic algorithms is a policy,
+ and the critic is a value function.
+ So we need to learn a little bit more about value functions.
+ [WRITING ON BOARD]
+ [SOUND OF WATER RUNNING]
+ [TAPPING ON BOARD]
+ [SOUND OF WATER RUNNING]
+ [TAPPING ON BOARD]
+ [SOUND OF WATER RUNNING]
+ [TAPPING ON BOARD]
+ [SOUND OF WATER RUNNING]
+ [TAPPING ON BOARD]
+ [TAPPING ON BOARD]
+ [SOUND OF WATER RUNNING]
+ OK.
+ So I want you to have the mathematical understanding
+ of a value function, but I also just
+ want you to have a very intuitive understanding
+ of a value function.
+ For manipulation, these things should be very, very intuitive.
+ I almost wish-- so when Abhishek was showing the dexterous hand
+ opening the door, I wish I had some magic AR goggles that
+ would somehow show me, as it was progressing,
+ the value function estimate.
+ What you would expect to see is if the value function is
+ the expected cost to go, or expected--
+ I have to watch my cost versus reward--
+ expected long-term cost or reward,
+ depending on if you're a positive person
+ or a negative person.
+ I'm a negative person, apparently.
+ OK.
+ So basically, it tells me-- my value estimate
+ says if I'm in this state right now
+ and I continue to execute my policy,
+ then what reward should I expect to receive?
+ So what I would like to see for the robot opening the door
+ is that I would expect to see some future rewards.
+ And if I were to move the hand in the direction of the door,
+ I would expect to see the reward staying high.
+ Let's say I only got a reward when I actually successfully
+ turned the door knob.
+ So I would expect to roughly see in the direction of the door
+ that I'd get-- there's a high reward prediction if I'm doing
+ the right thing.
+ If I deviate, I would expect to see my expected long-term
+ reward go down.
+ There's directions that I should not move.
+ It's taking me farther from my possible goal.
+ But if I'm moving in the direction,
+ depending on if there's a discount or shaping
+ or anything like this, but I would roughly
+ like to see that my rewards are predicting--
+ there's a path that this function is roughly
+ telling me a path of where I should move through space
+ in order to accomplish the task.
+ And to make that a little bit more concrete,
+ the simplest example that I always have to use,
+ I think, just to make that concrete,
+ is imagine you're a robot in a grid world.
+ I'm sorry for those of you that know this well.
+ Just take a second on it.
+ Imagine I'm a little robot living on a grid.
+ And my action space is to move up, down, left, right.
+ And let's say I have a goal that's down here,
+ and I have some bad regions, pits of despair,
+ or something like this over here.
+ And let's say I get a reward of a million
+ when I get to the goal, and I get some penalty
+ when I fall in the pit.
+ And maybe I have a cost of taking an action.
+ The reward function in this task is very simple.
+ Everywhere here, the reward might be just a small penalty
+ for taking an action.
+ And it's not until I get to the goal
+ that I actually get some big one-step reward.
+ But the value function captures the long-term expected reward.
+ So it can tell me if I have an optimal policy,
+ then this is a pretty good state to be in.
+ And this is almost as good state to be in.
+ And it can start backing up the long-term reward
+ into a map that tells the system where to go.
+ So here's my goal.
+ Here's my pit of despair.
+ And if I start solving from the reward function to the value
+ function, then it's going to find this function now,
+ which you see the height of the function.
+ This is my cost formulation, sorry.
+ This being in the pit is a very bad place to be.
+ Being at the goal is a great place to be.
+ But it goes through the entire state space.
+ And basically, it figures out how much cost
+ I would expect to incur over the long run.
+ And it provides effectively a map that gets me to the goal.
+ So we'll work through the basic mechanics of it.
+ But basically, if I'm in some state
+ here, rather than solving some long path planning problem,
+ I can use my value function to just say,
+ if I'm going downhill on the value function,
+ then it's going to take me where I need to be to the goal.
+ It turns a long-term delayed reward problem
+ into a one-step decision-making problem.
+ So if this is my value function here,
+ then the features of it that make the algorithms like you
+ just saw possible and that Avi was using in his lecture
+ is that it has this beautiful property, which
+ is my value function at state x is
+ equivalent to my one-step cost plus my value
+ function at the next state.
+ And if I'm going to do this for a particular set of parameters,
+ then this is a sum over many rewards
+ from the current time up to n steps into the future.
+ And it has a beautiful recursive property
+ that says my value function I can compute by saying,
+ I'll take the one-step cost plus the cost
+ to go from the next step, from wherever I get to.
+ This idea of a value function or cost-to-go function
+ underlies all of the fundamental results in optimal control.
+ It's the reason that we have good solutions
+ to the linear quadratic regulator problem.
+ It is the thing that underlies all of the deep results
+ in robust control.
+ And it is certainly a mainstay for reinforcement learning,
+ too.
+ What reinforcement learning has particularly emphasized
+ is when you can't solve these value functions perfectly,
+ but you're going to use approximation methods
+ to estimate the value function.
+ OK.
+ I'll make one more point here.
+ So if I were to somehow find the optimal value function--
+ and our notation is typically something like this--
+ which is the cost-to-go that I would get if I was following
+ the optimal policy.
+ That also has a beautiful recursive structure.
+ It turns out that, like I said, if someone's
+ computed the value function, the cost-to-go function,
+ then it turns my long-term path planning problem
+ into a short-term.
+ I just need to figure out what's the best thing to do in one
+ step, plus given this map that someone gave me
+ of the long-term cost-to-go.
+ OK.
+ I really think value functions are
+ a fundamental property of control,
+ of reinforcement learning, of all these things.
+ There's evidence from the brain that there are signals that--
+ there are neurons in your dopaminergic system
+ that light up when you anticipate
+ you're going to get reward.
+ There's like-- I don't think this
+ is some arbitrary concept.
+ This is deeply embedded in the fabric of control,
+ of making long-term decisions.
+ OK.
+ And I really do think it's very intuitive.
+ It's a way to capture the roadmap to the goal.
+ So how do we use some concept of value functions
+ in a deep learning setting?
+ The first thing is that we need to think about the approximation
+ version of this.
+ RL is, if you approximate dynamic programming--
+ in fact, one of the conferences, the few conferences that
+ really focused on RL all the way through,
+ was a conference called ADP RL.
+ It's still alive, but approximate dynamic
+ programming in RL.
+ This was one of the places you could continue
+ to publish RL works, even when it was not super popular.
+ And it's asking the question of, if I
+ want to store or represent v hat with a function approximator,
+ let's say, then there's the objective
+ that's sort of natural, given the sort of recursive
+ structure.
+ You'd like to have v hat given some-- let
+ me call it alpha, the parameters of my function approximator--
+ minus--
+, minus.
+ So this now becomes like a supervised learning loss.
+ This is called the Bellman residual.
+ [TYPING]
+ You can similarly-- you can do this on policy,
+ or you can do it for the optimal policy, if you can compute it.
+ So it turns out that learning cost-to-go functions--
+ it's not surprising, I guess--
+ can be done mostly with supervised learning.
+ So it makes sense that you could try to train a neural network
+ to try to represent a value function.
+ One thing that doesn't make sense--
+ I don't know if people have caught up on this.
+ So I write this down.
+ Abhishek wrote this down, too, roughly.
+ He did it for the Q functions.
+ This isn't actually what people do.
+ I don't know if people know that.
+ So every once in a while, you'll see people talk
+ about solving this exactly.
+ But actually, this doesn't work as well as you would expect.
+ Anybody know the catch, the subtlety that's written here,
+ but often not done in practice?
+ The way you would think to do this with supervised learning--
+ if you wrote this as your loss function,
+ and then you would try to take the gradient
+ of this whole thing with respect to alpha.
+ People don't do that.
+ They almost always fix this and only take the gradient
+ with respect to this.
+ There's a bunch of ways that people talk about that.
+ But certainly, the TD updates do that.
+ Sometimes they'll talk about this as the target network.
+ But empirically, it seems to work better
+ to fix this side, this right-hand side,
+ and only update this side.
+ There's some theory about why that is.
+ But it's always struck me as frustrating.
+ There's some notion that it backs up better.
+ You want to encourage it going backwards in time,
+ and maybe this is the way to do it or something like this.
+ But this is already one place where I think
+ it's a little unsatisfying.
+ Our theoretical understanding of that is a little unsatisfying.
+ But mostly, this is supervised learning, throw it in PyTorch,
+ take your gradients, lock those parameters,
+ and then take your gradients, and you
+ can train your value function.
+ If you look at the code in stable baselines,
+ it almost doesn't even call out the--
+ so my code said MLP policy.
+ So the inputs in stable baselines
+ that a lot of the algorithms, basically, you
+ have x coming in, you get your big neural network here,
+ and you have your actions coming out.
+ That's what you have your pi.
+ And they just will add one extra output
+ to the same architecture for v hat.
+ So it's actually plus value all hidden in this.
+ So it's very common to use the same architectures
+ for your policy and just throw one extra output on
+ for your value function.
+ Value functions are intuitive.
+ Value functions are essential.
+ There are reasonable approaches to train a value function.
+ Now, here's where there's a lot more options that open up.
+ So what do you do with your value function
+ once you have it?
+ In the classic dynamic programming world,
+ you'd say, once I have my value function,
+ I've solved the problem.
+ I'm done.
+ Because if I have a value function,
+ then I can say my optimal policy--
+ if I found the optimal value function,
+ then my optimal policy really, like I said,
+ should just be the one step I should minimize over u,
+ my one step cost plus my value function.
+ So if I know the value function, I know the policy mostly.
+ The problem with this is that it assumes I know the dynamics
+ and I know the cost.
+ I don't fault anybody for assuming
+ they know the cost most of the time.
+ I mean, there are settings.
+ But in robotics, I always say we know the cost.
+ But knowing you know the dynamics,
+ if you need to know the dynamics in order to make your decision,
+ then this is hard to use in a setting where I'm
+ like got a robot making salad.
+ So the alternatives here--
+ one is a Q-learning, and the second one is actor-critic.
+ The Q-learning roughly says, why don't I just
+ take this whole function here, and I'll just
+ learn that instead.
+ So I'll just call this thing Q. If I learn that whole thing,
+ then my optimal policy is just looking up Q.
+ I don't need to know something.
+ I don't have some other hidden terms that I have to know.
+ It has other benefits like off-policy,
+ which is a big deal.
+ I'm not trying to make that a small deal.
+ That's a huge deal, and other benefits.
+ I think the first idea, the first reason
+ you might need a Q function is because you
+ don't have the model.
+ So having just the value function by itself
+ isn't enough to tell me what control action I should take.
+ But having just the Q function is enough,
+ because I can just minimize directly on the Q.
+ The actor-critic thing is make an explicit policy
+ parameterization.
+ So you're basically trying to learn this function,
+ the minimizer, as well as V simultaneously.
+ Those are two solutions to the same--
+ they have different aspects, but I'd say first and foremost,
+ two solutions to this problem of having the value function
+ alone is not enough.
+ Now, it's interesting.
+ This min over U for Q is a non-trivial problem
+ to solve, potentially.
+ If Q is a deep network and U is a continuous action space,
+ then that amounts to solving some potentially very
+ non-convex problem in order to even take your actions here.
+ So as a result, for continuous action spaces,
+ people often prefer actor-critic.
+ There are a few examples of people
+ that stay in the Q-learning domain
+ and try to just solve this optimization.
+ That's an approach being pushed hard at Google,
+ where they're saying, we're going
+ to just learn the Q function.
+ We'll just solve that optimization on the fly.
+ That's what the opt part is.
+ They also-- Qt opt is more than that.
+ It talks about how to do decentralized Q-learning also.
+ But I think there's a group at DeepMind also that's quite
+ still thinking about the advantages of Q-learning
+ from experience replay kind of perspective.
+ And that started with Martin a long time ago.
+ He was maybe the first to talk about fitted Q-learning
+ with a neural network.
+ And he did a big series of experiments.
+ 2005 was right when I was getting my PhD.
+ We were at the same conferences.
+ And he was talking about neural Q-learning at the time.
+ And I remember that well.
+ So this is a big idea, a big branch of work.
+ But it tends to be more popular in the discrete actions.
+ And if you look at the stable baselines,
+ and you look at all the DQN and other methods that are
+ explicitly Q-learning, they're optimized
+ for discrete action spaces.
+ And Actor-Critic is the version that
+ works really well with continuous action spaces.
+ All right, so now let's come back to the view
+ we had of policy gradient, where we have a policy.
+ We're doing black box optimization on it.
+ Why would we need a value function?
+ Why would that help?
+ Can we connect those dots?
+ Why is it useful?
+ So it makes sense if you have a value function,
+ that's not enough.
+ But now let's flip back from the other perspective.
+ If I've got a policy, why isn't that enough?
+ Why is-- if I've got a policy, why do I also
+ use a value function?
+ Why is it helpful to do both simultaneously?
+ Because you might start with some place where the policy's
+ not trained well.
+ You might start in a place where the policy is not trained well.
+ And so how does the value function help you with that?
+ So you can know how to act whenever you [INAUDIBLE]
+ OK, so you're leveraging this fact
+ that the value function provides a map, roughly tells you
+ where to go from a long way out.
+ Yes, OK, good.
+ So I'm with you on that.
+ So I think the value function, if you
+ can learn it simultaneously, can give you
+ the ability to train your policy more locally.
+ There's a very specific role it plays, too,
+ in the policy gradient world, which
+ I wonder if we can capture.
+ If anybody knows.
+ Yeah?
+ AUDIENCE: It provides a baseline.
+ ERIK DEMAINE: Yeah, it provides a baseline.
+ We did it-- we just did a problem set on this.
+ The advantages functions in your problem set
+ were exactly this idea.
+ So what does that baseline provide
+ for the reinforced algorithms?
+ If I'm doing my long-term optimization,
+ and I'm getting noisy random samples
+ of the objective function, then if I'm
+ trying to estimate a gradient locally,
+ I'm going to have maybe noisy estimates of my gradients.
+ I think the pictures in the problem set
+ were actually better, right?
+ Were that you'd like to be going straight downhill,
+ but in practice, the reinforced algorithm is taking you
+ all over the place, sometimes uphill, sometimes downhill,
+ whatever.
+ And the reason for that is you don't know,
+ from a single rollout of my robot, I get a score of 42.
+ Was that a good score or a bad score?
+ And if I ran almost the same policy
+ from almost the same initial conditions,
+ and I got a 38, was that a difference in noise,
+ or was that a difference in actual cost?
+ So distinguishing between noisy samples from a rollout
+ and true signal is a hard problem, OK?
+ And if you know that my expected return with my current policy
+ was 40, because I've been in this vicinity before,
+ and I've learned the value of my current policy,
+ then that gives you this sharp tool to distinguish,
+ but that 38 was a good thing to do.
+ I should try to make that happen more often,
+ and 42 was not such a good thing to do, right?
+ The particular role it plays is--
+ let me think how I want to say this.
+ The value estimate is a baseline in policy gradient
+ and can dramatically reduce the variance.
+ [WRITING ON BOARD]
+ The amount of random walking you do as you descend the landscape
+ can go down a lot with a good baseline.
+ I hope you saw that in your problem sets.
+ OK.
+ So in practice, the actor-critic methods
+ are winning for these continuous control
+ for all these reasons, right?
+ They're better than the policy search
+ because they can make the policy search much more effective.
+ In the case of you have a multi-step problem,
+ if you have a single-step problem,
+ then the concept of value function--
+ the general black box optimization world
+ doesn't think about value functions
+ because it doesn't assume anything
+ about the long-term multi-step problem.
+ But if you do have a multi-step problem,
+ then this notion of a value function
+ becomes an important one.
+ OK.
+ That's sort of the rough taxonomy of these methods.
+ Let's dig into just a few more specific details.
+,
+ So the actor-critic algorithms actually, and even the value
+ estimate algorithms, I should say
+ there's good work, including that Kanda and Sinsiklis
+ work from early 2000s, or '99 actually,
+ that understand some rigorous statements about what
+ actor-critic or value function learning does,
+ even with function approximators.
+ Typically, the statements are if you
+ can represent your value function perfectly,
+ then you can-- many of these algorithms
+ enjoy strict convergence to the true value function.
+ That's a super powerful thing to say.
+ The fact that if I--
+ I will eventually learn the true cost to go.
+ That's a very powerful thing to say.
+ There's a next tier of value methods
+ that use linear function approximators, where
+ we can say rigorously that it will find the--
+ that it will converge to the closest value
+ function in the class that is close to your data.
+ There's some really strong convergence results
+ for linear function approximators.
+ OK.
+ Most of those are based on this notion of value functions
+ being a function of x.
+ I mean, even the modern analysis of what's--
+ trying to people-- people trying to understand why is deep RL
+ working.
+ There's people trying to connect ideas
+ from deep learning and supervised learning
+ with these old results from linear function approximators.
+ But they're all based on--
+ all of the good theory says that the cost to go
+ is a function of my state.
+ If you look at the code in stable baselines,
+ or in-- you name any of these RL algorithms,
+ almost always the gem just has actions coming in,
+ has observations coming out.
+ And the critic and the policy takes observations in,
+ takes my actions out, and my value estimate.
+ OK, so there, where I think of--
+ my notation is that my dynamics are f of xn, un.
+ My observations are some other function.
+ This value function is not v of x.
+ It's v of y.
+ Let me write in big letters here.
+ Observations are not states.
+ This is like one of my big gripes, I guess,
+ with just the sloppiness, I guess,
+ of people writing code and the like.
+ Let me just make that point.
+ I've got a box here.
+ I've got some money here.
+ Do you want to open the box?
+ There's a lot of money in that box, right?
+ OK.
+ I've got something you probably don't want.
+ I mean, you could have it if you want.
+ [LAUGHTER]
+ OK, my observations are the same.
+ I know this is a silly trick.
+ But my observations are exactly the same, right?
+ But my value, how much I want to open that box,
+ has changed completely.
+ Observations are not states, especially the biggest culprit
+ here.
+ You'll see people saying, like, images are our states.
+ And that can be true if you have partial observability
+ and you have quasi-static dynamics and all these things.
+ But beware of this, please.
+ Observations in general are not states.
+ Partial observability is the easiest example for that.
+ But dynamics already is enough that a single image
+ doesn't tell me the velocity that my cheetah is running at
+ or something like that.
+ OK, so there's this big important idea here,
+ which is either your observations,
+ you need to take a history of observations,
+ you need to have a recurrent network,
+ all this discussion we talked about before.
+ There are ways to make this OK.
+ Or there are places where, if you think about this
+ as just a very approximate version of the true value
+ function, v of x, the actor-critic algorithms
+ can still flourish.
+ Even if your value function doesn't
+ have the information it's required to estimate
+ the true cost to go, it can still
+ do good things in terms of improving
+ the convergence of your actor-critic algorithm.
+ But I think any analysis or even just debugging of these tools
+ needs to be aware that all the foundations of RL
+ are based--
+ and of actor-critic algorithms--
+ are based on some analysis of the potential convergence
+ of the value function to the true value function.
+ And if you stick in a deprived state representation,
+ then I think there's really nothing that tells--
+ I don't know how to tell you if it's doing a good job or not.
+ Because you're asking it to solve a different problem.
+ And I think we're lacking the tools.
+ And I would say, in general, when--
+ even just playing with the box flip up last night,
+ I think that--
+ or if we have student projects.
+ If you have a project, and you're working away,
+ and your trajectory optimization isn't doing what you expected,
+ or your dynamics isn't doing what it's expected,
+ or your differential IK isn't doing what's expected,
+ I can almost always tell you.
+ You can come up with yourself.
+ But there's almost always something like, OK,
+ it should definitely do x.
+ There's theorems that say it should have this property.
+ Make sure it has this property, otherwise you have a bug.
+ And you can go down the list.
+ And you can vet these very complex algorithms.
+ You can debug, I think, very effectively.
+ Because there's a deep theory behind many
+ of those algorithms.
+ RL's theory is deep, but it's harder.
+ I really think RL is in this place where it's starting
+ to work incredibly well, but it's
+ missing some of the fundamental theory that would even help
+ you-- not just if you care about theory, just like if you want
+ to debug your algorithm.
+ It went downhill.
+ And I could feel myself making stories like, oh,
+ it wanted to do x, so my cost might be--
+ but no, it might have just gone downhill,
+ because it's a random algorithm going in a random direction
+ with 50 random rollouts.
+ So I think there's a big role for the theory
+ to play to talk about-- there's lots of good work
+ already on approximate value functions.
+ But I think there's a big push that
+ needs to happen in terms of closing
+ the gap between theory and practice for this stuff
+ to work better.
+ So let me try to say a few things about the ongoing theory
+ of RL, of deep RL.
+ And I think this is just such a vibrant area right now,
+ because empirically, it's working so well.
+ Right?
+ Maybe it even starts with some results
+ from deep supervised learning.
+ There's only a few--
+ I mean, there's lots of ideas out there,
+ but there's a few sort of really big dominant ideas
+ about maybe why supervised learning seems to work now.
+ You've probably heard of double descent curves and all
+ these different ideas.
+ But the arguments roughly go into two parts.
+ So the first argument is that if you're doing well,
+ your training error, your training loss, goes to 0.
+ And the argument there-- there's a handful
+ of different sort of pieces of work on this.
+ But why does your training loss go
+ to 0 for arbitrarily complicated nonlinear objectives,
+ it seems?
+ There's a very simple argument that people make.
+ One of them is called the neural tangent kernel.
+ The argument is that if you are in the massive over
+ parameterization regime, you've got a big deep network
+ and a relatively smaller set of data,
+ then even a random initialization
+ of your deep network produces some outputs
+ in your last layer.
+ And it produces a rich enough basis of possible outputs
+ that the last layer can effectively just do
+ least squares.
+ So you can get-- so basically, if your second to last layer
+ spans all of the possible space and your last layer is just
+ a linear layer, then you actually
+ have a least squares problem in the last layer.
+ And then all of the other stuff in the beginning
+ can just be left-- you'll get to 0 training loss almost
+ trivially if you have an ultra wide last layer.
+ OK?
+ And that's sort of in the massive over parameterization
+ regime.
+ That's an explanation for maybe why your training
+ loss might go to 0.
+ OK?
+ And the second part then is then sort
+ of this implicit regularization.
+ [WRITING ON BOARD]
+ Stochastic gradient descent.
+ OK, so if I'm able to fit my training data by just having
+ a really wide second to last layer,
+ the last layer is just solving a least squares problem.
+ Then I get to-- in the null space of my solutions,
+ of 0 training loss, I get to move,
+ walk around inside the parameters of my earlier
+ layers of the network.
+ And there's a lot of ideas about why stochastic gradient descent
+ will continue to walk around even after you've got 0
+ training loss and will find a solution that generalizes well
+ to new examples.
+ That's sort of the simplest brush pass
+ of what people are talking about in deep supervised learning.
+ OK?
+ And there's-- I think it's not quite what happens in practice,
+ but there's this massive overparameterization regime
+ that's happening in practice.
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ There's a lot of ideas about it.
+ But it seems that of the solutions which
+ fit my data perfectly, I mean, SGD
+ tends to walk around and find them that have a--
+ they minimize particular norms of the parameters and stuff
+ like this that tend to give you nice smooth functions
+ around your data.
+ And even do ridiculous things around noisy data,
+ like fit the generalizing curve, but still explain noisy data
+ with 0 training loss.
+ It's a big topic that I don't mean to go into,
+ but thank you for asking.
+ The point I want to make, though,
+ is that the theory we have for deep supervised learning, which
+ assumes massive overparameterization
+ and ultra-wide last layers, simply
+ doesn't explain why we're having success in deep RL
+ with a 255 layer, three layer network.
+ It's just not the same regime at all.
+ So I don't see how this--
+ there's more gap to close in understanding
+ the connections between why supervised learning--
+ it's not enough, I think, to just say,
+ supervised learning works, so RL starts working.
+ I do think some of the black box optimization
+ that we talked about maybe is part of the--
+ I should-- I think the story I told you a little bit about,
+ about black box optimization working fairly well, even
+ in noisy landscapes, I do think that's part of the story that's
+ emerging, is that some of the--
+ what sounded to me as very naive algorithms
+ for gradient descent in RL might be getting around
+ some of the fundamental complexity of the landscape
+ in a nice, smart way.
+ So I think that's part of the emerging story,
+ is the black box optimization, both in its--
+ sort of its local robustness to bad landscapes,
+ and some of its global optimization aspects.
+ I think both of those have a role
+ to play to understanding when and why RL works.
+ I think the stochastic objectives that we talked about
+ is an important part of the story.
+ It connects to the idea of randomized smoothing.
+ Remember I said if you have a discontinuous loss
+ function like this, but then you take the expected value
+ over some kernel, you might smooth the loss function out
+ beautifully just by having a stochastic formulation instead
+ of a deterministic formulation.
+ I think this is a big part of it.
+ In fact, I would go so far as to hypothesize.
+ So I have a couple of versions of my box flipping code.
+ The one I showed you that I trained last night
+ was the box has random initial conditions,
+ but it's the same box all the time
+ because I'm using full state feedback.
+ The next version that I just haven't run yet
+ takes key points from the box.
+ And then I can take and make different sized boxes
+ and different masses of boxes.
+ You would think that that would be a harder optimization
+ problem.
+ But I'll go out on a limb, and I would say--
+ when I run it tonight or whatever--
+ that it's probably going to be an easier optimization problem,
+ or let's say a better optimization problem.
+ I would actually expect to say that the policies we would get
+ out of that optimization might be less ridiculous.
+ And I would guess that it learns faster,
+ learns reasonable policies faster.
+ And my intuition for that is that I
+ think when you ask too narrow of a problem,
+ then there are many quirky solutions that
+ almost solve the problem.
+ But when you ask that the same policy solves
+ a whole distribution of problems, like all the boxes,
+ then all the quirky solutions where you just
+ happen to throw your finger into the back corner
+ and knock it up and the box happened to land on it,
+ whatever, that just doesn't happen
+ if you have arbitrary boxes.
+ It's just not a good solution.
+ The solution that works for all boxes of all sizes,
+ whatever it is you got, you put your finger on
+ and you twist it up, I would think.
+ I'll find out.
+ I'll run tonight.
+ And I think there's something important
+ that we need to understand in that space.
+ Here's the thing.
+ RL can't solve every problem.
+ We know that.
+ You can write any optimization problem as an RL problem,
+ as a one-step RL problem.
+ There are NP-hard optimization problems.
+ We just know there's problems.
+ I would be mining Bitcoin now if RL solved every problem.
+ Because it just doesn't do that.
+ There's something about the types of problems
+ that we're asking which RL is solving well.
+ And it's something about the distribution of problems
+ that we're asking.
+ Roughly, I would say that maybe the biggest thing maybe
+ is manipulation is easy if we formulate it this way.
+ I think that's maybe my number one takeaway.
+ I'll say a few more of the existing work stuff.
+ But I think deeply that there's something
+ about the distribution of problems
+ that the real world gives us.
+ My human intelligence is limited also.
+ And somehow, I'm pretty effective in my kitchen.
+ I mean, not great.
+ But I can get around my kitchen without throwing boxes
+ through the window.
+ So there's something about the distribution of kitchens
+ in the world that doesn't have the crazy scenarios.
+ And I think somehow that makes the optimization problems
+ better that I can learn.
+ There's something about the distribution of the world
+ and the distribution of our problems
+ that I don't know how to capture yet.
+ But it seems important.
+ There's a bunch of good work on controlled parameterizations.
+ [WRITING]
+ That make-- or value function parameterizations
+ that aren't super present in the neural network deep RL
+ community.
+ But they're sort of coming.
+ They're coming behind.
+ And they're taking even classic control problems--
+ LQR, LQG, some of these classic control problems--
+ asking, does stochastic gradient descent work for them?
+ What about robust control formulations?
+ Some of the formulations that we really
+ understand well from an optimization perspective,
+ can stochastic gradient descent--
+ how do we understand stochastic gradient descent
+ on those problems?
+ And there's some really deep things happening there.
+ And while it's still a long way from the neural network case,
+ I feel like that's the theory community chasing.
+ And if we can even catch up a little bit more,
+ then I think it's going to give good dividends.
+ So as an example, for instance, some of the work
+ that Jack and others in my group have been thinking about,
+ if you have a convex reparameterization--
+ [WRITING]
+ --e.g. from robust control--
+ [WRITING]
+ If you look at my underactuated notes,
+ there's a bunch of cases where it's like,
+ here's a crazy hard problem.
+ But if you change coordinates into this new set of decision
+ variables, then you can write it as an optimization problem
+ that's convex.
+ The fact that those tricks even exist actually
+ implies something topologically.
+ If they have certain properties, those reparameterizations,
+ like if they're smooth and other things like this--
+ [WRITING]
+ --about, let's say, policy gradient.
+ [WRITING]
+ And there's a stream of results from the theory community
+ saying, well, actually, LQR, we know how to solve it in MATLAB.
+ But actually, that means that we can solve it
+ with stochastic gradient descent, too.
+ Even though the cost function is not
+ convex in the control parameters and the policy parameters,
+ it can't have local minima because
+ of the existence of these reparameterizations.
+ And even some pretty hard--
+ increasingly harder problems, we're actually saying, oh,
+ that would have worked with SGD also.
+ And I think as we grow that body of knowledge,
+ we'll get closer and closer to understanding
+ why these things work.
+ But there is some limits.
+ Right?
+ I guess I said Bitcoin.
+ That's not what I wrote in my notes, but here we go.
+ Yeah.
+ Someone's got to do that next week now that I wrote it.
+ But it doesn't solve-- there's problems that are just
+ fundamentally hard.
+ We have hardness results, hardness theories.
+ You can write all of them as an RL problem.
+ Like I said, it's hopelessly generic.
+ And you're not going to run PPO and suddenly solve that.
+ So there's something more going on between our RL algorithms
+ and our RL formulations.
+ There's some structure that's hidden there
+ in the cases where it's working that's not visible yet.
+ But we have to discover it.
+ That should be our mission.
+ OK, so that was a whirlwind tour of RL in a couple lectures.
+ And Happy Thanksgiving.
+ I'm happy to keep helping with projects.
+ And we'll transition into some like the boutique lectures
+ that you guys picked starting next week.

@@ -1,0 +1,4788 @@
+1
+00:00:00,000 --> 00:00:07,520
+ Okay, so thank you guys for filling out the survey.
+
+2
+00:00:07,520 --> 00:00:10,440
+ I had a couple of different ways we could go with the next couple of lectures.
+
+3
+00:00:10,440 --> 00:00:16,900
+ One of them was to continue on the more details about RL, but it seems like there was more
+
+4
+00:00:16,900 --> 00:00:19,320
+ interest in other areas than RL.
+
+5
+00:00:19,320 --> 00:00:24,640
+ So I'm going to jump ahead a little bit, talk about the intuitive physics portion, which
+
+6
+00:00:24,640 --> 00:00:27,240
+ I think is - we didn't even ask you about that one because I think it's important enough
+
+7
+00:00:27,240 --> 00:00:31,120
+ that I wanted to include it.
+
+8
+00:00:31,120 --> 00:00:32,840
+ And it does connect to RL.
+
+9
+00:00:32,840 --> 00:00:37,440
+ You could call this - you could think of this as maybe part of the model-based reinforcement
+
+10
+00:00:37,440 --> 00:00:39,160
+ learning pipeline.
+
+11
+00:00:39,160 --> 00:00:47,720
+ And let me just kind of transition from the RL and behavior cloning kind of conversation
+
+12
+00:00:47,720 --> 00:00:50,920
+ into what we're going to talk about today.
+
+13
+00:00:50,920 --> 00:01:05,480
+ So we talked about - I've been saying over and over again that I like visual motor policies,
+
+14
+00:01:05,480 --> 00:01:12,840
+ right?
+
+15
+00:01:12,840 --> 00:01:21,680
+ And so far, where we - the goal of the visual motor policies is to control the state of
+
+16
+00:01:21,680 --> 00:01:36,920
+ the world and the robot.
+
+17
+00:01:36,920 --> 00:01:41,520
+ And so far, we've given you two major pipelines to possibly try to find those visual motor
+
+18
+00:01:41,520 --> 00:01:42,660
+ policies.
+
+19
+00:01:42,660 --> 00:01:50,680
+ The first one was behavior cloning.
+
+20
+00:01:50,680 --> 00:02:05,080
+ And the second one was a very brief look at a big topic of reinforcement learning.
+
+21
+00:02:05,080 --> 00:02:07,880
+ And both of those can work.
+
+22
+00:02:07,880 --> 00:02:12,380
+ Both of them - I mean, all of the approaches we'll talk about have strengths and weaknesses.
+
+23
+00:02:12,380 --> 00:02:17,420
+ Actually, there was a really interesting question that came up at the end last time.
+
+24
+00:02:17,420 --> 00:02:19,940
+ I guess the person who asked this isn't here yet today.
+
+25
+00:02:19,940 --> 00:02:26,420
+ But someone asked if I had just run RL for longer on the box flip up, would it have done
+
+26
+00:02:26,420 --> 00:02:29,380
+ something less ridiculous, right?
+
+27
+00:02:29,380 --> 00:02:35,260
+ And I answered quickly, you know, and I think I answered about how RL can get stuck in local
+
+28
+00:02:35,260 --> 00:02:39,220
+ minima and maybe because it's stochastic enough, it could jump out and eventually find its
+
+29
+00:02:39,220 --> 00:02:43,220
+ way down.
+
+30
+00:02:43,220 --> 00:02:48,780
+ But I think there might have been a - I don't know if there was a deeper point to that question.
+
+31
+00:02:48,780 --> 00:02:53,820
+ But it occurred to me that, you know, when people like David Silver talks about RL for
+
+32
+00:02:53,820 --> 00:03:01,900
+ Go, for instance, it gives the impression that I think there's a belief there that the
+
+33
+00:03:01,900 --> 00:03:04,420
+ more you learn, the better you'll get at Go.
+
+34
+00:03:04,420 --> 00:03:09,280
+ That you'll just - you've got enough parameters in your network, you've got enough experience
+
+35
+00:03:09,280 --> 00:03:13,100
+ coming in that you can just, you know, it's just the amount of compute you're willing
+
+36
+00:03:13,100 --> 00:03:18,100
+ to spend, it'll just get better and better and better the more you play.
+
+37
+00:03:18,100 --> 00:03:23,460
+ And so I don't think that's the regime we're in with the RL examples I've been showing
+
+38
+00:03:23,460 --> 00:03:24,460
+ you here.
+
+39
+00:03:24,460 --> 00:03:31,740
+ I can't say that, you know, this is my intuition and my, you know, experience, but maybe not
+
+40
+00:03:31,740 --> 00:03:32,980
+ a proof here.
+
+41
+00:03:32,980 --> 00:03:38,580
+ But I don't think we're in that regime with the robotics RL experiments that we've been
+
+42
+00:03:38,580 --> 00:03:39,900
+ seeing in the market.
+
+43
+00:03:39,900 --> 00:03:43,700
+ I think we're more in the regime where you can bounce around, but you can really get
+
+44
+00:03:43,700 --> 00:03:45,580
+ stuck in local minima.
+
+45
+00:03:45,580 --> 00:03:50,060
+ And one of the reasons might be that we're not really in the dramatically over-parameterized
+
+46
+00:03:50,060 --> 00:03:55,820
+ regime in the policies, where we can just keep going down and down and down and down.
+
+47
+00:03:55,820 --> 00:04:01,660
+ OK, so - but RL is doing a pretty good job of even without a model, you know, finding
+
+48
+00:04:01,660 --> 00:04:07,540
+ its way into at least a local minima in the cost landscape.
+
+49
+00:04:07,540 --> 00:04:10,900
+ And if you run it long enough, it might bounce around to a better local minima, but it's
+
+50
+00:04:10,900 --> 00:04:15,900
+ not guaranteed to solve the global problem in any way.
+
+51
+00:04:15,900 --> 00:04:21,340
+ OK, so how are we going to go from - why are we going to move on from this to something
+
+52
+00:04:21,340 --> 00:04:24,660
+ about learning models instead, right?
+
+53
+00:04:24,660 --> 00:04:33,220
+ So the drawbacks of both of these approaches, I think, are largely about generalization.
+
+54
+00:04:33,220 --> 00:04:40,860
+ So the experience we talked about in supervised learning was this amazing capability of transfer
+
+55
+00:04:40,860 --> 00:04:48,260
+ learning that you can learn on ImageNet and apply that to some different domain.
+
+56
+00:04:48,260 --> 00:04:53,740
+ I think a strong criticism of reinforcement learning and behavior cloning is that these
+
+57
+00:04:53,740 --> 00:04:55,020
+ tend to be very task-specific.
+
+58
+00:04:55,020 --> 00:05:06,900
+ OK, so if you have a particular task, you want to flip up the box in a particular way,
+
+59
+00:05:06,900 --> 00:05:12,460
+ you write your cross-function, you find your policy - and this is a strength and a weakness,
+
+60
+00:05:12,460 --> 00:05:16,420
+ actually, of this - is that it learns exactly the policy it needs to learn to accomplish
+
+61
+00:05:16,420 --> 00:05:19,220
+ that task, and it doesn't learn other stuff.
+
+62
+00:05:19,220 --> 00:05:23,780
+ And that gives it power by ignoring all the things it doesn't need to learn, but it's
+
+63
+00:05:23,780 --> 00:05:29,300
+ also a limitation if you want to then change the task a little bit.
+
+64
+00:05:29,300 --> 00:05:34,260
+ The naive recipe is you just start over, right?
+
+65
+00:05:34,260 --> 00:05:38,500
+ There are ways to try to make RL generalize more.
+
+66
+00:05:38,500 --> 00:05:52,140
+ You can talk about goal-conditioned policies, for instance, where maybe you make - if you
+
+67
+00:05:52,140 --> 00:05:58,020
+ can find an efficient way to parameterize the objective function, the goal, let's say,
+
+68
+00:05:58,020 --> 00:06:00,620
+ then you could basically throw that in your state space.
+
+69
+00:06:00,620 --> 00:06:04,460
+ It's not quite that, but imagine putting it into your state space.
+
+70
+00:06:04,460 --> 00:06:11,900
+ And then learn a policy that is a function of the goal parameters as well as the state.
+
+71
+00:06:11,900 --> 00:06:22,420
+ And there's also nice work on sort of multitask RL, which is, I think, a very powerful framework.
+
+72
+00:06:22,420 --> 00:06:27,780
+ And I think there's - that field's still growing up.
+
+73
+00:06:27,780 --> 00:06:32,820
+ But this is going to be a constant struggle, because, like I say, it's a good thing about
+
+74
+00:06:32,820 --> 00:06:37,900
+ RL that it ignores all the things that are not relevant to the current task at hand.
+
+75
+00:06:37,900 --> 00:06:39,220
+ That's one of its strengths.
+
+76
+00:06:39,220 --> 00:06:44,820
+ But if you want to compare that to, for instance, our kinematic trajectory optimization or something,
+
+77
+00:06:44,820 --> 00:06:48,260
+ where you give it a new task and you just change the cost function on the fly, you're
+
+78
+00:06:48,260 --> 00:06:49,780
+ doing the new task, right?
+
+79
+00:06:49,780 --> 00:06:51,820
+ RL is not doing that.
+
+80
+00:06:51,820 --> 00:06:54,020
+ It's not immediately well-suited to that.
+
+81
+00:06:54,020 --> 00:07:00,340
+ It's a very - you do a lot of computation to get a good controller for one cost function.
+
+82
+00:07:00,340 --> 00:07:03,340
+ And you have to start over.
+
+83
+00:07:03,340 --> 00:07:12,860
+ So the most sound way, I guess, to address that is to learn something more than just
+
+84
+00:07:12,860 --> 00:07:14,940
+ the parameters of the policy.
+
+85
+00:07:14,940 --> 00:07:20,180
+ You want to learn something that generalizes from different task to different task.
+
+86
+00:07:20,180 --> 00:07:24,460
+ And the opposite extreme of that is that maybe what you should do is actually learn the dynamics,
+
+87
+00:07:24,460 --> 00:07:25,460
+ right?
+
+88
+00:07:25,460 --> 00:07:28,700
+ I talked about these things are hard because we don't know how to - what the dynamics of
+
+89
+00:07:28,700 --> 00:07:34,660
+ spreading peanut butter on toast is or what the dynamics of buttoning my shirt are.
+
+90
+00:07:34,660 --> 00:07:37,280
+ But neural networks are pretty good at learning things.
+
+91
+00:07:37,280 --> 00:07:44,780
+ So why don't we try to learn the dynamics of the world and then apply our best control
+
+92
+00:07:44,780 --> 00:07:48,540
+ tools to those learned dynamics?
+
+93
+00:07:48,540 --> 00:08:08,780
+ So the idea for today is learn - try to learn the dynamics of the world.
+
+94
+00:08:08,780 --> 00:08:13,300
+ Some versions of this will actually just try to learn the state representation in addition.
+
+95
+00:08:13,300 --> 00:08:21,820
+ Some of them will require you to give a state representation.
+
+96
+00:08:21,820 --> 00:08:31,340
+ Now, some people call this model-based reinforcement learning.
+
+97
+00:08:31,340 --> 00:08:38,060
+ I'm not a huge fan of that particular word just because it's - I mean, yeah.
+
+98
+00:08:38,060 --> 00:08:41,220
+ People do model-free reinforcement learning even though they have a simulator, which is
+
+99
+00:08:41,220 --> 00:08:45,780
+ a model in my book, and they have - this one could just be called control, but it's called
+
+100
+00:08:45,780 --> 00:08:48,660
+ model-based RL.
+
+101
+00:08:48,660 --> 00:08:51,660
+ Don't get hung up on the naming.
+
+102
+00:08:51,660 --> 00:08:59,100
+ But I guess if you want to call it model-based RL, yeah, you're welcome to.
+
+103
+00:08:59,100 --> 00:09:00,100
+ Okay.
+
+104
+00:09:00,100 --> 00:09:05,780
+ So let's talk today about learning the dynamics of the world and what tools do we have to
+
+105
+00:09:05,780 --> 00:09:08,780
+ offer about that.
+
+106
+00:09:08,780 --> 00:09:13,220
+ It's a super rich subject, and actually, even once you learn the dynamics, model-based control,
+
+107
+00:09:13,220 --> 00:09:14,220
+ of course, is a huge subject.
+
+108
+00:09:14,220 --> 00:09:18,820
+ And that's one that I spend basically all of the underactuated lectures talking about
+
+109
+00:09:18,820 --> 00:09:21,520
+ how to do model-based control.
+
+110
+00:09:21,520 --> 00:09:25,940
+ But let's think about today about learning the dynamics and what kind of tools we can
+
+111
+00:09:25,940 --> 00:09:28,420
+ bring to bear on that.
+
+112
+00:09:28,420 --> 00:09:41,620
+ And there's sort of a zoo of model parameterizations that we might try to learn.
+
+113
+00:09:41,620 --> 00:09:47,980
+ We talked a little bit about it, but broadly speaking, learning dynamics is the topic of
+
+114
+00:09:47,980 --> 00:09:54,180
+ system identification, say, aka system identification.
+
+115
+00:09:54,180 --> 00:10:04,500
+ Or at least that's the old word for it.
+
+116
+00:10:04,500 --> 00:10:08,580
+ And even though I think there's a lot of things from system identification that we want to
+
+117
+00:10:08,580 --> 00:10:12,460
+ remember, I think there's also a lot of new tools for machine learning that have come
+
+118
+00:10:12,460 --> 00:10:17,080
+ and recently contributed new life to some of the old system ID questions.
+
+119
+00:10:17,080 --> 00:10:18,380
+ And that's not just deep learning.
+
+120
+00:10:18,380 --> 00:10:25,420
+ It's also finite sample results and online optimization kind of results that are very,
+
+121
+00:10:25,420 --> 00:10:29,540
+ very powerful new approaches to system identification.
+
+122
+00:10:29,540 --> 00:10:33,220
+ But in the world of system identification or learning the dynamics, the first thing
+
+123
+00:10:33,220 --> 00:10:36,780
+ we have to do is we have to pick a family of models that we're going to optimize over
+
+124
+00:10:36,780 --> 00:10:38,980
+ to try to explain the data.
+
+125
+00:10:38,980 --> 00:10:47,820
+ So the standard thing is I have some system coming in or some data coming in, let's say,
+
+126
+00:10:47,820 --> 00:10:49,340
+ some signal coming in, I'll call it.
+
+127
+00:10:49,340 --> 00:10:54,380
+ I have some system that I'm trying to fit, and I have some signal coming out.
+
+128
+00:10:54,380 --> 00:11:05,980
+ These are my actions and my observations in this case.
+
+129
+00:11:05,980 --> 00:11:09,420
+ And we've already talked about some of the different forms that this could take because
+
+130
+00:11:09,420 --> 00:11:14,780
+ we use this sort of setup for even learning policies.
+
+131
+00:11:14,780 --> 00:11:23,260
+ So we said already that you could talk about static parameterizations, which would be yn
+
+132
+00:11:23,260 --> 00:11:27,220
+ is just a function of un.
+
+133
+00:11:27,220 --> 00:11:37,220
+ We've talked about feedforward or Rmax kind of models, where we could say that my output
+
+134
+00:11:37,220 --> 00:11:59,500
+ is some function of my previous outputs, un, un minus 1.
+
+135
+00:11:59,500 --> 00:12:09,940
+ So we've talked about states-based models.
+
+136
+00:12:09,940 --> 00:12:38,460
+ So I might learn something where this is the x of my controller.
+
+137
+00:12:38,460 --> 00:12:42,920
+ So we've talked a little bit about that before, and I won't talk about it again.
+
+138
+00:12:42,920 --> 00:12:47,380
+ But now the question is, given that we're going to choose one of these forms, whether
+
+139
+00:12:47,380 --> 00:12:53,560
+ it's a static or a feedforward or a state-based kind of model, I want to start digging into
+
+140
+00:12:53,560 --> 00:12:59,140
+ what are our choices for f and what are our choices for g if we have one.
+
+141
+00:12:59,140 --> 00:13:02,880
+ And what parameterizations can we say strong things about?
+
+142
+00:13:02,880 --> 00:13:08,740
+ And what gives us-- there's going to be pros and cons to each different choice of f and
+
+143
+00:13:08,740 --> 00:13:09,740
+ g.
+
+144
+00:13:09,740 --> 00:13:24,740
+ Again, there's lots of choices.
+
+145
+00:13:24,740 --> 00:13:31,860
+ And I think I can kind of paint the picture, and then we'll dig deep into one or two of
+
+146
+00:13:31,860 --> 00:13:33,820
+ them.
+
+147
+00:13:33,820 --> 00:13:39,060
+ So you could choose f and g to be linear.
+
+148
+00:13:39,060 --> 00:13:48,700
+ That's a natural, powerful choice, really, because it affords so much analysis that we
+
+149
+00:13:48,700 --> 00:13:53,780
+ can understand a lot of things through the lens of linear dynamics.
+
+150
+00:13:53,780 --> 00:14:00,940
+ Even theoretical machine learning folks had a few years where they returned in force to
+
+151
+00:14:00,940 --> 00:14:06,580
+ linear dynamical systems to understand finite sample bounds and everything like that.
+
+152
+00:14:06,580 --> 00:14:10,780
+ The other case that we can really throw the math hammer at would be if you did finite
+
+153
+00:14:10,780 --> 00:14:22,700
+ models or tabular models.
+
+154
+00:14:22,700 --> 00:14:30,060
+ If you're thinking about stochastic versions of this would be like learning the traditional
+
+155
+00:14:30,060 --> 00:14:35,460
+ MDP Markov decision process.
+
+156
+00:14:35,460 --> 00:14:42,100
+ Those two, I think, have limits to what they can represent, but they have huge value in
+
+157
+00:14:42,100 --> 00:14:43,840
+ what we can understand through those lens.
+
+158
+00:14:43,840 --> 00:14:48,540
+ So a lot of times, some of the lessons that you learn in linear control are pretty specific
+
+159
+00:14:48,540 --> 00:14:49,540
+ to linear systems.
+
+160
+00:14:49,540 --> 00:14:54,140
+ But some of them generalize beautifully, and we should take those lessons and carry them
+
+161
+00:14:54,140 --> 00:15:01,620
+ with us, because it's much harder to see the same lessons in the more nonlinear setting.
+
+162
+00:15:01,620 --> 00:15:06,540
+ Of course, we have neural nets.
+
+163
+00:15:06,540 --> 00:15:11,580
+ But in the world of neural nets, there's all kinds of choices.
+
+164
+00:15:11,580 --> 00:15:12,780
+ In any one of them, there's a lot.
+
+165
+00:15:12,780 --> 00:15:18,380
+ But there's the standard sort of feedforward neural networks, conv nets, and all the others.
+
+166
+00:15:18,380 --> 00:15:23,860
+ We talked about recurrent networks like LSTMs.
+
+167
+00:15:23,860 --> 00:15:28,060
+ But what you'll see more and more in some of these model learning cases, you'll see
+
+168
+00:15:28,060 --> 00:15:37,580
+ graph neural networks come up.
+
+169
+00:15:37,580 --> 00:15:39,980
+ Transformers are coming.
+
+170
+00:15:39,980 --> 00:15:46,060
+ They haven't been a huge focus, but they're coming, I think.
+
+171
+00:15:46,060 --> 00:15:49,460
+ And so on.
+
+172
+00:15:49,460 --> 00:15:52,540
+ All of these are going to be relevant.
+
+173
+00:15:52,540 --> 00:15:58,780
+ And we'll give a few examples maybe in the next lecture on this.
+
+174
+00:15:58,780 --> 00:16:03,500
+ But then there's also, I think, different levels at which these try to represent the
+
+175
+00:16:03,500 --> 00:16:04,500
+ world.
+
+176
+00:16:04,500 --> 00:16:10,940
+ Some of them operate directly on pixels.
+
+177
+00:16:10,940 --> 00:16:13,740
+ Some of them try to operate on particles.
+
+178
+00:16:13,740 --> 00:16:17,340
+ They try to say that I'm going to assume the world is based on particles or almost point
+
+179
+00:16:17,340 --> 00:16:21,780
+ clouds.
+
+180
+00:16:21,780 --> 00:16:25,340
+ Some of them try to do more object-centric kind of modeling.
+
+181
+00:16:25,340 --> 00:16:26,540
+ This is the broad strokes.
+
+182
+00:16:26,540 --> 00:16:40,700
+ And I'll go into a few examples of these.
+
+183
+00:16:40,700 --> 00:16:46,540
+ Now it's interesting to put these right next to each other, because linear and tabular
+
+184
+00:16:46,540 --> 00:16:53,660
+ have limits on what they can represent, but they have huge, powerful back ends mathematically.
+
+185
+00:16:53,660 --> 00:16:58,260
+ Neural nets can represent anything, but we have less that we can understand when they're
+
+186
+00:16:58,260 --> 00:16:59,780
+ not working well.
+
+187
+00:16:59,780 --> 00:17:05,660
+ Or less guarantees about if you care about proving your robot's not going to do something
+
+188
+00:17:05,660 --> 00:17:07,780
+ bad, let's say.
+
+189
+00:17:07,780 --> 00:17:17,020
+ And they're going to also be harder to control, harder to do control design for.
+
+190
+00:17:17,020 --> 00:17:28,620
+ There are many other nonlinear models, model parameterizations.
+
+191
+00:17:28,620 --> 00:17:34,420
+ I don't know if you've heard Volterra series, or you can learn polynomials.
+
+192
+00:17:34,420 --> 00:17:36,780
+ You can learn all these different things.
+
+193
+00:17:36,780 --> 00:17:42,380
+ And I put a few of them in the notes, but I won't dwell on them now.
+
+194
+00:17:42,380 --> 00:17:47,780
+ Neural nets have consumed people's attention on the nonlinear model front.
+
+195
+00:17:47,780 --> 00:17:51,340
+ But the one that I think I don't want to forget about, and I want to spend some time on today,
+
+196
+00:17:51,340 --> 00:18:02,260
+ is the multibody equations, which is a particular type of nonlinear models that has important
+
+197
+00:18:02,260 --> 00:18:05,600
+ structure of Lagrangian mechanics.
+
+198
+00:18:05,600 --> 00:18:13,220
+ It's far richer than these models and what it can represent.
+
+199
+00:18:13,220 --> 00:18:15,740
+ And there's another important consideration too.
+
+200
+00:18:15,740 --> 00:18:23,460
+ So if you're just doing system identification for the sake of system identification, then
+
+201
+00:18:23,460 --> 00:18:30,500
+ maybe the only metric is to try to predict as well as possible why given U. That's the
+
+202
+00:18:30,500 --> 00:18:34,620
+ standard system identification metric.
+
+203
+00:18:34,620 --> 00:18:38,680
+ But if your goal is to do system identification in the service of building a controller and
+
+204
+00:18:38,680 --> 00:18:43,580
+ getting closed-loop performance, then that can change your requirements a little bit.
+
+205
+00:18:43,580 --> 00:18:48,960
+ It might be that actually you don't have to predict all of your observations perfectly.
+
+206
+00:18:48,960 --> 00:18:50,840
+ Some of them are task relevant.
+
+207
+00:18:50,840 --> 00:18:53,320
+ Some of them are not task relevant.
+
+208
+00:18:53,320 --> 00:19:00,380
+ But there's also, it could be that I've learned a perfect predictive model of my system, but
+
+209
+00:19:00,380 --> 00:19:05,600
+ with equations that are very hard to do control design with, then that's a problem too.
+
+210
+00:19:05,600 --> 00:19:11,000
+ So I think one of the interesting things-- I'm sorry to pan on you here-- but one of
+
+211
+00:19:11,000 --> 00:19:14,760
+ the interesting things here is that if I were to learn a model that could describe the data
+
+212
+00:19:14,760 --> 00:19:19,020
+ that was linear or tabular, that control design is easy.
+
+213
+00:19:19,020 --> 00:19:22,560
+ If I learn a model that's a neural network, depending on how big or complicated the neural
+
+214
+00:19:22,560 --> 00:19:28,040
+ network is, then it might be that control is still hard.
+
+215
+00:19:28,040 --> 00:19:31,080
+ The multibody equations are somewhere in the middle.
+
+216
+00:19:31,080 --> 00:19:33,120
+ There's a lot of structure in those equations.
+
+217
+00:19:33,120 --> 00:19:37,680
+ If you can find the multibody equations that describe the data well, then we have more
+
+218
+00:19:37,680 --> 00:19:43,160
+ structured tools, more powerful tools for control.
+
+219
+00:19:43,160 --> 00:19:47,000
+ And there's some things we know about this that just are so strong and so powerful, and
+
+220
+00:19:47,000 --> 00:19:52,360
+ I want to make sure people remember about them.
+
+221
+00:19:52,360 --> 00:19:56,920
+ So let me start by digging in a bit to learning multibody equations.
+
+222
+00:19:56,920 --> 00:20:03,480
+ And I'll do it by motivated-- I'll motivate it with throwing stuff.
+
+223
+00:20:03,480 --> 00:20:12,040
+ So a bunch of people watched the tossing bot video.
+
+224
+00:20:12,040 --> 00:20:16,640
+ Everybody in the CIM class in the first lectures talked about the tossing bot paper.
+
+225
+00:20:16,640 --> 00:20:19,360
+ This is the video that went along with that paper.
+
+226
+00:20:19,360 --> 00:20:24,360
+ Great paper by Andy Zeng and company of picking up relatively-- basically unknown objects
+
+227
+00:20:24,360 --> 00:20:32,480
+ and tossing them into a target location.
+
+228
+00:20:32,480 --> 00:20:35,480
+ They used a neural network to do that.
+
+229
+00:20:35,480 --> 00:20:43,080
+ Well, they used a combination of a simple model, and then they learned a residual neural
+
+230
+00:20:43,080 --> 00:20:45,240
+ network to capture the differences.
+
+231
+00:20:45,240 --> 00:20:49,120
+ So I think a lot of people have seen that, and I won't play the whole video here.
+
+232
+00:20:49,120 --> 00:20:52,600
+ It's a nice long video, beautifully put together.
+
+233
+00:20:52,600 --> 00:20:57,280
+ But there was an original tossing bot that I don't think as many people have seen.
+
+234
+00:20:57,280 --> 00:21:07,040
+ This is actually work from MIT, but in '91.
+
+235
+00:21:07,040 --> 00:21:16,880
+ So this is a WAM robot, a Barrett Whole Arm Manipulator.
+
+236
+00:21:16,880 --> 00:21:22,840
+ Let me just show you what it does first.
+
+237
+00:21:22,840 --> 00:21:29,080
+ But again, what it's doing is actually-- so now that the bin is right here, which is about
+
+238
+00:21:29,080 --> 00:21:35,080
+ the size of the ball-- it's a pretty small bin, by the way.
+
+239
+00:21:35,080 --> 00:21:40,520
+ You saw it did a little regrasp there just to know where it is.
+
+240
+00:21:40,520 --> 00:21:43,440
+ Right in the bin across the room.
+
+241
+00:21:43,440 --> 00:21:45,440
+ The mass of the ball was unknown.
+
+242
+00:21:45,440 --> 00:21:46,440
+ The size of the ball was unknown.
+
+243
+00:21:46,440 --> 00:21:50,720
+ It was approximately what fits in the hand or whatever, but there was something even
+
+244
+00:21:50,720 --> 00:21:53,000
+ more remarkable about that.
+
+245
+00:21:53,000 --> 00:21:56,320
+ There wasn't learning in that.
+
+246
+00:21:56,320 --> 00:22:02,240
+ This was online system identification and adaptive control.
+
+247
+00:22:02,240 --> 00:22:05,600
+ So let's just watch it one more time here.
+
+248
+00:22:05,600 --> 00:22:06,800
+ That was too fast.
+
+249
+00:22:06,800 --> 00:22:08,760
+ He's throwing to a person, by the way.
+
+250
+00:22:08,760 --> 00:22:10,520
+ Human-robot interaction.
+
+251
+00:22:10,520 --> 00:22:13,800
+ OK, so watch what happens here.
+
+252
+00:22:13,800 --> 00:22:14,800
+ Quick regrasp.
+
+253
+00:22:14,800 --> 00:22:20,440
+ OK, now right here, there's one back motion and one forward motion.
+
+254
+00:22:20,440 --> 00:22:25,520
+ And what you don't realize is that in that backwards swing, it's estimating the mass
+
+255
+00:22:25,520 --> 00:22:27,560
+ of the ball.
+
+256
+00:22:27,560 --> 00:22:32,120
+ And then it computes exactly what it needs to do to throw it into the target wherever
+
+257
+00:22:32,120 --> 00:22:34,360
+ it is.
+
+258
+00:22:34,360 --> 00:22:36,360
+ Really good.
+
+259
+00:22:36,360 --> 00:22:38,360
+ OK.
+
+260
+00:22:38,360 --> 00:22:45,080
+ You know, they went on and did other versions of this too.
+
+261
+00:22:45,080 --> 00:22:48,920
+ They actually didn't publish the ball throwing one.
+
+262
+00:22:48,920 --> 00:22:51,200
+ This is Jean-Jacques Loutin's work.
+
+263
+00:22:51,200 --> 00:22:59,840
+ And actually, when I first came to the AI lab, it was I only got here much later, but
+
+264
+00:22:59,840 --> 00:23:14,800
+ the arm was still up in the ninth floor of the NE 43.
+
+265
+00:23:14,800 --> 00:23:16,880
+ The way they tracked this, they had cameras up here.
+
+266
+00:23:16,880 --> 00:23:19,240
+ See if I can turn the volume off again.
+
+267
+00:23:19,240 --> 00:23:22,080
+ They have cameras up here and they're doing foveating vision.
+
+268
+00:23:22,080 --> 00:23:26,140
+ OK, so there's a bright red ball or a bright white ball in the last one.
+
+269
+00:23:26,140 --> 00:23:30,480
+ And they just get the cameras to lock on the initial location of the ball.
+
+270
+00:23:30,480 --> 00:23:32,160
+ And then they track the white blob.
+
+271
+00:23:32,160 --> 00:23:34,720
+ This is before computer vision really worked, right?
+
+272
+00:23:34,720 --> 00:23:40,960
+ They track the white blob with the servoed cameras and they could back out the 3D position
+
+273
+00:23:40,960 --> 00:23:46,680
+ of the ball based on that, the center of the ball.
+
+274
+00:23:46,680 --> 00:23:51,680
+ That's a good question.
+
+275
+00:23:51,680 --> 00:23:54,240
+ Probably yeah.
+
+276
+00:23:54,240 --> 00:24:01,640
+ This is catching paper airplanes with a simple model of a paper airplane.
+
+277
+00:24:01,640 --> 00:24:04,920
+ So the catching one doesn't involve the same parameter estimation.
+
+278
+00:24:04,920 --> 00:24:09,280
+ It did some online tracking and they have incredibly good control, which I'll mention
+
+279
+00:24:09,280 --> 00:24:12,800
+ at the end of trying to align.
+
+280
+00:24:12,800 --> 00:24:17,240
+ They're using feedforward inverse dynamics model cancellation, but it's also an adaptive
+
+281
+00:24:17,240 --> 00:24:23,320
+ control and they take into account the mass of the ball when they're executing their trajectory.
+
+282
+00:24:23,320 --> 00:24:24,960
+ And this is pretty good.
+
+283
+00:24:24,960 --> 00:24:29,080
+ 91, like catching airplanes out of the air, throwing balls across the room into targets
+
+284
+00:24:29,080 --> 00:24:30,800
+ exactly the size of the ball.
+
+285
+00:24:30,800 --> 00:24:32,440
+ Pretty good.
+
+286
+00:24:32,440 --> 00:24:40,040
+ OK, so let's think about how they learned the model of that and how the sort of rich
+
+287
+00:24:40,040 --> 00:24:45,960
+ initial literature on learning the dynamics of the objects in the world.
+
+288
+00:24:45,960 --> 00:24:51,640
+ And it goes through multibody equations.
+
+289
+00:24:51,640 --> 00:24:56,360
+ So let's just even think for a second about what you need to know about the ball in order
+
+290
+00:24:56,360 --> 00:25:03,680
+ to be able to do a good throw.
+
+291
+00:25:03,680 --> 00:25:09,960
+ The dynamics of throwing are nice because they're simple if we ignore aerodynamics.
+
+292
+00:25:09,960 --> 00:25:12,120
+ So you can throw anything.
+
+293
+00:25:12,120 --> 00:25:14,920
+ You could throw a banana, which that's an example from Andy.
+
+294
+00:25:14,920 --> 00:25:18,960
+ It sounded arbitrary, but that was the last thing I saw them throw in the tossing by video
+
+295
+00:25:18,960 --> 00:25:19,960
+ when I just played it.
+
+296
+00:25:19,960 --> 00:25:23,640
+ You could throw a banana, you could throw a ball, you could throw whatever.
+
+297
+00:25:23,640 --> 00:25:28,120
+ Any one of them, no matter how complicated, they might flip around or whatever.
+
+298
+00:25:28,120 --> 00:25:33,680
+ If you write the dynamics of the center of mass, then it's trivial.
+
+299
+00:25:33,680 --> 00:25:39,080
+ The dynamics of the center of mass are always, if I just do it in the plane, if I do center
+
+300
+00:25:39,080 --> 00:25:51,840
+ of mass without drag, the dynamics of the center of mass are simple, depending if I
+
+301
+00:25:51,840 --> 00:25:55,960
+ put the g as positive or negative.
+
+302
+00:25:55,960 --> 00:26:06,800
+ And even the rotations around the center of mass, there's a conservation of angular momentum.
+
+303
+00:26:06,800 --> 00:26:22,000
+ This is the moment of inertia about the center of mass.
+
+304
+00:26:22,000 --> 00:26:23,000
+ It may spin.
+
+305
+00:26:23,000 --> 00:26:27,160
+ It may be spinning around the center of mass, but it won't spin more or less as it flies
+
+306
+00:26:27,160 --> 00:26:32,200
+ through the air because of conservation of angular momentum.
+
+307
+00:26:32,200 --> 00:26:40,200
+ So there's a couple things that immediately we can notice here is that this implies that
+
+308
+00:26:40,200 --> 00:26:47,720
+ since mass is not 0, that x double dot center of mass is 0, z double dot center of mass
+
+309
+00:26:47,720 --> 00:26:56,200
+ is negative g, and theta double dot center of mass equals 0.
+
+310
+00:26:56,200 --> 00:27:04,280
+ And in the air, you don't have to do any work to estimate the parameters of the mass.
+
+311
+00:27:04,280 --> 00:27:08,440
+ The mass of the ball is irrelevant once you throw it.
+
+312
+00:27:08,440 --> 00:27:14,400
+ Similarly, if you were to throw a ball at me, there's no way that I can just by watching
+
+313
+00:27:14,400 --> 00:27:20,960
+ the motion of the ball-- this is classic physics-- that I could estimate its mass.
+
+314
+00:27:20,960 --> 00:27:22,680
+ Every ball will take the same arc.
+
+315
+00:27:22,680 --> 00:27:24,640
+ Just remember that.
+
+316
+00:27:24,640 --> 00:27:28,480
+ So now, why then do we have to estimate-- why is it useful to estimate the mass of the
+
+317
+00:27:28,480 --> 00:27:30,120
+ ball if we're going to throw it?
+
+318
+00:27:30,120 --> 00:27:35,460
+ Well, what matters very much is the location of the center of mass and the spatial velocity
+
+319
+00:27:35,460 --> 00:27:39,640
+ of the center of mass at the point of release.
+
+320
+00:27:39,640 --> 00:27:42,040
+ So everything follows from that.
+
+321
+00:27:42,040 --> 00:27:44,760
+ There's no accelerations after you launch.
+
+322
+00:27:44,760 --> 00:27:47,960
+ But if you don't know where the center of mass is when you launch, then you've got no
+
+323
+00:27:47,960 --> 00:27:51,400
+ hope of controlling where it goes.
+
+324
+00:27:51,400 --> 00:27:56,600
+ So what matters is the moment of release.
+
+325
+00:27:56,600 --> 00:27:57,600
+ This was all in the air.
+
+326
+00:27:57,600 --> 00:28:15,600
+ It has nothing to do with the moment of inertia.
+
+327
+00:28:15,600 --> 00:28:20,760
+ That's just a bad choice of words, maybe.
+
+328
+00:28:20,760 --> 00:28:44,400
+ So I care about the spatial velocity in general, the position and spatial velocity at release.
+
+329
+00:28:44,400 --> 00:28:50,520
+ So at very least, when I start moving around, I need to know the center of mass of the ball
+
+330
+00:28:50,520 --> 00:28:55,400
+ or of whatever banana I'm going to throw relative to my hand.
+
+331
+00:28:55,400 --> 00:28:59,920
+ So that's the key parameter to estimate.
+
+332
+00:28:59,920 --> 00:29:05,560
+ And then depending on how heavy the banana is relative to your arm, you might also need
+
+333
+00:29:05,560 --> 00:29:10,920
+ to know the mass and other things just to be able to execute the trajectory well enough.
+
+334
+00:29:10,920 --> 00:29:14,920
+ If the object is insignificant mass relative to your arm, then your robot controller can
+
+335
+00:29:14,920 --> 00:29:18,400
+ just ignore the mass and execute its trajectory and expect to do well.
+
+336
+00:29:18,400 --> 00:29:23,960
+ But if you start to throw heavy bananas-- I've got to pick a different object-- then
+
+337
+00:29:23,960 --> 00:29:29,160
+ suddenly the ability to track a trajectory with very high fidelity-- I mean, that's high
+
+338
+00:29:29,160 --> 00:29:32,920
+ fidelity to throw it in the bin all the way across, right?
+
+339
+00:29:32,920 --> 00:29:37,360
+ With very high fidelity requires you to consider the mass in the hand.
+
+340
+00:29:37,360 --> 00:29:41,760
+ And that's where the extra terms from mass and inertia start coming in more, is in the
+
+341
+00:29:41,760 --> 00:29:42,760
+ tracking.
+
+342
+00:29:42,760 --> 00:30:04,600
+ And it's a good problem for lots of our applications, right?
+
+343
+00:30:04,600 --> 00:30:10,400
+ Amazon wants to move boxes fast, or you want to play tiddlywinks, or whatever your robot
+
+344
+00:30:10,400 --> 00:30:12,320
+ wants to do.
+
+345
+00:30:12,320 --> 00:30:15,920
+ There's a lot of applications where you'd want to be able to pick up an object and learn
+
+346
+00:30:15,920 --> 00:30:20,680
+ something about its inertial properties by interaction.
+
+347
+00:30:20,680 --> 00:30:27,280
+ So let's just think about how would we learn those parameters by picking up an object and
+
+348
+00:30:27,280 --> 00:30:44,440
+ moving it around.
+
+349
+00:30:44,440 --> 00:30:50,760
+ Turns out that estimating the mass of an object in the hand, especially once it's in a reasonable
+
+350
+00:30:50,760 --> 00:30:54,080
+ grasp inside the hand-- remember, they opened and closed to make sure they had a really
+
+351
+00:30:54,080 --> 00:31:03,920
+ good grasp, and it was solidly at the base of the gripper.
+
+352
+00:31:03,920 --> 00:31:09,560
+ It turns out that's just a special case of the more general problem of estimating mass
+
+353
+00:31:09,560 --> 00:31:32,680
+ and inertia of your robot as you move around.
+
+354
+00:31:32,680 --> 00:31:45,240
+ OK, so how do we do multibody parameter estimation?
+
+355
+00:31:45,240 --> 00:31:47,000
+ What does that even look like?
+
+356
+00:31:47,000 --> 00:31:48,000
+ How do we set it up?
+
+357
+00:31:48,000 --> 00:31:50,360
+ What special structure can we exploit?
+
+358
+00:31:50,360 --> 00:31:53,040
+ What guarantees do we think we can get?
+
+359
+00:31:53,040 --> 00:32:07,160
+ So the multibody equations-- you've seen me write them many times.
+
+360
+00:32:07,160 --> 00:32:17,700
+ They might have other terms like friction, damping, contact, you name it.
+
+361
+00:32:17,700 --> 00:32:19,200
+ Other terms like that.
+
+362
+00:32:19,200 --> 00:32:25,680
+ These are nonlinear equations.
+
+363
+00:32:25,680 --> 00:32:29,320
+ You'll see sines and cosines inside this.
+
+364
+00:32:29,320 --> 00:32:34,300
+ So that sounds like we're going to have a tough nonlinear estimation problem.
+
+365
+00:32:34,300 --> 00:32:40,360
+ But it turns out the parameters that we care to estimate enter these equations in very
+
+366
+00:32:40,360 --> 00:32:44,880
+ particular ways.
+
+367
+00:32:44,880 --> 00:33:01,120
+ There's parameters inside here, in all of these, possibly in those two.
+
+368
+00:33:01,120 --> 00:33:03,880
+ And they tend to be of two basic varieties.
+
+369
+00:33:03,880 --> 00:33:06,960
+ There's the kinematic parameters.
+
+370
+00:33:06,960 --> 00:33:13,880
+ Length, for instance.
+
+371
+00:33:13,880 --> 00:33:22,200
+ And then there's the dynamic parameters, like the masses and the moment of inertias.
+
+372
+00:33:22,200 --> 00:33:24,120
+ You can actually estimate them jointly.
+
+373
+00:33:24,120 --> 00:33:25,160
+ That's OK.
+
+374
+00:33:25,160 --> 00:33:30,000
+ But just get a ruler for this one.
+
+375
+00:33:30,000 --> 00:33:32,320
+ This one you should probably just measure fairly well.
+
+376
+00:33:32,320 --> 00:33:37,680
+ And then there's actually kinematic-- there's more subtle problems in kinematic calibration,
+
+377
+00:33:37,680 --> 00:33:43,000
+ which are more about joint offsets, if you have an encoder offset error or something
+
+378
+00:33:43,000 --> 00:33:44,040
+ like this.
+
+379
+00:33:44,040 --> 00:33:48,320
+ But a lot of times, people will separate out the kinematic parameter estimation and maybe
+
+380
+00:33:48,320 --> 00:33:53,920
+ have a way to-- so a lot of our robots actually wake up and go against the joint limits and
+
+381
+00:33:53,920 --> 00:34:00,300
+ then come back just to calibrate their joint encoders.
+
+382
+00:34:00,300 --> 00:34:05,160
+ And the lengths are normally pretty faithful to the CAD models.
+
+383
+00:34:05,160 --> 00:34:08,520
+ So I'll talk about estimating them jointly because we can.
+
+384
+00:34:08,520 --> 00:34:10,920
+ But know that I wouldn't actually recommend that.
+
+385
+00:34:10,920 --> 00:34:14,760
+ You should probably just pull those out and estimate them separately.
+
+386
+00:34:14,760 --> 00:34:18,240
+ You could, for instance, just try to draw a straight line.
+
+387
+00:34:18,240 --> 00:34:21,520
+ And if it's not a straight line, you haven't got your kinematic parameters working very
+
+388
+00:34:21,520 --> 00:34:23,720
+ well.
+
+389
+00:34:23,720 --> 00:34:26,140
+ OK.
+
+390
+00:34:26,140 --> 00:34:28,320
+ So what's the special structure?
+
+391
+00:34:28,320 --> 00:34:30,480
+ They enter here into these different terms.
+
+392
+00:34:30,480 --> 00:34:34,840
+ Hidden inside there are the masses, the inertias that make the equations of motion.
+
+393
+00:34:34,840 --> 00:34:35,840
+ And they're nonlinear.
+
+394
+00:34:35,840 --> 00:34:36,840
+ Yeah?
+
+395
+00:34:36,840 --> 00:34:37,840
+ [INAUDIBLE]
+
+396
+00:34:37,840 --> 00:34:40,920
+ So you can estimate some of the parameters of friction.
+
+397
+00:34:40,920 --> 00:34:43,400
+ There are identifiability requirements.
+
+398
+00:34:43,400 --> 00:34:46,120
+ So for instance, if I never see it slide, I'm not going to be able to get its friction
+
+399
+00:34:46,120 --> 00:34:48,080
+ coefficient.
+
+400
+00:34:48,080 --> 00:34:53,920
+ But yes, the rules of the game apply to friction as well.
+
+401
+00:34:53,920 --> 00:34:54,920
+ More subtle.
+
+402
+00:34:54,920 --> 00:34:56,920
+ More subtle.
+
+403
+00:34:56,920 --> 00:34:57,920
+ OK.
+
+404
+00:34:57,920 --> 00:35:05,840
+ So if you take away exactly one thing from this part, you should know that there is a
+
+405
+00:35:05,840 --> 00:35:09,880
+ very important particular way that those parameters enter the equations.
+
+406
+00:35:09,880 --> 00:35:14,880
+ And it's true of basically the same way we said almost every kinematic chain is representable
+
+407
+00:35:14,880 --> 00:35:16,480
+ as a polynomial.
+
+408
+00:35:16,480 --> 00:35:20,880
+ Basically almost every multibody set of equations that you'll come across, the parameters enter
+
+409
+00:35:20,880 --> 00:35:22,720
+ in a particular way.
+
+410
+00:35:22,720 --> 00:35:30,760
+ And it turns out that the worst nonlinearities, your sines and cosines or whatever, are separable
+
+411
+00:35:30,760 --> 00:35:31,760
+ from your parameters.
+
+412
+00:35:31,760 --> 00:35:37,160
+ That your parameters group together and your sines and cosines and other nonlinearities
+
+413
+00:35:37,160 --> 00:35:38,160
+ group together.
+
+414
+00:35:38,160 --> 00:35:41,800
+ And you can separate those two apart and estimate just the parameters.
+
+415
+00:35:41,800 --> 00:35:45,480
+ And it's a nicer problem than you would expect out of the box.
+
+416
+00:35:45,480 --> 00:35:47,240
+ And I'll show you that in a simple example.
+
+417
+00:35:47,240 --> 00:35:56,560
+ The simplest possible example is just the one link robot, which I think is the right
+
+418
+00:35:56,560 --> 00:35:59,440
+ place to write it on the board.
+
+419
+00:35:59,440 --> 00:36:08,400
+ And then I'll show a couple more complicated examples.
+
+420
+00:36:08,400 --> 00:36:17,920
+ So I just make my pendulum dynamics.
+
+421
+00:36:17,920 --> 00:36:26,560
+ And I have my mass and my length and my gravity coming down and my theta.
+
+422
+00:36:26,560 --> 00:36:31,120
+ And the equations of motion, ml squared theta double dot.
+
+423
+00:36:31,120 --> 00:36:43,520
+ Maybe I have some damping.
+
+424
+00:36:43,520 --> 00:36:51,080
+ So in this particular set of equations, which I know by heart, you can see that what I said
+
+425
+00:36:51,080 --> 00:36:58,320
+ is true, that these things are separable.
+
+426
+00:36:58,320 --> 00:37:03,240
+ If you know the lengths already, because you did separate kinematic trajectory-- sorry,
+
+427
+00:37:03,240 --> 00:37:07,560
+ kinematic parameter estimation, then that gets even simpler.
+
+428
+00:37:07,560 --> 00:37:14,620
+ But even if you don't, it's useful to write the equations in a slightly different form.
+
+429
+00:37:14,620 --> 00:37:27,880
+ Let me separate out what I would consider to be the data.
+
+430
+00:37:27,880 --> 00:37:30,360
+ That's the things we're getting from our measurements and our sensors.
+
+431
+00:37:30,360 --> 00:37:33,240
+ And I'll throw the sign on that.
+
+432
+00:37:33,240 --> 00:37:42,940
+ From our parameters-- I'll just write it in a vector form here.
+
+433
+00:37:42,940 --> 00:37:45,820
+ That thing equals tau.
+
+434
+00:37:45,820 --> 00:37:49,340
+ In general, it's a scalar as I've written it here.
+
+435
+00:37:49,340 --> 00:37:53,340
+ But in general, it can be a vector.
+
+436
+00:37:53,340 --> 00:37:54,340
+ Yeah?
+
+437
+00:37:54,340 --> 00:37:55,340
+ Oh, yeah.
+
+438
+00:37:55,340 --> 00:37:56,340
+ Thank you.
+
+439
+00:37:56,340 --> 00:37:57,340
+ ml squared.
+
+440
+00:37:57,340 --> 00:37:58,340
+ Tau is also measured.
+
+441
+00:37:58,340 --> 00:37:59,340
+ Yeah.
+
+442
+00:37:59,340 --> 00:38:12,340
+ So here we have data coming in, which will have, in general, the trajectory of the velocity
+
+443
+00:38:12,340 --> 00:38:16,580
+ of theta and tau.
+
+444
+00:38:16,580 --> 00:38:18,620
+ Yeah.
+
+445
+00:38:18,620 --> 00:38:21,060
+ And we can take its derivatives.
+
+446
+00:38:21,060 --> 00:38:22,660
+ So we're going to have all those come in.
+
+447
+00:38:22,660 --> 00:38:24,500
+ And we can just compute this a priori.
+
+448
+00:38:24,500 --> 00:38:26,500
+ There's no parameters involved.
+
+449
+00:38:26,500 --> 00:38:28,900
+ And this is our parameter vector.
+
+450
+00:38:28,900 --> 00:38:38,340
+ In fact, this is famously known as the lumped parameters.
+
+451
+00:38:38,340 --> 00:38:46,700
+ Now, you might say, well, that's not cool.
+
+452
+00:38:46,700 --> 00:38:47,780
+ I've got a mass here.
+
+453
+00:38:47,780 --> 00:38:48,780
+ I've got a mass here.
+
+454
+00:38:48,780 --> 00:38:49,780
+ It entered twice.
+
+455
+00:38:49,780 --> 00:38:51,580
+ I want to make sure I estimate the mass.
+
+456
+00:38:51,580 --> 00:38:53,180
+ There's some coupling I haven't acknowledged.
+
+457
+00:38:53,180 --> 00:38:55,660
+ And that's true.
+
+458
+00:38:55,660 --> 00:39:01,740
+ But it turns out that these are exactly the parameters you need to know to do prediction.
+
+459
+00:39:01,740 --> 00:39:03,580
+ You can't know more than that.
+
+460
+00:39:03,580 --> 00:39:04,860
+ We'll say that more carefully in a minute.
+
+461
+00:39:04,860 --> 00:39:11,700
+ You can't know more than that without some other priors on those things.
+
+462
+00:39:11,700 --> 00:39:16,060
+ And this is actually, I think, maybe the right way to think about the parameters.
+
+463
+00:39:16,060 --> 00:39:19,660
+ The way we happen to write it in the URDF doesn't line up perfectly with what you can
+
+464
+00:39:19,660 --> 00:39:27,020
+ estimate in the real world.
+
+465
+00:39:27,020 --> 00:39:31,600
+ So that's just a different way to write those equations.
+
+466
+00:39:31,600 --> 00:39:38,580
+ If I write them over the course of an entire experiment where I have lots of samples of
+
+467
+00:39:38,580 --> 00:39:47,900
+ this and this over time, the entire trajectory, then in general, I can write the equations.
+
+468
+00:39:47,900 --> 00:39:55,460
+ I can write my parameter estimation problem in terms of a data matrix, which would be--
+
+469
+00:39:55,460 --> 00:40:12,540
+ let's call this thing w, where I'll write all of my w's.
+
+470
+00:40:12,540 --> 00:40:18,160
+ These are at time equals 0, let's say.
+
+471
+00:40:18,160 --> 00:40:22,300
+ I'll do the same thing at time equals 1.
+
+472
+00:40:22,300 --> 00:40:25,720
+ So data at time equals 1, data dot.
+
+473
+00:40:25,720 --> 00:40:28,040
+ This is just all of my data.
+
+474
+00:40:28,040 --> 00:40:31,380
+ And I'll stack them up into this.
+
+475
+00:40:31,380 --> 00:40:39,940
+ I've got the same parameter vector.
+
+476
+00:40:39,940 --> 00:40:53,260
+ And now I have the torques at t0, t1.
+
+477
+00:40:53,260 --> 00:40:58,100
+ So if you're willing to give me that this is the right-- this is an OK vector to try
+
+478
+00:40:58,100 --> 00:41:00,100
+ to estimate.
+
+479
+00:41:00,100 --> 00:41:06,500
+ And certainly, if I do estimate this, then if you give me a new state of the robot, I
+
+480
+00:41:06,500 --> 00:41:07,900
+ can predict the torques.
+
+481
+00:41:07,900 --> 00:41:13,780
+ And if you can do all the operations I want, if you give me the value of that vector correctly,
+
+482
+00:41:13,780 --> 00:41:18,140
+ you can evaluate the dynamics.
+
+483
+00:41:18,140 --> 00:41:25,380
+ Then you can see from this that solving for the best lumped parameters is actually just
+
+484
+00:41:25,380 --> 00:41:26,700
+ a least squares problem.
+
+485
+00:41:26,700 --> 00:41:31,060
+ So that's a very specific-- even though they're nonlinear equations, we can actually solve
+
+486
+00:41:31,060 --> 00:41:50,020
+ for the lumped parameters with least squares.
+
+487
+00:41:50,020 --> 00:41:56,580
+ So that's a super important idea.
+
+488
+00:41:56,580 --> 00:41:59,380
+ It turns out it's more general than pendulums.
+
+489
+00:41:59,380 --> 00:42:02,940
+ It works for the general multibody equations.
+
+490
+00:42:02,940 --> 00:42:08,740
+ You can take any equations of this form that come out of our multibodies.
+
+491
+00:42:08,740 --> 00:42:13,540
+ When these things are derived from multibody equations, then you can basically-- I think
+
+492
+00:42:13,540 --> 00:42:15,340
+ screw joints might screw this one up too.
+
+493
+00:42:15,340 --> 00:42:18,060
+ Like I said, just don't use screw joints in your robot.
+
+494
+00:42:18,060 --> 00:42:22,580
+ That screws up all of our math.
+
+495
+00:42:22,580 --> 00:42:28,780
+ In general, I can have this big data matrix times my parameter vector is my other side
+
+496
+00:42:28,780 --> 00:42:33,060
+ of my data matrix.
+
+497
+00:42:33,060 --> 00:42:48,860
+ So this is just my right-hand side here, whatever the leftover stuff is.
+
+498
+00:42:48,860 --> 00:42:51,860
+ I can convert this set of equations into this.
+
+499
+00:42:51,860 --> 00:42:57,740
+ And even when they're more complicated, when I've got the double pendulum equations here,
+
+500
+00:42:57,740 --> 00:43:05,060
+ right here, that's the double pendulum equations.
+
+501
+00:43:05,060 --> 00:43:14,540
+ It still turns out that even though m, c, and tau are more complicated, the little c2
+
+502
+00:43:14,540 --> 00:43:19,060
+ is my shorthand for cosine of theta 2.
+
+503
+00:43:19,060 --> 00:43:20,500
+ Sines are s's.
+
+504
+00:43:20,500 --> 00:43:23,100
+ But the point is that they still separate out.
+
+505
+00:43:23,100 --> 00:43:28,820
+ I get a sine of 1 plus 2 is sine of theta 1 plus theta 2.
+
+506
+00:43:28,820 --> 00:43:36,820
+ So you get lots of instances that look like parameters times sine of, let's say, theta
+
+507
+00:43:36,820 --> 00:43:39,660
+ 1 plus theta 2, whatever.
+
+508
+00:43:39,660 --> 00:43:43,620
+ But what we're saying is what you don't get, and what's beautiful, is you never see, for
+
+509
+00:43:43,620 --> 00:43:48,820
+ instance, a sine of m theta 1 or anything like this.
+
+510
+00:43:48,820 --> 00:43:52,620
+ None of my parameters sneak inside my ugly nonlinearities.
+
+511
+00:43:52,620 --> 00:44:00,500
+ So it's more structured than the general grab bag of similarly nonlinear equations.
+
+512
+00:44:00,500 --> 00:44:03,180
+ I don't see a length that ever pops inside there.
+
+513
+00:44:03,180 --> 00:44:08,100
+ It's only all those nonlinearities operate directly on the angles.
+
+514
+00:44:08,100 --> 00:44:13,780
+ And so it's separable.
+
+515
+00:44:13,780 --> 00:44:20,340
+ But wait, there's more.
+
+516
+00:44:20,340 --> 00:44:28,100
+ So the fact that I can solve for the lumped parameters with least squares means I can
+
+517
+00:44:28,100 --> 00:44:29,660
+ do even more.
+
+518
+00:44:29,660 --> 00:44:33,300
+ So it turns out that not all parameters are identifiable.
+
+519
+00:44:33,300 --> 00:44:37,500
+ And this goes to Tom's question about friction and the like.
+
+520
+00:44:37,500 --> 00:44:42,460
+ So there are some parameters that you might have written in your URDF, which get turned
+
+521
+00:44:42,460 --> 00:44:48,300
+ into your multibody equations that you won't be able to estimate.
+
+522
+00:44:48,300 --> 00:44:49,500
+ Let me give you an example.
+
+523
+00:44:49,500 --> 00:44:59,540
+ So if I'm an EWA bolted to a table, I wrote down in my URDF the inertia of that link 0.
+
+524
+00:44:59,540 --> 00:45:05,540
+ No matter how much I move around the EWA, I've got no data that could possibly-- the
+
+525
+00:45:05,540 --> 00:45:08,540
+ inertia of the bottom link has zero effect on my dynamics.
+
+526
+00:45:08,540 --> 00:45:11,540
+ It's been welded to the world.
+
+527
+00:45:11,540 --> 00:45:16,020
+ So I will not be able to estimate that.
+
+528
+00:45:16,020 --> 00:45:19,140
+ And on the flip side, it has nothing to do-- I don't need to estimate it, because it has
+
+529
+00:45:19,140 --> 00:45:21,580
+ nothing to do with my dynamics.
+
+530
+00:45:21,580 --> 00:45:27,100
+ If you go off one link, now there's only a one revolute joint before the first link.
+
+531
+00:45:27,100 --> 00:45:31,420
+ So you can move that thing around, but you're only going to ever estimate the moment of
+
+532
+00:45:31,420 --> 00:45:34,900
+ inertia about the one axis that moves.
+
+533
+00:45:34,900 --> 00:45:41,340
+ There's two other axes of moment of inertia that will not be relevant to your dynamics.
+
+534
+00:45:41,340 --> 00:45:45,060
+ It's just-- it will affect your mass.
+
+535
+00:45:45,060 --> 00:45:51,580
+ But the inertia around those other axes is unidentifiable.
+
+536
+00:45:51,580 --> 00:45:56,580
+ So what's beautiful is because we're in the realm of linear algebra, we can see that.
+
+537
+00:45:56,580 --> 00:46:01,580
+ How does that manifest itself in these kind of equations is that the data matrix will
+
+538
+00:46:01,580 --> 00:46:02,580
+ drop rank.
+
+539
+00:46:02,580 --> 00:46:05,760
+ There will be some parameters here.
+
+540
+00:46:05,760 --> 00:46:13,620
+ If they are not identifiable, then the data matrix will have a zero singular value corresponding
+
+541
+00:46:13,620 --> 00:46:17,340
+ with those parameters.
+
+542
+00:46:17,340 --> 00:46:24,420
+ And in fact, before you even start, you can do basic analysis to extract the identifiable
+
+543
+00:46:24,420 --> 00:46:29,420
+ lumped parameters.
+
+544
+00:46:29,420 --> 00:46:33,420
+ OK?
+
+545
+00:46:33,420 --> 00:46:49,220
+ All right.
+
+546
+00:46:49,220 --> 00:47:08,620
+ I'll just say with linear algebra.
+
+547
+00:47:08,620 --> 00:47:09,620
+ Right?
+
+548
+00:47:09,620 --> 00:47:12,700
+ So the point is we're in the space of linear algebra here.
+
+549
+00:47:12,700 --> 00:47:19,540
+ And all of the concepts of rank and kernel of that matrix and stuff apply.
+
+550
+00:47:19,540 --> 00:47:20,540
+ OK?
+
+551
+00:47:20,540 --> 00:47:27,300
+ And it's a direct operations on the data matrix, which we've separated out.
+
+552
+00:47:27,300 --> 00:47:33,540
+ Again, that's not a bad-- having a low rank data matrix does not mean you're a bad person.
+
+553
+00:47:33,540 --> 00:47:34,540
+ Right?
+
+554
+00:47:34,540 --> 00:47:38,420
+ It just means that there are some parameters that are irrelevant to the dynamics.
+
+555
+00:47:38,420 --> 00:47:43,820
+ So you will not be able to estimate them, but you also don't need to estimate them.
+
+556
+00:47:43,820 --> 00:47:45,340
+ There are some deep implications of that.
+
+557
+00:47:45,340 --> 00:47:46,340
+ Right?
+
+558
+00:47:46,340 --> 00:47:50,220
+ So like I said, if you throw a ball at me, I'm not going to be able to know the mass
+
+559
+00:47:50,220 --> 00:47:51,860
+ of the ball before it gets to me.
+
+560
+00:47:51,860 --> 00:47:52,860
+ Right?
+
+561
+00:47:52,860 --> 00:47:56,540
+ If I've watched a ball fall and then I go to pick it up, I can't, from just passive
+
+562
+00:47:56,540 --> 00:47:59,060
+ observations, know the mass of the ball.
+
+563
+00:47:59,060 --> 00:48:03,260
+ In fact, as a general rule, one of the things you see from the identifiability is you're
+
+564
+00:48:03,260 --> 00:48:08,340
+ going to need force measurements to apply actions in order to estimate any mass kind
+
+565
+00:48:08,340 --> 00:48:09,340
+ of parameters.
+
+566
+00:48:09,340 --> 00:48:10,340
+ Right?
+
+567
+00:48:10,340 --> 00:48:17,540
+ I could watch a video of a walking robot, and I have no concept from just watching a
+
+568
+00:48:17,540 --> 00:48:26,020
+ video whether it's a 40-foot tall, car-crushing, fire-breathing, massive robot or like a little
+
+569
+00:48:26,020 --> 00:48:27,020
+ walking toy.
+
+570
+00:48:27,020 --> 00:48:28,020
+ Right?
+
+571
+00:48:28,020 --> 00:48:31,180
+ Unless there's something else in the background that gives me context and I use common sense.
+
+572
+00:48:31,180 --> 00:48:34,820
+ But from the motions of the robot, the joint angles, I won't be able to tell.
+
+573
+00:48:34,820 --> 00:48:35,820
+ Okay?
+
+574
+00:48:35,820 --> 00:48:40,580
+ So I guess, I mean, robots probably can't learn everything by watching YouTube.
+
+575
+00:48:40,580 --> 00:48:41,580
+ Right?
+
+576
+00:48:41,580 --> 00:48:46,740
+ Some of us want that to be true, but you're not going to learn inertia from watching YouTube.
+
+577
+00:48:46,740 --> 00:48:48,380
+ It's not identifiable.
+
+578
+00:48:48,380 --> 00:48:49,380
+ Okay?
+
+579
+00:48:49,380 --> 00:48:51,380
+ So that's cool.
+
+580
+00:48:51,380 --> 00:48:54,060
+ At some point, robots matter.
+
+581
+00:48:54,060 --> 00:49:00,180
+ You have to have embodiment to learn everything about the world.
+
+582
+00:49:00,180 --> 00:49:06,500
+ In going, riffing on that even just a little bit more, there's a, I mean, in all learning
+
+583
+00:49:06,500 --> 00:49:13,860
+ kind of applications, there's a question of data generation, of exploration, of experiment
+
+584
+00:49:13,860 --> 00:49:14,860
+ design.
+
+585
+00:49:14,860 --> 00:49:15,860
+ Okay?
+
+586
+00:49:15,860 --> 00:49:20,300
+ So, you know, if I'm, the robot we watched in the video just went like this, and that
+
+587
+00:49:20,300 --> 00:49:24,820
+ was enough in that particular case to estimate the parameter it needed to throw the ball.
+
+588
+00:49:24,820 --> 00:49:28,100
+ But in general, just going like that won't be enough to estimate the parameters that
+
+589
+00:49:28,100 --> 00:49:31,860
+ matter for your EWA, if you wanted to estimate all those parameters.
+
+590
+00:49:31,860 --> 00:49:37,580
+ And there's a nice problem of experiment design.
+
+591
+00:49:37,580 --> 00:49:43,460
+ Okay?
+
+592
+00:49:43,460 --> 00:49:50,780
+ So let's say your goal is to design a trajectory for the robot to follow that will excite the
+
+593
+00:49:50,780 --> 00:49:56,820
+ parameters so that the system identification problem goes well.
+
+594
+00:49:56,820 --> 00:49:57,900
+ Right?
+
+595
+00:49:57,900 --> 00:50:03,580
+ Because we're in the land of linear algebra, there's a natural objective for that.
+
+596
+00:50:03,580 --> 00:50:09,380
+ You can just look at the condition number of the data matrix, and you'd like to say,
+
+597
+00:50:09,380 --> 00:50:17,500
+ you know, I want to get as much of the parameters to have data, you know, to be away from singularity
+
+598
+00:50:17,500 --> 00:50:18,500
+ as possible.
+
+599
+00:50:18,500 --> 00:50:19,500
+ You don't expect to get all of them.
+
+600
+00:50:19,500 --> 00:50:20,500
+ Some of them are identifiable.
+
+601
+00:50:20,500 --> 00:50:24,580
+ But the ones that are identifiable, you'd like to move their singular values away from
+
+602
+00:50:24,580 --> 00:50:25,900
+ zero.
+
+603
+00:50:25,900 --> 00:50:27,460
+ Okay?
+
+604
+00:50:27,460 --> 00:50:30,740
+ So there's a natural trajectory optimization formulation.
+
+605
+00:50:30,740 --> 00:50:35,500
+ It's a little bit ugly to implement, but people do it.
+
+606
+00:50:35,500 --> 00:50:39,660
+ This is, you know, is that you design up to your torque limits and maybe don't drive your
+
+607
+00:50:39,660 --> 00:50:40,660
+ motor crazy.
+
+608
+00:50:40,660 --> 00:50:41,660
+ Right?
+
+609
+00:50:41,660 --> 00:50:45,320
+ You put some heuristics on costs on action.
+
+610
+00:50:45,320 --> 00:50:52,580
+ But then you put a cost on the condition number of the data matrix to design informative trajectories
+
+611
+00:50:52,580 --> 00:50:55,420
+ for parameter estimation.
+
+612
+00:50:55,420 --> 00:50:55,920
+ OK.
+
+613
+00:50:55,920 --> 00:50:59,400
+ [WRITING ON BOARD]
+
+614
+00:50:59,400 --> 00:51:28,300
+ [WRITING ON BOARD]
+
+615
+00:51:28,300 --> 00:51:30,460
+ OK, so let's just pause for a second and just think.
+
+616
+00:51:30,460 --> 00:51:32,660
+ I mean, I motivated this conversation by saying,
+
+617
+00:51:32,660 --> 00:51:34,300
+ I think there's going to be cases where
+
+618
+00:51:34,300 --> 00:51:35,700
+ you want to train a neural network
+
+619
+00:51:35,700 --> 00:51:37,860
+ to do a lot of these tasks.
+
+620
+00:51:37,860 --> 00:51:39,780
+ The things you're training the neural network
+
+621
+00:51:39,780 --> 00:51:44,100
+ are multi-body systems in most cases, in this class.
+
+622
+00:51:44,100 --> 00:51:48,900
+ Even if you want the representational power
+
+623
+00:51:48,900 --> 00:51:51,740
+ of the neural net, a lot of these lessons
+
+624
+00:51:51,740 --> 00:51:54,460
+ about what's identifiable, how do you excite the parameters,
+
+625
+00:51:54,460 --> 00:51:56,740
+ what do you expect to estimate, what do you not expect
+
+626
+00:51:56,740 --> 00:52:00,420
+ to estimate, still apply.
+
+627
+00:52:00,420 --> 00:52:04,380
+ In particular, the thing that I said
+
+628
+00:52:04,380 --> 00:52:12,020
+ is linear in the lumped parameters is this equation.
+
+629
+00:52:12,020 --> 00:52:14,900
+ This is not the dynamics of the robot.
+
+630
+00:52:14,900 --> 00:52:16,740
+ This is the inverse dynamics of the robot.
+
+631
+00:52:16,740 --> 00:52:24,380
+ If I were to take mass matrix inverse
+
+632
+00:52:24,380 --> 00:52:27,220
+ to solve for the forward dynamics,
+
+633
+00:52:27,220 --> 00:52:28,180
+ then things get worse.
+
+634
+00:52:28,180 --> 00:52:32,860
+ All my parameters become--
+
+635
+00:52:32,860 --> 00:52:34,360
+ I become rational in my parameters.
+
+636
+00:52:34,360 --> 00:52:36,700
+ I don't get these beautiful polynomials.
+
+637
+00:52:36,700 --> 00:52:38,540
+ I get mixtures of the sines and cosines
+
+638
+00:52:38,540 --> 00:52:41,380
+ in ways that are in the denominator and the like.
+
+639
+00:52:41,380 --> 00:52:43,700
+ Things get worse.
+
+640
+00:52:43,700 --> 00:52:46,480
+ But basically, every machine learning project
+
+641
+00:52:46,480 --> 00:52:51,140
+ that's learning dynamics is learning the forward dynamics.
+
+642
+00:52:51,140 --> 00:52:56,460
+ I mean, I think there's room to explore that more.
+
+643
+00:52:56,460 --> 00:52:59,340
+ And there's a lot more lessons that I'll try to point about
+
+644
+00:52:59,340 --> 00:53:00,020
+ as we hit them.
+
+645
+00:53:00,020 --> 00:53:06,260
+ But this idea of doing nice experiment design
+
+646
+00:53:06,260 --> 00:53:08,640
+ and having a metric that talks about how well you
+
+647
+00:53:08,640 --> 00:53:11,100
+ can identify the parameters, that's a luxury.
+
+648
+00:53:11,100 --> 00:53:13,420
+ We don't have that in the general case.
+
+649
+00:53:13,420 --> 00:53:15,500
+ But it's a beautiful way to have it in this case.
+
+650
+00:53:19,020 --> 00:53:23,220
+ OK, so let me tell you how you'd actually do this.
+
+651
+00:53:23,220 --> 00:53:26,060
+ So in the particular case of the pendulum,
+
+652
+00:53:26,060 --> 00:53:29,860
+ or maybe the double pendulum, the lumped parameters
+
+653
+00:53:29,860 --> 00:53:32,500
+ come in in a way that it's kind of-- I can fit it on a paper.
+
+654
+00:53:32,500 --> 00:53:35,740
+ If I do a little scratching on the paper,
+
+655
+00:53:35,740 --> 00:53:37,620
+ I can extract the lumped parameters.
+
+656
+00:53:37,620 --> 00:53:39,420
+ I could write a program to estimate them.
+
+657
+00:53:39,420 --> 00:53:41,040
+ You don't want to do that for the EULA.
+
+658
+00:53:41,040 --> 00:53:42,660
+ The equations don't fit on a page.
+
+659
+00:53:42,660 --> 00:53:44,060
+ They're big and ugly.
+
+660
+00:53:44,060 --> 00:53:45,480
+ They have a structured form.
+
+661
+00:53:45,480 --> 00:53:48,500
+ So there are actually specific numerical recipes
+
+662
+00:53:48,500 --> 00:53:50,540
+ that will extract the lumped parameters directly.
+
+663
+00:53:50,540 --> 00:53:53,260
+ The same way you'd write a recursive algorithm
+
+664
+00:53:53,260 --> 00:53:54,940
+ to generate the equations of motion,
+
+665
+00:53:54,940 --> 00:53:57,580
+ you can write recursive algorithms
+
+666
+00:53:57,580 --> 00:53:59,540
+ to extract lumped parameters.
+
+667
+00:53:59,540 --> 00:54:01,020
+ They're a little bespoken, actually.
+
+668
+00:54:01,020 --> 00:54:03,940
+ I think not many people have implemented them.
+
+669
+00:54:03,940 --> 00:54:12,380
+ You can get them in Drake using the symbolic toolbox.
+
+670
+00:54:12,380 --> 00:54:13,700
+ I'm actually very proud of this.
+
+671
+00:54:13,700 --> 00:54:19,900
+ Because a lot of people think I'm
+
+672
+00:54:19,900 --> 00:54:24,500
+ crazy for the emphasize symbolic as much as we did.
+
+673
+00:54:24,500 --> 00:54:26,380
+ But here's the reason why it's very powerful.
+
+674
+00:54:26,380 --> 00:54:33,100
+ Well, I'll just show you in code.
+
+675
+00:54:33,100 --> 00:54:39,820
+ I'll make it a lot bigger than that.
+
+676
+00:54:39,820 --> 00:54:40,320
+ OK.
+
+677
+00:54:40,320 --> 00:54:50,940
+ So I'll just do a very simple example here,
+
+678
+00:54:50,940 --> 00:54:53,820
+ which is I'll take the double pendulum.
+
+679
+00:54:53,820 --> 00:54:56,860
+ I'll load it into my multi-body plant.
+
+680
+00:54:56,860 --> 00:55:05,220
+ I'll make some symbolic variables for q, v, and dot v.
+
+681
+00:55:05,220 --> 00:55:07,580
+ And then the parameters that I want to estimate
+
+682
+00:55:07,580 --> 00:55:10,660
+ are going to be the mass and the length in that particular one.
+
+683
+00:55:10,660 --> 00:55:12,240
+ I could have put the damp-- actually,
+
+684
+00:55:12,240 --> 00:55:15,820
+ I put a to do to make the damping in.
+
+685
+00:55:15,820 --> 00:55:21,340
+ And in order to put that into the manipulator equations,
+
+686
+00:55:21,340 --> 00:55:23,780
+ I have to compute the spatial inertia in terms of the mass,
+
+687
+00:55:23,780 --> 00:55:26,740
+ just to relate the mass and length to the operations.
+
+688
+00:55:26,740 --> 00:55:30,220
+ I do a little work with spatial algebra.
+
+689
+00:55:30,220 --> 00:55:32,620
+ And then I just basically ask the symbolic engine
+
+690
+00:55:32,620 --> 00:55:34,580
+ to print the equations of motion.
+
+691
+00:55:34,580 --> 00:55:37,260
+ And it'll give me nice little Latak equations of motion
+
+692
+00:55:37,260 --> 00:55:40,540
+ through the dynamics engine.
+
+693
+00:55:40,540 --> 00:55:44,700
+ So that's-- you guys probably understand
+
+694
+00:55:44,700 --> 00:55:46,820
+ kind of how it's built behind the scenes.
+
+695
+00:55:46,820 --> 00:55:49,660
+ But behind the scenes in Drake, we
+
+696
+00:55:49,660 --> 00:55:53,060
+ build almost all of our systems.
+
+697
+00:55:53,060 --> 00:55:54,820
+ They'll support doubles.
+
+698
+00:55:54,820 --> 00:55:56,460
+ They support autodiff.
+
+699
+00:55:56,460 --> 00:55:58,780
+ And they support symbolic.
+
+700
+00:55:58,780 --> 00:56:01,940
+ And any system that opts into supporting symbolic,
+
+701
+00:56:01,940 --> 00:56:04,380
+ you can just ask it for its symbolic equations.
+
+702
+00:56:04,380 --> 00:56:07,860
+ And it'll generate them like this.
+
+703
+00:56:07,860 --> 00:56:13,980
+ And I can get all of them like that.
+
+704
+00:56:13,980 --> 00:56:15,380
+ So let's do a simple example then.
+
+705
+00:56:15,380 --> 00:56:18,060
+ So the cart pole is a very--
+
+706
+00:56:18,060 --> 00:56:19,900
+ it happens I did it on the cart pole instead
+
+707
+00:56:19,900 --> 00:56:20,860
+ of the double pendulum.
+
+708
+00:56:20,860 --> 00:56:25,700
+ But it's another two-link system.
+
+709
+00:56:25,700 --> 00:56:26,860
+ It's a common one in control.
+
+710
+00:56:26,860 --> 00:56:29,340
+ It's in the AI gym.
+
+711
+00:56:29,340 --> 00:56:31,900
+ Let's just do the lump parameters for the cart pole
+
+712
+00:56:31,900 --> 00:56:33,820
+ and do some basic estimation.
+
+713
+00:56:33,820 --> 00:56:36,700
+ And I'll just show you how the mechanics of that works.
+
+714
+00:56:36,700 --> 00:56:38,860
+ So this, I know the equations look like this.
+
+715
+00:56:38,860 --> 00:56:40,480
+ But I'm not going to use them directly.
+
+716
+00:56:40,480 --> 00:56:45,540
+ I'm going to use the multibody engine to get them.
+
+717
+00:56:45,540 --> 00:56:48,580
+ The first thing I did is just generate a bunch of data.
+
+718
+00:56:48,580 --> 00:56:52,900
+ So I loaded in the multibody plant.
+
+719
+00:56:52,900 --> 00:56:54,340
+ I loaded the cart pole URDF.
+
+720
+00:56:54,340 --> 00:57:00,420
+ I made a trajectory to input.
+
+721
+00:57:00,420 --> 00:57:02,780
+ I didn't do the optimal experiment design on this.
+
+722
+00:57:02,780 --> 00:57:03,900
+ I could have.
+
+723
+00:57:03,900 --> 00:57:09,140
+ But I just did something much simpler, which is I
+
+724
+00:57:09,140 --> 00:57:10,820
+ made a sine wave.
+
+725
+00:57:10,820 --> 00:57:13,220
+ Because the cart pole, there's kind of only one thing
+
+726
+00:57:13,220 --> 00:57:14,980
+ you can do.
+
+727
+00:57:14,980 --> 00:57:17,620
+ You've got only one motor and one passive joint.
+
+728
+00:57:17,620 --> 00:57:20,020
+ So all I did was I just shook the motor back and forth
+
+729
+00:57:20,020 --> 00:57:23,300
+ for a little bit, made sure it was sufficiently exciting,
+
+730
+00:57:23,300 --> 00:57:24,820
+ parametrically exciting.
+
+731
+00:57:24,820 --> 00:57:28,180
+ If I chose that to be too large, things might have gone crazy.
+
+732
+00:57:28,180 --> 00:57:29,660
+ And it wouldn't have [INAUDIBLE]
+
+733
+00:57:29,660 --> 00:57:33,740
+ If it was too small, then it wouldn't excite the [INAUDIBLE]
+
+734
+00:57:33,740 --> 00:57:37,540
+ Well, I have a low condition number.
+
+735
+00:57:37,540 --> 00:57:40,660
+ So I just generate a bunch of data.
+
+736
+00:57:40,660 --> 00:57:43,700
+ And what's important to me is if I plot,
+
+737
+00:57:43,700 --> 00:57:46,820
+ I just rolled it out four times, reset it to zero,
+
+738
+00:57:46,820 --> 00:57:48,820
+ rolled it out four times.
+
+739
+00:57:48,820 --> 00:57:51,220
+ And I got what I considered to be--
+
+740
+00:57:51,220 --> 00:57:53,460
+ so the period of the sine wave was
+
+741
+00:57:53,460 --> 00:57:54,820
+ a function of the rollout.
+
+742
+00:57:54,820 --> 00:57:57,520
+ I did slightly different sine waves on each sweep.
+
+743
+00:57:57,520 --> 00:58:02,140
+ And I was happy to see that x moved more than a little,
+
+744
+00:58:02,140 --> 00:58:05,140
+ but not too much.
+
+745
+00:58:05,140 --> 00:58:08,060
+ Zero to four is like a pretty sweet--
+
+746
+00:58:08,060 --> 00:58:11,380
+ four meters is like a good amount of data.
+
+747
+00:58:11,380 --> 00:58:14,100
+ Data seemed in a reasonable regime.
+
+748
+00:58:14,100 --> 00:58:16,540
+ And in fact, I will check the condition number
+
+749
+00:58:16,540 --> 00:58:18,020
+ and show that it's reasonable.
+
+750
+00:58:18,020 --> 00:58:24,140
+ Now I'll estimate the lumped parameters.
+
+751
+00:58:24,140 --> 00:58:28,100
+ And I'll do the symbolic thing to get the lumped parameters.
+
+752
+00:58:28,100 --> 00:58:29,840
+ And then I'll fit them with least squares.
+
+753
+00:58:29,840 --> 00:58:32,460
+ So I'm going to pretend I didn't know
+
+754
+00:58:32,460 --> 00:58:34,060
+ about that multi-body plant, come up
+
+755
+00:58:34,060 --> 00:58:36,980
+ with a new multi-body plant, load it again,
+
+756
+00:58:36,980 --> 00:58:39,900
+ make the symbolic version of that,
+
+757
+00:58:39,900 --> 00:58:41,620
+ make my decision variables.
+
+758
+00:58:41,620 --> 00:58:42,940
+ Those are my data variables.
+
+759
+00:58:42,940 --> 00:58:44,780
+ And then my parameters that I'm going to fit
+
+760
+00:58:44,780 --> 00:58:47,220
+ is the mass of the cart, the mass of the pole,
+
+761
+00:58:47,220 --> 00:58:49,060
+ the length of the pole, just because I can,
+
+762
+00:58:49,060 --> 00:58:50,980
+ even though I should have just gotten a ruler.
+
+763
+00:58:51,500 --> 00:58:52,000
+ OK?
+
+764
+00:58:52,000 --> 00:58:57,780
+ And then I'm going to fix the import to be the data
+
+765
+00:58:57,780 --> 00:59:00,460
+ and evaluate the dynamics.
+
+766
+00:59:00,460 --> 00:59:04,500
+ And I basically generate my big data matrix, which I'll
+
+767
+00:59:04,500 --> 00:59:06,740
+ show you how it comes in here.
+
+768
+00:59:06,740 --> 00:59:09,300
+ I just get a big matrix.
+
+769
+00:59:09,300 --> 00:59:14,140
+ I call it W0 instead of y here.
+
+770
+00:59:14,140 --> 00:59:19,020
+ And then I just call NP lineal least squares
+
+771
+00:59:19,020 --> 00:59:22,940
+ to extract the lumped parameters.
+
+772
+00:59:22,940 --> 00:59:25,860
+ And then I have my fit parameters, alpha.
+
+773
+00:59:25,860 --> 00:59:27,460
+ I call the vector alpha.
+
+774
+00:59:27,460 --> 00:59:31,380
+ I have my true known parameters, alpha, which came from the URDF.
+
+775
+00:59:31,380 --> 00:59:34,180
+ And the question is, how well do I do?
+
+776
+00:59:34,180 --> 00:59:40,020
+ And I actually don't know why it's random.
+
+777
+00:59:40,020 --> 00:59:42,340
+ Why is it random?
+
+778
+00:59:42,340 --> 00:59:45,300
+ I've noted that it's random.
+
+779
+00:59:45,300 --> 00:59:47,460
+ I don't remember why.
+
+780
+00:59:47,460 --> 00:59:47,980
+ OK.
+
+781
+00:59:47,980 --> 00:59:54,860
+ But I get my symbolic acceleration residuals
+
+782
+00:59:54,860 --> 00:59:56,940
+ are this, but my lumped parameters-- so the URDF
+
+783
+00:59:56,940 --> 01:00:01,420
+ says the lumped parameters, the joint mass of the cart pole,
+
+784
+01:00:01,420 --> 01:00:02,580
+ should be 11.
+
+785
+01:00:02,580 --> 01:00:03,900
+ I got 10.91.
+
+786
+01:00:03,900 --> 01:00:06,900
+ If I did a little more data, I'd get better.
+
+787
+01:00:06,900 --> 01:00:08,900
+ My mass times length is 0.5.
+
+788
+01:00:08,900 --> 01:00:10,540
+ I get 0.56.
+
+789
+01:00:10,540 --> 01:00:13,180
+ And this is a case where more data does make it better.
+
+790
+01:00:13,180 --> 01:00:15,260
+ Yeah, that's just me being a little lazy,
+
+791
+01:00:15,260 --> 01:00:18,380
+ not letting it run for very long.
+
+792
+01:00:18,380 --> 01:00:19,700
+ OK.
+
+793
+01:00:19,700 --> 01:00:20,820
+ So that's really powerful.
+
+794
+01:00:20,820 --> 01:00:24,180
+ I think people should know about that tool chain.
+
+795
+01:00:24,180 --> 01:00:28,700
+ If you want to estimate the parameters of an object,
+
+796
+01:00:28,700 --> 01:00:30,380
+ and you assume that the object is well--
+
+797
+01:00:30,380 --> 01:00:33,140
+ you need some model of how it's connected to the hand,
+
+798
+01:00:33,140 --> 01:00:36,340
+ and some measurement of how it's connected to the hand.
+
+799
+01:00:36,340 --> 01:00:39,380
+ If you said it was connected to the hand in a pin joint,
+
+800
+01:00:39,380 --> 01:00:41,620
+ then you would need the angle theta of that pin joint
+
+801
+01:00:41,620 --> 01:00:43,300
+ to feed into this algorithm.
+
+802
+01:00:43,300 --> 01:00:45,980
+ The standard thing is to make a grasp on the object
+
+803
+01:00:45,980 --> 01:00:48,260
+ and assume it's welded to the hand.
+
+804
+01:00:48,260 --> 01:00:53,260
+ Then you estimate the inertia of the hand as well as the object.
+
+805
+01:00:53,260 --> 01:00:55,860
+ And you can do that with just the joint torque sensors.
+
+806
+01:00:55,860 --> 01:00:59,300
+ You can do it better if you have a force sensor in the wrist.
+
+807
+01:00:59,300 --> 01:01:00,380
+ OK.
+
+808
+01:01:00,380 --> 01:01:03,540
+ You run-- the nice thing is that-- so symbolic computations
+
+809
+01:01:03,540 --> 01:01:06,260
+ get expensive as you do lots of symbols
+
+810
+01:01:06,260 --> 01:01:07,940
+ through lots of nonlinear equations.
+
+811
+01:01:07,940 --> 01:01:09,860
+ But you only have to do the symbols that you're
+
+812
+01:01:09,860 --> 01:01:10,740
+ trying to estimate.
+
+813
+01:01:10,740 --> 01:01:13,980
+ And the rest it treats as doubles.
+
+814
+01:01:13,980 --> 01:01:17,500
+ So you just make the parameters of the system
+
+815
+01:01:17,500 --> 01:01:21,060
+ symbolic in the unknown parameters of the inertia.
+
+816
+01:01:21,060 --> 01:01:22,700
+ You run your experiments.
+
+817
+01:01:22,700 --> 01:01:23,780
+ You back it out.
+
+818
+01:01:23,780 --> 01:01:25,860
+ And you have an estimate of the inertia.
+
+819
+01:01:25,860 --> 01:01:28,900
+ You can actually do a more special case, more dialed in,
+
+820
+01:01:28,900 --> 01:01:31,260
+ if it's exactly just one inertia you want at the end.
+
+821
+01:01:31,260 --> 01:01:33,780
+ In fact, there's an even more specialized version of that.
+
+822
+01:01:33,780 --> 01:01:35,900
+ But the recipe is this.
+
+823
+01:01:35,900 --> 01:01:37,580
+ It's just a special case of that.
+
+824
+01:01:37,580 --> 01:01:38,080
+ Thanks.
+
+825
+01:01:38,080 --> 01:01:42,020
+ Any questions on that?
+
+826
+01:01:42,020 --> 01:01:43,020
+ Yeah.
+
+827
+01:01:43,020 --> 01:01:46,500
+ [INAUDIBLE]
+
+828
+01:02:04,740 --> 01:02:08,100
+ So it's a great question.
+
+829
+01:02:08,100 --> 01:02:09,180
+ And let me repeat it.
+
+830
+01:02:09,180 --> 01:02:11,300
+ So the question is, what about-- so I
+
+831
+01:02:11,300 --> 01:02:14,900
+ talked about cases where there are unidentifiable parameters.
+
+832
+01:02:14,900 --> 01:02:17,580
+ What happens in the case where there are--
+
+833
+01:02:17,580 --> 01:02:19,220
+ I think the case you're talking about
+
+834
+01:02:19,220 --> 01:02:24,500
+ is really the case where there's not enough data to excite the--
+
+835
+01:02:24,500 --> 01:02:27,300
+ the opposite version of having losing rank
+
+836
+01:02:27,300 --> 01:02:29,940
+ would be if you don't have enough data in your matrix
+
+837
+01:02:29,940 --> 01:02:32,900
+ to identify all those parameters.
+
+838
+01:02:32,900 --> 01:02:35,700
+ You could similarly-- in that case,
+
+839
+01:02:35,700 --> 01:02:38,940
+ you would expect to get more data and be able to bring
+
+840
+01:02:38,940 --> 01:02:40,620
+ the rank up and identify.
+
+841
+01:02:40,620 --> 01:02:42,700
+ You said, OK, the other extreme you're talking about
+
+842
+01:02:42,700 --> 01:02:45,020
+ is if there's--
+
+843
+01:02:45,020 --> 01:02:47,940
+ if you're over-constrained, you would
+
+844
+01:02:47,940 --> 01:02:52,580
+ expect that if your lumped parameters came
+
+845
+01:02:52,580 --> 01:02:54,060
+ from the equations of motion, then
+
+846
+01:02:54,060 --> 01:02:57,300
+ there is a solution that satisfies all of those.
+
+847
+01:02:57,300 --> 01:03:01,620
+ So having insufficient data, insufficient rank is one thing.
+
+848
+01:03:01,620 --> 01:03:04,620
+ But you wouldn't expect to be in an over-constrained situation
+
+849
+01:03:04,620 --> 01:03:06,740
+ if those lumped parameters came out
+
+850
+01:03:06,740 --> 01:03:10,380
+ of the equations of motion.
+
+851
+01:03:10,380 --> 01:03:12,940
+ I think that would be the natural other side
+
+852
+01:03:12,940 --> 01:03:14,580
+ of the linear--
+
+853
+01:03:14,580 --> 01:03:15,940
+ of the over-constrained equations
+
+854
+01:03:15,940 --> 01:03:17,500
+ instead of under-constrained.
+
+855
+01:03:17,500 --> 01:03:20,580
+ Was that your question?
+
+856
+01:03:20,580 --> 01:03:21,540
+ I think so.
+
+857
+01:03:21,540 --> 01:03:23,940
+ It's kind of like--
+
+858
+01:03:23,940 --> 01:03:26,420
+ let's say I was swinging an object around,
+
+859
+01:03:26,420 --> 01:03:28,940
+ but the object had a huge object.
+
+860
+01:03:28,940 --> 01:03:29,440
+ Yes.
+
+861
+01:03:29,440 --> 01:03:30,900
+ And so it was affecting--
+
+862
+01:03:30,900 --> 01:03:31,400
+ I see.
+
+863
+01:03:31,400 --> 01:03:34,300
+ And I didn't tell my equations about that.
+
+864
+01:03:34,300 --> 01:03:36,740
+ What would it do?
+
+865
+01:03:36,740 --> 01:03:37,940
+ So it would find--
+
+866
+01:03:37,940 --> 01:03:41,500
+ so the question is, if I didn't declare in my equation
+
+867
+01:03:41,500 --> 01:03:43,620
+ the fact that the object is sliding in my hand,
+
+868
+01:03:43,620 --> 01:03:44,900
+ what would it do?
+
+869
+01:03:44,900 --> 01:03:47,960
+ It's going to find the least squares approximation given
+
+870
+01:03:47,960 --> 01:03:50,260
+ the data for the rigid--
+
+871
+01:03:50,260 --> 01:03:51,860
+ I mean, for whatever model you fit.
+
+872
+01:03:51,860 --> 01:03:54,900
+ So if you said it's rigid and you have accelerations that
+
+873
+01:03:54,900 --> 01:03:56,420
+ are inconsistent with that, it will
+
+874
+01:03:56,420 --> 01:03:59,220
+ try to find the best explanation given the model you fit.
+
+875
+01:03:59,220 --> 01:04:01,020
+ That's one of the beautiful things about the least squares
+
+876
+01:04:01,020 --> 01:04:02,400
+ is that you actually expect to get
+
+877
+01:04:02,400 --> 01:04:04,620
+ the best model in the class.
+
+878
+01:04:04,620 --> 01:04:07,220
+ But it can't guarantee if your model class is wrong,
+
+879
+01:04:07,220 --> 01:04:09,980
+ it won't, of course, overcome that.
+
+880
+01:04:09,980 --> 01:04:10,480
+ Yeah.
+
+881
+01:04:10,480 --> 01:04:12,900
+ So I think it will do it relatively--
+
+882
+01:04:12,900 --> 01:04:16,460
+ it doesn't die catastrophically in that sense.
+
+883
+01:04:16,460 --> 01:04:19,420
+ It should try to find the best in class.
+
+884
+01:04:19,420 --> 01:04:20,620
+ Other questions like that?
+
+885
+01:04:20,620 --> 01:04:24,280
+ Yeah.
+
+886
+01:04:24,280 --> 01:04:27,980
+ I guess on the other hand, I was going to ask about
+
+887
+01:04:27,980 --> 01:04:31,460
+ if you didn't know whether multiple degrees of freedom
+
+888
+01:04:31,460 --> 01:04:32,940
+ objects were [INAUDIBLE]
+
+889
+01:04:32,940 --> 01:04:33,940
+ Yes.
+
+890
+01:04:33,940 --> 01:04:45,420
+ Then, like, if you [INAUDIBLE]
+
+891
+01:04:45,420 --> 01:04:46,140
+ Yes, good.
+
+892
+01:04:46,140 --> 01:04:50,340
+ So right, if you--
+
+893
+01:04:50,340 --> 01:04:54,340
+ there's a question of sort of estimating
+
+894
+01:04:54,340 --> 01:04:56,300
+ the numbers of degrees of freedom in the object
+
+895
+01:04:56,300 --> 01:04:59,020
+ that you're trying to manipulate.
+
+896
+01:04:59,020 --> 01:05:01,620
+ And that is an extra interesting question, where you're actually
+
+897
+01:05:01,620 --> 01:05:03,820
+ trying to do--
+
+898
+01:05:03,820 --> 01:05:06,220
+ well, so there's ways that you could do that through this
+
+899
+01:05:06,220 --> 01:05:06,820
+ lens.
+
+900
+01:05:06,820 --> 01:05:08,460
+ You could try to fit the one-dimensional version,
+
+901
+01:05:08,460 --> 01:05:10,920
+ the two-dimensional version, the three-dimensional version,
+
+902
+01:05:10,920 --> 01:05:13,300
+ and expect to find some amount of--
+
+903
+01:05:13,300 --> 01:05:17,020
+ any more degrees of freedom will only explain it better.
+
+904
+01:05:17,020 --> 01:05:18,460
+ But you would expect--
+
+905
+01:05:18,460 --> 01:05:20,820
+ same with, like, proper orthogonal decomposition,
+
+906
+01:05:20,820 --> 01:05:22,180
+ or PCA, or anything like this.
+
+907
+01:05:22,180 --> 01:05:24,300
+ You'd probably expect the fit to level off
+
+908
+01:05:24,300 --> 01:05:26,580
+ when you found the appropriate degrees of freedom.
+
+909
+01:05:26,580 --> 01:05:27,080
+ [INAUDIBLE]
+
+910
+01:05:27,080 --> 01:05:34,220
+ That's right.
+
+911
+01:05:34,220 --> 01:05:34,720
+ [INAUDIBLE]
+
+912
+01:05:34,720 --> 01:05:37,820
+ Good.
+
+913
+01:05:37,820 --> 01:05:38,620
+ Yeah, good point.
+
+914
+01:05:38,620 --> 01:05:42,300
+ So in that case, we have assumed that you have the cues.
+
+915
+01:05:42,300 --> 01:05:42,980
+ You could do it--
+
+916
+01:05:42,980 --> 01:05:46,580
+ no, you're right.
+
+917
+01:05:46,580 --> 01:05:47,020
+ You're right.
+
+918
+01:05:47,020 --> 01:05:48,380
+ That would be the sticking point,
+
+919
+01:05:48,380 --> 01:05:50,100
+ is we wouldn't have cues in that setting.
+
+920
+01:05:50,100 --> 01:05:52,420
+ Mm-hmm.
+
+921
+01:05:52,420 --> 01:05:56,020
+ Yeah, people do a lot of work on topology estimation
+
+922
+01:05:56,020 --> 01:05:57,220
+ and the like first.
+
+923
+01:05:57,220 --> 01:05:59,540
+ And it's typically a pre-processing step,
+
+924
+01:05:59,540 --> 01:06:03,500
+ a separate optimization.
+
+925
+01:06:03,500 --> 01:06:04,300
+ Nice.
+
+926
+01:06:04,300 --> 01:06:09,420
+ OK, so there's a lot of other hidden lessons here.
+
+927
+01:06:09,420 --> 01:06:15,180
+ I mean, so there is actually one thing that--
+
+928
+01:06:15,180 --> 01:06:17,260
+ when I was talking about the over-parameterization,
+
+929
+01:06:17,260 --> 01:06:18,500
+ it kind of came to mind.
+
+930
+01:06:18,500 --> 01:06:20,580
+ It is possible that, in some sense,
+
+931
+01:06:20,580 --> 01:06:26,740
+ we have over-parameterized our URDF.
+
+932
+01:06:26,740 --> 01:06:28,540
+ When I said that, I kind of caught myself.
+
+933
+01:06:28,540 --> 01:06:29,920
+ So there is one sense in which we
+
+934
+01:06:29,920 --> 01:06:31,820
+ are over-parameterizing our URDF, which
+
+935
+01:06:31,820 --> 01:06:36,620
+ is that if we specify the mass and the center of mass
+
+936
+01:06:36,620 --> 01:06:44,820
+ and the six numbers of the inertia matrix all separately,
+
+937
+01:06:44,820 --> 01:06:46,260
+ then you've actually over-specified
+
+938
+01:06:46,260 --> 01:06:48,740
+ the number of free parameters.
+
+939
+01:06:48,740 --> 01:06:51,380
+ And it is important, if you want to get a dynamically
+
+940
+01:06:51,380 --> 01:06:53,860
+ consistent inertial matrix out, that you actually
+
+941
+01:06:53,860 --> 01:06:55,620
+ have to put in a few additional--
+
+942
+01:06:55,620 --> 01:06:57,660
+ they can be written as convex constraints.
+
+943
+01:06:57,660 --> 01:06:59,240
+ A pretty tight approximation of what
+
+944
+01:06:59,240 --> 01:07:00,780
+ it means to be a valid inertial matrix
+
+945
+01:07:00,780 --> 01:07:03,580
+ can be written as a convex constraint.
+
+946
+01:07:03,580 --> 01:07:05,580
+ But that was-- just as I said that, I was like,
+
+947
+01:07:05,580 --> 01:07:07,660
+ I should be a little more careful.
+
+948
+01:07:07,660 --> 01:07:11,100
+ So yeah, our URDFs are not a minimal representation
+
+949
+01:07:11,100 --> 01:07:13,300
+ of the parameters.
+
+950
+01:07:13,300 --> 01:07:15,840
+ And in fact, it's kind of the one case
+
+951
+01:07:15,840 --> 01:07:18,300
+ where you might want to go back and back out mass
+
+952
+01:07:18,300 --> 01:07:20,540
+ separate from length, separate from whatever.
+
+953
+01:07:20,540 --> 01:07:23,460
+ Is if you want to write your results back into your URDF
+
+954
+01:07:23,460 --> 01:07:27,260
+ to share with your friends, then you
+
+955
+01:07:27,260 --> 01:07:29,700
+ would have to solve that last piece of the problem.
+
+956
+01:07:29,700 --> 01:07:31,940
+ But it shouldn't matter which one you pick
+
+957
+01:07:31,940 --> 01:07:33,940
+ in terms of the simulation.
+
+958
+01:07:33,940 --> 01:07:38,220
+ If you had an initial guess, you could solve a nonlinear problem
+
+959
+01:07:38,220 --> 01:07:41,220
+ saying, give me the closest to the initial guess
+
+960
+01:07:41,220 --> 01:07:44,500
+ in some of these squares sense that satisfies exactly
+
+961
+01:07:44,500 --> 01:07:47,180
+ the lumped parameter values.
+
+962
+01:07:47,180 --> 01:07:49,140
+ That would be a standard thing to do.
+
+963
+01:07:49,140 --> 01:07:52,220
+ I looked for a while at whether you could do that convexly,
+
+964
+01:07:52,220 --> 01:07:54,300
+ and I don't think you can.
+
+965
+01:07:54,300 --> 01:07:58,140
+ Only in very simple cases you can.
+
+966
+01:07:58,140 --> 01:08:02,340
+ OK, so just to finish the story for the throwing,
+
+967
+01:08:02,340 --> 01:08:07,020
+ it turns out that because this is least squares,
+
+968
+01:08:07,020 --> 01:08:09,420
+ it's beautiful, it's good, you can actually
+
+969
+01:08:09,420 --> 01:08:14,060
+ do it with recursive least squares online as you operate.
+
+970
+01:08:14,060 --> 01:08:18,780
+ And that's what's happening in the slow team throwing example,
+
+971
+01:08:18,780 --> 01:08:22,060
+ is that he's actually estimating the parameters of the ball
+
+972
+01:08:22,060 --> 01:08:24,220
+ as the robot's operating.
+
+973
+01:08:24,220 --> 01:08:26,820
+ And then there's a desired trajectory,
+
+974
+01:08:26,820 --> 01:08:29,340
+ but the execution of that desired trajectory
+
+975
+01:08:29,340 --> 01:08:32,660
+ is using a computed torque inverse dynamics
+
+976
+01:08:32,660 --> 01:08:35,940
+ controller that has the adaptive parameters in.
+
+977
+01:08:35,940 --> 01:08:38,740
+ So it's actually refining its execution of the trajectory
+
+978
+01:08:38,740 --> 01:08:39,860
+ as it throws.
+
+979
+01:08:39,860 --> 01:08:42,420
+ So it really does estimate the mass of the ball
+
+980
+01:08:42,420 --> 01:08:45,860
+ and then throw it better because of that estimate.
+
+981
+01:08:45,860 --> 01:08:46,860
+ Awesome.
+
+982
+01:08:46,860 --> 01:08:47,360
+ Right?
+
+983
+01:08:47,360 --> 01:08:53,260
+ And you remember in the inverse dynamic setting,
+
+984
+01:08:53,260 --> 01:08:56,420
+ we talked about error could go to 0
+
+985
+01:08:56,420 --> 01:08:58,260
+ if you put the feedforward term in.
+
+986
+01:08:58,260 --> 01:08:59,940
+ There are the classic--
+
+987
+01:08:59,940 --> 01:09:02,220
+ the famous result by Jean-Jacques,
+
+988
+01:09:02,220 --> 01:09:04,420
+ his little team, is that you can still
+
+989
+01:09:04,420 --> 01:09:06,660
+ get that in the parameter estimation regime.
+
+990
+01:09:06,660 --> 01:09:09,700
+ You can still get your tracking error to go to 0,
+
+991
+01:09:09,700 --> 01:09:12,940
+ even if you have to estimate online some of your parameters
+
+992
+01:09:12,940 --> 01:09:15,380
+ because of this least squares result.
+
+993
+01:09:15,380 --> 01:09:20,420
+ That's a very strong result.
+
+994
+01:09:20,420 --> 01:09:22,460
+ It does require your system to be fully actuated.
+
+995
+01:09:22,460 --> 01:09:24,260
+ It requires that you have a controller that
+
+996
+01:09:24,260 --> 01:09:28,660
+ can accomplish the task stably without any parameter
+
+997
+01:09:28,660 --> 01:09:29,900
+ knowledge.
+
+998
+01:09:29,900 --> 01:09:32,180
+ And basically, it just gets better and better
+
+999
+01:09:32,180 --> 01:09:34,140
+ as the parameters dial in.
+
+1000
+01:09:34,140 --> 01:09:35,620
+ But it's a famous classic result.
+
+1001
+01:09:36,380 --> 01:09:37,340
+ [INAUDIBLE]
+
+1002
+01:09:37,340 --> 01:09:49,180
+ The controller is a closed form function of the parameters.
+
+1003
+01:09:49,180 --> 01:09:52,380
+ The parameters evolve along with the state of the robot.
+
+1004
+01:09:52,380 --> 01:09:54,740
+ This is an adaptive controller architecture.
+
+1005
+01:09:54,740 --> 01:09:59,220
+ So you think of it of having my dynamics for q,
+
+1006
+01:09:59,220 --> 01:10:01,860
+ but you also have your dynamics for your parameters,
+
+1007
+01:10:01,860 --> 01:10:04,620
+ which are the recursive least squares estimator, typically.
+
+1008
+01:10:04,620 --> 01:10:06,700
+ There's a couple other more clever ways to do it,
+
+1009
+01:10:06,700 --> 01:10:10,340
+ where you can estimate a subset of the parameters in order.
+
+1010
+01:10:10,340 --> 01:10:11,940
+ But the simplest way to think about it
+
+1011
+01:10:11,940 --> 01:10:14,180
+ is a recursive least squares update
+
+1012
+01:10:14,180 --> 01:10:15,660
+ to the parameters and a controller
+
+1013
+01:10:15,660 --> 01:10:19,540
+ that's using those parameters to execute the trajectory.
+
+1014
+01:10:19,540 --> 01:10:28,260
+ In that line of work-- sorry, I'm just--
+
+1015
+01:10:28,260 --> 01:10:30,060
+ you guys got me talking, which is great.
+
+1016
+01:10:30,060 --> 01:10:31,520
+ But in that line of work, they also
+
+1017
+01:10:31,520 --> 01:10:33,060
+ did some residual models.
+
+1018
+01:10:33,060 --> 01:10:35,260
+ The residual models back in the day
+
+1019
+01:10:35,260 --> 01:10:40,660
+ were radial basis functions or--
+
+1020
+01:10:40,660 --> 01:10:42,740
+ radial basis functions, they did a couple other--
+
+1021
+01:10:42,740 --> 01:10:45,920
+ they did a lot of wavelets, actually, back in the day.
+
+1022
+01:10:45,920 --> 01:10:48,000
+ I'm sure there was a neural network version of it,
+
+1023
+01:10:48,000 --> 01:10:50,460
+ but not a deep neural network version of it.
+
+1024
+01:10:50,460 --> 01:10:51,340
+ And they worked incredibly well.
+
+1025
+01:10:51,340 --> 01:10:52,920
+ And that's how they fit the airplane,
+
+1026
+01:10:52,920 --> 01:10:57,540
+ I believe, was with the radial basis function network.
+
+1027
+01:10:57,540 --> 01:11:00,900
+ So I think residual models can be added on top of this.
+
+1028
+01:11:00,900 --> 01:11:05,620
+ And actually, a radial basis network with fixed means
+
+1029
+01:11:05,620 --> 01:11:07,540
+ would still be linear in the parameters.
+
+1030
+01:11:07,540 --> 01:11:12,020
+ So it fits beautifully in this kind of framework.
+
+1031
+01:11:12,020 --> 01:11:14,500
+ If you compare that to the tossing bot,
+
+1032
+01:11:14,500 --> 01:11:17,580
+ tossing bot is solving a harder version of the problem,
+
+1033
+01:11:17,580 --> 01:11:22,140
+ because it is worrying about unknown center masses
+
+1034
+01:11:22,140 --> 01:11:27,300
+ and rotations that are more complicated than what
+
+1035
+01:11:27,300 --> 01:11:27,980
+ John Jock did.
+
+1036
+01:11:27,980 --> 01:11:30,820
+ It's potentially talking about aerodynamics.
+
+1037
+01:11:30,820 --> 01:11:32,300
+ The paper talks about aerodynamics.
+
+1038
+01:11:32,300 --> 01:11:33,860
+ There was at least one ping pong ball
+
+1039
+01:11:33,860 --> 01:11:36,820
+ that might have been subject to aerodynamics, right?
+
+1040
+01:11:36,820 --> 01:11:40,780
+ So it is solving a harder version of the problem.
+
+1041
+01:11:40,780 --> 01:11:42,300
+ If I had one wish for that paper,
+
+1042
+01:11:42,300 --> 01:11:43,220
+ it would be that it would compare it
+
+1043
+01:11:43,220 --> 01:11:45,260
+ against the fully adaptive controller,
+
+1044
+01:11:45,260 --> 01:11:47,620
+ because there was an intermediate result that
+
+1045
+01:11:47,620 --> 01:11:50,220
+ would have been really nice to say, how much does
+
+1046
+01:11:50,220 --> 01:11:54,160
+ the neural network residual learn over the parameter
+
+1047
+01:11:54,160 --> 01:11:55,540
+ adaptive controller?
+
+1048
+01:12:00,340 --> 01:12:00,840
+ OK.
+
+1049
+01:12:00,840 --> 01:12:09,700
+ One last maybe nugget on that.
+
+1050
+01:12:09,700 --> 01:12:13,380
+ So let me just write it on the board
+
+1051
+01:12:13,380 --> 01:12:15,220
+ since I said it in that conversation.
+
+1052
+01:12:15,220 --> 01:12:27,460
+ But an interesting lesson is all the nice properties
+
+1053
+01:12:27,460 --> 01:12:28,740
+ are for the inverse dynamics.
+
+1054
+01:12:29,740 --> 01:12:37,460
+ The forward dynamics is less pretty.
+
+1055
+01:12:37,460 --> 01:12:42,140
+ And there's one other--
+
+1056
+01:12:42,140 --> 01:12:44,380
+ I think the algorithms that people tend to implement
+
+1057
+01:12:44,380 --> 01:12:46,340
+ are not quite what I said.
+
+1058
+01:12:46,340 --> 01:12:48,060
+ There's another nice insight, which
+
+1059
+01:12:48,060 --> 01:12:57,100
+ is that we talk about how q, v, v dot are the data that I
+
+1060
+01:12:57,100 --> 01:12:58,020
+ talked about.
+
+1061
+01:12:58,020 --> 01:13:07,580
+ We've said so far that these two are relatively clean data.
+
+1062
+01:13:07,580 --> 01:13:10,300
+ I've said it's OK to use those in your controller,
+
+1063
+01:13:10,300 --> 01:13:13,420
+ but be a little careful sending your raw acceleration
+
+1064
+01:13:13,420 --> 01:13:15,540
+ measurements back into the controller.
+
+1065
+01:13:15,540 --> 01:13:18,500
+ This is a little more noisy.
+
+1066
+01:13:18,500 --> 01:13:26,780
+ Maybe be more careful.
+
+1067
+01:13:26,780 --> 01:13:32,340
+ There's a version of the same sort of parameter estimation
+
+1068
+01:13:32,340 --> 01:13:35,940
+ story where you can reduce the sensitivity
+
+1069
+01:13:35,940 --> 01:13:39,260
+ on the accelerations by writing basically
+
+1070
+01:13:39,260 --> 01:13:44,340
+ the error in terms of power instead of in terms of torque.
+
+1071
+01:13:44,340 --> 01:13:48,020
+ And that allows you to average out over some time some
+
+1072
+01:13:48,020 --> 01:13:50,100
+ of the noise and the acceleration.
+
+1073
+01:13:50,100 --> 01:13:55,620
+ So there are power formulations or even energy formulations.
+
+1074
+01:13:55,620 --> 01:13:59,060
+ [WRITING ON BOARD]
+
+1075
+01:13:59,060 --> 01:14:20,740
+ Can decrease sensitivity to v dot.
+
+1076
+01:14:21,660 --> 01:14:25,100
+ [WRITING ON BOARD]
+
+1077
+01:14:25,100 --> 01:14:29,860
+ Pretty good.
+
+1078
+01:14:29,860 --> 01:14:32,300
+ I think that stuff's very, very powerful.
+
+1079
+01:14:32,300 --> 01:14:34,460
+ Maybe underappreciated.
+
+1080
+01:14:34,460 --> 01:14:42,020
+ I won't do all of linear control in five minutes, linear system
+
+1081
+01:14:42,020 --> 01:14:44,420
+ ID in five minutes, but maybe there's at least one thing
+
+1082
+01:14:44,420 --> 01:14:45,260
+ that--
+
+1083
+01:14:45,260 --> 01:14:47,340
+ one lesson, I would say, from linear system
+
+1084
+01:14:47,340 --> 01:14:49,500
+ ID that is immediately applicable to this.
+
+1085
+01:14:49,500 --> 01:14:51,140
+ And so I'll just say that one idea,
+
+1086
+01:14:51,140 --> 01:14:52,780
+ and we'll wrap up for today.
+
+1087
+01:14:52,780 --> 01:15:01,100
+ There's loads of insights, different insights,
+
+1088
+01:15:01,100 --> 01:15:05,420
+ from linear system identification.
+
+1089
+01:15:05,420 --> 01:15:06,660
+ But one of them is this.
+
+1090
+01:15:06,660 --> 01:15:15,620
+ Different people have different names for it,
+
+1091
+01:15:15,620 --> 01:15:19,300
+ but there's a distinction between equation error
+
+1092
+01:15:19,300 --> 01:15:20,660
+ versus simulation error.
+
+1093
+01:15:20,660 --> 01:15:35,740
+ So if I have my system identification problem,
+
+1094
+01:15:35,740 --> 01:15:37,860
+ there's maybe even-- let's just pretend
+
+1095
+01:15:37,860 --> 01:15:43,140
+ I have state observations, just to keep it simple.
+
+1096
+01:15:43,140 --> 01:15:45,540
+ There's sort of two ways to write
+
+1097
+01:15:45,540 --> 01:15:49,060
+ the objective of system identification, two common ways.
+
+1098
+01:15:49,060 --> 01:15:59,260
+ One of them is the equation error is the one-step version,
+
+1099
+01:15:59,260 --> 01:16:11,300
+ which is I'm going to minimize over my parameters alpha
+
+1100
+01:16:11,300 --> 01:16:15,500
+ the dynamics of alpha of the one-step dynamics.
+
+1101
+01:16:15,500 --> 01:16:30,420
+ Let me get my notation careful here.
+
+1102
+01:16:30,420 --> 01:16:39,300
+ So I'll use a lowercase like this.
+
+1103
+01:16:45,460 --> 01:16:46,340
+ So this would be--
+
+1104
+01:16:46,340 --> 01:16:49,780
+ I'm trying to use this-- this is my data.
+
+1105
+01:16:49,780 --> 01:16:54,620
+ When I use the subscript here, I'll
+
+1106
+01:16:54,620 --> 01:16:56,700
+ say that's data that's coming in a priori,
+
+1107
+01:16:56,700 --> 01:17:00,220
+ whereas this is a simulation of my model.
+
+1108
+01:17:00,220 --> 01:17:01,580
+ I'll write them both, and I think
+
+1109
+01:17:01,580 --> 01:17:03,180
+ it'll be clear what I'm trying to say.
+
+1110
+01:17:03,180 --> 01:17:06,660
+ [WRITING ON BOARD]
+
+1111
+01:17:06,660 --> 01:17:10,140
+ [WRITING ON BOARD]
+
+1112
+01:17:10,140 --> 01:17:13,620
+ [WRITING ON BOARD]
+
+1113
+01:17:13,620 --> 01:17:17,100
+ [WRITING ON BOARD]
+
+1114
+01:17:17,100 --> 01:17:20,100
+ [WRITING ON BOARD]
+
+1115
+01:17:20,100 --> 01:17:23,100
+ [WRITING ON BOARD]
+
+1116
+01:17:23,100 --> 01:17:26,100
+ [WRITING ON BOARD]
+
+1117
+01:17:26,100 --> 01:17:29,100
+ [WRITING ON BOARD]
+
+1118
+01:17:29,100 --> 01:17:32,100
+ [WRITING ON BOARD]
+
+1119
+01:17:32,100 --> 01:17:35,100
+ [WRITING ON BOARD]
+
+1120
+01:17:35,100 --> 01:17:38,100
+ [WRITING ON BOARD]
+
+1121
+01:17:38,100 --> 01:17:41,100
+ [WRITING ON BOARD]
+
+1122
+01:17:41,100 --> 01:17:44,100
+ [WRITING ON BOARD]
+
+1123
+01:17:44,100 --> 01:17:47,100
+ [WRITING ON BOARD]
+
+1124
+01:17:47,100 --> 01:17:50,100
+ [WRITING ON BOARD]
+
+1125
+01:17:50,100 --> 01:17:53,100
+ [WRITING ON BOARD]
+
+1126
+01:17:53,100 --> 01:17:55,100
+ [WRITING ON BOARD]
+
+1127
+01:17:55,100 --> 01:17:56,600
+ OK.
+
+1128
+01:17:56,600 --> 01:17:58,600
+ Sorry, that was a lot of writing.
+
+1129
+01:17:58,600 --> 01:18:00,900
+ There's two ways you can write a system identification
+
+1130
+01:18:00,900 --> 01:18:01,400
+ objective.
+
+1131
+01:18:01,400 --> 01:18:03,980
+ One would be to say, all I want for my model
+
+1132
+01:18:03,980 --> 01:18:07,020
+ is that every data point, I just like--
+
+1133
+01:18:07,020 --> 01:18:10,100
+ I'm going to reset my simulator to the current data point.
+
+1134
+01:18:10,100 --> 01:18:11,740
+ I'm going to take one step, and I'm
+
+1135
+01:18:11,740 --> 01:18:14,740
+ going to compare it to the data at the next step.
+
+1136
+01:18:14,740 --> 01:18:17,980
+ That's a different objective than if I say,
+
+1137
+01:18:17,980 --> 01:18:19,440
+ I'm going to take my simulator, I'm
+
+1138
+01:18:19,440 --> 01:18:21,440
+ going to put them in the same initial condition.
+
+1139
+01:18:21,440 --> 01:18:24,780
+ I'm going to simulate forward using the parameters alpha,
+
+1140
+01:18:24,780 --> 01:18:26,660
+ and I'm going to have my data, and I'm
+
+1141
+01:18:26,660 --> 01:18:29,340
+ going to then evaluate, even in the long term in the future,
+
+1142
+01:18:29,340 --> 01:18:31,260
+ the long term rollouts.
+
+1143
+01:18:31,260 --> 01:18:34,100
+ The question is, am I going to reset on every time step,
+
+1144
+01:18:34,100 --> 01:18:37,540
+ or am I going to roll it out with the dynamics?
+
+1145
+01:18:37,540 --> 01:18:40,500
+ The multibody parameter estimation that we just did
+
+1146
+01:18:40,500 --> 01:18:43,340
+ was this version, where we reset the data on every step,
+
+1147
+01:18:43,340 --> 01:18:46,300
+ and we only implemented the dynamics for one step.
+
+1148
+01:18:46,300 --> 01:18:48,460
+ And that's for a fundamental reason,
+
+1149
+01:18:48,460 --> 01:18:51,360
+ which is this tends to be-- even in linear system
+
+1150
+01:18:51,360 --> 01:18:54,380
+ identification, this tends to be the easier objective.
+
+1151
+01:18:54,380 --> 01:18:56,340
+ It's convex in the multibody case,
+
+1152
+01:18:56,340 --> 01:18:58,820
+ and the multiple step one is non-convex.
+
+1153
+01:18:58,820 --> 01:19:05,820
+ This tends to be the better objective
+
+1154
+01:19:05,820 --> 01:19:07,420
+ for an important reason.
+
+1155
+01:19:07,420 --> 01:19:10,260
+ The simplest argument I can give you for that
+
+1156
+01:19:10,260 --> 01:19:15,220
+ is that you can find models that score--
+
+1157
+01:19:15,220 --> 01:19:21,100
+ that minimize the equation error, which actually
+
+1158
+01:19:21,100 --> 01:19:24,300
+ have unbounded simulation error.
+
+1159
+01:19:24,300 --> 01:19:28,140
+ And the particular case that comes on,
+
+1160
+01:19:28,140 --> 01:19:30,780
+ like a simple way to think about that,
+
+1161
+01:19:30,780 --> 01:19:33,380
+ is if you have a model you're trying to identify
+
+1162
+01:19:33,380 --> 01:19:35,700
+ that's on the boundary of being stable,
+
+1163
+01:19:35,700 --> 01:19:39,020
+ that the true model is actually stable.
+
+1164
+01:19:39,020 --> 01:19:41,420
+ You could find a set of parameters
+
+1165
+01:19:41,420 --> 01:19:43,340
+ that fits in the least square sense,
+
+1166
+01:19:43,340 --> 01:19:46,860
+ but actually gives you an unstable model.
+
+1167
+01:19:46,860 --> 01:19:49,740
+ So your true data is stable.
+
+1168
+01:19:49,740 --> 01:19:50,940
+ It maybe goes towards 0.
+
+1169
+01:19:50,940 --> 01:19:53,340
+ It happens even in the linear setting.
+
+1170
+01:19:53,340 --> 01:19:54,940
+ Your least squares fit because you
+
+1171
+01:19:54,940 --> 01:19:56,580
+ didn't have perfect measurements,
+
+1172
+01:19:56,580 --> 01:19:59,420
+ or you got something-- your best estimate came up
+
+1173
+01:19:59,420 --> 01:20:01,860
+ with an unstable model, and it did diverge.
+
+1174
+01:20:01,860 --> 01:20:04,220
+ That doesn't happen if you can minimize this error,
+
+1175
+01:20:04,220 --> 01:20:07,020
+ but this model is susceptible.
+
+1176
+01:20:07,020 --> 01:20:09,700
+ So even in the multibody setting,
+
+1177
+01:20:09,700 --> 01:20:13,300
+ we tend to use least squares and do our very best with that.
+
+1178
+01:20:13,300 --> 01:20:15,260
+ But oftentimes, we do a cleanup pass.
+
+1179
+01:20:15,260 --> 01:20:17,300
+ This looks like a trajectory optimization problem,
+
+1180
+01:20:17,300 --> 01:20:19,220
+ finding the parameters alpha that
+
+1181
+01:20:19,220 --> 01:20:21,140
+ satisfy over an entire rollout.
+
+1182
+01:20:21,140 --> 01:20:23,900
+ We will often fine tune alpha at the end
+
+1183
+01:20:23,900 --> 01:20:26,020
+ after the initial solution here, just
+
+1184
+01:20:26,020 --> 01:20:29,580
+ to make sure we minimize the long term error.
+
+1185
+01:20:29,580 --> 01:20:32,980
+ And this is-- in the linear system identification world,
+
+1186
+01:20:32,980 --> 01:20:36,700
+ there are strong approaches to avoiding--
+
+1187
+01:20:36,700 --> 01:20:41,140
+ to actually making this problem still good.
+
+1188
+01:20:41,140 --> 01:20:42,980
+ And there's lots of lessons there, too.
+
+1189
+01:20:42,980 --> 01:20:46,260
+ But I won't jam them into the end here.
+
+1190
+01:20:46,260 --> 01:20:48,840
+ But I do want you to understand that there's
+
+1191
+01:20:48,840 --> 01:20:52,420
+ a difference between a one step and a long term.
+
+1192
+01:20:52,420 --> 01:20:54,940
+ And the long term is the one we really want.
+
+1193
+01:20:54,940 --> 01:20:56,660
+ The one step is the one we often use,
+
+1194
+01:20:56,660 --> 01:21:00,420
+ because it's more convenient.
+
+1195
+01:21:00,420 --> 01:21:01,500
+ OK, to be continued.
+
+1196
+01:21:01,500 --> 01:21:07,060
+ Happy Thanksgiving.
+
+1197
+01:21:07,060 --> 01:21:08,960
+ by Zola Levitt Ministries.
+

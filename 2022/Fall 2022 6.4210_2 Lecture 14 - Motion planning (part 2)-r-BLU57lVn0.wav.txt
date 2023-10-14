@@ -1,0 +1,1498 @@
+ Part two of our motion planning week.
+ I want to just quickly say a few of the key ideas
+ from last time to kind of launch us into this time.
+ So last time we started talking about motion planning.
+ Wow, that's a bad start.
+ Last time.
+ And there were a couple important ideas that came up.
+ One of them was almost hidden.
+ I didn't emphasize it particularly.
+ But one important idea was the idea of just configuration
+ space.
+ And we're going to lean on that more today.
+ So remember that I drew some plots.
+ One of them, for instance, I used
+ this example of a simple pendulum with two links
+ and a ball on the end of the hand that had q1, q2.
+ And so this picture, when I draw it in sort of the 2D world,
+ I guess in this case, this is what
+ we call our task space, or our world space, if you will,
+ or work space.
+ But-- and then we drew similar pictures
+ talking about the geometry in the-- if I drew it instead
+ of-- this is sort of in our canonical xz world axes, right?
+ But we also tried to draw the same geometry in our q1, q2
+ space, right?
+ And this is our configuration space.
+ Joint space, if you will, but more generally,
+ configuration of the robot.
+ And we drew-- this was-- if you call this, for instance,
+ a task space obstacle, then we could also draw--
+ this would be an excellent time to go multicolor, right?
+ Then we could also draw these regions in task space
+ in the configuration space.
+ You remember I had curves that looked a little bit like this,
+ right?
+ [DRAWING]
+ For this region, right?
+ And so what does this obstacle in configuration space
+ look like, right?
+ So if I take a particular set of joint angles, q1 and q2,
+ and my robot is in collision with this obstacle,
+ then I'm going to mark that similarly,
+ you know, for that configuration.
+ If it's in collision, I'll mark that
+ as an obstacle in the configuration space, right?
+ And that geometry is such a strong sort of-- there's
+ such a strong correlation there that we often
+ refer to these as configuration space obstacles.
+ OK?
+ So this notion of configuration space,
+ I drew it a handful of times, but I didn't maybe
+ call it out as important as it really is.
+ And we're going to use it more again today.
+ And one of the important things to observe
+ that this picture was meant to show
+ was that even geometries that are
+ sort of simple in the task space-- this is just
+ a half plane or a wall, right?
+ It's certainly a convex geometry, if you will,
+ in the task space.
+ It got a little curvy, a little bit more complicated
+ in task space.
+ Because if you think about it, the conditions
+ that make this hand run into that wall
+ depend on the sines and cosines of the kinematics, right?
+ So those warp my task space obstacles
+ into configuration space.
+ OK, so that was one really important idea.
+ And then we actually started motion planning
+ by talking about inverse kinematics.
+ And inverse kinematics is just trying to find one--
+ especially the type we wrote, the richer form,
+ was just trying to find some point in my configuration
+ space that I like, right?
+ By some objective.
+ And probably that is not in collision, right?
+ So we tried to write inverse kinematics as an optimization.
+ Say, find me some q.
+ Maybe that's close to my comfortable q.
+ That's the way I wrote it a bunch.
+ Maybe I want it to have that the end effector is
+ in a desired position.
+ So I put my kinematics as constraints, right?
+ And maybe I'd say that the minimum distance
+ to any collisions is greater than something like this,
+ right?
+ This is the kind of thing we wrote down
+ in our optimizations last time.
+ And then we said that kinematic trajectory optimization--
+ tradjopped, if you're-- the cool kids call it tradjopped--
+ then was just finding now, instead of finding one point,
+ was trying to find a series of points in the configuration
+ space.
+ And it may be a trajectory of points
+ in the configuration space that satisfied some optimization
+ problem.
+ So in the optimization view, the way I described it last time,
+ I said, let's try to find some trajectory.
+ And I'll parameterize it with parameters alpha.
+ You could describe your trajectory
+ as, let's say, a neural network that took t as an input
+ and put q as the output with weights alpha if you wanted to.
+ I wouldn't recommend it, probably for this case.
+ But if you think about things in that space,
+ this is just a parameterized class of curves.
+ And the ones that we use the most
+ are actually just polynomials.
+ These are polynomial bases.
+ So we just parameterized some class of curves.
+ Typically, they're defined well over some finite interval,
+ maybe some-- that's a nice curve.
+ It doesn't blow up or something in some finite interval.
+ And then we just did only a little bit more than this.
+ We said, let me find-- minimize over the parameters
+ of my curve.
+ You can have various interesting objectives, maybe shortest
+ path, maybe minimum time kind of objectives.
+ And you put some additional constraints,
+ like maybe my starting hand position
+ is where at the beginning of my trajectory.
+ So let's say q of alpha at 0.
+ And maybe my goal satisfies the kinematics at time t,
+ for instance.
+ And so you could put collision avoidance constraints
+ and joint limit constraints and all the other things
+ off the end of this.
+ I think the one thing-- I got a couple good questions
+ after lecture.
+ One thing I wish I had said better last time
+ was that this looks a lot like this.
+ If I'm going to hand this to my optimization package,
+ and it's solving it as a nonlinear optimization,
+ then it's doing things like taking the gradient,
+ partial f, partial q, for instance.
+ And that's how it's doing gradient descent
+ or sequential quadratic programming
+ to get to the bottom.
+ This is not much worse for the optimizer.
+ This is just saying now f of kin of sum of alpha i and i at time
+ 0, I guess.
+ I can still take the gradient of this constraint with respect
+ to just alpha instead of q.
+ That's just you just use the chain rule
+ or call it back propagation if you
+ want to take the gradients of this thing with respect
+ to alpha instead of with respect to q.
+ And this is a similar type of constraint
+ you can hand to the optimizer.
+ And it can do sequential quadratic programming
+ or gradient descent or whatever it's
+ going to do to try to satisfy these constraints
+ and find the best alpha.
+ The one we did last time was a little bit fancier.
+ It also allowed you to search for the time horizon.
+ You didn't have to specify the time horizon.
+ So it made that a decision variable too.
+ And then you could put things like minimize time here.
+ But that's just a detail on top of that.
+ So everything we did in that space
+ was with nonlinear, nonconvex optimization.
+ In general, this is a nonconvex problem.
+ All right.
+ Which means it's subject to local minima.
+ And local minima sounds like-- I almost
+ want to call something more dramatic than local minima.
+ Local minima is not just you always get a solution
+ and it might not be the best solution.
+ In this case, local minima could mean
+ the solver was not able to satisfy all the constraints,
+ was not able to find a path even if the path exists.
+ It could just get stuck.
+ And I think there's two particular ways--
+ I want to sort of distinguish between the two particular ways
+ that that nonconvexity comes in because we're
+ going to try to address that today.
+ So I think there's-- I mean, they're related.
+ But there's two big sources.
+ I think one of them is from the kinematic constraints.
+ If you tell me that I'd like my q to satisfy some-- my hand
+ to be in some position, we know that, for instance, there
+ might be multiple solutions that achieve the same-- again,
+ my shoulder isn't mobile enough-- but there
+ might be multiple solutions.
+ And unfortunately, if you take a straight line between those two
+ solutions, it's unlikely that they're both
+ going to be good-- that the set of optimal solutions
+ is convex when you have complicated nonlinear
+ kinematics.
+ So just by the fact that this is a nonlinear function
+ is the first source.
+ But there's a second source, which is-- I
+ think obstacles are sort of a fundamentally different type
+ of nonconvexity, where you really-- it's
+ like there's multiple things you might have to try to do.
+ I might have to be above the table.
+ I might have to be below the table.
+ And you have somehow a discrete choice
+ to make about what are you going to do around that obstacle.
+ Let me just make that super clear with my little example
+ here.
+ So here's my nonlinear trajectory optimization.
+ I actually-- in this example, I left it going through--
+ I said all the points are out of collision.
+ But I was trying to make a point about that the segment--
+ you have to check the segment, too, to keep it out of collision.
+ But let me focus on the nonconvexity here.
+ So this is now a picture in configuration space.
+ So I just have a point-- call this my start-- another point
+ that's my goal that I'm trying to find in configuration space.
+ And there's a configuration space obstacle.
+ This is way simpler than what a real configuration space
+ obstacle would look like.
+ But let me just make the point.
+ And the solver is doing a good job of finding a path.
+ The goal here-- the objective is to find the shortest path
+ from the start to the goal.
+ And it's doing a pretty good job,
+ apart from cutting the corner.
+ And you can solve these in real time.
+ That's no big deal.
+ But because it's a local trajectory optimization
+ approach, it stuck in local minima.
+ Even if I were to pull the start and the goal over here,
+ once it starts thinking about going right
+ around the obstacle, it's not going to change its mind.
+ Because why is that?
+ So if I were to make an incremental change
+ to those points that went into this direction,
+ then it's going to get worse before it gets better.
+ Because it's going to get a big penalty for going
+ into the obstacle.
+ There's a better place over here.
+ But it has to get worse before it gets better.
+ And so the gradient-based methods
+ aren't going to find it.
+ OK.
+ So I can't do that.
+ So our goal today is to try to get around-- first,
+ I'm going to emphasize that type of non-convexity.
+ And we'll think about how we get around this kind
+ of non-convexity, too.
+ And the two big approaches we'll talk about--
+ we'll talk about sampling-based methods and ways
+ to try to do global optimization,
+ to try to do more than just look at the gradients.
+ That's my setup.
+ Is it clear?
+ OK, so people have incredibly good solutions to this.
+ Let me stop that.
+ And you might have seen some of them.
+ You've seen robots doing amazing things.
+ One of my favorites still is my start to the goal, written
+ as a simple optimization.
+ And that's what I was solving.
+ Forgot to use my slides.
+ But OK, this is a humanoid.
+ This is a video from James Kupner back in the early 2000s
+ of a humanoid reaching under-- that's
+ a lot of degrees of freedom, reaching under
+ to get a flashlight.
+ He's solving a big, complicated motion planning problem.
+ And there's another example here from the same time,
+ same guy, James Kupner, where he's actually
+ solving a geometry puzzle, like one of those things
+ that you find at parties.
+ And they're challenged to try to figure out
+ how to separate the two rings, right?
+ That's the canonical-- well, it's
+ one of the canonical geometry puzzles for motion planning.
+ Another one is the piano movers problem.
+ We're trying to-- if you have an apartment in Back Bay,
+ and you live on the third floor, and you have a piano,
+ how do you get it up there?
+ I think there's no solution.
+ But-- or it involves taking out windows or something.
+ But if there was a solution, these
+ would be the methods you would try to use to find it.
+ I'm going to put it back to there, just
+ so the animation stops.
+ OK, so how are we actually going to do that?
+ How do we solve these geometry puzzles
+ when this picture of local minima, I think, is real?
+ And it's sort of mysterious, maybe,
+ on the face of it, of how do you actually solve highly
+ non-convex geometry problems like that?
+ If I'm talking all about local minima, right?
+ And the two most famous algorithms,
+ the variations of this-- many things are-- there's
+ many, many, many algorithms in this family,
+ but they're maybe derived from these sources here.
+ One would be called the probabilistic roadmaps.
+ PRMs.
+ And the other is the rapidly exploring random trees.
+ [WRITING ON BOARD]
+ How many people know PRM and RRT?
+ OK.
+ That's helpful, thank you.
+ OK, so the big idea here-- I'm going
+ to actually start with this one.
+ It's a little bit-- I mean, I know chronologically this
+ is came first, but I think it's a little simpler
+ to talk about the RRT.
+ That's just my preference.
+ Different people have different preference, OK?
+ So the idea is simple.
+ We're going to get around this non-convexity by sampling, OK?
+ So if I have my configuration space obstacle,
+ my start and my goal, the basic idea of an RRT
+ is I'm going to-- don't worry about getting to the goal.
+ Maybe with some probability I'll try
+ to get straight to that goal, but I'd fail.
+ I'm going to pick a point.
+ I'm going to just define some region safely
+ around my workspace, OK?
+ And I'm going to start sampling.
+ I'll pick a point at random.
+ I'll take my start, and I'll see if I
+ can grow my goal to the start, OK?
+ So in practice, I draw a straight line to that goal.
+ And since I don't want to sort of teleport all the way
+ to some distant goal, I'm going to just take a motion
+ in the direction of that goal.
+ Now when I sample in configuration space again,
+ right, this is Q1, Q2, right, configuration space.
+ If when I sample, I land up in the obstacle, which
+ I can check quickly by putting my manipulator in those joint
+ angles, calling my collision detection engine,
+ and deciding if I'm in collision.
+ That's an easy check to do, relatively,
+ given the geometry engines.
+ But I'll just discard that right off the bat.
+ I'll say, I sampled there.
+ That was a bad choice.
+ Ignore it.
+ Let's keep going.
+ And then at some point, I'll sample over here.
+ I'll grow a little bit over here.
+ And as the name suggests, I'm going to grow a tree.
+ The exact version of the algorithm,
+ every time I pick a sample, I'm going
+ to look for the closest point in my existing tree
+ and try to extend from that closest
+ point in the existing tree towards my sample.
+ The details I'll put on the slide in a second here.
+ But the intuition is that I'm solving a non-convex problem
+ by choosing points at random.
+ In this case, right, I might grow here.
+ At some point, I might pick a point that would
+ cause me to grow into collision.
+ There's various choices you could do.
+ You could try to just grow up to the collision,
+ or you could just discard that sample and keep going.
+ And at some point, the hope is that I
+ will have picked enough of these random sub-goals
+ that my tree will come out, and I'll
+ have found my way all the way to the goal.
+ In low dimensions, it seems completely reasonable
+ that that would solve this problem.
+ What's surprising is that you can do it with a humanoid,
+ that it works surprisingly well in high dimensions.
+ Four problems that have a reasonably large configuration
+ space region and relatively large tunnels that will get you
+ from one place to the other.
+ If you have to thread a needle to try to find it,
+ then sampling is not a great strategy for that.
+ OK, so this is the picture from the original RRT paper
+ where they started there with their initial.
+ They've grown a tree.
+ You pick a random sample.
+ You extend towards that sample, and you add a point.
+ For those of you that are familiar,
+ I'm not going to spend that much time on this.
+ I'm just saying the basics because I
+ think the intuition is important,
+ and the details are easy to get.
+ OK, so I grow towards this tree.
+ Now, what's important is that that very simple strategy
+ can solve pretty hard problems.
+ This is actually a narrow passage kind of problem.
+ It will solve it eventually.
+ It just will take potentially a lot of samples.
+ So I had an initial guess that was in here
+ and a goal that was out here.
+ And eventually, if I draw enough samples
+ and grow a dense enough tree, then this algorithm
+ will grow these sort of characteristic RRT trees
+ and find paths if they exist.
+ This is a good example of a path where if I started here
+ and I was trying to go here, and my initial guess was trying
+ to take a straight line there, it
+ would be very, very hard for a trajectory optimization
+ approach to get this.
+ And this, by brute force, will eventually
+ find its way around it.
+ That's pretty cool.
+ OK, so it sounds like an extremely-- so it's actually,
+ it is an extremely simple algorithm.
+ But it is not, I would say, a naive algorithm.
+ There are some very clever things
+ that make it work, even though it
+ can be written in three lines and anybody can type it in
+ and make it work.
+ For instance, if I take this problem again
+ and I do a more naive thing, where I just say,
+ I'm going to take my current tree,
+ I'll pick a point on the current tree,
+ and I'll grow it in a random direction.
+ So just pick a point on the random tree,
+ grow it in a random direction, add a little edge.
+ That sounds like a very reasonable search type
+ strategy.
+ I'll just pick a random direction, grow.
+ That doesn't work at all.
+ That gives you these sort of hairball kind of pictures,
+ where with high probability, that
+ would be taking a random walk.
+ And random walks have this characteristic sort
+ of Brownian motion kind of picture,
+ that it would be a random walk that
+ would stay near the origin.
+ So there's something very clever about this sub-goal idea,
+ where I'm going to pick a point randomly in the space
+ and try to grow towards this distant goal.
+ That causes it to have this exploration behavior, which
+ avoids this naive sampling.
+ In particular, it has something called the Voronoi bias, which
+ is the best property of this thing.
+ [WRITING ON BOARD]
+ You know what the Voronoi regions of a graph
+ are, or a set of points are?
+ If I have a set of points in the plane,
+ then the Voronoi regions are the regions
+ associated with a point, which are-- if I have all these
+ points and I make them a little bigger so people in the back
+ can see.
+ So I've got some points in my plane.
+ If I were to draw the regions of all the places in the space
+ that are closest to this point, then
+ it's going to be-- there's going to be a line that separates it
+ from that point.
+ There's a line that separates it from this point and this point.
+ And I don't know.
+ Should have worked out better than it did, but there you go.
+ Something like this would be like the Voronoi region
+ associated with this, which is all
+ of the points in the plane that are closest to this point.
+ And there's a Voronoi region for this point,
+ something like that, and a Voronoi region for this one.
+ So that would be a Voronoi partition of the space,
+ is this notion of what are the sets that
+ are associated with the closest distance to each point.
+ Computing the Voronoi regions explicitly
+ is a little bit computationally intensive.
+ The RRT doesn't do that.
+ The RRT is just the algorithm I said,
+ just pick a random point, grow towards it.
+ But it turns out implicitly, because it
+ does-- when you pick a point, you
+ try to find the closest point on the tree,
+ it's acting as if it's trying to take a local evaluation
+ of the Voronoi region.
+ And that has this remarkable property
+ of causing it to explore, not just exploring like-- well,
+ let me show you.
+ So if you start growing the tree,
+ and I draw the Voronoi regions, which is relatively expensive,
+ the animation is harder than the algorithm,
+ then it starts at the initial condition.
+ And because the Voronoi regions of the cells on the outside
+ are large, with very high probability as it starts--
+ let me sort of reset a little bit here.
+ OK, that was a fail.
+ Let me-- all right, so as it starts,
+ the Voronoi regions on the outside are big.
+ So the specific thing that says is
+ that the chance, the probability of expanding some node
+ is proportional to the volume, or the size,
+ of the Voronoi region.
+ At the beginning of the search, the regions
+ that are unexplored have the largest Voronoi regions.
+ So with high probability at the beginning,
+ it's going to grow out into the free space.
+ As it continues, the free space gets filled up,
+ and there's some still large regions in the interior,
+ and it will start filling those in with probability.
+ And that sounds incredibly clever,
+ but it's just because it does this nearest neighbor query.
+ It's like when you're reading a book in literature,
+ and they tell you all the things the author meant,
+ and I'm not sure if the author really meant it.
+ But it's like endowing it with these incredible properties
+ post hoc.
+ But it's beautiful.
+ So in practice, these things will expand out
+ into the unexplored regions, and then it
+ will fill in all the nooks and crannies.
+ And if there is a region, like this little tunnel in my bug
+ trap example, then it will eventually sample there,
+ and it will eventually grow.
+ So this idea of the Voronoi bias is one important idea.
+ And the other super important idea
+ is that it's probabilistically complete,
+ which means that if there's a path from the start
+ to the goal, then it will be found with probability 1
+ as the number of samples goes to infinity.
+ That last part's a bit of a bummer.
+ And it's actually not that hard to make an algorithm that
+ has the probabilistic completeness property.
+ In fact, even the naive one is technically
+ probabilistically complete.
+ It's just going to take a long time
+ to find this path to the goal.
+ But that's an interesting class of algorithms,
+ to say I want to guarantee that eventually I
+ will find a path if it exists.
+ There's tons of variations and extensions
+ that I'm not going to list.
+ But you can imagine, for instance,
+ that you might do better by growing a tree from the start
+ and backwards from the goal at the same time
+ and just let them connect.
+ That's extremely effective, used often in practice.
+ And there's a whole pile of heuristics
+ that make these things work really well.
+ Any questions about RRT at the high level here?
+ Yeah.
+ OK, so the RRT-- like I said, people plan humanoids.
+ They will plan on the fly.
+ You can have a mobile manipulator
+ that goes into a new environment and will
+ start planning with RRTs.
+ But they do spend some amount of-- especially
+ for hard search problems, they can potentially
+ do a lot of computation to find a path.
+ If you're going to do the same-- like in our clutter clearing
+ example, if you're going to be moving
+ in the same environment over and over and over again,
+ it makes sense that you'd want to reuse some of the graph
+ search, some of this tree that you've built,
+ to do a multi-query version of this.
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ This would often be called multi-query planning.
+ Then that's where the PRM comes in, the probabilistic roadmap.
+ The probabilistic roadmap basically
+ says I'm going to build a graph in the first place.
+ I'm going to separate my computation into first
+ the roadmap construction, where I'll go ahead and build
+ some complicated graph.
+ I'll show you a couple pictures of it in the first step.
+ And then when it's time to plan, I'm
+ just going to try to find the shortest path on the graph.
+ So imagine building one big network roadmap once
+ and then planning on it separately.
+ And this was actually published a few years before the RRT.
+ In my mind, I like talking about it in this order.
+ So now I've got my simple configuration space obstacles.
+ And I'll pick a point at random.
+ And I'll just look around and try
+ to connect it to all of its nearest neighbors.
+ I'll draw an edge to all of its nearest neighbors.
+ And I'll make this graph.
+ And the offline phase is just to build up this roadmap
+ by picking points at random.
+ There's no start.
+ There's no goal.
+ Pick points at random.
+ Just try to connect it to the neighbors,
+ make a nice, dense network.
+ And then at query time, I have an initial--
+ the robot's in some initial condition.
+ It's got some true goal.
+ All I do is try to connect that up
+ to the closest point on the graph
+ and do graph search in my graph to try to find the path.
+ It's very similar to the RRT.
+ But it makes sense if you're going to do repeated plans.
+ And you might as well add that node
+ and add that edge to the graph.
+ And this thing can have kind of a--
+ I call it lifelong learning, if you want.
+ This little thing will continually
+ sort of fill out the regions of space
+ that you're actually experiencing.
+ And it can be very, very efficient.
+ So for instance, there's a company now
+ called Real-Time Robotics that does these PRMs on the fly
+ from in perception by putting all this stuff into the GPU.
+ PRMs and RRTs are both--
+ and the collision queries that go along with it
+ have been highly optimized with GPU implementations
+ and the like.
+ This is actually specialized hardware.
+ I think it's FPGA.
+ I actually forgot now if it's FPGA or even ASIC or something.
+ But they're talking and saying that planning doesn't
+ start until I hit the red button.
+ And it plans with no pause, no delay.
+ And this can be made to be very performant to the point
+ where he's going to come in and shuffle the environment.
+ People can walk through the environment.
+ It's doing planning on the fly with highly optimized PRM RRT.
+ Yes?
+ So from there on, it's kind of hard
+ to get the exact pattern because it's temporary.
+ What kind of process is it for you?
+ Good.
+ [INAUDIBLE]
+ So I have a slide to show--
+ yeah, so there's something that I think a lot of people--
+ I tend to call the RRT dance, which
+ is that if you're trying to find a path from the start
+ to the goal to pick this up, this strategy,
+ you might do something like this.
+ You know?
+ And that's real.
+ That happens all the time.
+ I put a video in the slide somewhere that will show that.
+ So sample-based planning gives random paths.
+ There are post-processing algorithms
+ like you just alluded to.
+ You could, for instance, take any plan you get out of there
+ and call a trajectory optimization.
+ You could call eukinematic trajectory optimization.
+ That's a great way to do it.
+ The sample-based community tends to do things like short-cutting.
+ [WRITING]
+ So if you found your big, complicated plan that
+ was visiting more places than it should to get to the goal,
+ and maybe there was just one obstacle over here,
+ but it decided to do a little dance,
+ then the short-cutting type algorithms will, for instance--
+ they tend to be very probabilistic.
+ It's kind of the theme here.
+ And very approximate.
+ But they'll just say, I'll take my path.
+ I'll pick a couple points on my path.
+ If I could draw a straight line to them,
+ then I'll just remove all the ones that were there.
+ And now I've added the straight line.
+ I'll pick two more random points.
+ If I can do this, then I'll just erase this.
+ These are kind of a heuristic thing
+ that's very fast to implement and gives you
+ pretty good results.
+ If you have an edge that goes through this--
+ so people typically-- and this is
+ one of the things we'll talk a little bit about today--
+ people typically try to verify this just
+ by running the collision engine on many samples
+ along the segment.
+ But there are more advanced approaches
+ that can try to guarantee that you don't have any collisions
+ on the line segment.
+ [INAUDIBLE]
+ I think at some point you switch to an optimization
+ to smooth it out.
+ But I think you'd be surprised how often people
+ send piecewise constant curves to their robot.
+ Almost certainly the controller is
+ smoothing it out a little bit.
+ But--
+ OK, so that's a cool set of ideas.
+ I mean, a super powerful set of ideas
+ to use sampling to sort of get around
+ these hard non-convexities.
+ They also get around the kinematic non-convexities.
+ Because when I sample points, I just
+ have to call the function.
+ So if I have a sample point in joint space,
+ I can just call my kinematics on that function
+ and put my robot into its pose and check constraints
+ in task space.
+ I could check whether the real hardware
+ is running into the obstacle in the original task space.
+ So by virtue of going to points instead of trajectories
+ and doing sampling, they're sort of solving
+ both of those problems.
+ If you do want to play with more and more of these tools,
+ the OMPL, the Open Motion Planning Library,
+ is a fantastic resource that has just
+ a long library of all the different RRT PRM variants.
+ It's in ROS that you can connect it
+ to Drake and collision queries.
+ It's a great resource for just even seeing
+ the list of planners, even getting your head
+ around the sense of different types of planners people
+ are using.
+ There's the PRM.
+ There's different single query planners, the RRT,
+ expansive space trees.
+ A lot of the different algorithms that are out there
+ are available there.
+ So highly recommend it.
+ Even if you just look at the website,
+ it's already super valuable.
+ We have a bunch of sample-based planners
+ that have been written at TRI that we're pushing to Drake now,
+ hopefully, but not quite in time for this lecture, I ask.
+ So when it's there--
+ I mean, if anybody needs it, I have
+ versions that I could share that are just not as polished.
+ But it has the RRT.
+ The bi-RRT is going in both directions, bi-directional RRT.
+ PRMs, we have all the basics in there.
+ Here's the RRT dance.
+ And the point was made nicely in a paper by Sertash and others.
+ This is the RRT applied to the PRM.
+ I mean, you will really see robots do that sometimes.
+ It's like, oh.
+ It's kind of embarrassing.
+ The other one that's really embarrassing
+ is when you have a beautiful manipulation robot system,
+ and it goes, and it acts like it's picked something up,
+ but it has nothing in its hand.
+ And it continues through the rest of the motion
+ as if it's like, oh.
+ We should never see these things again.
+ But that's real.
+ OK.
+ So I mean, that's just a very quick version of it.
+ But I think this idea of the RRT,
+ but I think this idea of sampling
+ is, I think, easy to communicate and very powerful.
+ And it opens up a whole class of algorithms
+ that you can play with.
+ And people use them in industry all the time.
+ It's real.
+ Let me tell you a bit about the optimization
+ view of being more global.
+ OK?
+ I want to tell you--
+ spend the second half of the lecture
+ on global optimization-based planning.
+ This is one that I'm super excited about right now.
+ We've been working hard on it in my group.
+ So I'll give you a slightly biased version of this.
+ But I do think we've made some nice improvements
+ and to what you can do with motion planning here.
+ So I want to tell you that story.
+ Maybe I'll tell it first with code.
+ So if I go back to this simple example, my red box,
+ I'll run my--
+ I'm going to run--
+ so this is-- the work I'm going to tell you about
+ is motion planning around obstacles
+ with convex optimization.
+ So I just talked about how the problem was clearly non-convex.
+ I'm going to try to do it with convex optimization.
+ And that is supposed to be surprising.
+ So here's the same old example.
+ And I'm just solving a convex optimization problem.
+ But now it solves beautifully to global optimality.
+ So I'll tell you the basics of how that works.
+ And it's not magic.
+ It's just putting together some good ideas.
+ But I think it opens up what we can do with some of our motion
+ planning approaches.
+ In particular, the advantage of these optimizing-based planners
+ is that you avoid RRT dance kind of things.
+ And if you care about-- like I told you with the DexEye
+ example the other day, if time is money,
+ then having the benefits of kinematic trajectory
+ optimization combined with the globalness of planning
+ is the dream.
+ OK, so how did I do that simple example?
+ And where did I put my chalk?
+ Jeez, oh, Pete's.
+ OK.
+ I said that that was a non-convex problem
+ and that there's non-convexity everywhere in the motion
+ planning problem.
+ So how can we possibly do around obstacles
+ with convex optimization?
+ So saying it's non-convex is a little disingenuous.
+ Any problem can be made convex if you just lift it
+ to a high enough dimension.
+ So typically, it's not practical to do so,
+ but it's theoretically interesting to know
+ that you could.
+ So really, I want to dial that in a little bit more.
+ What I think is important is that we
+ found a convex formulation that is compact and efficient.
+ So we didn't have to raise it to some ridiculous dimensionality
+ that would be impossible to solve,
+ but we have an efficient convex formulation.
+ And the way that we did it in that particular way,
+ that I coded it up in that particular example,
+ is I have my configuration space obstacle.
+ And I'm going to first decompose the space.
+ We'll talk about how to do that in a bit.
+ I'm going to manually decompose the space
+ into a couple different regions.
+ I said that the RRT did this automatically
+ without doing any explicit decomposition.
+ I'm going to do the explicit decomposition, but it's OK.
+ You can do that.
+ It's not the fastest part of the algorithm,
+ but it's approachable.
+ And then for each possible segment,
+ or region in the optimization problem,
+ in the configuration space, I'm going
+ to put a small kinematic trajectory optimization
+ problem inside it.
+ So I'm actually going to solve lots
+ of different kinematic trajectory optimization
+ problems all at the same time, which sounds bad.
+ But it can be made very efficient, in particular
+ because this is the best type of kinematic trajectory
+ optimization problem, because it only
+ has to stay-- all of its constraints
+ are convex, once I've made a convex decomposition
+ of the space.
+ Saying that this curve stays inside a convex region
+ is an easy thing to do.
+ Staying inside a non-convex region is a hard thing to do.
+ And then I'm going to build a little graph out
+ of these regions.
+ So if I call this region 1 here, I'll make a little graph.
+ If I call this region 2, region 3, and 4.
+ Maybe I have 3 and 4.
+ If those regions touch in the configuration space,
+ then I'll draw an edge between the two.
+ It's actually a bidirectional graph in this case.
+ 2 and 3 touch.
+ 3 and 4 touch.
+ 1 and 4 touch.
+ I could have probably put 4 there.
+ That would have been a little prettier.
+ And then I'm going to do the same sort of thing as the PRM.
+ I'll take my start.
+ I'll take my goal.
+ I'll add my start and my goal here.
+ Add whatever things it's touching.
+ I'll put an edge to it there.
+ This was in 4 and 3, I guess.
+ And I'm going to solve a graph search problem.
+ But unlike the way that the PRM solves a graph search problem,
+ I'm going to solve a particular type of graph search that
+ is actually solving the kinematic trajectory
+ optimization at the same time as it's finding
+ the shortest path on the graph.
+ So let's just understand it at that level.
+ I'll tell you how that works just a little bit in a second.
+ But this is like a sampling-based approach.
+ I'll show you the direct connections
+ to the sampling-based approach.
+ But it's more explicitly saying there
+ is a combinatorial problem in motion planning.
+ You have to decide, am I going left or right?
+ And if I write down that combinatorial problem,
+ then I should use graph search type tools to accommodate it.
+ And what's nice is that there's actually--
+ when you think about graph search,
+ you probably think about A* and Dijkstra's
+ and these kind of methods.
+ But you can solve graph search with a linear program
+ and optimization-based approaches, too.
+ And so there are ways to jointly solve
+ the graph search and the kinematic trajectory
+ optimization at the same time and make that very efficient.
+ It's not magic.
+ It's just explicitly writing the combinatorial problem
+ and the continuous problem down in one formulation
+ and then doing a lot of work to make
+ that formulation very efficient.
+ So I won't go into the math of the optimization.
+ But if you want to read more, but the basic intuition
+ is we take the optimization view of the shortest path
+ on a graph.
+ I could find just from the start to goal on any ordinary graph.
+ I can write that down as an optimization problem
+ in addition to a standard graph search,
+ kind of the way you think about a standard A* kind of algorithm.
+ And the mathematical background of this,
+ we call it the graph of convex sets.
+ Because there's PRM, there's RRT.
+ We needed a three-letter acronym.
+ So ours is GCS.
+ That's the brand.
+ And the way to think about how do you
+ do a continuous optimization at the same time
+ as a discrete optimization is you basically--
+ the abstraction we have is that every time you
+ visit a node on the graph, you pick one element out
+ of a convex set.
+ Don't think about this as obstacles or anything
+ for a minute.
+ This is just an abstract mathematical framework
+ where you say, I'm going to do graph search,
+ but I get to pick one element out of a convex set
+ every time I visit.
+ And I'm allowed to put edge costs.
+ The standard shortest path could have an edge cost on each edge.
+ Now I'm allowing the edge cost to be
+ a function of the continuous variables.
+ And we can put constraints and other things like that too.
+ We've made a lot of progress on having strong optimization
+ formulations for that abstract problem.
+ And that abstract problem is exactly-- this thing
+ I drew on the board, we just transcribe it.
+ This is now the motion planning problem,
+ where our regions are-- the blue regions in the last
+ are the blue regions here.
+ But we put and we make a graph based on what is just touching.
+ And embed in each of those a B-spline,
+ a kinematic trajectory optimization problem.
+ You remember I mentioned the B-spline
+ has that convex hull property?
+ We leverage that convex hull property.
+ So it's the parameters of the B-spline
+ that form the convex set.
+ You know, the intuition I want to make sure you definitely
+ get is that we can combine this continuous search
+ with the graph search.
+ And when you pick an edge on the shortest path on the graph,
+ then it implies that some constraints
+ must be true, which make those curves connect.
+ And you can make them continuous up to arbitrary degree.
+ And you can scale time similarly all in the framework.
+ Yeah?
+ So the parameters of the spline are the convex set?
+ It's not the boundaries of the regions?
+ So that's an awesome question.
+ So what is the convex set?
+ So in this picture over here, I have this abstract notion
+ of the set.
+ So it lives in some space called big X.
+ What is big X in this picture?
+ It is not this region.
+ So it's the Cartesian product of that region times
+ the number of control points.
+ I want to say that one element in that set
+ means a choice of all of the control points,
+ and they all must live in that set.
+ So it's only a little bit different
+ than the original picture, but it's an important difference.
+ Thank you for asking.
+ Is that clear?
+ Yeah?
+ OK.
+ What's cool is that that solves really hard problems
+ with convex optimization.
+ So this is like two Iwas playing Twister, where
+ you have to put a mug on the shelf,
+ and you've got to reach under the other Iwa.
+ And that is being solved by jointly solving
+ the convex optimization on the graph
+ and the kinematic trajectory optimization.
+ And this is on the robots upstairs.
+ And this is actually solving even a richer version
+ of the problem than I already suggested.
+ It is choosing what order to pick up the mugs.
+ And the combinatorial decisions of the task
+ are also being embedded in this graph, in this big graph.
+ And it's getting smooth, beautiful motions out.
+ We have a handful that we put together for the paper
+ we're writing.
+ But we want to have smooth, beautiful, time optimal,
+ if you want, motions coming out of the robot.
+ That's the opposite of the RRT dance.
+ That's a little-- that would mean--
+ my decomposition probably wasn't very good on that one.
+ But-- yeah?
+ So is the number of control points
+ in each convex set fixed?
+ We choose the number of control points, yeah.
+ But we allow it to stretch in time.
+ But it's like how there's a representational power
+ of the curve in that set.
+ So how do we choose how many control points
+ we should get in?
+ Yeah, so the question was, how do we
+ choose how many control points?
+ The more you give it, the more curvy it can be inside the set.
+ But the more expensive the optimization will be.
+ So it's a trade-off.
+ I'll talk about the different gaps.
+ So what I would like to say is that if an optimal path exists--
+ if a path exists, we find the optimal path.
+ We can almost say that.
+ We can say, if the path exists, we
+ find the optimal path as parameterized
+ by the Bézier curves in the decomposition.
+ So there are a few gaps.
+ And that is one of them.
+ In theory, I would need an infinite number of control
+ points to say any possible curve could live inside the set.
+ The problem is-- or the interesting part
+ of the problem is that I talked all about how-- maybe it's--
+ it's long gone.
+ But I talked about how convex obstacles in task space
+ turn into non-convex obstacles in configuration space.
+ So how did we get those convex regions?
+ There's an algorithm that we're going to have you explore.
+ It was released moments ago for your p-set,
+ which is this approximate convex decomposition algorithm.
+ And it's related closely to the sampling-based ideas
+ that we used in PRM and RRT.
+ But the idea is that when I pick a point at random
+ in my configuration space, I'm going
+ to go ahead and do a little extra work, which
+ is to try to find a big convex region that
+ is collision-free around that point.
+ And you'll understand, I think, by the end of the p-set
+ that it does this by an alternation of finding
+ half spaces, which separate the sample point
+ from the obstacles.
+ And then once you have the half space regions,
+ you do a maximum inscribed ellipse,
+ and then you alternate.
+ The details you'll see closely on the p-set.
+ We'll work through half of it.
+ We won't make you do the inscribed ellipse,
+ but we'll make you do the other part.
+ So this is an efficient optimization.
+ It's a large-scale quadratic program
+ and a really small convex optimization.
+ And when we did this initially a few years ago,
+ Robin Dietz was the inventor of this algorithm.
+ He was trying to do it for Atlas walking around.
+ And he cared very much about finding big places for Atlas
+ to step from raw perception.
+ So he wanted an algorithm, a convex decomposition algorithm
+ that could scale to raw pixels.
+ And he accomplished it, enough to work on raw sensor data.
+ This is a version of that.
+ But as the robot was walking around,
+ he was trying to decompose the space into regions
+ that it could step on or touch.
+ And we had these convex decomposition type algorithms.
+ So that was a tool that we had done for walking.
+ And it turns out then that if you
+ have convex obstacles in your configuration space,
+ then the picture is going to look a bit like this.
+ These are the gaps here, the gaps
+ that prevent us from saying it's globally optimal.
+ Because we're going to just do an approximate convex
+ decomposition.
+ And if you think about the roadmap generation
+ phase of the PRM, we're going to do something like that here.
+ But every time we pick a point, we're
+ going to grow an iris region.
+ And we'll end up with an approximate decomposition
+ of the space.
+ But then we get to solve a continuous set of curves.
+ Whereas the PRM was only walking along
+ the discrete edges in the graph, and therefore
+ was restricted to the motions of that graph,
+ here we have enough room for the kinematic trajectory
+ optimization to do its optimization.
+ And we get beautiful curves.
+ Importantly, when you get to things with dynamics,
+ which we haven't talked about in here,
+ the kinematic trajectory optimization typically
+ doesn't include the dynamics of the robot.
+ But if you have dynamic constraints
+ and other constraints, optimization-based frameworks
+ handle that naturally, where sampling-based frameworks
+ can struggle with those kind of constraints.
+ OK, so we can't quite say what I want to say.
+ We say that we're guaranteed to be collision-free because
+ of this iris algorithm.
+ We can guarantee that once I'm in the curve in that region,
+ I won't have a collision.
+ I don't have to check the line segment
+ at a bunch of different samples.
+ I have this nice property.
+ And then within the convex decomposition
+ and within the class of curves, we
+ can be complete and globally optimal.
+ So this is the-- back when we were doing it
+ with the big mixed integer problem,
+ this is Robin's version of it.
+ So you have your original obstacle-based environment.
+ And the first step is you compute
+ these approximate convex decompositions.
+ This is the iris algorithm that you'll implement.
+ And then once you have those decompositions,
+ you can plan optimal motions.
+ [AUDIO OUT]
+ That particular environment used to run
+ as one of our unit tests on an early version of Drake
+ that was running on the build servers in my office.
+ And there was a bug for a while that it
+ would publish its visualization to the LCM channel
+ across the subnet.
+ So everybody on the third floor used
+ to see trees appear randomly and quadrotors flying around.
+ And they're like, where is this coming from?
+ And there was a long time where I would just randomly
+ see that pop up on my screen.
+ So that brings up fond memories to me.
+ So that was the case where the obstacles are in task space--
+ or the obstacles are convex.
+ And that's the case we'll have you do.
+ But there's a more sophisticated version
+ of that, thinking about how do you do it for configuration
+ space obstacles.
+ The original algorithm assumed convex.
+ Now there's new extensions for C space.
+ And one of them is just using nonlinear optimization.
+ And it's fast.
+ And I'll run it right here.
+ There's another one that gives actual certifications
+ using sums of squares optimization.
+ And that's guaranteed to be collision free.
+ But it's slower.
+ And I won't run it here.
+,
+ So I was like, how do I visualize
+ collision free obstacles in a way that you can understand?
+ So this is a pretty good visualization.
+ So you've got some weird q1, q2.
+ There's a weird collision free collision region,
+ which is these two EOs smacking into each other.
+ And it makes this very non-convex shape.
+ And this is a visualization.
+ As you move around through the C-free,
+ you can see them not in collision.
+ Here's the version I put up last night here--
+ this morning.
+ Blurs together.
+ Instead, I made an iris region, which
+ was seeded with a point inside the shelf.
+ And I get a convex polytope in the joint space.
+ And I'm thinking, how do I make you guys understand
+ what that region looks like?
+ And I was going to plot it in 3D.
+ And it's completely uninterpretable in joint space.
+ My brain does not understand what's happening there.
+ So this is what I did instead.
+ Is I just basically-- I wrote a little program that
+ would basically visit random boundaries of the joint space.
+ And I just plotted it here.
+ So basically, this robot is just walking around
+ inside one of the regions, one of the iris regions.
+ And you can kind of see that it carves out
+ a nice large part of the state space.
+ And it's not in collision.
+ It'd be nice if it walked a different dimension.
+ I guess randomness-- oh, yeah, there it goes.
+ Up and down, right?
+ So it's got this nice sort of joint space region.
+ You might wonder, what if a convex decomposition of this--
+ this is a pretty narrow part of this joint space,
+ of the configuration space, too, because of the collision
+ geometry.
+ But it fills out a nice big region.
+ And in practice, we found in all those motion planning examples
+ we did, we only needed a handful of regions.
+ It's a pretty surprisingly small number of regions.
+ It's also working with the original collision
+ geometry of the robot.
+ So for the kinematic trajectory optimization before,
+ I had to turn it into a sphere to make
+ sure it got out of local minima.
+ None of that here.
+ It's still the simplified geometry, but it's good.
+ Yeah?
+ [INAUDIBLE]
+ Good.
+ So that's exactly the right question.
+ He says, so the non-convexity that's
+ coming from the kinematics-- so the way
+ we're doing this here is we are building
+ the graph in joint space, not in end-effector space.
+ But we're certifying that every point in that region
+ is valid in task space.
+ So we are addressing your concern.
+ But we're using Iris to go across that non-linear boundary
+ of kinematics.
+ The graph of convex sets cannot go through--
+ the convex optimization cannot go
+ through the non-linear transformation,
+ but the Iris can.
+ So we have to pre-compute any of the non-linearities away.
+ [INAUDIBLE]
+ That's what I tried to do.
+ Actually, I tried to even walk along the vertices.
+ But so the way that I've implemented Iris today,
+ it kicks out a stupid number of vertices, basically.
+ So it would have been a great video that went--
+ [LAUGHTER]
+ So I was like, you know what?
+ I'm going to just make it go in random directions instead.
+ You caught me.
+ That was the first idea.
+ If the robot is [INAUDIBLE] or it loses a joint,
+ does the configuration space change in a predictable way?
+ Or would you have to pre-compute it?
+ That's an awesome question.
+ So the question is, what happens--
+ so your question was removing the gripper,
+ but even more relevant maybe is picking up an object.
+ And you suddenly want to not collide
+ with the object in the sink.
+ So I think that does change the configuration space.
+ And we haven't addressed that yet.
+ This is a hot off the press algorithm.
+ I think for the case of the clutter clearing,
+ or the DexEye workflow, or any of the million robots
+ out there that are moving in a relatively similar environment
+ all day long--
+ the multi-query case.
+ Any case where you can afford to do some pre-computation
+ and then optimize very quickly, we've dialed that in well.
+ And I think the next round, which
+ I'm happy to have you guys think about,
+ is to think about how to dynamically change
+ those regions, for instance.
+ Maybe straight from perception.
+ Maybe from-- maybe you can crop regions.
+ There's all kinds of clever things to do.
+ [INAUDIBLE]
+ We seed them-- yeah, you can see them in either place.
+ But they have to be seeds in Q, in the joint space.
+ But we typically seed them by solving an inverse kinematics
+ problem, just because that's easier for the human.
+ [INAUDIBLE]
+ So that's one to many [INAUDIBLE]
+ If you seed it in--
+ like, if doing this kinematics, then
+ we cover it in [INAUDIBLE]
+ So you're worried about--
+ so I think there are sampling-based approaches
+ that could try to fill out the space
+ and have a probabilistic completeness kind of guarantee.
+ But we found, actually, that--
+ I mean, there's a lot of regions you probably
+ don't want to visit.
+ So we found it's more useful to pick the ones
+ and use IK to sort of filter out some of those crazy regions.
+ [INAUDIBLE]
+ OK, yeah, so you can--
+ right, you can sample directly in Q to grow the regions
+ if you need to.
+ That's true.
+ Yes?
+ [INAUDIBLE]
+ That's a great question.
+ Do humans do graph of convex sets, or RRT, or PRM?
+ You'll get a different answer from everybody you ask,
+ I think.
+ I would guess that they are not doing this.
+ I would have said that the sample-based things,
+ like PRMs and RRTs, would be a very weird thing
+ to think about a human doing.
+ But I've had conversations with people like Josh Tenenbaum
+ who say that the cognitive scientists are actually
+ pretty excited about the RRT kind of view of the world
+ as a cognitive model.
+ Still feels weird to me.
+ I don't know.
+ I think we are certainly a parallel processing machine.
+ And maybe we can do a lot of things like that.
+ If you ask me, I would think that-- and this is speculation.
+ I think we're probably not solving the geometric puzzles
+ that we're asking our motion planning to solve.
+ I'm going to make that point at the very end.
+ This is a harder problem than humans are probably solving.
+ This is when you're asked to separate the puzzles out
+ and stuff like this.
+ And humans do that rarely and not particularly well.
+ I think we are much more approximate,
+ and we're not afraid of bumping into things.
+ And I think much more simple strategies
+ can solve a lot of problems.
+ But apparently some cognitive psychologists like RRT.
+ It's all good.
+ I would love to know more about that.
+ I don't know as much as I would like.
+ So just to give you-- since I kind of advertised that,
+ let me just tell you what it can do and what it can't do.
+ So not every kinematic trajectory optimization
+ fits in that framework.
+ I have to restrict ourselves to things that are convex,
+ costs and objectives.
+ But it's a pretty large library.
+ If you use Bézier polynomials and Bézier splines
+ and all the right tricks and tools,
+ then you can minimize time.
+ You can minimize path length.
+ You can minimize some sense of energy in it.
+ You can make trajectories smooth up
+ to arbitrary derivative degree.
+ You can avoid collisions by being inside the iris
+ regions of this picture.
+ And those are guaranteed for all time.
+ There's no sampling-based concerns, right,
+ of clipping a corner or something like that,
+ which is a big deal.
+ I think lots of people suffer those clipped corners
+ in practice.
+ You can put velocity constraints.
+ I really want the next thing to say acceleration constraints,
+ but we don't know how to put acceleration constraints on.
+ That's non-convex so far.
+ Maybe there's a problem we can crack.
+ But you can put bounds on the time.
+ You can give it initial conditions,
+ final-- those kind of things.
+ That's a little bit bigger than that,
+ but that's the main library of costs and constraints
+ that we can put on here.
+ But in that regime, we're solving to global optimality
+ mostly with convex optimization.
+ And even that, I want to be super clear
+ that it's actually a mixed integer program where
+ the convex relaxation is almost always tight.
+ So it's not guaranteed to solve to optimality
+ with convex optimization, but in practice, we
+ find it almost always does.
+ And we've done a lot of work to try to compare it to PRM.
+ And this is the shortcutting that [INAUDIBLE]
+ about.
+ Take my crazy PRM and try to find the shortcutting.
+ And how does it compare in terms of time and the message?
+ This is an unoptimized PRM.
+ I think people have more optimized PRMs out there.
+ But it's a good PRM.
+ It's just not super GPU-enabled and stuff.
+ We tend to find better paths.
+ That's what you would expect.
+ We're using optimization instead of just sampling.
+ Even then, the shortcutting PRM, we're doing better than that.
+ And we can often find them in less time than the PRM.
+ In particular, the one I really like
+ is that there's some things you can do on the graph.
+ There's some observations you can
+ make by just looking at the graph
+ without even thinking about the continuous variables that
+ allow you to rule out lots of possibilities very quickly
+ and kind of pre-process yourself into a very simple problem.
+ And some problems, if there's not big branching,
+ can just go solve almost instantly.
+ So we get all these little examples
+ of complicated bimanual--
+ I like the bimanual case because most PRM RRT algorithms
+ don't scale well.
+ Sampling scales surprisingly well.
+ I wouldn't have expected it to work in 10, 12 dimensions.
+ But when you start getting to 14 dimensions,
+ or if you put it on a mobile base,
+ and you've got 17 dimensions, maybe you've got a torso,
+ you're up to 20, most people don't--
+ you'll see, actually, most robots,
+ if you see a bimanual robot, almost always you look for this.
+ One arm will be fixed.
+ It'll move the other arm.
+ And then it'll stop.
+ And it'll move this arm.
+ Almost always.
+ Almost always.
+ Or they'll be not moving close to each other.
+ So yeah, just to wrap that up and say it's super clear.
+ So what I'm advocating here is a change from the PRM,
+ where you sample and make the roadmap,
+ to every time you make one of those samples,
+ you grow a region.
+ But to some extent, everything you can do with the PRM,
+ you could do this way.
+ It's just trying to make those samples into big regions
+ so that you have room for the continuous optimization
+ to do its work.
+ You pay a price.
+ That's an expensive step at the offline.
+ Although it's even comparable to building a denser roadmap.
+ Because we can make 10 iris regions in the time
+ you'd make 10,000 regions over here.
+ And that's what people tend to do is make super dense PRMs.
+ And we get better motions.
+ All right, sorry for the advertisement.
+ Having said all that, I actually don't
+ like collision-free motion planning
+ as a problem formulation.
+ This is the point.
+ So I want to just make sure that I land at the end
+ that this is kind of a weird problem.
+ It's probably not the problem humans are solving.
+ Anybody know this one?
+ This is from my childhood.
+ It was a little after people played with sticks and stones.
+ About a little bit before iPads.
+ So it's a little game called Operation.
+ Yeah, thank you.
+ It's annoying.
+ It's annoying to have in the house.
+ But basically, you have to pick out the bones out
+ of this poor patient.
+ And if your leads touch the side of the cell,
+ you kill the patient or something.
+ It goes, eh.
+ And mom and dad go, eh.
+ OK, that's a weird game.
+ And it's probably not how we move through the world.
+ So I think a better formulation.
+ So as we get past the core material of the class,
+ we're going to enter this boutique lectures.
+ And I'll ask you guys for feedback.
+ And we can choose which ones we're
+ going to cover of the more advanced topics.
+ But task and motion planning I've mentioned.
+ Belief space planning was a possibility.
+ Planning through contact is another possibility
+ as a more advanced topic.
+ And it's something that I care a lot about.
+ But it's, I think, a richer formulation
+ for these kind of things.
+ You shouldn't be afraid of bumping into the world
+ all the time.
+ There's a bunch of projects.
+ This is one at TRI.
+ We're trying to build something kind of like Baymax.
+ We call it Puno, which is soft and cuddly
+ in Japanese, I guess.
+ And we have all kinds of prototypes.
+ If you were to come over to TRI, you
+ see all kinds of prototypes of different soft sensors
+ and soft structures that are instrumented
+ that try to make it so the robots don't
+ break when you do rich planning through contact.
+ And they're safe to interact with humans.
+ Good.
+ So that is the second half of the motion planning.
+ Allows us to think about how to address
+ the non-convexity of the motion planning problem.
+ PRM's-- oh, yeah, go ahead.
+ Yeah, just a general question.
+ Sorry.
+ Like, you say, could a free motion planning
+ be non-convex?
+ And then you could think about it
+ from a trajectory organization.
+ I feel like you can solve the trajectory organization
+ in the computing space.
+ But I feel like if you were to think about humans,
+ that maybe you solve the trajectory organization
+ problem in the workspace.
+ But then once you have the gradient,
+ you just use Jacobian to get back to the Jacobian.
+ So you go back to the configuration.
+ Do you feel like that is [INAUDIBLE]??
+ Good.
+ So the question is, if the configuration space
+ is so messy and the task space is so much cleaner,
+ in general-- we've done the big, boxy objects, right,
+ where engineers-- until AI designs everything,
+ we've got nice rectilinear structures.
+ Why not plan in the task space and then map it back
+ to the joint space?
+ I think that is viable.
+ I think there's, of course-- then the reason it's often
+ preferred to plan in the joint space
+ is because the mapping from joint space to workspace
+ is the good one, is the forward kinematics.
+ And going backwards is inverse kinematics.
+ But you're right.
+ We can do differential, inverse kinematics, and the like.
+ I do think it would be more-- if I think about how a human
+ plans-- and I have no reason to have
+ a strong feeling about this.
+ But it feels very natural to think
+ I plan a fairly simple motion of my end effector
+ and then execute it.
+ I do think that can be very natural.
+ [INAUDIBLE]
+ So the statement was that maybe the gradients in the task space
+ could be reasonable.
+ But then the question is, what if I
+ have to worry about where my elbow is
+ while I'm reaching through?
+ Right?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ I think if you were to not think about the arm
+ and only plan in end effector space,
+ that's kind of some of the problems
+ we had with my simple example, where eventually the elbow
+ would fold in on itself and the like.
+ So I think you need to think about both jointly in order
+ to solve the full problem.
+ If you need-- and I think maybe humans
+ don't do that very often.
+ I think most of the time we probably don't do that.
+ But to solve the full problem as specified,
+ you would have to solve both of them jointly.
+ And you can choose to do it with the forward kinematics,
+ or you could choose to do it with the inverse kinematics.
+ And I think most people choose the forward kinematics.
+ But I agree, for more approximate methods that
+ maybe don't worry about making some collisions,
+ then it might be very natural to live in the task space.
+ [INAUDIBLE]
+ Good?
+ OK.
+ See you next time.

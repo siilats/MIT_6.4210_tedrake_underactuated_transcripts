@@ -1,0 +1,1110 @@
+ And then I'll run a basic simulation
+ with a couple examples.
+ So hopefully that'll be useful.
+ OK, let's do it.
+ Thank you, as always, for your feedback on the surveys.
+ Someone actually said they want more jokes.
+ And if it wasn't an anonymous survey,
+ I would instantly give an A for that.
+ But unfortunately, it was anonymous,
+ and that old person will-- but it made me happy.
+ Today we're going to do the second half.
+ Remember, I talked last time about a point finger.
+ And with the promise that at some point
+ we'd put the robot back in.
+ And the goal today is to put the robot back in.
+ And I'm going to do that in a few steps.
+ I want to tell you about-- unfortunately,
+ there's a bit of a zoo of different manipulator control
+ ideas.
+ They are all, I think, very related and very simple.
+ So my task today is to try to keep that organized for you
+ in your head on the board and try to make it
+ so it's not confusing.
+ And I'm going to try to do that by-- I'll put the outline here
+ and then go back to it a couple times.
+ So we'll do first just joint space control.
+ And I want in joint space for you
+ to just lock in what it would mean to do PD control, what it
+ means to do stiffness or impedance control, what it
+ would mean to do inverse dynamics control.
+ And then we're going to go into Cartesian or end effector
+ space.
+ And we'll primarily think about what
+ it means to be doing stiffness or impedance control there.
+ OK.
+ And I'll make sure I talk a little bit at the end
+ about some limitations and extensions.
+ OK.
+ So they're very related ideas, very simple ideas.
+ I hope that by the end you'll understand
+ the difference between those and then understand really
+ the beautiful trick about making the entire robot program
+ the dynamics at the end effector.
+ OK.
+ Now last time we did it on a point finger.
+ And just partly to review that and to build
+ into the next one, the interesting thing
+ about the point finger case is that your joint space
+ is your Cartesian space.
+ So we did, in some sense, almost--
+ we didn't do inverse dynamics, but we did these.
+ And I'll just write them again.
+ And we'll launch from there.
+ OK.
+ So--
+ So we thought about our robot as just being
+ a point with some mass.
+ OK.
+ So the configuration of that was really just x, y, z position
+ of that.
+ OK.
+ It turns out that I could have equivalently
+ said that was the position of the finger,
+ using my multibody notation, the position of the finger
+ and the world coordinates.
+ And since we're going to go back and forth between joint
+ coordinates and end effector coordinates,
+ it's a weird thing that in this particular example
+ they're the same.
+ OK.
+ More generally, those are going to be different.
+ And we're going to want to go back and forth between them.
+ But I'll highlight here that they're the same
+ and just show the various components when they're
+ the same are very simple.
+ OK.
+ So the dynamics of this point finger were very simple.
+ Just had our mass was our gravity vector.
+ Let me write it in the slightly more general form this time.
+ This is the gravitational vector,
+ which for the simple robot is just 0, 0, negative m times
+ 9.81, negative mg, if you will.
+ OK.
+ And then we allowed ourselves to have some fictitious forces
+ being applied.
+ Our actuator was coming in as a jet pack, basically,
+ that could apply forces anywhere.
+ And then I could potentially have some external forces that
+ were applied at the finger.
+ And we talked last time about how
+ to regulate the external forces, either directly or indirectly.
+ When you see this, by the way, the reason I always
+ choose to write it like this-- I've said this once before.
+ I'll say it again because we're going to build on it today here.
+ But I want you to see this equation.
+ And the reason I always put some terms on the right hand side,
+ some terms on the left hand side,
+ is because I want you to see this as just mass times
+ acceleration on one side.
+ And these are all the forces, right?
+ This is the sum of the forces.
+ So the gravity is a force, a torque.
+ My control input is another force
+ that's being applied on any external forces.
+ So this is just f equals ma.
+ And I always try to write it where
+ I have ma on one side and force on the other side,
+ unless we start trying to be fancier.
+ But the original governing equations should be like that.
+ So in joint space, there's an interesting question, first,
+ of how do I track a trajectory?
+ So we talked about force control,
+ and we'll get back to force control.
+ But let's forget about interacting with the world.
+ Let's just say I want to move my finger around.
+ And I spent some time, maybe, with my kinematic trajectory
+ optimization, made a beautiful trajectory, q of t.
+ I've got some beautiful q of t.
+ I'll call it q desired of t.
+ Maybe the result of trajectory optimization.
+ [WRITING ON BOARD]
+ There's a problem in the manipulator control world,
+ which would just be trajectory tracking.
+ If I have some q desired of t, how
+ do I make it so q of t tries to track,
+ converges on q desired of t, and maybe
+ tracks it with high precision?
+ And for this, I'll say the external forces
+ are 0 for a minute.
+ And we'll put those back in.
+ So what is a good controller for tracking a trajectory
+ that you might want to run on a robot?
+ Even in the point finger case, it's just so simple
+ that I think it's worth writing it here first,
+ so we can see how those same ideas manifest themselves
+ in the full case.
+ We only have a few different cases.
+ So the one that we've seen a few times--
+ I feel bad for the people that have a robot directly
+ in the way, but I guess, of all the things
+ to be occluded by, robots are good.
+ OK, so maybe I could do a PD control.
+ PID control is perfectly good, too,
+ but I'll just do PD control for now.
+ So what if I did kp q desired minus q, kd q desired
+ dot minus q dot?
+ [INAUDIBLE]
+ That's one of the systems that we've seen before.
+ [INAUDIBLE]
+ You're right, sorry.
+ No, it should be plus over here.
+ Yeah, because I put the desired in, I put a minus here.
+ Sometimes I do q dot.
+ It was absolutely an error.
+ Thank you.
+ [INAUDIBLE]
+ Good.
+ So by the way, this is well-defined.
+ If I have a trajectory a priori, I
+ could take the derivative of that trajectory,
+ and I could have a desired velocity
+ at every instant in time, too, if I'm tracking some trajectory.
+ So what happens if I put this controller even
+ into my little mass system?
+ Let's say I have a desired trajectory that
+ was just a sine wave or something like this.
+ Let's say q desired of time was just, I don't know,
+ 10 times sine of t.
+ I could certainly figure out-- I could take the derivatives,
+ of course, right?
+ q dot t is just 10 cosine of t.
+ And I could run this controller.
+ How well will it do at tracking?
+ What are the good and bad things about that?
+ Assuming I've chosen pretty good values for, let's say, kp and kd,
+ how would you expect this to perform?
+ Yes?
+ [INAUDIBLE]
+ Good.
+ So there's a question about delay,
+ which we're going to-- that's actually
+ the second point I want to make.
+ So yes, there's going to be a little bit of lag here.
+ What about even if-- what if I just
+ said the desired trajectory was 0?
+ What's going to happen?
+ That's even the simplest case.
+ What if qd was just 0?
+ What's this controller going to do?
+ [INAUDIBLE]
+ It won't be 90 degrees out of phase.
+ That's a good question.
+ I mean, if I've chosen a critically damped thing,
+ and I say the desired is 0-- so q desired is 0,
+ q dot desired is 0-- then I will have
+ a system that has a critically damped response,
+ assuming I've chosen this.
+ But the question is, does it get to the desired 0?
+ And it doesn't necessarily, because there's an offset term
+ here in the gravity.
+ And this is fundamentally an error-driven controller.
+ So if q equals q desired, and q dot equals q desired,
+ then the torque is 0.
+ And gravity is going to pull me away.
+ It requires some error here in order
+ to resist gravity and balance.
+ And I made the trivial simulation
+ just so we could see it.
+ This is the simple case.
+ Let's even make-- it's easy to see when I just
+ set the amplitude to 0.
+ If my desired trajectory is just a flat line,
+ and I have a point mass finger, and I have gravity,
+ and I run a PD controller, then it
+ will converge to a steady state.
+ But it's not necessarily going to drive the error
+ to 0.
+ A PID controller would drive that to 0
+ if I put the integral term back in.
+ But when we start tracking fast trajectories,
+ the integral term is going to have a more complex effect.
+ So I'm going to leave it out for now.
+ There's a different way besides the integral term
+ that we could take care of that.
+ And I want you to appreciate that that actually
+ is what happened when we wrote the stiffness controller
+ before.
+ So when we wrote a stiffness controller before,
+ we wrote almost the same controller.
+ But we also added in-- actually subtracted off--
+ the gravity term.
+ And we called that our stiffness control before.
+ [WRITING]
+ And I almost feel silly calling these things different things.
+ In the point finger case, they're so simple.
+ But I think this is an important idea.
+ One thing you can do if you know the mass of your finger
+ is you can just subtract it off.
+ And the reason that that intellectually
+ matches stiffness control is because then I
+ can say that the resulting closed loop dynamics were
+ mq double dot plus-- I'll do it like a mass spring damper.
+ So I'm going to change my sign on that.
+ Like Leray was looking for.
+ This is a dot here now.
+ q desired equals 0, in fact, if there's
+ no external force.
+ The PD controller has an extra nagging term from gravity.
+ The stiffness controller, by virtue
+ of trying to act like a spring, is actually
+ canceling that out.
+ But in the simple case, the only thing
+ that's different between the stiffness controller and the PD
+ controller is gravity compensation.
+ And of course, if I add that gravity compensation
+ into the simulator, then I get a nice response
+ that will converge to the desired, when
+ the desired is 0 at least.
+ If I do something more interesting,
+ like have it be the sine wave again,
+ then this actually will do a fairly OK job at tracking.
+ This is the orange is the desired.
+ The blue is the actual.
+ I started a little bit off the nominal.
+ And although there's a little bit of lag,
+ certainly at the beginning here, it actually
+ does a pretty good job.
+ I think I'd have to put up the bandwidth to see the phase.
+ I'd have to increase the frequency
+ to see any notable lag.
+ OK.
+ Turns out you can do better still.
+ You can get around some of the lag
+ with just one additional idea.
+ And guess what?
+ That additional idea is what happens
+ in inverse dynamics control.
+ In the point finger case, it's all extremely simple.
+ What would you do to try to get around that lag, if you will?
+ Which is there's an extra piece of information
+ that we have that we haven't given our tracking controller.
+ Which is we know arbitrary derivatives of q, right?
+ Of q desired.
+ If we tell it where it's going to go and give a feed forward
+ term that uses q double dot, then we
+ can get better tracking performance still.
+ OK.
+ So there's a couple ways that you could add that in.
+ The way that it's typically done in inverse dynamics control,
+ I wish it was exactly the thing you'd expect.
+ But for an important reason, it's
+ just a little different than what you'd expect.
+ But I'm going to say it's q double dot desired.
+ And I'm going to go ahead and multiply that mass by all
+ of my terms here.
+ Flipping my signs.
+ Let's do it like this.
+ So this is a feed forward term.
+ And fundamentally, it's what you need
+ to do to get around this error driven control.
+ You want to be able to send it so that if the trajectory is
+ on-- if your current system is exactly on the trajectory,
+ it will get the command it needs to stay on the trajectory.
+ You don't have to wait for error to occur to get back
+ towards the trajectory.
+ The way to do that is by giving instantaneous information
+ about where that trajectory is going to go.
+ And this is what happens in inverse dynamics control.
+ OK.
+ Super simple ideas, especially in the point finger case.
+ And they're just going to map directly over
+ to the joint, full joint robot case.
+ And of course, I will try to convince you here
+ that if I were to put the feed forward term in,
+ that things get even better.
+ That I get beautiful convergence to the nominal trajectory.
+ And I'll stay on the nominal trajectory.
+ I won't deviate on every oscillation.
+ Once I'm there, I'll stay on there.
+ It's actually easy to see that.
+ OK.
+ The reason to do this and have mass actually multiply my--
+ I'm going to scale my kp and kd also by the mass.
+ Is because then if I write out the closed loop dynamics,
+ I can say that I have m q double dot.
+ I can pull this whole thing on the other side here.
+ Minus this.
+ I'll just pull that on the other side.
+ OK.
+ I'll put it in spring mass damper form again.
+ Put my damping equals 0.
+ OK.
+ That's the resulting equations of motion.
+ And if I were to just call this term e,
+ if I define e to be my error, I'll call it q minus q desired.
+ Then I could write the same equation.
+ You'll see this often in the multi-body manipulator control
+ world.
+ I could write the same equation as just a first order--
+ a second order spring mass damper on the error.
+ OK.
+ So the error will converge to 0 and stay at 0.
+ And that's beautiful.
+ That wasn't true until I put the feedforward accelerations in.
+ I want to make sure that these ideas are clear.
+ Because they'll get more--
+ same ideas, but just with more terms and the like
+ if we go to the manipulator case.
+ Yes.
+ [INAUDIBLE]
+ Excellent.
+ Good.
+ So the question is, what are the requirements for the controller
+ in terms of knowing the system?
+ So in this case, I only need to know the gravity terms.
+ If I have a model of the gravity terms of the robot,
+ then I can execute this controller.
+ Here, I applied a controller that
+ had the mass also inside it--
+ mass and the gravity term.
+ OK.
+ So that does ask me to know more about my system.
+ But you can ask an interesting question
+ about if this is approximate, how sensitive is it?
+ This is actually relatively not terribly sensitive.
+ You can do an error analysis of what happens if I put m tilde in
+ like this.
+ If you have controllers that try to invert mass and stuff
+ like this, it can get a lot more sensitive.
+ There's different ways that mass can enter.
+ This one's not as terrible.
+ So this controller doesn't need to sense
+ q double dot on the robot.
+ It's just if I have a trajectory,
+ I can differentiate it twice.
+ That's my motion plan.
+ I differentiate it twice.
+ As long as I could do that, that's OK.
+ So I don't feel that I added a new requirement in terms
+ of sensing in that.
+ But there is a new requirement in terms of the model.
+ Great question.
+ This controller is actually the one
+ we've been mostly using in simulation.
+ It has torques coming out in the Drake systems framework,
+ whatever.
+ You'll see this as the estimated state coming in,
+ the desired state coming in, and then you
+ can send a feedforward acceleration coming in.
+ That's the inverse dynamics controller.
+ You'll see that in the manipulation station stack
+ that you've been running.
+ But we actually don't send--
+ we just leave this disconnected because EWO won't accept it.
+ And I'll tell you about that at the end, maybe why.
+ OK.
+ If I put force back in, then it's not so different.
+ If I were to put the force back in,
+ then I'd get a trailing force term.
+ And it's interesting to think about what happens
+ if I put the force back in.
+ Now I have a second order damped oscillator,
+ but with some driving external force.
+ So maybe that's still a pretty reasonable thing to do.
+ Yeah?
+ OK, sorry.
+ Thanks.
+ AUDIENCE: I think we're adding--
+ what sensor do we use to get q double dot?
+ Do we use just using the numerical method from position,
+ or do we have extra sensors?
+ Again, this is q double dot desired.
+ Yeah, but like the--
+ This is--
+ Oh.
+ Good, that's a great--
+ great.
+ So this is me analyzing the closed loop system.
+ I don't have to-- this is the controller that I implement.
+ This is what I have to type in.
+ The result of combining my controller with physics
+ is something that uses q double dot,
+ because physics uses q double dot.
+ But I don't have to implement that.
+ What about q dot?
+ For q dot, it's going to be--
+ I mean, depending on the sensors,
+ there's rotary encoders there.
+ Derivatives-- we typically think of as positions and derivatives
+ to be pretty clean, and we try to avoid accelerations
+ as a general rule of thumb.
+ You don't want to do high bandwidth control
+ with accelerations.
+ So EWA-- just something I was going to say later,
+ but EWA allows you to send q desired,
+ but it doesn't actually allow you to independently send
+ q desired and q desired dot.
+ I believe that's--
+ I think they made a safety argument with that,
+ and that somehow--
+ if you could imagine a bad user sending inconsistent q and q
+ desired dot, that might break their safety proof,
+ for instance.
+ So they instead take a sequence of q desired,
+ and they add a little bit more delay even,
+ and they'll take a finite differences to estimate q dot,
+ and then send that as a command.
+ But you're only actually allowed to talk to the robot
+ with q desired over time.
+ All right, so let's blow this up now.
+ So we understand in the simple case, PD, stiffness,
+ and inverse dynamics is just adding one thing at a time.
+ Yeah?
+ [INAUDIBLE]
+ For which part?
+ They shouldn't.
+ The stiffness control--
+ [INAUDIBLE]
+ Tau g.
+ They should both be minus tau g.
+ Thank you.
+ Because, yes, the tau g is on the right-hand side
+ with the u's, so I have to subtract it out.
+ Thank you for catching that.
+ Too many symbols to get right on the board.
+ OK, same recipe now, but let's do it
+ on the manipulator equations.
+ Remember, the dynamics that we were writing
+ was just mass times acceleration equals
+ the sum of the forces.
+ The way that manifests in the manipulator equations
+ is now my MA is just a little bit more complicated.
+ It looks like this and this.
+ These are-- this is now the inertial matrix.
+ These are the Coriolis terms, but they really go together.
+ This is-- you should think of this together as MA.
+ If you were to change the coordinate system,
+ then they would both change equivalently.
+ This is MA.
+ And then we get the sum of the forces,
+ so you get the gravity forces, which in general
+ are some function of the configuration.
+ I'll assume that I've got u's everywhere,
+ so I'll just say I can command every coordinate.
+ And then I can have-- I'll write it as a torque now,
+ a tau external.
+ [WRITING ON BOARD]
+ OK, so the first thing I want to ask
+ is just in joint space, how should I
+ do trajectory tracking?
+ If I have a desired qd of t, and now I have these equations,
+ then what's the analogous thing to do?
+ And it follows exactly from what we do.
+ We could do PD control, which actually
+ looks identical in this case.
+ It's just now-- it's identical.
+ I shouldn't even spend my time writing it, maybe.
+ The stiffness control also looks effectively identical.
+ It's just canceling out a more interesting gravity term.
+ Minus tau g, which is a function of q now.
+ And the resulting dynamics of that
+ are a more interesting version of what we've done before.
+ But it's still a-- it's just a more complicated spring mass
+ damper system.
+ And it happens in the joint coordinates.
+ So what does that mean is if I put a resistive force,
+ if I push on a particular joint, I
+ expect it to feel like a spring when it's pushing back at me.
+ OK?
+ And these terms are the mass of that spring mass damper system.
+ And they're a more complicated object.
+ But it should still feel like a-- if I
+ were to move one joint at a time, for instance,
+ it would feel like I'm pushing against it.
+ And we're going to actually do that.
+ Terry, is it OK to do it now?
+ Yeah?
+ Let's do the-- so I want you to at least see me feel the--
+ we'll do the joint impedance control.
+ OK?
+ Now, so EWA does-- it's called joint impedance control.
+ OK?
+ But like I said before, it actually--
+ it doesn't shape the mass of the robot.
+ It only shapes the rotor mass.
+ So unless you get to the level of modeling the rotor inertia
+ and the elastic joints, at our level of modeling,
+ it looks like a stiffness controller.
+ OK.
+ Now, let me just say something about safety here.
+ So this is-- we're only running the very simple controller that
+ has been actually certified.
+ And Terry's got his hand on the big red button.
+ But I don't advise, in general, people running up and touching
+ powerful robots.
+ OK?
+ I'm going to just do this carefully.
+ So right now, this is in joint impedance control mode.
+ So that means if I were to apply--
+ it's got something like a 50 newton meter,
+ I think, was the gains we put in here.
+ A 50 newton meter gain on any one of those joints,
+ it's going to let me move it.
+ I can kind of move the robot around.
+ It's going to resist.
+ It's going to drive itself back to this nominal joint
+ configuration.
+ But it's in a complicated space.
+ The response is a complicated function
+ of the kinematics of the robot, because every joint
+ independently is looking like a spring.
+ OK?
+ It's pretty beautiful.
+ And it feels very nice and natural and smooth,
+ which is a testament to the hardware.
+ OK?
+ Good.
+ We're going to do the other one in just a minute,
+ if that's OK.
+ Yeah.
+ So that's, I think, at our level of modeling,
+ this is kind of what we should think about EWA as doing.
+ If you wanted a higher fidelity simulation model,
+ if the reason your robot was failing to pick up a coffee cup
+ was because of the dynamics of the elastic joint,
+ then you have to go dig deeper than this.
+ But for almost all the manipulation research I've done,
+ you haven't had to go to that level of modeling power.
+ OK?
+ [CLEARS THROAT]
+ You can do inverse dynamics control, too.
+ And we often write it down.
+ It's interesting, though, that EWA doesn't do it.
+ And I think it does go back to the requirements,
+ as you say, of what's happening.
+ The inverse dynamics controller would send in--
+ I'm going to take a mass times the entire signal here.
+ I'll send in q double dot desired as my lead,
+ my feed forward term.
+ And I'll put inside here my kp plus kd.
+ Outside here, I'll take my tau gravity.
+ OK?
+ And the result is, once again, a beautiful system.
+ Keep switching my E dots and whatever.
+ But it looks like this.
+ The error dynamics in joint space
+ will converge like a second order spring
+ with a more complicated mass matrix.
+ It actually has the Coriolis terms, too.
+ Like I said, those two go together.
+ Those are still there.
+ But it's a more complicated mass spring damper system.
+ But the error converges to 0.
+ So this is a nice way to do high-end trajectory tracking
+ control.
+ If you had a torque-controlled robot
+ and you wanted to do extremely accurate trajectories,
+ then I recommend sending in the q double dot forward.
+ I think it's only doing first derivative.
+ It could be taking two finite derivatives, differences
+ of my q command.
+ But I don't think the advantage is there when
+ you've already done a lag.
+ So I suspect it's not.
+ OK.
+ So the interesting differences now
+ become when we start thinking about how the forces enter
+ the joint equations, the multibody equations.
+ Because forces naturally live in Cartesian space.
+ And everything here is in joint space.
+ In joint space, it just looks like a more complicated finger,
+ if you will.
+ And everything still goes.
+ But let's see what happens if I add forces in.
+ [WRITING ON BOARD]
+ I showed you once before, when we
+ were talking about friction cones and whatever,
+ I showed you these equations without fully justifying them.
+ The way that forces enter the multibody equations,
+ I wrote this down sort of quickly without justification,
+ that it looks something like this.
+ That I have a Jacobian transpose times f,
+ where this is a Cartesian force.
+ But these equations live in joint coordinates.
+ If you have a robot with some joints and some equations
+ of motion, and you apply a Cartesian force here,
+ then the question is, how does it affect torques at the links?
+ Or vice versa, if I were to apply torques to the links,
+ what sort of force would I be applying
+ at a point on the world?
+ And the relationship here, which is there, but more generally,
+ is that you have this relationship of torque
+ is the Jacobian transpose times force.
+ And that one I want you to remember.
+ That's a good thing to know at parties, I guess.
+ And it's like-- yes, I think that's core knowledge,
+ I would say.
+ How many people know why torque is
+ Jacobian transpose times force?
+ Yeah.
+ OK, I'm going to add to your core knowledge.
+ It's really simple.
+ OK, it's just a power argument.
+ So if you think about the work, actually,
+ done at the end effector, this is the way we think about it.
+ So if I have a robot in some configuration,
+ I want to think about the incremental work done
+ at this point on the end effector.
+ Work is force times distance.
+ This is an argument of virtual work.
+ It's called.
+ Work is force times distance.
+ I'm going to compute the work done at the end
+ effector in two different ways.
+ I'll think about a virtual change in x,
+ and I'll think about a virtual change in q.
+ These are two different ways, and I
+ should get the same answer.
+ So the total work done by the force
+ should have an equivalent work done by the torques.
+ So if I say the force-- let me use my correct small f--
+ dotted with some delta change in x
+ must equal the torque dotted with some virtual change in q.
+ So this is a virtual displacement in x.
+ This is a virtual displacement in joint.
+ This delta notation, and that's a dot product.
+ Since we also know that delta x is related to delta q
+ by the sum of Jacobians, then if you put this together and say
+ it has to work for all delta q, I have f.
+ And I'll go ahead and multiply out the transpose.
+ I'll say f transpose equals Jacobian q.
+ Delta q is tau transpose delta q.
+ And this has to work for all delta q.
+ And it is equivalent to saying tau--
+ and I'll take a transpose on both sides--
+ is J transpose f.
+ So any time you want to go between a force computation
+ at a particular point and a torque at the joints,
+ the Jacobian is exactly the mechanism you need.
+ It's just a Jacobian transpose.
+ It's just an argument about virtual work.
+ It's actually-- it was, I think, a major advance
+ in the rigid body mechanics when people
+ started thinking about these virtual displacements.
+ And that's the Lambert's principle
+ and all the good stuff, all the variational mechanics work.
+ So there's a lot of depth there.
+ And the reason for those annoying virtual displacements
+ is actually really important and the like.
+ But I think it's mixed for simple algebra.
+ And you get tau equals Jacobian transpose times force.
+ OK, so let's think about now trying to live in this space.
+ Remember, the amazing thing we want
+ to do if we're thinking about forces
+ is we want to make the big complicated robot act like a--
+ be able to control the forces as if it was a point finger.
+ So given we have this relationship
+ and we see how it enters the multibody equation,
+ how do we make that happen?
+ It turns out this translation between the Cartesian space
+ and the torque space with the Jacobian transpose
+ can actually be applied to the entire multibody equations.
+ And the result of doing that is one
+ of the most beautiful results on our list
+ here, which is this idea of writing Cartesian space
+ dynamics, task space dynamics.
+ [WRITING ON BOARD]
+ OK, so now my location of my finger--
+ I'll call it an end effector more generally here.
+ So this would be my end effector frame.
+ We know that that is related to q by the kinematics.
+ My velocities are related by the Jacobian.
+ My accelerations also have the relationship,
+ v dot of e, which we actually have multibody notation for a,
+ calling that a.
+ And that gives me-- if I take the derivative,
+ time derivative one more time, I get
+ this plus an extra term, j dot q, q dot.
+ [WRITING ON BOARD]
+ The tricky step here is if I take the multibody equations,
+ solve them for q double dot, and insert them
+ into this equation, then I actually
+ get a new set of multibody equations.
+ The derivations in a little bit more detail in the notes.
+ Certainly all the terms are written out there.
+ Keep that off just to keep it simple.
+ [WRITING ON BOARD]
+ What is this equation?
+ This is the manipulator dynamics from the point
+ of view of the end effector.
+ This is my command input.
+ I can just achieve this with my Jacobian transpose.
+ [WRITING ON BOARD]
+ And I can actually write the dynamics
+ as it's viewed from the finger, from the end effector.
+ And since these equations-- so this thing
+ has the original mass matrix in it.
+ It has a couple of Jacobians in it.
+ It has a couple inverses in it.
+ But it's always well-posed, assuming-- yeah,
+ it's actually always positive definite.
+ It has some nice properties.
+ And all of these are just functions
+ of the original equations and the Jacobian.
+ It's basically the Jacobian transpose applied
+ to all those equations.
+ But these equations, looking at the dynamics of my robot
+ through the lens in the coordinate system of the end
+ effector, look so similar to what we've done before
+ that I can use the same kind of control.
+ In fact, I can write a stiffness controller the same way
+ I did before.
+ I just will cancel this out.
+ I'll write the PD terms on this.
+ And the resulting equations will be an end effector dynamics
+ that looks like a spring mass damper system.
+ That's the amazing thing.
+ So this is Cartesian stiffness.
+ This is the analysis.
+ But the controller is simple.
+ It's still just-- I'm going to do my kp.
+ I have to modify it into the correct space.
+ But in this coordinate system, the controller is simple.
+ I'm going to write it as pe minus pe kd p dot e minus p
+ dot e, and then minus this f of gravity.
+ Now you see why I was worried about snilling you
+ with the details.
+ So but I hope you see, by the simple analogies,
+ that this is really just writing the PD controller,
+ canceling the gravity.
+ But we're doing it in the coordinate system
+ of the end effector dynamics.
+ It's fantastic.
+ Should we run it, Terry?
+ Is that good?
+ I showed you the KUKA folks running this early,
+ and they looked happy.
+ So I figured I should try it.
+ Maybe I'll be happy.
+ Again, this is just one of the basic certified controllers.
+ And which one we're doing first, the translational?
+ So the way to make this interesting
+ is we put a different translational stiffness in x,
+ y, and z.
+ So I think it was 150, 250, and 50, or something like this.
+ So one of them is going to be really--
+ that one's a little bit--
+ that's the 250, and then this is the 50 newton meters.
+ Yeah?
+ If you want to go from Cartesian back to the [INAUDIBLE]
+ OK, there's two parts of that question.
+ So the controller that I've written here,
+ I can actually just command Jacobian transpose times
+ this virtual force.
+ So I don't have any ugly inverses in the control.
+ But you're right, there's a null space of that control.
+ And I should do something-- if I have more degrees of freedom
+ than the thing I'm commanding, then I
+ should do something in the null space
+ to not leave that undefined.
+ But the actual forward mapping looks good.
+ There's no inverses in the forward mapping.
+ So just once more.
+ So what is also different compared to-- remember,
+ before I was doing the joint by joint,
+ and the response in the end effector
+ was actually pretty complicated, because it
+ was living in joint space.
+ The springs were living in joint space.
+ But now it really does feel obviously different
+ and obviously kind of linear.
+ I don't know if I can feel linear.
+ But in the end effector coordinates.
+ That's why he was happy.
+ That's pretty good.
+ OK, and then we can do the same thing in rotational coordinates.
+ So all the same things work if you
+ were to use our spatial vector notation
+ and say that the thing I'm trying to control
+ is not the position, but the orientation,
+ or in general, spatial velocities and frames
+ in the end effector.
+ Then you can put a stiffness.
+ You have to be a little careful at how you write stiffness.
+ I actually cited your paper, actually,
+ about maybe an interesting way to write a six degree of freedom
+ stiffness.
+ But now, if I wanted to push it sideways,
+ he made it very stiff in the xyz direction.
+ So that end effector wants to stay there.
+ But it's allowed to be soft in the out of plane.
+ And I've got a smaller moment arm to do the last one.
+ But yeah, it's math.
+ Math works.
+ [INAUDIBLE]
+ There are different ways to write the stiffness.
+ How do you parameterize the stiffness in that box?
+ It's just the-- does it take a--
+ [INAUDIBLE]
+ The orientation stiffness, is it a diagonal matrix on RPY?
+ Yeah, I think it is.
+ But I actually don't remember.
+ [INAUDIBLE]
+ Yeah, they do RPY.
+ OK, yeah, so don't-- I won't try to get to pi over 2.
+ Awesome.
+ Thank you, Terry.
+ OK, questions about that?
+ [INAUDIBLE]
+ Yes?
+ [INAUDIBLE]
+ Correct.
+ [INAUDIBLE]
+ Good.
+ That's not a naive question.
+ That's an advanced question, I would say.
+ So remember how I said you can mix this
+ in the hybrid position control?
+ So EWL will actually also accept a feedforward force.
+ We normally live in joint-- I know better what it does in
+ joint.
+ I assume it could also take a feedforward force in Cartesian.
+ But actually, I'd have to look to make sure that-- we almost
+ always use joint space control for a limitation I'll
+ talk about in just a second.
+ So yes, if you're in the limit, you
+ could set kp and kd in the joint space impedance
+ controller to 0.
+ You can say, I know everything I should know.
+ It will still compensate torque for you, the gravity torque.
+ And it actually does a little bit more.
+ It compensates friction, too, in a very clever way.
+ But then you can command forces directly to add in.
+ Therefore, you could do the acceleration-based stuff
+ through that.
+ I think the bandwidth needs to be considered.
+ So expecting it to track super high through that force
+ command is to maybe-- there will be limits to what you can do.
+ Did that answer the question?
+ Yeah?
+ Great.
+ OK.
+ Yeah, so this is super powerful.
+ There's only one thing that I don't like about it.
+ What's the one thing I don't like about it?
+ I kind of alluded to it in that question.
+ I mentioned it once before, which
+ is why it's a fair question.
+ What's that?
+ The null space is--
+ I think that's manageable.
+ So in fact, I should probably have lectured about that.
+ Because it's sort of a thing.
+ It's called operation space control.
+ And the idea-- so we talked about joint centering
+ in differential inverse kinematics.
+ There's a joint centering-- I did put it in the notes.
+ There's a joint centering sort of version for this.
+ I can say it off the top of my head here.
+ How would you do joint centering to take care of that null space?
+ If you're normally commanding this
+ with your command that comes from stiffness control,
+ and you want to take care of the null space,
+ then the standard thing people would do,
+ would do-- this is the null space projection.
+ And then write something like kp q desired minus q.
+ Lots of symbols.
+ But the point is, you could write it like a PD controller
+ and have it in the joint coordinates
+ and project it into the null space of this.
+ So that's a really beautiful idea
+ that says, in some sense-- and the way people talk about this--
+ this is the first priority task.
+ The torques you pick should absolutely
+ create the virtual stiffness that you
+ want at the end effector.
+ But in the null space of that Jacobian
+ and any extra degrees of freedom,
+ then I'd like the rest of my joints
+ to act like they're a PD controller going back
+ to the original.
+ And this mixing of joint space and end effector space control
+ was originally-- it's called operational space control.
+ And operational space control has
+ grown into a whole rich library of ways
+ to prioritize different tasks and constraints.
+ There's humanoid versions of it and the like.
+ But operational space control was originally just,
+ let's mix joint and force into the same frame.
+ Great question.
+ But that wasn't my biggest concern.
+ I have exquisite control.
+ I can write the dynamics beautifully.
+ But I have to know the point about which
+ I'm going to write my dynamics.
+ That's the thing that drives me nuts.
+ All of this is based so heavily on the Jacobian.
+ And it's the Jacobian that gets me from robot joint coordinates
+ to a particular point on my robot.
+ So if I'm in the factory or something
+ and I'm applying forces exactly at the end of the orange knob
+ on the robot, then life is good.
+ I can act exactly like I want at the end of that orange knob.
+ It's actually the center of that little orange sphere,
+ I think, is where the coordinate system is for us today.
+ All right.
+ But if the robot bumps into something halfway up its elbow,
+ then we haven't solved that problem.
+ We haven't programmed the response
+ that the robot's going to have if I were to go up--
+ it's turned off right now.
+ But if I were to go up and knock it like this,
+ none of my math has told me what that response should be,
+ if I programmed the response down here.
+ And it's for that reason that we tend to live in joint space.
+ Because if I get a perturbation anywhere,
+ it might not have a beautiful interpretation
+ at the end effector.
+ But it has a logical interpretation
+ in joint coordinates.
+ OK?
+ You would like to say there's a richer problem of trying
+ to say, how would I program the response for whatever contact
+ I happen to be experiencing?
+ That's a rich problem.
+ And I'll maybe jump ahead and say that, too.
+ I have-- I didn't even show most of my videos here.
+ OK?
+ So there's an interesting problem of contact estimation.
+ If we know J transpose F equals torque,
+ then you can ask the question, if I'm feeling torques that I
+ didn't expect at my robot, where on the robot
+ could I have been-- did that force come from?
+ OK?
+ And you can imagine, if you can estimate
+ by looking at your joint torque sensors, where
+ on the robot you made contact, then
+ you could program the response to interact
+ at that point with some impedance or some stiffness.
+ But it turns out that's a really bad problem.
+ I think this picture was one that Pang
+ made to try to make that point.
+ If you are experiencing some joint torques,
+ and you try to map that back to the possible locations
+ on the arm, and you admit that there's
+ a friction cone on the arm, so the location--
+ the direction is not directly imposed by the location.
+ It could be-- even if I'm pushing here,
+ it could be any of these vectors.
+ And you try to solve the inverse problem.
+ For a particular torque, there's a bunch
+ of places on the robot that could have possibly--
+ this wasn't even the worst one, I think,
+ now that I'm seeing it.
+ But there's a lot of different locations
+ on the robot that could have explained the same torques.
+ And in general, I think you can make some progress.
+ The people that have done really nice contact estimation
+ have done it well enough that you
+ can stop when you're about to hit something,
+ but not well enough that you can program the response
+ at an unexpected location.
+ That's a hard problem, especially
+ if I were to allow the fact that there could
+ be multiple points of contact.
+ Then it's completely-- it gets very complicated.
+ People who've been asking about human-robot interaction,
+ if I bump up against something and it's a wall,
+ then the thing I should do might be very different than if I
+ bump up against something and it's a person in both directions.
+ Because actually, the person might
+ be trying to command me by pushing me around.
+ And I should be responsive, submissive, I guess,
+ to the human.
+ Or it could be other cases where I should try to get the task
+ done, even through some--
+ so it's a very, very hard problem.
+ I think the world is sort of agreeing
+ that maybe the way to solve that is with tactile skins.
+ And that's one of the things we're
+ excited about with the soft robot project at TRI
+ is we're trying to build sensing skins.
+ And I think at some point, you have
+ to try to estimate the contact location with a richer
+ set of sensors than just your joint torques.
+ I think we understand that the joint torques are not
+ going to get it done, unless you had a lot of links.
+ So I'd say that's the biggest limitation of this
+ is the impedance control, stiffness control,
+ end effector view of the world needs you to know
+ where the end effector is.
+ [WRITING ON BOARD]
+ And that's why-- so if I now go back to this one example
+ I talked about with key points, it's
+ kind of exciting to think about maybe combining
+ some of the tools from perception
+ with some of the good tools from control.
+ So the simplest version of this, I would say,
+ would be that if we're looking at a tool
+ and we want to apply a force at the end of the tool
+ instead of the end of the end effector,
+ if I use my key point estimation pipeline,
+ if I want to control a stiffness in multiple degrees of freedom,
+ maybe I'll have an oriented key point or a handful of key
+ points so that I can get the orientation of the object too.
+ And then if I assume the object is fixed to the hand,
+ I just have a slightly different end effector on my robot.
+ I have a Jacobian that's just slightly different,
+ but based on the location that came out of the key point
+ estimator.
+ And I can suddenly apply impedance or stiffness
+ control at the end effector of the tool.
+ And that's what made the examples
+ I showed of erasing and plugging in and things like this.
+ This was impedance control plus key points.
+ There's probably lots of potent combinations
+ of the different tools.
+ But you do need to know where the location of the contact
+ is in order to get that done.
+ OK.
+ Yeah.
+ And so what do we do on the EWA?
+ We are sending an only queue desired trajectory,
+ like I said.
+ And EWA's controller is differentiating.
+ We don't get to send the feed forward.
+ We tend to do joint stiffness control.
+ Despite the elegance of the Cartesian stuff,
+ the joint stiffness is more robust to unknown contacts,
+ I think, or more reasonable response.
+ Principle of least astonishment, if you will,
+ responses to unknown contacts.
+ And an important point that I maybe forgot to make,
+ but the difference between the stiffness control, which
+ is canceling out gravity, versus just a PD control,
+ is if I can cancel out gravity with a feed forward gravity
+ term, then I can choose my stiffnesses to be much softer.
+ I can choose kp and kd to be much smaller
+ if they don't have to also fight gravity.
+ And that's how we got compliant motion for things like opening
+ up the dishwasher door.
+ The trajectory of this was, I would say, carefully planned,
+ but with a highly imperfect model of where the dishwasher
+ door is, where the hinge on the dishwasher door was.
+ And we are heavily relying on the ability for that robot,
+ just like when I pushed it in joint space mode,
+ to deviate from its planned trajectory
+ in order to execute that task.
+ If it didn't, if those gains were too high,
+ and the robot was pulling down on this,
+ and it was kinematically bad, the hand could get jammed,
+ and things would be bad.
+ You'd blow a fuse.
+ These things are pretty robust.
+ Good.
+ Any other questions about that?
+ Did that lineup of--
+ did that organization help with the litany
+ of different versions?
+ OK.
+ Cool.
+ I don't mind ending a few minutes early.
+ And I actually have one other thing.
+ If anybody wants a Drake sticker--
+ someone gave me Drake stickers, and I
+ have laptop-sized Drake stickers and cell phone-sized Drake
+ stickers.
+ And if you guys come to class, you get to get Drake stickers.
+ I mean, just take one or two.
+ OK, see you next time.

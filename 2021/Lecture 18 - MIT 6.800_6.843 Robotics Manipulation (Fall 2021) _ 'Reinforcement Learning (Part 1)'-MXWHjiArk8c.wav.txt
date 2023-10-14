@@ -1,0 +1,1393 @@
+ [INAUDIBLE]
+ All right.
+ OK, we're good.
+ Let me list a few administrative things just to kick off,
+ since there's a lot of things going on.
+ We know that the drop date is Thursday,
+ so people are thinking about their grades.
+ We've done our best.
+ I would say Rachel and Danny have done their best.
+ Thank you to grade as many of the p-sets
+ as we could possibly do.
+ They should be-- all the grades should be available to you
+ on Gradescope.
+ You get emails, I guess, most of the time that they're released.
+ And the rubric is on the website,
+ and the percentages should line up.
+ There's no intention to curve.
+ So you should have a good sense of where you're at.
+ If you have questions, of course, you can ask.
+ We have our project face-to-face meetings this week.
+ I'm excited to see your faces and talk about the project.
+ That's my number one goal.
+ I mean, I sent in the post just some basic instructions.
+ Come and tell us--
+ show us a few pictures, talk us through them,
+ and tell us how things are going.
+ Use it as a chance to ask us questions.
+ If you're stuck on anything, we want
+ to make sure we're helping you as much as possible
+ and that you're still on track.
+ If you have a big team and you want
+ to help us understand if everybody's
+ able to contribute, I think that's an important thing that I
+ would like to look out for.
+ In general, I think some of you are
+ asking lots of good questions on Stack Overflow.
+ I think a lot of them are private.
+ You guys don't realize how many questions
+ are getting answered all, but there's lots of good questions.
+ Keep them coming.
+ Some of you are asking them on Stack Overflow, which I actually
+ really appreciate and love.
+ I mean, I think--
+ and some of them have gotten-- some of those
+ have gotten extremely good answers.
+ So don't be shy asking on the main Drake forum.
+ I think that's incredibly good for, in general, just
+ having more open documentation and community
+ building for that.
+ And you also get more people answering questions
+ because they're on--
+ someone's there answering most of the time.
+ And the last thing that I guess we haven't said,
+ but we sort of decided, is that logistically,
+ with 50-some groups, we're going to do the videos again
+ for the final project presentation
+ rather than the live presentation.
+ I think it's actually worked incredibly well.
+ It was one of the good things that came out of Zoom semesters,
+ I think, is being able to have something-- an artifact
+ that you can look back at and share and other things
+ is a great thing.
+ And also, avoiding the switching laptop conundrum is nice.
+ So we're going to go for that again.
+ We still have the last day allocated for it.
+ I've actually reserved the room for longer.
+ We'll have a viewing session.
+ So it counts as one lecture from the time we get together,
+ but we'll watch as many of them as we can.
+ And we'll give you all the details on the website
+ about exactly the time durations and how to post
+ and everything like that.
+ Lots of small things, but any questions
+ about the administrative stuff?
+ OK.
+ So we started-- I kind of gave the prelude last week
+ to reinforcement learning, talking about visual motor.
+ And this week, we'll squarely focus on reinforcement
+ learning in two parts.
+ So part one today, we're going to talk about mostly
+ sort of the policy gradient view of reinforcement learning.
+ And then I'm going to talk--
+ I'm going to emphasize sort of a few of the core ideas, I think,
+ and maybe not even the most commonly discussed ideas,
+ but the ones that I think are most relevant to manipulation
+ and that are coming up in our research.
+ Some of the important ideas of thinking about it
+ as a black box optimization, some
+ of the important things that happen when we add
+ stochasticity to the formulation.
+ We'll talk through those.
+ Thursday, we're actually going to have a guest lecture
+ from Abhishek Gupta, who's fantastic.
+ He's a recent graduate from Peter Abbeel and Sergey
+ Levine's group.
+ He's done lots of reinforcement learning on real robots
+ doing manipulation.
+ So he's going to give you a very sort of applied RL view
+ and what does it take to do RL with real data
+ in the real world on Thursday.
+ So I think that'll be very good.
+ And he'll build off this, talk about the actor critic
+ and the Q-learning varieties.
+ Good.
+ OK, so let's start talking about RL.
+ What is reinforcement learning?
+ It means a lot of things to a lot of people.
+ The scope of what you might call a reinforcement learning
+ algorithm is a dynamic object.
+ And it grows aggressively, I would say.
+ For me, RL is a set of methods that
+ are trying to solve the control problem.
+ So the diagram you will always see here
+ in every sort of RL talk or book or whatever
+ is that you have an environment.
+ You have an agent.
+ Sometimes that's agent.
+ And we're just trying to close the loop with the environment.
+ But I think what defines RL for me, which
+ is maybe slightly narrower than it's broadly used these days,
+ is the idea that we're going to assume
+ that the environment, the world, the plant, is a black box.
+ So you get to run experiments on the environment.
+ You get to send in actions and get observations out.
+ But you don't get to know the full detailed equations
+ of the environment.
+ You don't get to explicitly take gradients of it.
+ You don't get to know its convex.
+ You don't get to do any of the stuff
+ that we've been trying to emphasize.
+ And there's a couple of key ideas about policy gradient
+ and Q functions and value functions
+ that are, I would say, defining in the sense of RL.
+ But this, I think, first idea is treating
+ the world as a black box.
+ And I think another key idea is that RL almost always
+ leverages stochastic optimal control as opposed
+ to the deterministic formulations
+ for algorithmic reasons.
+ And we'll see, I think, important reasons
+ for the success of the algorithms.
+ So last time, we started talking about the visual motor
+ policies, which is just so good and so awesome
+ that we can finally take a full camera input
+ and think about possibly blocking it off a little bit
+ and having a smaller pipe that comes down to a controller
+ that we think about with our RL tools,
+ but still this pipeline that takes images straight
+ through to actions and in a feedback loop
+ is just so good and so powerful.
+ And I really became completely convinced
+ when we were doing these experiments, this very, very,
+ I think, compelling, robust behavior, at least
+ local to the demonstrations, but where you could prod and push
+ and watch the robot interact with the world
+ in a much more reasonable way.
+ But last time, we did visual motor policies
+ with behavior cloning.
+ And today, we'll try to talk about some
+ of the underpinnings.
+ Can we find those policies with RL?
+, OK.
+ So I actually want to start.
+ It's been very fun for all of us,
+ I think, to read the feedback that you
+ give on the problem sets.
+ Those of you that are continuing to give good feedback,
+ we appreciate it.
+ Many of you keep asking about, don't
+ forget to throw in some software examples and the like.
+ So I actually want to start a little bit with this--
+ talk a little bit about RL software.
+ And it's actually progressed quite a bit
+ since this time last year.
+ So this time last year, I was looking around
+ at all the possible RL packages that I would recommend or not
+ recommend for the class.
+ And I was torn, because a lot of them
+ were in an intermediate state or something.
+ But I think there's some pretty good, more mature offerings
+ this time.
+ And I'm pretty excited about that.
+ So I feel more confident recommending
+ one or two specific things.
+ OK, so the first--
+ I guess I've forgotten my intro order,
+ but let me forward pass that for a second.
+ OK, the first bit of RL software that
+ has become the winning format, I think,
+ for specifying the environment half of this
+ is the OpenAI gem.
+ Many of you know this.
+ So there's a standard Python interface, the gem environment,
+ which asks you to define your RL problem--
+ not the algorithm, but the problem--
+ just by filling in a few simple callbacks.
+ You have a basic init method, a step method,
+ which takes your action, outputs the observations
+ at the next step, advances your simulator,
+ however you want to do that, a basic reset method, something
+ to render just for the human or for making
+ videos, which could be separate from the observations.
+ These are all, of course, very analogous to the things
+ we have been using in Drake.
+ This picture is not so different than a sort of systems
+ view of the world.
+ So every one of those things has sort
+ of an analogy in the tools we've been using.
+ We have-- we put our diagram builder inside the init,
+ and our--
+ not just the diagram, but the simulator.
+ Our step function is equivalent to advance to in Drake speak,
+ but it also has to return the evaluated observation,
+ the evaluated reward.
+ Reset just means start over, create a new context, probably
+ a random context, actually.
+ And those sort of all--
+ I think it's pretty--
+ this is what's been great about the OpenAI gem,
+ is that this is asks very little of the interface,
+ and it's very easy to populate, whether it's
+ from a game engine or from an Atari game,
+ or all kinds of problems are easy to sort
+ of cast in that framework.
+ But I also think it's very telling, maybe,
+ to think about just the difference, the different sort
+ of view.
+ And maybe it's one of the best ways
+ to express my mixed feelings about RL,
+ is that this picture of the world
+ is general enough to be used for everything.
+ And that API, you can put sort of anything behind it.
+ But if you contrast that with sort of the Drake systems
+ framework that I've been advocating,
+ where the goal in Drake has been to expose everything,
+ not to bottle up everything.
+ I mean, this is really a sort of a philosophical difference.
+ And it's not clear if one's better or worse yet, right?
+ But there's a philosophical difference,
+ where I believe that the systems are very structured.
+ I think our mechanics is very structured.
+ I think our controllers are very structured.
+ I think you should do everything in your power
+ to express that structure in a clean way,
+ and allow your algorithms to dig in and exploit
+ the structure when they can, and make that as glass box,
+ clear box as possible.
+ And the RL approach is more general,
+ but it's weaker in the sense that it doesn't ask
+ you to declare those things.
+ It only assumes a black box.
+ And that's a philosophical difference.
+ And so I actually, this week, have
+ been trying to make sure there's a nice interface available
+ for you to--
+ if you have a Drake system, you can use the open AI tools
+ and things like this.
+ So it's easy to go back and forth,
+ and I'll show you that in a second.
+ But it sort of pains me to do it.
+ I mean, of course, I want to be able to enable both.
+ But I feel like we've tried to expose
+ all this beautiful structure, write
+ all the diagrams and all the systems in a way that's
+ sort of like, if they're convex, they're convex, whatever.
+ And then it's kind of like, we're
+ going to let you look at them through a little drinking
+ straw in order to do the algorithms.
+ And it's not leveraging the extra work that
+ has happened behind the scenes.
+ So I would say that's the only--
+ I actually love--
+ I do really like RL.
+ I think RL is clearly the most exciting thing that's
+ happening, I think, right now.
+ It's generating the most excitement right now.
+ And even my thesis-- that's what this funny slide was before--
+ my thesis was actually in RL, right?
+ So this was in 2003, probably, this one,
+ where I was in building E25, back when
+ the neuroscientists were in E25.
+ And because I was in a neuroscience lab
+ and I was trying to build robots,
+ I had to bring a CD rack shelf from home.
+ And someone needed a piece of rubber,
+ so I only had one piece of rubber.
+ I was working on a shoestring budget,
+ but this is a little walking robot
+ that just fell down a ramp.
+ There's no motors, no RL there.
+ And then my thesis was about making
+ a robot do RL in the wild, sort of,
+ and learn it quickly to learn how to walk.
+ And this was the actuated version of that simple robot.
+ And I spent a lot of hours watching
+ that thing do gradient descent with kind of a--
+ you're trying to write your thesis and you're hearing--
+ [TAPPING]
+ Everyone's over here.
+ But no, I mean, this was defining for me
+ to think about what you could do with online learning.
+ And I think-- and even in my job talk,
+ to get the job at--
+ when I went around giving my faculty candidate talks,
+ I was saying, even if we could solve the optimal control
+ problem perfectly for humanoid robots,
+ you would still need online learning
+ to adapt to all the changes that are
+ going to happen in the world.
+ And I still believe that.
+ OK.
+ So this little robot basically fell down a ramp
+ because of the mechanical design,
+ but then it learned how to walk using RL.
+ That was doing policy gradient-based--
+ actually, an actor-critic-based algorithm
+ that was learning to walk in real time.
+ It took only a few minutes to learn how to walk
+ because the design put it in a space
+ where it could tune only a very small policy at that time.
+ And it would adapt on the fly.
+ As it walked around, this was--
+ walking from E25 towards the Media Lab
+ was like the crowning achievement
+ because it wasn't a very big robot.
+ And right around that time when they were shooting that video,
+ Marvin Minsky walked by.
+ And he looked down at the robot, and he
+ looked at the camera crew that was behind the robot.
+ He's like, I think the camera is more impressive than the robot.
+ And I cried myself to sleep that night,
+ but I was still proud of the robot.
+ Anyway, so this was defining for me.
+ I really think a lot about RL, but I
+ think that there is a fundamental sample complexity
+ issue in the amount of training data
+ that you need to do the types of algorithms
+ we'll talk about today.
+ And so I have been trying to contribute
+ to trying to exploit the structure in the equations
+ more.
+ OK, so there's this OpenAI gem.
+ It exists.
+ I think you can use anything that's
+ sort of a system in Drake can be a system in OpenAI gem.
+ And similarly, you could take any OpenAI gem system
+ and use it in Drake.
+ You just won't be able to use all
+ of the gradient and other features in Drake
+ if you do that.
+ So I made this Drake gem.
+ Many people have done Drake wrappers around exposing
+ the gem interface around Drake, but I tried to make one
+ that you could build off of for your projects if you want this.
+ So it just goes through and defines all of those carefully.
+ It's actually-- I think it's important to do it right.
+ I mean, there's sort of right ways
+ to reinitialize the simulator to get everything seeded properly
+ off a single random seed and the like,
+ but it's all very easy to do.
+ So that's available if people want it.
+ OK, and like I said, back in the day-- so the OpenAI gem
+ is for the environments.
+ And this has been relatively convergent.
+ Most people are using the AI gem interface for some time now.
+ But for the algorithms, there are
+ lots of good tools out there.
+ And I'd say they're even more mature this year.
+ So the one that I will be using in the notes
+ as I write them up this week is the stable baselines
+ 3 as an example.
+ We're using PyTorch in the class.
+ It uses PyTorch.
+ Some of the other baselines algorithms
+ are still using TensorFlow, and so harder for me
+ to use alongside the notes without having
+ more dependencies and the like.
+ It's got a lot of the famous algorithms implemented.
+ It strikes me that this isn't the best advertisement.
+ The particular lots of red that they put here
+ is a little scary, but there's still some good check marks.
+ And it's honest, right?
+ But there are a lot of the algorithms
+ that work for a lot of cases.
+ So this has got many of the RL algorithms.
+ I guess I already wrote algorithms.
+ And then there's one other tool that I think is incredibly
+ good that we've used a bunch, which is this NeverGrad tool.
+ Now my slides are not quite--
+ for some of the black box optimization,
+ which is not purely RL.
+ It's for a broader view of this.
+ NeverGrad has a bunch of good algorithms,
+ and we'll use that too.
+ NeverGrad meaning no gradients for black box optimization.
+ [TYPING]
+ OK, so let's dig in and talk a little bit
+ about the implications of black box optimization
+ and why it's good and why it's expensive in some ways.
+ OK?
+ OK, so I've been advocating many times
+ to think about our manipulation problems
+ through the lens of optimization.
+ The general form of that is something like this, right?
+ In many cases, many algorithms we've used,
+ like the solvers in SNOPT or if you've
+ used any of our MOSEC or Girobi sort of tools,
+ exploit some structure in f and g.
+ The weakest form, the sort of SNOPT
+ or the general nonlinear optimization,
+ maybe it's just asking for the gradients.
+ Some of the more advanced algorithms
+ from MOSEC and Girobi will ask if you
+ can say that this is quadratic or it's
+ convex in some structured convex form.
+ It's similar for these constraints
+ to be a convex set.
+ Then you can level even more advanced algorithms at it.
+ So what we're going to go to today is just a simpler form.
+ We're going to minimize f of x and assume almost nothing.
+ [WRITING ON BOARD]
+ About f.
+ We're not even going to assume it's a-- we'll
+ start off by assuming f is even a deterministic function,
+ but there's going to be versions of this where you won't even
+ assume that you get the same answer every time you
+ put an x in.
+ So when I think of this as a black box,
+ I'm saying that I give you an x, you give me f of x out,
+ and that's it.
+ I don't get to ask any more detailed questions.
+ Don't get to know anything about what's
+ happening behind the scenes.
+ It could be calling a game engine.
+ It could be playing Go.
+ Doesn't matter.
+ OK, so in this view of the world-- I'm
+ going to erase that just to stay on the same boards here.
+ In this view of the world, we had some really nice algorithms.
+ So for instance, if I had some complicated optimization
+ problem, the simplest versions would be gradient descent.
+ I get a point here.
+ I start moving down the landscape.
+ We talked about sort of Newton-like or quasi-Newton
+ algorithms or the quadratic programming
+ generalization of that, sequential quadratic
+ programming, which maybe if I have a sample point here, what
+ I would do would be use some of the gradient information
+ to make a local quadratic approximation of the function,
+ jump right down to the minimum, get a new sample point,
+ jump right down, and eventually converge on the minimum.
+ So if I tell you now that you can assume almost nothing
+ about f, we don't actually even want to assume it's smooth,
+ but I think our pictures will indicate it's smooth for now,
+ just to get our head around the problem.
+ Then what kind of optimization are you left with?
+ I mean, in a one-dimensional board example,
+ you could just sample until you find a good solution
+ and be done.
+ But in high dimensions, we're thinking that's probably not--
+ it's harder to draw, but it's important to think about this
+ as sort of a high-dimensional object.
+ And just trying every point until you find a good one,
+ brute force search isn't going to get the job done.
+ So how do you do something like gradient-based optimization
+ when you only have a black box?
+ And you can imagine that almost most of the ideas over here
+ have sort of a sampling-based analogy.
+ Right?
+ Which is, in many ways, not so different than what
+ we talked about with kinematic trajectory optimization
+ versus sample-based motion planning.
+ There's actually a lot of nice parallels
+ between those two worlds and the two worlds we're doing today.
+ But maybe the simplest algorithm,
+ gradient-like algorithm, would be if I take my random sample.
+ [WRITING ON BOARD]
+ Perturb it by some amount.
+ So let's say I have my guess that the i-th step is xi.
+ You have f of xi.
+ Try to go ahead and evaluate f of xi
+ plus some small perturbation.
+ So I'll make a little perturbation here, w.
+ I'll get a different point.
+ Maybe that's just drawn from some Gaussian.
+ I'll just make a small random change to my parameters, w,
+ in some direction.
+ And the simplest algorithm, I think,
+ would just be to say, if this value is less than this value,
+ keep it.
+ Use that as my new point.
+ And then we'll wash, rinse, and repeat.
+ If it went uphill, discard it.
+ Maybe a slightly more refined version of that
+ could be to say that I will move in the direction of this point
+ proportional to the reward I got, the relative reward.
+ So if this looked a lot better, I'll
+ move aggressively in the direction of that sample point.
+ And maybe even if it went up, I could move somehow
+ in the opposite direction based on this.
+ So there's a sort of a first order
+ sample-based approximation.
+ OK.
+ But there's also-- you can imagine second order methods
+ or richer methods that are doing sort of the same thing.
+ I'm highly positive about the SQP style optimization.
+ I think it's a very powerful, fast, converging
+ set of algorithms.
+ And you could imagine taking my initial sample point
+ and taking lots of random samples.
+ Again, the picture is not fully expressive in 2D on the board.
+ But you can imagine trying to take lots of samples
+ around here.
+ Maybe I explore broadly.
+ And then fit a-- I almost said covariance,
+ but let's call it a quadratic.
+ Fit a quadratic, fit to samples, and then
+ do sort of something like a quasi-Newton descent.
+ OK, and this turns out to be a very powerful class
+ of algorithms, this general idea of trying
+ to use samples to approximate some
+ of the other types of algorithms that we like.
+ There are other considerations, too,
+ that make sampling a nice choice.
+ Right?
+ [SIPPING]
+ All right.
+ So let's just think for a minute about what's
+ the relative merits of a sampling-based approach
+ versus the exact gradient-based approach.
+ I mean, first of all, the sampling only requires--
+ that's easy, right?
+ f of x.
+ Doesn't require the actual gradient.
+ I think there's a question of how expensive is evaluating
+ f of x versus partial f of x if you have it.
+ That's definitely a consideration.
+ Sometimes it can be so much faster to implement--
+ if taking gradients is quite slow,
+ then it might actually be better to just run f
+ a bunch of times separately.
+ I remember Mo Todorov going back and forth with this from Majoko.
+ He was like-- one day I would talk to him.
+ He's like, oh, yeah, I wrote all the analytical gradients.
+ And then he's like, oh, no, I realized this is just faster.
+ Because I could put it on a GPU.
+ And he went back and forth.
+ So there was a time where he had all the analytical gradients.
+ And I think he's mostly gotten rid of them.
+ Another sort of important consideration,
+ like how many GPUs--
+ how big is your GPU, right?
+ How many threads, how many GPUs?
+ Because doing lots of samples of f
+ can be sort of trivially parallelized.
+ And if that is expensive but not as expensive as--
+ if it's free to make this in parallel,
+ then maybe it's cheaper, again, than the partial f partial x.
+ And that's a big one.
+ I think the success of these methods
+ is tied, I think, very closely with the fact
+ that we've got good GPUs and the like now.
+ But there is more subtle reasons that I really
+ want to think about, more, I think, robustness reasons.
+ So what if your cost function looks like something like this?
+ Right?
+ Right?
+ If there's a lot of sort of local, noisy structure
+ that happens in your optimization.
+ OK?
+ The gradient is a beautiful object, of course.
+ But it's-- for better or for worse,
+ it's an extremely local object.
+ If I happen to sample this point,
+ I might get instantaneously a gradient
+ that looks like that just because
+ of the high frequency components of my landscape.
+ And that could be a very poor representation of what I
+ actually-- the direction I actually want to move in.
+ So I think there is some robustness in actually
+ taking multiple samples.
+ Of course, it could still be susceptible to noisy
+ evaluations, but somehow the sampling-based thing
+ can potentially power through some noisy--
+ locally noisy observations.
+ So I think there's a very deep question that I don't
+ have an answer for you for.
+ I've seen examples that look a lot like this.
+ And I've seen examples that look more
+ like those simple pictures coming out of manipulation.
+ But I think there's a deep question, which
+ is, do our manipulation problems look like this or not?
+ Do the problems we care about solving and control,
+ more generally, look like this or not?
+ I think for the low-dimensional problems where
+ it's easy to plot these things, I don't worry too much
+ that it does.
+ But in the higher-dimensional, much richer sort of contact
+ kind of configurations, it's hard to know.
+ It's hard to know what those look like.
+ Like I said, I've seen examples where we're like, oh,
+ clearly the performance of our algorithm
+ is suffering because of something like this.
+ And then you plot them, and they're actually pretty smooth.
+ I think that there's other examples like people
+ tend to use these sampling-based methods sometimes
+ to optimize neural network-based models.
+ And so you think, well, maybe the neural network
+ is capturing the function correctly,
+ but it's locally not very smooth.
+ And I think that is probably true in some cases.
+ But we've seen other cases where we do our best to visualize
+ them, and they look pretty smooth.
+ Yes?
+ For higher-dimensional problems,
+ how do you check whether it's a normal shape or more
+ like a 2D shape?
+ Good question.
+ So when I say we've checked sometimes
+ and have looked at this in higher dimensions,
+ what do you do?
+ The tools are not as strong as I would like.
+ But a standard heuristic would be take your sample point,
+ pick a random direction, and make a 2D plot.
+ And if you do that a few times, you
+ can sort of convince yourself of the local shape,
+ even if you can't say anything rigorously about it.
+ I think in general, the sense of taking small probes
+ into the neural network, for instance.
+ And as a follow-up to that, is it common for the whole function
+ to have a similar level of local minima?
+ Or is it possible that it's just pockets
+ and really simply 2D?
+ Yeah, OK.
+ So the question is, do you expect
+ to see this uniformly everywhere,
+ like this high-frequency stuff, or just in pockets?
+ I think it's completely problem-dependent.
+ And I would suspect, in a lot of our manipulation formulations,
+ if I've got a huge swath of parameter space
+ where I don't even touch an object,
+ and then there's some parts where
+ the detailed mechanics are coming in
+ and it's much more complicated, that it's probably
+ going to be smooth sailing but maybe uninformative
+ for a lot of places, and then a lot of activity
+ in other places.
+ I would definitely think that's true,
+ which makes it hard to set global learning rate
+ parameters and the like.
+ So this is, I think, a very important point.
+ And I really do think that this number
+ of parallel executions is a very important point, too.
+ But of course, the most naive version
+ of this, of a sampling algorithm,
+ would say that every time I want to make
+ a local approximation of my gradient,
+ I'll take n samples, where n is the dimensionality
+ of my parameter space.
+ So basically, I'll change--
+ I'll perturb the decision variables
+ in every possible direction at least once.
+ That'd be like a finite difference type method.
+ And if you're doing that, then you'd
+ expect potentially the number of possible evaluations
+ that you have to do in f, in parallel,
+ to grow very badly if your number of x's
+ is like the weights of a neural network.
+ You would expect that to start getting bad.
+ So there's ways to try to fight against that.
+ And then the question is, do you have a super good gradient
+ based--
+ for neural networks, we do have very good gradient algorithms.
+ So these two do fight each other.
+ And they fight each other in interesting ways
+ as the dimensionality goes high.
+ Now, there's another name for these sort of black box
+ sampling based algorithms, which for a while
+ was sort of a bad thing, a bad word, or something like that.
+ I don't know.
+ But these are really the genetic algorithms.
+ They were not as popular before, or swarm-based optimization,
+ let's say.
+ But I think, like I said, because of the ability
+ to do these things in parallel, and I
+ think because of these nice robustness properties,
+ they've come back into fashion.
+ So the one that is most similar to this picture
+ that I said of trying to make a local quadratic approximation
+ of my data and then doing a quasi-Newton update
+ is an algorithm called CMAES.
+ I mean, all these algorithms are pretty similar.
+ There's many algorithms that are small variations
+ on each other.
+ So cross-entropy methods are pretty similar to this, too.
+ But I'll highlight CMAES here.
+ So CMA stands for covariant matrix adaptation.
+ It's often with an ES, evolutionary strategy.
+ OK.
+ As we've said before, the probabilistic interpretation
+ would be that you're trying to fit the covariance
+ matrix of a Gaussian kernel.
+ But that's the same as fitting a quadratic form
+ for a quasi-Newton method.
+ And this is just sort of a picture
+ if you actually do try to do a simple optimization,
+ if you're on a simple quadratic landscape
+ and you start with a swarm of particles,
+ you'd expect the-- in fact, in the simple case of it
+ being a quadratic, you actually expect
+ that the local covariance matrix approximation will indeed
+ reproduce the Hessian of the quadratic form.
+ So it's an accurate second order approximation
+ of the quadratic form.
+ You get a new covariance matrix.
+ You have a new Gaussian to sample from,
+ which tells you where I should draw samples
+ on the next update, wash, rinse, and repeat.
+ And it will converge to some local--
+ there's an additional scheduling and other sort of heuristics
+ inside there about the path that it takes
+ given these approximations.
+ But roughly, it's what we say.
+ It's a quasi-Newton method that's
+ trying to use swarms of particles
+ to estimate the local curvature and move down the hill.
+ Is that clear?
+ There's another feature of these algorithms
+ that I think is important, often sort of mixed in
+ with this local convergence analysis.
+ So in a quadratic form, you can really sort of focus in
+ on the convergence rate.
+ You can talk about all the things we would like
+ to talk about with gradient descent
+ or other optimization algorithms.
+ You can talk-- it's just converging to a local minima.
+ If you're in the vicinity of a local minima,
+ you'd like it to behave roughly like this.
+ But there's also some sort of global aspect
+ to the sampling-based algorithms,
+ some sort of global optimization interpretation.
+ And this is, I think, harder to appreciate rigorously.
+ Even in my simple picture, where I've--
+ if I were to do even the completely deterministic
+ quadratic approximation of my Hessian
+ and make a quasi-Newton update, it could be--
+ if I'm sorry to be a screw over here--
+ it could be that as I'm walking down here,
+ I get a quasi-Newton step that jumps me all the way across
+ and finds this better local minima.
+ That can absolutely-- it can even
+ happen with gradient descent if I'm taking big steps.
+ But it's maybe more likely to happen in a quasi-Newton
+ algorithm, which is intentionally taking
+ potentially very big steps.
+ It could have gotten lucky and gotten here.
+ That can absolutely happen for the same reason
+ in the evolutionary algorithms, in the CMA-style algorithms.
+ But these algorithms, because they're doing samples,
+ will often have some extra layers of heuristics
+ that try to add a global aspect to their optimization.
+ They'll cast off far-ranging samples, maybe, for instance,
+ and just explore.
+ It costs little to throw out a few Hail Marys out there
+ to see if they can find another possible minima.
+ And so they do tend to have a more global success.
+ I'd say they can find global optima in a stronger way
+ than a method that's dedicated itself
+ to myopically looking at the local curvature.
+ So there's, I think, a somewhat confusing but important
+ global optimization aspect to the sample-based planning
+ algorithms.
+ And I think there's a big discussion about,
+ should we be using these algorithms
+ to do planning with a neural network or whatever?
+ And I think there's a, why does it work?
+ I often see people going back and forth
+ between these kind of justifications,
+ the parallel execution type of justifications,
+ the global optimization aspect.
+ They're all mixed together in some way.
+ But if you put them all together, this has now
+ come back into fashion as a good set of algorithms to use.
+ Just to say that one more possible way,
+ if I have a gradient descent type algorithm that's
+ using local gradients, we said that there's--
+ I'm just trying to be like I'm a vehicle flying
+ around some obstacles and going from the start to the goal,
+ or I'm reaching around some obstacle,
+ and this is the current path that I'm considering,
+ it seems very unlikely with gradient-based methods
+ that it'll suddenly find a completely different solution.
+ That's the same picture.
+ This is just a geometric version of the same picture,
+ but in a trajectory optimization sort of case,
+ you really don't expect gradient descent, any information
+ over here, to ever tell you to jump over here.
+ Because at some point, you're going
+ to do worse for a long time before you get better
+ and go to the other side.
+ And I think these algorithms will occasionally
+ send flyers out there and find an ultimately better solution
+ in ways that you don't expect your gradient-based methods
+ to do.
+ Yeah, of course.
+ Would you expect an algorithm of this type
+ to be more robust to--
+ I'm imagining a case where you are
+ trying to optimize the policy, and it
+ finds a very deep but very shallow or very narrow
+ optimum.
+ But then if you try to run that on a real robot,
+ the odds that actually you think that's going to be
+ [INAUDIBLE]
+ Would an algorithm like this be more robust
+ to find an optimum like that?
+ Awesome question.
+ So the question was, what if I have these sort of landscapes
+ that maybe have a small, narrow optimization?
+ I mean, you could do the same thing where you could have
+ a narrow local minima that's maybe a trap, for instance.
+ That's not the one you want to end up in.
+ I think the case of the good solution being narrow
+ is one case, and the case of a suboptimal solution being
+ narrow is another case.
+ I think these algorithms, they are both
+ subject to possibly getting stuck there.
+ In practice, the algorithm is just like a learning rate.
+ They have a handful of parameters
+ that control how much exploration
+ versus how fast they converge and how fast they settle.
+ And when you feel like your algorithm is getting
+ stuck in these, you dial up the heat in a sort of entropy
+ kind of way and try to explore a little bit more.
+ And you end up finding a balance there.
+ But that is, again, very problem specific.
+ Did you have some intuition about whether you'd expect one
+ to be better or worse than the other?
+ My intuition is that if you're sampling,
+ then you're more robust because you have a very narrow value
+ of good cost.
+ Yes.
+ And then sampling around the rim of that
+ and then ignoring it more.
+ Right, so I think what could happen
+ with an algorithm like this, he says,
+ for the same reason I said, if it's sending out
+ flyers, maybe if it starts converging
+ with a local quadratic approximation that's
+ very narrow in here, then that's where-- at some point,
+ it will actually get in convergence mode
+ and try to efficiently-- but if it occasionally throws out
+ these sort of extra samples, it might
+ discover that it's made a mistake and jump out.
+ And I agree with you on that.
+ But that's going to be subject-- the amount of exploration
+ versus exploitation it does is subject to these sort
+ of temperature kind of parameters.
+ Did you have a question?
+ Yeah.
+ Yeah, I was wondering what it was like.
+ I think I've seen some results that say that it seems to be
+ [INAUDIBLE]
+ And so is that just a matter of [INAUDIBLE]
+ So why is it, for example, using a window or something
+ like [INAUDIBLE]
+ Yeah, I think-- so there are many variants of it.
+ It'd be interesting-- if you have that paper,
+ if you want to track down the reference,
+ I'd actually be interested in that.
+ Yes.
+ Some of them keep multiple populations around
+ and can be more explicitly multimodal.
+ Some of them really do just have more feelers
+ out there in some sense.
+ But I think the inner loop CMAES is really
+ this sort of covariance-- makes local Gaussians
+ and will shrink into a minimized necessary.
+ The cross-entropy methods, which are, I think, known to some
+ of you, are very similar to CMAES.
+ They make a slightly different-- they
+ take a slightly different path.
+ And the way they update their local Hessian approximations
+ is slightly different.
+ But these are all very similar algorithms.
+ So that is a very important first big thing that's
+ happening, I think, when you give up on the structure in f,
+ you open the door to these algorithms
+ making a lot more sense.
+ And maybe they make sense even if you have structured f,
+ but you just have a really big GPU.
+ And that's the way the cost-benefit trade-off falls.
+ I'm pretty sure I had the Nevergrad list of solvers
+ here, too.
+ Nevergrad is a toolbox that just has a bunch of these solvers
+ implemented, super easy to use in Python.
+ And it's got a whole list of these sort of optimization
+ algorithms that are all based on no gradients, hence Nevergrad.
+ I think it's a very--
+ I have no qualms recommending this as a tool to play with.
+ We've used it often.
+ So I think that's the first sort of major shift in thinking.
+ Well, I should say one thing we didn't talk about yet
+ is when I went from the left side of the board
+ to the right side of the board, I dropped my constraints.
+ So that is an important thing that I left out.
+ I think that the structured solvers I've always advocated
+ using fairly simple objectives and rich constraints.
+ That's, I think, a much more robust way to sort of live.
+ [LAUGHS]
+ I've always said, keep this simple.
+ In our kinematic optimization, our IK problems, for instance,
+ I was just saying, just do Q minus desired squared,
+ something like this.
+ Keep that simple, and then add all your rich constraints.
+ Not everybody agrees with me on that,
+ but I've seen lots of people go down--
+ so spend a lot of time tuning cost functions
+ when everything's up in the cost function.
+ And the constraints are just, I think, a much more--
+ it's a stronger way to say what you actually require,
+ and then a lot of the tuning goes away.
+ Nevergrande explicitly says you can only do--
+ it's actually better than many sort of sample-based methods.
+ But it says, we're only going to let
+ you give us computationally very cheap constraints.
+ It's like, the method is actually, like,
+ add cheap constraints to your solver,
+ because the only thing it will do is do rejection sampling.
+ So if it's walking around and you give it an x,
+ it'll just evaluate g.
+ If it's less than--
+ if it violates the constraints, it throws that sample out.
+ That's the only method of constraint reasoning
+ that these solvers typically do.
+ And there is not--
+ these algorithms do not typically
+ embrace the rich constraints.
+ You end up playing the game where you say,
+ I'm going to minimize f of x plus, like,
+ lambda times g of x, for instance.
+ I want g of x, maybe minus, or something,
+ whatever my sign should be.
+ And you start putting a penalty approximation
+ of a true constraint.
+ I guess I do want that to be plus.
+ And there are good ways to schedule this,
+ that penalty parameter.
+ But it becomes a harder game, because really, what you're
+ doing is something that looks a lot more like this.
+ And you've got lots of knobs to tune,
+ and they all kind of compete.
+ Some people worry a lot about RL not embracing
+ the full constraint view of the world
+ and being only in this jam everything
+ into the cost function.
+ Some people think it's not a big deal.
+ I'm somewhere in the middle, I'd say.
+ Let's talk about, I think, another essential aspect,
+ which goes together with the black box optimization.
+ By virtue of feeling like we're going to do sampling anyways,
+ it's natural to couple that with stochastic formulations
+ of the optimal control problem.
+ Yeah, sure.
+ [INAUDIBLE]
+ In terms of the black box solvers?
+ So I'll repeat the question.
+ So it's certainly true that you can take any optimization
+ problem here, and I could write that as s f of x less than
+ or equal to s g of x less than or equal to 0.
+ You just try to push down on s.
+ This is a scalar, and then maybe you have to--
+ so those are equivalent.
+ But that's putting things more from the objective
+ down into the constraint, not going the other way, right?
+ Yeah.
+ [INAUDIBLE]
+ OK, so you're not worried about the penalty method.
+ You're just worried about the basic statement about-- yeah,
+ yeah.
+ Yeah, I think these ways do not embrace
+ what I'm trying to say here.
+ You can hide your objective, of course, in the constraints.
+ I mean, this comes down, I think,
+ to what your solver likes, whether you prefer
+ to write it like this or prefer to write it like this.
+ And some solvers do actually really like this.
+ Many times, they require you to-- a lot of the convex
+ solvers you know require you to write it like this in order
+ to write something as a semi-definite--
+ if you have a quadratic objective
+ in a semi-definite program, then you
+ have to do something like this, for instance.
+ But I think this is more of a--
+ you could defeat this heuristic by writing constraints
+ in such a way that you had a very simple cost function,
+ and you still jammed all your penalties and stuff
+ in the constraints.
+ That's not what I mean.
+ I'm saying, if you don't want to collide with the mug,
+ say you don't want to collide with the mugs, not say,
+ well, I'd be kind of sad if I collided a bit with the mug.
+ I think this is a stronger thing to tell the solver.
+ That's a good question.
+ Another really big important thing
+ is this sort of stochastic formulation of control.
+ So stochastic optimal control is as old as optimal control.
+ It's not an RL thing.
+ But RL has embraced those formulations.
+ And let me just try to--
+ I'd say I think this is inspired in RL probably first
+ by the practical, right?
+ On a real robot, frankly, I mean,
+ even if you think of your robot as a black box
+ that you can set your control parameters,
+ run an experiment, measure the outcome,
+ wash, rinse, and repeat, you can never
+ run the same experiment twice.
+ I was acutely aware of that during my thesis.
+ It was very hard to get the same--
+ the robot to be the same initial conditions.
+ It was very hard to get repeatable data,
+ even in the load regime.
+ This is what experimental science is all about.
+ I've had a little bit of--
+ I've had some really, really good collaborators
+ in experimental fluid dynamics.
+ And the amount of effort that they
+ put into making experiments as repeatable as possible.
+ I can only imagine what the condensed matter
+ folks do and the like, right?
+ And the roboticists just don't do that.
+ You just expect every time I run the robot,
+ it's going to be different.
+ My actuator's heated up.
+ I didn't put it in the same initial conditions.
+ It stepped on a pebble this time, whatever it is, right?
+ And I think we've just embraced it in RL more than in most
+ other cases.
+ So let's think about what the implication for that is, right?
+ So how would I write this in the simplest
+ form of a stochastic optimization?
+ So I wrote min of x, f of x before.
+ But now if f of x is some sort of random evaluation,
+ there's a couple different ways I could write that.
+ I'll choose to write it like this.
+ I'll make the randomness explicit.
+ So w is, for instance, drawn from some random distribution.
+ It doesn't have to be Gaussian, but let's just say--
+ make that explicit.
+ And if w is a random variable and f depends on w,
+ then my cost is a random variable also.
+ I need to take the expected value.
+ I need to take some statistic of that random variable
+ in order to make a scalar cost.
+ And this is the one we almost always
+ choose in stochastic optimal control,
+ because the expected value plays well with the additive cost
+ formulations.
+ And this is very consistent with what
+ I've said before about the modeling choices in the systems
+ framework, where we very explicitly--
+ and throughout robust control, I'd
+ say you'll see pictures that look like this, where
+ you have your control inputs coming in here,
+ and you have an explicit disturbance
+ port, or something like this.
+ Disturbance input.
+ So don't call rand in the middle of your plant dynamics function.
+ Make it very explicit.
+ And then you can start thinking about it more carefully
+ like this.
+ Stochastic optimal control is a more specific version
+ of this big picture, where I know
+ that I have a dynamical system.
+ So this f is actually a rollout of a long-term dynamical
+ system.
+ So stochastic optimal control is just
+ narrowing in on the stochastic optimization problem, where
+ I want to maybe minimize over, let's say,
+ my policy of my controller now of some long-term cost that's
+ over time.
+ So I'll just write it out like this.
+ [WRITING ON BOARD]
+ And probably I have to choose where
+ I want the randomness to come in.
+ There's a couple different choices.
+ It might be that there's randomness in the dynamics.
+ We'll see that there's going to be choices we make,
+ where we might add randomness explicitly to the policy.
+ But we still have a random disturbance input.
+ Random noise or disturbance.
+ And I'll take some expected value over those.
+ [WRITING ON BOARD]
+ So there's a lot of work specific in stochastic optimal
+ control to exploiting this sort of important structure.
+ But let's start by thinking of it
+ just as now a stochastic optimization problem.
+ [WRITING ON BOARD]
+ I mean, there's lots of places that people put in randomness
+ in our actual manipulation RL experiments.
+ So you can name them, I'm sure.
+ What are the ones you see in all the videos?
+ Like, what are the crazy things people do to add randomness
+ to the simulations?
+ Yeah.
+ OK, good.
+ So you get the random disturbances
+ where you're jamming something.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, right.
+ So the robot's getting hit from all sides.
+ I mean, in Boston Dynamics, I guess they actually
+ do it for real.
+ Yeah.
+ I mean, I think the one that I always laugh at
+ is the domain randomization, where
+ they will put the most ridiculous patterns
+ for the vision, for robustness in the perception system.
+ The fact that you might have an elephant
+ on the side of your coffee mug or something like that,
+ or a giraffe or whatever, just cracks me up.
+ But these can all be interpreted in some squinty way
+ as adding some sort of randomness, random parameters
+ to my system.
+ If I'm allowing w to be an entire rich signal,
+ it would be fine if it's just a constant.
+ That would still fit in the class.
+ OK, so let's think through how it changes the optimization
+ problem to now have these stochastic objectives.
+ And as a thought experiment, imagine
+ I've got some manipuland on the table
+ here that I'm trying to pick up.
+ Something on the table here.
+ I've got my shunk coming down from above.
+ Let me just consider, so I can plot things,
+ a very simple policy.
+ We'll just move straight down to height alpha,
+ and then close the hand and then lift.
+ Right?
+ And let's say that the cost function, or the reward,
+ is just the height of the center of mass of the object,
+ manipuland.
+ What is that going to look like?
+ [INAUDIBLE]
+ Maybe if I set my height of my controller too low,
+ then maybe I have a collision or something down here.
+ Or maybe I just give a bad score if I
+ have a collision with the hand.
+ [WRITING]
+ And then maybe if I'm too high, the height of the mug
+ is somewhere over here, let's say I don't get any point.
+ I don't get any reward, because the center of mass
+ just stayed where it was.
+ And somewhere in the middle here,
+ I've got a plateau where I've made successful contact
+ with my cylindrical mug, and I lift up.
+ Just a toy example of a kind of reward function
+ that we might get when we have manipulation.
+ We have the possibility of making contact,
+ of colliding dramatically, of completely missing the object.
+ You can often get these sort of pretty ugly--
+ this does not look like these nice pictures
+ that I showed before.
+ It's not the kind of landscape you'd
+ want to do sort of gradient descent on by default.
+ OK, so this is often not the problem
+ that we try to formulate in RL.
+ I'm going to draw giraffes on here and stuff, right?
+ But I'm also probably going to change the shape of the mug,
+ maybe change the initial positions of the hand, right?
+ And that can do good things, right?
+ So if I ended up with even just a richer shaped object, right?
+ Maybe it's a-- I don't know what that is, a chalice, right?
+ Then maybe I've got a slightly better cost function.
+ Maybe I'm still in collision for a bunch of the time,
+ but maybe there's some interesting times
+ where I can grasp successfully.
+ I fail in the middle.
+ I grasp-- I don't know.
+ I could get something by just having a more interesting
+ object.
+ I could potentially have more interesting cost functions,
+ OK?
+ But that doesn't sort of defeat the problem of if I just
+ airball, I've got nothing going on here.
+ Having lots of samples down here,
+ that's just not going to give me any gradient information
+ to base my search on.
+ I've got lots of samples over here.
+ I've got nothing good to do.
+ OK, so it's very interesting to think that-- I mean,
+ you might think that if you're asking
+ the same robot, the same policy, to pick up
+ a whole variety of objects, that that would be a harder
+ optimization problem.
+ I would think that, right?
+ That sounds like a harder optimization problem.
+ Tune a robot to pick up a single object versus pick up
+ an entire category of objects.
+ You'd think that would be a bigger ask.
+ But in sort of a gradient optimization landscape way,
+ it can actually make things better, right?
+ So imagine now that just I have a variety of different-- well,
+ let me even go back to an even simpler example here.
+ So the characteristic I care about here
+ is these rough discontinuities, right?
+ So what about if I just bottle that up
+ and think about a very simple case of this?
+ If I'm just trying to minimize some discontinuous function.
+ This is a function that is 1 if x is greater than 0,
+ negative 1 if x is less than 0.
+ [WRITING ON BOARD]
+ That's a nasty optimization problem for gradients, right?
+ It's also a boring one because I guess
+ there's a lot of uniquely good answers.
+ But just if we think about its gradient-based properties.
+ Randomness can make these problems better.
+ OK, so let's think of a small variation on that,
+ where I want to say min over x now.
+ And I'll add noise in sort of the way
+ I've indicated above here.
+ Let's just say we'll do it like this.
+ What does that optimization do?
+ OK.
+ What does that optimization look like?
+ Yeah.
+ [INAUDIBLE]
+ OK.
+ So what is your intuition for why that is?
+ Because the bigger x is, the smaller w
+ has to be for the sine of x plus w to be possible.
+ So it should be increasing x.
+ OK.
+ So the bigger x is, then this can get smaller.
+ So maybe if I were to plot this, somehow this
+ might be my probability of x plus w.
+ Yeah.
+ And so you're saying that as I make x bigger,
+ then I'm going to get more of my Gaussian on there.
+ And that's exactly the right picture.
+ So what I'll get, I think, I know,
+ is actually a beautiful sort of smooth version
+ of that original function.
+ That Gaussian-- you can think of this Gaussian
+ as actually acting as a smoothing function that
+ goes over your cost landscape and smooths things out.
+ OK.
+ And gradient descent here has a much better chance
+ of doing something interesting.
+ What's super interesting is that I
+ think a lot of the domain randomization
+ that we're doing in RL is having a similar effect on the cost
+ landscapes that we're generating.
+ So there's a more general interpretation of these ideas.
+ In stochastic optimization, there's
+ a field of randomized smoothing.
+ OK.
+ And in fact, many ways that you would
+ choose to add noise to your simulation,
+ or to your policy, or whatever--
+ a lot of different choices of w will have this interpretation
+ that it'll take potentially a complicated landscape.
+ I've got a fun one plotted up here from Terry, actually.
+ OK.
+ This is just a--
+ Terry's way of thinking about this was he's
+ trying to throw a ball over a wall.
+ OK.
+ And he's trying to maximize the distance,
+ the final distance of the ball.
+ And the only control decision to make
+ is sort of the angle at which you throw.
+ OK.
+ And for some small angles, you'll just land smoothly.
+ And you'll get better and better scores, less cost here.
+ At some point, you'll run into the wall.
+ All of these angles have exactly the same cost.
+ And then suddenly, you're over the wall.
+ So you drop down.
+ 45 is sort of the optimal solution,
+ is to throw it 45 degrees.
+ At some point, you throw too steeply,
+ and you actually hit the wall again, because you went up
+ and on the way down.
+ But if you were to just add some randomness--
+ so if you took the policy parameters,
+ and you say, I'm going to throw the ball at theta,
+ plus or minus some Gaussian.
+ So every time I throw it, I'll just throw it
+ at theta plus some Gaussian.
+ And I'll take the expected value of that cost instead.
+ Then for sort of arbitrarily complicated landscapes,
+ you end up with things that look much more
+ amenable to gradient descent.
+ And I think this is an essential part
+ of what's making policy-based, gradient-based methods work
+ in RL.
+ OK, I've talked too slowly, I guess.
+ I'm sorry.
+ But let me see if I can at least indicate
+ one other important idea.
+ So I think those are maybe the two I really
+ wanted to land first.
+ One is that we're switched to black box optimization.
+ The second is that I think these stochastic formulations
+ really affect the success of a gradient-based method.
+ All right, let me just tell you what policy gradient is
+ in a way that Abhishek can build on here.
+ So policy gradient in RL is not quite black box optimization.
+ So imagine I have a function.
+ Imagine I'm trying to do this, minimize over x, f of x.
+ I'll leave the randomness out for just a moment
+ just to make this point simple.
+ Imagine I have a nested function.
+ I have two parts of my system, two parts of the cost
+ function.
+ Let's say this is something that is known,
+ and I know partial g, partial x.
+ So I have gradients on the inside.
+ And this is unknown, black box.
+ [WRITING]
+ OK, so not surprisingly, this is going to be my policy.
+ This is going to be my neural network.
+ [WRITING]
+ And this could be my dynamics and cost function.
+ There's a lot of parameters in a neural network.
+ You probably don't want to just randomly check
+ all the parameters of a neural network.
+ Well, we can talk about when you do
+ and when you don't want to do.
+ It's viable.
+ But it seems like you'd like to leverage the fact
+ that at least part of my gradients are known.
+ And this is the key idea in the policy gradient algorithms,
+ basically is to, instead of adding--
+ so there would be two approaches I
+ could do if I wanted to do the random version of this.
+ [WRITING]
+ I could try to minimize something like this.
+ I could add noise directly.
+ [WRITING]
+ Or I can add noise to the output of my neural network,
+ let's say.
+ [WRITING]
+ And if you do this second version, in both cases,
+ there's an interpretation where if x plus w was better than x,
+ then I would like to make x plus w more
+ likely to happen in the future.
+ That's the basic gradient descent sort of story.
+ If x plus w was better, make it more likely to happen.
+ In this case, you say I've got a neural network outputting
+ y equals g of x.
+ [WRITING]
+ If y plus w was better, I'd like to make y plus w more likely
+ to happen in the future.
+ And I can do that by using gradient descent on g.
+ So the policy gradient suite of algorithms in RL
+ is basically a combination of the black box optimization,
+ which is leveraging the gradient of just the policy,
+ hence the name.
+ It's often, I think, misused.
+ The word policy gradient is often misused.
+ But I think that, in my mind, that's the key idea,
+ is that you take the gradient of your policy,
+ the true gradient of your policy,
+ and you combine it with a noisy approximate gradient
+ from sampling for the part you don't know.
+ And you're actually-- I don't feel too bad.
+ I think we've got a problem on the problem set that
+ will help you explore the details of that
+ with enough instructions that it'll be OK.
+ But this is sort of the key idea in policy gradient.
+ You can imagine, if you have the additive structure
+ from stochastic optimal control, then you
+ can even be smarter about taking gradients
+ through the serial chain and leverage
+ the structure of the optimal control problem.
+ And the more advanced algorithms in RL do that.
+ That was a super-- it was like the three-minute version
+ of a complicated topic.
+ But is that OK?
+ At that level, does it make sense?
+ Yeah?
+ OK.
+ Good.
+ So I will see many of you in face-to-face this week.
+ Those of you that I'm going to meet in a few minutes,
+ I'm happy to-- I'm happy, in general, to meet in person.
+ It's just there's a logistical problem
+ of getting to the offices and stuff like that.
+ But most of you, I guess, I'll see on Zoom, just for logistics.

@@ -1,0 +1,1414 @@
+ Hi, everybody.
+ OK.
+ Today we're back to-- I'm trying to give you kind of a-- not
+ a ping pong, but maybe a smoothly swinging pendulum
+ back and forth between deep networks and mechanics
+ and forces and stuff like this.
+ So today the pendulum swings back towards forces,
+ all the way to force control.
+ Let me just start quickly by giving you
+ an update on the projects on the administrative side.
+ So thank you for submitting your project proposals.
+ Those of you in 6.800, you're going
+ to do the peer review on Friday.
+ And we are trying to get our feedback to you this weekend
+ also.
+ So basically, take a breather.
+ Around the end of this weekend, you'll
+ get all of the feedback from your peers and from us.
+ And then a week from this Friday,
+ you'll be submitting the final project proposal.
+ So I hope you're continuing to think about it,
+ but no urgent items until we give you feedback
+ at the end of the week.
+ OK, so today is about force control.
+ Now, a lot of people today do manipulation
+ without thinking as much about force control.
+ And like I said, there's a lot of useful tasks
+ where really pick and place does a lot of work.
+ But it doesn't solve everything.
+ And even for the situations we've already given you,
+ there's a need, I think, for force control.
+ So I don't know if you saw the notes.
+ I sort of cracked myself up because I just randomly--
+ I generated like 10,000 random images.
+ And it just happens that random image number 9,964
+ or something like this looks like this.
+ And I just happened to have it open on my screen one day.
+ I was like, how the heck are you going
+ to pick that up, that Cheez-It box,
+ with your two-fingered gripper?
+ You can't do an enveloping grasp.
+ You'll never get an over-the-head,
+ antipodal grasp on the Cheez-It box.
+ And you can't get under it to pick it up antipodally.
+ You've got to do something more clever
+ if you want to get that Cheez-It box out of the bin.
+ So I kind of by accident had generated a bunch of examples
+ that I think you really need something
+ more than what we've given you so far to do.
+ So I asked my daughter, I said, OK, get the box--
+ this is the two-fingered gripper I had in my kitchen.
+ And she starts doing all this clever stuff
+ to get the pasta out of the bin.
+ And it's not what we've been doing before.
+ It's like using environmental contacts.
+ It's using very clever strategies,
+ multi-part strategies.
+ She's older now.
+ Well, she's in middle school now.
+ But that was cheating.
+ I said, no, no, put that back.
+ That didn't count.
+ But people are amazing.
+ We do things so naturally.
+ And I'll try to make that point a few times when we're
+ thinking about free body diagrams
+ and exactly what's going on.
+ Some of the things she did in there are actually amazing.
+ Writing the equations to make that happen with your robot
+ is amazing.
+ It would be hard.
+ So that's kind of what we're going to try to do today.
+ And I want to give a few good examples, I hope,
+ of what force control is and simple enough
+ that we can think through the equations,
+ think through the implications.
+ So there's some canonical examples of force control.
+ Right.
+ That was it.
+ That was my example.
+ Did you see that?
+ Right?
+ There's another good one.
+ This is actually really good.
+ That's really good.
+ If I didn't do force control there,
+ that just wouldn't have worked very well.
+ If I had my arm rigidly following some position
+ trajectory, you would have gotten something like this.
+ If I estimated the orientation of the board just a little bit
+ wrong, it would have looked like this.
+ And if you've ever tried to write something with a robot,
+ you've seen things like that probably.
+ Or worse, you'd have like broken chalk on the bottom of the--
+ because it went a little bit into the board.
+ And same thing for the force control of a racing.
+ You're really doing something pretty subtle
+ about sort of pushing into the board
+ and regulating those forces.
+ Now, whether we're regulating them to the micro-Newton level,
+ probably not.
+ It can be fairly approximate.
+ But I think there's some level of trying
+ to sort of regulate forces that really does matter.
+ So more seriously, if I think about force control
+ versus position control, I don't think
+ it's strictly one or the other.
+ So versus is kind of a straw man.
+ But the impression I want-- so sometimes you
+ will hear people talk about force control
+ as in it's just this completely different thing.
+ And it has these completely different concepts
+ about impedance and admittance and other things
+ that you'll understand a bit today.
+ And that it's just completely divorced from position control.
+ And I've never liked that.
+ You can take a low level force controller
+ and basically wrap it up and do position control
+ through your force control loop.
+ And if you have a lower level position controller,
+ you can act like a force controller on top of it.
+ It's a matter of what do you want your core controller
+ to be, the thing that's running at the highest bandwidth
+ down at your robot.
+ What is your robot trying to act like given the tightest
+ loop between your controller, your amp, and your physics.
+ And there are times where choosing
+ to act like a force down at the lower level,
+ to close a loop on a force sensor,
+ can be a better choice than trying to be like a position.
+ And there are some tasks at the higher level
+ where it's more natural to describe
+ the controller in terms of desired forces
+ than in terms of desired positions.
+ You can get more robust performance
+ without worrying about the exact location of the board
+ by specifying your task with force commands instead
+ of with position commands.
+ And we'll see ways that you can walk back and forth
+ between them.
+ But it's really-- it's an addition.
+ It plays nicely with position control.
+ And we'll see ways that they can all be put together.
+ So the organization-- we've got two lectures on control,
+ if you will, of your robots.
+ Today, if you'll permit me, I'm going to basically assume
+ the robot is a point.
+ So we're going to-- a point finger, assume a spherical
+ robot.
+ Actually, spheres are too hard.
+ We're the point robot.
+ And then we're going to think of that as,
+ what if I could control perfectly
+ the end effector of my robot?
+ And the end effector is a point.
+ And we'll add the robot back in on Thursday
+ and all the details of making that abstraction that we're
+ trying to create at the point, at the contact point,
+ be good for the robot.
+ So today, we'll do the point finger approximation.
+ And I basically like to use this sort of flipping up
+ the Cheez-It box as a running example.
+ I think that there's a lot we can
+ do on that pretty simple problem.
+ So I'm going to show you graphics and draw
+ on the board this basic problem.
+ I've got a box.
+ Maybe I'll make it even pink since I've got enough colors.
+ And that would make sense.
+ I've got my Cheez-It box.
+ We're going to think a bit about the way
+ that the-- we've already talked a bit about the way
+ the forces of the Cheez-It box can
+ be modeled with the ground.
+ If I'm being careful, which I was in my examples,
+ I put some specific little contact points here just
+ to make sure that when I'm running the simulation,
+ the solver doesn't have to arbitrarily pick some place
+ on the square to choose its forces.
+ It's going to have a force here that it computes
+ and a force here that it computes.
+ And those forces are going to have some friction
+ cone that are a response to when the thing's at rest.
+ I've got gravity pulling down on this.
+ And those forces are going to balance.
+ There's actually-- everything I'm simulating is in 3D.
+ I'm just drawing it in 2D.
+ And then we're going to add in our--
+ let's make it blue here--
+ our point finger.
+ OK?
+ And the task is to do something like my daughter did there.
+ Let's try to flip up the Cheez-It box
+ so that we can come in with our two-finger gripper next.
+ And that's a task that I think is natively described naturally
+ in the language of forces.
+ [SCOFFS]
+ I'll just give one more example because it's a good one,
+ I think.
+ But this is another good example of something
+ that's native in forces.
+ OK?
+ So you want to push the book to the edge of the table.
+ If you can rely on the assumption
+ that the forces-- the friction between the hand and the book
+ is larger than the forces between the book and the table,
+ then that's a kind of strategy where you need to put yourself
+ in a regime where you're not pushing too hard,
+ such that the book sticks on the table,
+ but you're not pushing too softly, that you're
+ in this nice regime where moving the hand
+ moves the book on the table.
+ OK?
+ That's another example of how you pick up
+ one of these big things, move it to the side.
+ All right.
+ So this is roughly the regime that we're going to be in here.
+ Point finger, contact forces between the box and the sphere,
+ right?
+ Again, with the sphere, the small point finger,
+ then I know exactly where my contact forces are.
+ I don't have to worry about all the complicated geometry.
+ And once I've tilted up, I know exactly
+ that I'm going to have contact forces on that back corner.
+ OK?
+ So let's think about the way to work through sort of that.
+ so the entire configuration space
+ of this system, my Q vector, right?
+ It has elements for both the sphere geometry,
+ you know, the finger, and it has elements for the Cheez-It box,
+ right?
+ Since the sphere is-- we're modeling as a point here,
+ not worrying about its rotation at all,
+ I'll just write x double dot of the finger, z double dot--
+ sorry, just writing the cubes first-- z of the finger.
+ And then I've got x of the box, z of the box,
+ theta of the box, OK?
+ Because I've pinned the box.
+ I added an artificial joint just so it can only
+ move in 2D, a planar joint, OK?
+ So if I were to write-- the simulator
+ is implementing these equations we've
+ showed you many times before.
+ All right, we've got some equations of motion.
+ Some of them are due to the finger.
+ Some of them are due to the box.
+ In these equations, if you've come
+ to be a little bit more comfortable with them, right?
+ If you were to write out these equations,
+ you would see that this is-- there's
+ two systems here that are only connected
+ through the contact forces.
+ So you would see the mass matrix, for instance,
+ would have entries here for the finger,
+ entries down here for the box.
+ They don't have any coupling terms.
+ They're only coupled through the forces, right?
+ If they're not touching, wiggling the finger around
+ doesn't do anything to the box.
+ It doesn't cause any accelerations on the box.
+ OK, so let's just write the top two equations out, OK?
+ So I'll do-- there's also-- there's a mass of the finger,
+ and there's a mass of the box, OK?
+ But I'll try to remember to put my subscripts in there.
+ OK, so it's chosen intentionally to be particularly simple.
+ I'm going to assume that I have this perfect torque
+ source or force source on the coordinates of the box--
+ or of the finger, rather.
+ So I can basically just do this plus any contact forces.
+ There's only one contact, so I'll just leave it like this.
+ And it's only the x component here.
+ OK, so this is just the first row of this, OK,
+ in the x-coordinate.
+ It just happens that gravity doesn't affect me
+ at all in the x direction, so this term didn't contribute.
+ It's a point mass, so there's no Coriolis terms, OK?
+ And the Jacobian is the identity matrix, right?
+ So it's intentionally chosen to-- and of course,
+ you know this is just a free body, f equals ma, right?
+ But it fits-- it's just the first row of that.
+ OK, and similarly, mz--
+ sorry, mf z double dot f is going to be uz z.
+ And then I've got minus mg.
+ I do have gravity terms there, OK?
+ And the way I've parametrized f here, since f is positive here,
+ it is actually the way this arrow is looking here.
+ So it's-- although that's only because the arrow is
+ hidden inside there, but this direction.
+ So the force here, the coordinate frame,
+ is that positive forces are the box--
+ it's the box pushing on the sphere, OK?
+ All right, so our goal is going to be
+ to come up with a strategy to flip up the box,
+ reasoning about forces, reasoning
+ about the contact forces.
+ And we're writing a controller, right,
+ which means we're going to write some equations to be implemented
+ as u right here, or in the system's view.
+ Got my plant here with u coming in.
+ These equations are inside the plant, right?
+ And I'm going to write a force controller here, which
+ is going to take in q and q dot, potentially.
+ It might take in other things.
+ For instance, it could take in a desired force.
+ And then there's a really interesting question here
+ of what else do you give it, OK?
+ So these are sort of-- you'd expect
+ to know your position and velocity, x and z,
+ of the finger, so that's fine to give this, OK?
+ You could give it the box or not.
+ If we're only doing force control on the finger,
+ you can actually just have this be the subset
+ that is the finger.
+ But there's a big question of what else do you
+ hand your force controller, OK?
+ And some natural choices would be a force sensor.
+ And if you see a lot of robots that
+ are trying to do force control type tasks,
+ have some interesting arm, but they put a force torque
+ sensor at the wrist, right?
+ So they're only touching the world and controlling forces
+ through a specific force torque sensor.
+ If you don't have a force torque sensor,
+ you can potentially do some of the same work
+ by giving accelerations.
+ You know, q double dot.
+ That's always a little bit risky business,
+ because we've said it a few times,
+ but you kind of expect to be able to measure your joint
+ angles.
+ You kind of expect to be able to measure your joint velocities.
+ When you start trying to get joint accelerations,
+ that tends to be noisy signals, unless you're
+ measuring them very directly.
+ You don't try to inject too noisy of signals into here.
+ Some people do it.
+ You can also do a lot of interesting things
+ if you assume--
+ if you are in the mode of trying to think about it
+ as you're putting in accelerations,
+ but I'm not going to measure the accelerations.
+ I'm going to assume everything's moving pretty slowly
+ and that accelerations are effectively zero,
+ that the any terms that are being contributed
+ by the inertial dynamics are small compared
+ to the contact forces and my applied forces.
+ So there's also an idea of trying
+ to do quasi-static approximations, which
+ I'll use to start, because it's easier, which
+ is-- this is a little less precise than I'd like.
+ Maybe I should be a little bit--
+ actually, that inertial terms are small relative
+ to the other terms, to gravity, fc, and u.
+ What really matters is the mass times acceleration.
+ So let's say our goal of our force controller
+ is to take a desired force in, command a u
+ to achieve a desired force out.
+ That's a pretty-- algebraically, we
+ can do something that looks pretty natural
+ and see if we decide it makes sense.
+ OK.
+ If we assume that our accelerations are small
+ and those terms are small, then a pretty reasonable strategy
+ would be to say, I'm going to just command in the x command,
+ in my x force, something that looks like that.
+ And I'll command in my z, plus mg.
+ So if you were to assume these terms are small,
+ stick those into the equation, not think at all about
+ where force is coming from, you'd be pretty happy.
+ You could write down something that says,
+ well, force of contact is going to look
+ like force contact desired.
+ Now, of course, you can't just make force out of nowhere.
+ Those force of contact are actually
+ coming from the interaction forces.
+ The physics engine's going to solve
+ for some complicated relation to decide that.
+ But let's see what happens when we do this.
+ OK.
+ So let's think about the case of a constant force.
+ So let's say that fc of d, I'll just
+ let it be 0 in the z direction, and some constant,
+ some positive constant greater than 0 in the x direction.
+ And let's say I start off in my configuration--
+ yeah?
+ [INAUDIBLE]
+ I'm going to-- actually, that's exactly what
+ I'm asking about right now.
+ So the question was, are we assuming
+ breaking or breaking contact?
+ So great question.
+ Let's suss that out.
+ So let's start away from contact and just apply this controller.
+ So if I use this as my controller,
+ this would be my first instance of a direct force control,
+ where I'm directly trying to command a force.
+ What's going to happen?
+ So if fc desired, my desired-- I'm
+ hoping that I'm going to get a force here,
+ using this equation, which made up--
+ and just assumed I could get arbitrary forces algebraically.
+ Uz is going to be 0--
+ it's going to be mg, so the total acceleration
+ is going to be 0.
+ I'm going to get z double dot equals 0.
+ And x double dot, if I stick it all in,
+ in actuality, the contact forces are 0.
+ So I'm commanding as if I expect it
+ to be a gulp against a wall or something like this,
+ but I'm not actually touching it at all.
+ The interesting thing is that it'll actually--
+ in order to try to get a force, it's
+ actually going to push me this way.
+ I'm going to apply a force this way.
+ So when I'm off the wall here, I'll
+ get something like mx double dot equals a constant.
+ That's just putting this into those equations
+ and seeing what comes out.
+ So Charles asked the question, so what
+ happens if I'm off contact and I'm
+ trying to do force control?
+ In many cases-- this is a particularly simple example--
+ in many cases, if you command a force
+ and you're not actually making contact,
+ your controller is sort of unjustified,
+ but it tends to do the right-- you can analyze it,
+ and it tends to often do the right thing.
+ So this will actually, when I'm off contact,
+ will drive me into contact.
+ Once I'm in contact, then this is a more reasonable attempt
+ to try to regulate the contact force.
+ That's a super important point.
+ So this is, I think, a hallmark of force control.
+ So I worked on walking robots for many years,
+ and oftentimes, you would program your legs,
+ the robot's legs, to be in position control mode
+ when you're swinging, because you'd
+ like to get your foot to be at whatever foothold you've
+ been thinking about.
+ So maybe when you're in swing, you actually
+ put yourself roughly in a position control mode.
+ But then when you go to step, and when you're in stance,
+ you're often in a force control mode,
+ but especially that first step.
+ Because what happens is if you have any--
+ just like my board being a little bit off calibration,
+ if my feet are at all uncertain about the terrain,
+ if I start asking for a force and my foot
+ is a little above the ground, then it
+ has the property that it's going to try to drive
+ my robot into the ground.
+ In the DARPA robotics challenge, where
+ we had this humanoid that was walking around,
+ and we really didn't want it to fall down,
+ so we had this way to make it a little bit more conservative.
+ If we didn't trust our sensor estimates of the terrain,
+ we would put it in stompy mode, where it would actually--
+ we would just aim a little high on the terrain
+ and then lean into the force controller.
+ And you could watch from--
+ I mean, probably most people would never notice.
+ I know Scott Kindersma and I, we were watching that.
+ It's stomping like crazy.
+ And Robin Dietz, all these guys, we were on the sideline.
+ Like, it's stomping right now.
+ So it's confused about where the terrain is.
+ But it would go like this, just a little bit harder.
+ And we'd be like, oh my gosh, don't fall down.
+ But that is also the reason why we love the force control,
+ just because asking for force when there's no force to give
+ tends to drive you into contact.
+ I mean, locally, of course.
+ If I was up here, it's just going to miss.
+ But if you're close to contact, it'll get you there.
+ OK, so what's going to happen now if I--
+ so if I choose some c that's greater than 0,
+ what are all the things that could possibly happen?
+ And I'm going to accelerate.
+ We agree that for a reasonable set of initial conditions,
+ I'm going to accelerate into the box.
+ OK, what happens then?
+ Let's think about small c, think about big C.
+ What are the different things that could possibly happen?
+ It's pretty subtle.
+ I mean, there's some things that are not subtle.
+ And there's some things that are subtle.
+ Let me make this a little farther away just
+ to get you to think about it.
+ Yeah?
+ [INAUDIBLE]
+ OK, good.
+ So you said-- so first of all, maybe if c is very small
+ and your finger is light, it didn't have enough time
+ to build up a lot of momentum, it could just get there
+ and the box might just sit there, sit still.
+ That's like the lowest regime.
+ It's going to move a little bit, right, because of the collision.
+ But basically, just sit still.
+ And there's going to be some momentum effect, of course,
+ from the collision.
+ But really, we know that there's going
+ to be some amount of horizontal force from friction.
+ It's going to be maybe even just equal to-- in this case,
+ it's going to be equal to mu times mg, where m of the box.
+ So I've got my friction cones here.
+ I've got normal forces that must match mg.
+ And I'm allowed to put as much force as I can here.
+ So it's going to be less than or equal to mg.
+ So if c is small and the collision is small,
+ then it could just sit there, sit still.
+ If c is a bit larger--
+ well, sorry, if c is very large, it's
+ just going to move the box.
+ It'll be above this friction threshold.
+ It'll start moving the box until it slams
+ into the wall on the other side.
+ And then it's going to stop, in this particular example.
+ What's interesting is that you can also see--
+ if you just run the simulation, you can also
+ see a pretty big regime in c, where the impact's enough
+ to start it moving, but the drag is enough
+ that it's slowly decelerating into the point
+ where it'll just kind of come to rest,
+ move a nontrivial amount, and then come to rest.
+ So I actually just made that plot here.
+ There it is here.
+ I can make that bigger.
+ Can I make that bigger?
+ So this is different commanded forces,
+ from small, the blue one, to large.
+ When it's small, it takes a while in time
+ to even make contact with the box.
+ See, the contact with the box is always
+ going to happen at the same vertical place.
+ This is time versus x.
+ So there's an actual location of the box.
+ Horizontally, things are happening
+ all at the same location.
+ If you're accelerating slowly, it'll
+ take a while to get there.
+ And then it'll basically just stop.
+ You go a little-- hit it a little faster,
+ moves just a little bit more, but it's basically
+ a stiction regime.
+ But there's this regime where you hit it,
+ and it'll start sliding, but it'll come to rest.
+ And then there's a regime where you just
+ slam it into the back wall.
+ And that's the collision with the back wall that happens.
+ And there's lots of different forces that'll get you there.
+ Bigger and bigger will just hit that wall.
+ But it's a pretty rich--
+ it's a super simple system, but it's
+ pretty rich for all the things it can do.
+ Yeah?
+ [INAUDIBLE]
+ So the question is, am I assuming inelastic?
+ I'm not rigorously making that assumption.
+ In fact, the bouncing you see is a little bit of plasticity,
+ if you will, in that.
+ It's subtle.
+ This is coming from a time-stepping method that
+ allows a little bit of--
+ a soft contact model, those things together
+ can allow some bouncing.
+ But if you think about it, if I do bounce,
+ I'm going to push right back into myself immediately.
+ So you're not going to see a boing.
+ It's going to be shoved right back in there.
+ You're kind of pushing in.
+ It might bounce for a second, but it'll go right back in.
+ Good question.
+ And to some extent, only when you've
+ gotten all the way to the--
+ I didn't plot the force on that.
+ But only when the box really isn't moving
+ am I going to get the force that I expect out.
+ But it can still attempt to regulate the force
+ and do interesting things when it's doing that.
+ This model assumes that I'm sort of pushing up against the wall
+ and it's not moving.
+ And if I push more, I'll get more force.
+ And that's only true in the limit.
+ But the controller we got out of a very simple derivation
+ is still useful.
+ Now, but this picture I like very much.
+ I want to flip up the box.
+ Now, I originally was like, OK, I'm going to shove it
+ to the side and I'll flip it up there.
+ But my daughter, she just flipped it up
+ in the middle all the time.
+ I was like, OK, now I've got to figure out
+ how do we flip it up in the middle.
+ And it's pretty tough.
+ So I actually brought a box.
+ I brought some friction because I need friction
+ to make this work.
+ And I've got some variational principles and mechanics
+ inside the box, which is a great book, Cornelius Lenk shows,
+ if you haven't read it.
+ Good stuff.
+ OK, so if I'm pushing, it's not hard to make this thing go.
+ How do I make it flip up?
+ It's actually super hard to make it flip up.
+ OK, like I can just barely-- oh, no, I could do it upstairs.
+ Oh, man, I might have to take Lenk shows out.
+ Shoot.
+ You'd think that would be worse, but let me just try.
+ Oh, man, it's too slippery here.
+ Well, this is totally cheating.
+ But maybe I made my point, right?
+ It's pretty subtle to get this thing into a regime
+ where you're controlling the contact forces enough
+ to sort of flip it up.
+ If I have a lot of friction, my friction cone is bigger,
+ then that allows me to have a bigger range of forces
+ I can apply here to tip it up.
+ Interestingly, I want you to really appreciate,
+ like if nothing else, at the end of this class,
+ I hope you watch yourself loading the dishwasher,
+ because it's super impressive.
+ Like if I were to pick this up at the end of lecture,
+ I'm going to do something like this.
+ And I'm going to put my hand down here and provide exactly--
+ like on the free body diagram, that's
+ exactly the right thing to do.
+ I'm going to make that--
+ I'm going to help out the friction
+ by with a little bit of force here, tip it up.
+ I do it all the time.
+ People do it all the time.
+ We're so good at these things.
+ And if you think about all the subtle physics that
+ happens to make that happen, it's really, really impressive.
+ And I think it's a gap between what our robots are doing
+ and what we're doing.
+ OK.
+ But if I'm in the land of knowing the friction
+ coefficient, being able to regulate contact forces,
+ and I have a robot that can apply contact forces more
+ accurately than my hand, then I can
+ try to do this thing that I failed to do experimentally
+ right here.
+ So what's that going to look like?
+ What I'd like to do is think about having only friction
+ here.
+ So I'm allowed to have friction here and the normal force
+ here.
+ I'm going to apply a force here.
+ I also have a friction cone here based on my normal forces,
+ right?
+ Equal and opposite force.
+ So I'm only allowed to apply-- that's partly what happens.
+ This box is a little slippery.
+ I'm only allowed to apply forces inside this friction cone.
+ Otherwise, my finger will slip right up the box.
+ So the game becomes, can you find
+ a force in this friction cone that
+ stays inside that friction cone--
+ so there's enough force to keep my point from slipping--
+ that will rotate up the box?
+ OK.
+ Now, you're not going to be surprised.
+ And I wrote the whole derivation out in the notes.
+ But I like doing that with constrained least squares.
+ That's a good-- locally, it looks like a least squares
+ problem.
+ And this friction cone constraint
+ can be locally approximated as a linear constraint.
+ And I basically wrote a little controller
+ that sort of flips up the box.
+ OK?
+ I hope you run these yourselves, because they're fun
+ and they're good to think about, too.
+ But-- oops.
+ Oh, nice.
+ That happened last time, too.
+ Sorry.
+ OK.
+ [CLICKS TONGUE]
+ Um-- it's worth it.
+ I promise.
+ OK.
+ Why would that not work?
+ Hm.
+ I'll just do it again.
+ I'm going to run out of NGROC licenses.
+ So I shouldn't do that.
+ [CLEARS THROAT]
+ I have an idea.
+ [CLICKS TONGUE]
+ Darn it.
+ Would you guys try to click on it, maybe, for a second,
+ if I keep talking?
+ Well, I guess I can just-- I'll just restart the notebook
+ and talk, and then I'll redo it here.
+ That's the bad one, but I'll do it.
+ OK.
+ Suspend your disbelief for a second.
+ That'll work in, like, 3 and 1/2 minutes or something.
+ But-- OK.
+ So, I mean, the controller that I wrote for this
+ is effectively thinking about a virtual angle like this.
+ I can parameterize the orientation of the box
+ however I like.
+ But if I do it relative to vertical,
+ I basically implemented a small PID controller
+ that tries to say, I'm going to apply a force that is making--
+ I made theta desired be some slow from the initial angle
+ up to the top.
+ And then I followed theta desired.
+ I wrote a controller that was thinking about tracking theta
+ desired with my torque about theta
+ is like k theta desired minus theta actual estimated,
+ plus b theta dot desired minus theta dot,
+ in this, like, simplified coordinates.
+ I took that as a command, asked for the closest
+ I could do to executing this, subject to the friction cone
+ constraints.
+ And I give myself something that I can actually just sort of
+ follow, almost prescribe the theta trajectory up
+ to some friction limits.
+ If you start-- and I hope you do play with the notebook, right?
+ So if you start making mu small, then it's
+ going to, at some point, say, I can't find you a solution.
+ I can't execute that controller.
+ Even zero force would violate something.
+ But in the regime where that is happy and good,
+ it's pretty fun.
+ It works pretty well.
+ OK, almost there.
+ Ask some questions for a second, because I really
+ don't want to-- I want to show you that before I go on too
+ much.
+ Yeah?
+ AUDIENCE: [INAUDIBLE]
+ PROFESSOR: Great question.
+ So the question was, isn't it always
+ going to be the case that I should
+ be applying a force that's on the boundary of the friction
+ cone?
+ Yes, but the question is how hard--
+ so the direction of the force, I would expect,
+ would always want to be on the friction cone.
+ Or certainly, there's a solution that would always
+ want to be on the friction cone.
+ But if you push too hard there, when
+ you're on that friction cone, you're
+ pushing both this way and that way.
+ So there's some limit based on the geometry
+ of that friction cone for which you can achieve some rate.
+ And the faster you go here, the faster you turn up.
+ But at some point, you'll slip.
+ So you're right.
+ Yep, I think you're right.
+ I might have even done that.
+ Yeah?
+ AUDIENCE: When you set it up like this,
+ can you account for the fact that increasing
+ the force of the push will change the friction cone
+ at the bottom?
+ It'll reduce the normal force?
+ PROFESSOR: Yeah, yes, good.
+ So the total force here, the force balance,
+ is that this is also contributing to vertical.
+ That's a super good point.
+ So that's also contributing to vertical,
+ which is then fighting against mg, which reduces
+ the total friction here.
+ And I think all those are in the equations.
+ These are all simple enough that the free body diagram is just
+ completely written out.
+ OK, back in business.
+ Kind of takes the oomph out of my demo,
+ but the next one is also important.
+ So yay.
+ OK, oops, other side's better.
+ Look at that.
+ Beautiful contact forces, little sphere finger,
+ moving up the Cheez-It box.
+ Always staying right on the boundary of the--
+ let's watch, actually.
+ I mean, I think that force you're
+ going to see is always sort of on that margin.
+ It's kind of funny, though.
+ If you keep running the controller
+ after it goes up to the top--
+ I did make one linearization assumption there,
+ which goes bad when you're all the way at the top.
+ But yeah, you get this beautiful control that I must say
+ would be very hard to implement with position control.
+ So it's explicitly reasoning about--
+ like all these terms you guys mentioned,
+ the vertical force, what's the total amount
+ admissible friction in the corner in order
+ to command that trajectory.
+ Now, once the finger left the Cheez-It box,
+ it did something ridiculous, because it's
+ commanding forces, and that's not
+ so good for moving around the position of the world.
+ But OK, so that is strategy one, inspired by my daughter.
+ But it's just a simple example of a general principle,
+ of directly commanding forces, direct force control.
+ Now, direct force control, you can do that, again,
+ with the force sensor, or with this quasi-static assumption,
+ or by actually using the accelerations
+ and including them in the equation.
+ OK, there are lots of details, basically,
+ about how you derive that actual controller when
+ it's the full robot.
+ And those details really matter, like the difference
+ between a sensor that's high bandwidth and super clean,
+ implemented well at a high frequency,
+ compared to something that's not, is night and day.
+ Yeah?
+ [INAUDIBLE]
+ Yep.
+ I mean, I could ask for something
+ that would be too fast, I think, and it would just
+ refuse to execute faster than it could,
+ because of the thresholds from the friction cones.
+ I didn't repeat that.
+ She asked if the speed it rotated up
+ was given by theta desired, or something more subtle.
+ And it's mostly theta desired, up to some limit.
+ OK, so that ridiculousness of the finger afterwards,
+ I think, is something we can address.
+ And in general, commanding forces only
+ is potentially a slightly limiting view of the world.
+ And there's a generalization, which
+ tends to be called indirect force control.
+ There's a class of models, indirect force control,
+ that where you program the force,
+ but you do it indirectly, so by a surrogate objective.
+ So the simplest and one of the most powerful examples
+ would be stiffness control.
+ So it's an example of indirect force control.
+ All right, we've still got our equations up there,
+ the mx double dot equals ux fc, whatever.
+ If instead of saying my goal is to regulate this fictitious
+ force, if we said instead, I would
+ like that if you came up and pushed on my finger,
+ my little red circular finger, that the response you would get
+ would be like it was a spring.
+ And the rest length of that spring
+ is going to become the input to my control system.
+ So if I want the finger to come into contact with the box
+ and then potentially move the box around,
+ I can do that by just making my finger act like a spring
+ and then moving the rest position of that spring
+ into the box.
+ And it'll start pulling me, just like with the spring's dynamics,
+ into the box.
+ So if the rest length was inside the box,
+ it would be applying a force to the box.
+ The force it would apply is proportional to how far
+ into the box my rest length is.
+ That's a sort of indirect way to command a force,
+ but it turns out to be super useful.
+ So if I want my new mechanical system
+ to look like my sort of textbook spring mass damper system,
+ OK?
+ And I think of this now as the virtual positions,
+ or the rest length is like the input to my stiffness control.
+ OK?
+ In general, actually, I've added-- this
+ is the stiffness component, right,
+ where I'm acting like a spring.
+ This is a damping element I've added here.
+ If you really look-- if you want to be careful,
+ then there's this thing called stiffness control.
+ There's a thing called damping control.
+ If you put them together, maybe you're
+ technically doing compliance control.
+ Doesn't really matter.
+ This is the idea, right?
+ Call it what you will.
+ Right?
+ So the model is, if the world is pushing on me,
+ whatever the world is pushing on me,
+ I have a well-defined response.
+ I'm going to act like a mechanical spring.
+ I'm going to replace the dynamics of my robot
+ with the dynamics of a spring.
+ That's a very important intuitive idea.
+ One of the things that's very nice about it
+ is that springs are well-behaved for any reasonable forces.
+ Right?
+ If the world is not--
+ I mean, you can--
+ if the world were to come up and try
+ to hit your resonant frequency or something,
+ maybe that's bad.
+ But if the world is sort of like passive, energy-conserving,
+ right, and you are energy-conserving,
+ then you have some guarantees that even
+ if you don't know exactly what's happening
+ on with your contact forces, you can
+ guarantee that things aren't going to go too bad.
+ Right?
+ And in general, there's a deep literature
+ on this about passivity-based control,
+ where you try to say that each of my elements of my control
+ system, including the world-- if I say the world is
+ energy-conserving and my system is energy-conserving,
+ it's passive or potentially even dissipative.
+ Right?
+ There's friction in it, or damping.
+ Then you can make guarantees about the stability
+ of the entire system, even when they're in complex composition.
+ So that's a very powerful idea.
+ And there's a couple of references in the notes
+ about it.
+ There's also Hamiltonian-- Port Hamiltonian theory
+ is like this taken to an extreme.
+ So there's a lot-- there's a deep literature there.
+ OK, but this is just an intuitive idea.
+ Let's try to act like a spring.
+ And it turns out to be way useful.
+ OK, so I put in here, assuming I'm--
+ I think it should definitely not have disconnected yet.
+ So I didn't do teleop with force control,
+ because if I put a little slider and commanded the force,
+ the demo would be very short, because my finger would just
+ either slam into something, or it would just
+ kind of off the screen, and I'd be kind of done.
+ But with stiffness control, I can
+ move that set point of the spring around
+ and do totally reasonable things.
+ So I give myself a little desired position of the--
+ wakey, wakey.
+ It's a little scary, but let's--
+ there we go.
+ OK.
+ That's got like an old mesh cat talking to me.
+ Oh, I hit play.
+ Stop.
+ OK, let's try that again.
+ Dang.
+ These things went so well in my head.
+ OK, good.
+ Now I'm in a mode where I have my robot.
+ I've got my finger.
+ I can teleop the set point of the finger.
+ I made the box transparent.
+ Jeez, too many boxes.
+ OK.
+ OK.
+ The box is more transparent, because we're going to stick
+ our set point inside it.
+ There's the red finger, but there's also
+ a little gold finger here.
+ So the gold finger is my set point,
+ and it's going to track it around.
+ And I've got yesterday's finger there, too.
+ I'll ignore the finger at the top there.
+ OK.
+ All right, so now this is a pretty intuitive interface.
+ So I can move this thing around.
+ It does good position control.
+ It doesn't do crazy things.
+ But I can also generate forces.
+ I'm up against the static friction,
+ but I'm not yet exceeding the static friction.
+ If I push a little bit harder by moving it farther into the box,
+ I can start moving the box around.
+ If I try to do what we did a minute ago,
+ it's not going to go super well.
+ I'm a human.
+ Oh, man, look at that.
+ OK, but you get the point.
+ So this is actually a pretty nice interface for me.
+ It's also a pretty nice interface for the robot,
+ in the sense that a large number of choices for this,
+ and this, and this give very reasonable behaviors.
+ So you don't have to dial it in too carefully.
+ OK, but it gives me the sort of, I think, the best part--
+ hopefully it runs on the first try.
+ Let's try a different flip-up strategy.
+ That I think really captures the idea
+ that if you program the mechanics of your interaction,
+ you can do something just way better
+ than if you're trying to program the forces or the positions
+ slowly.
+ So here's a different flip-up strategy.
+ I'm going to drive the box like I was doing there,
+ but I'm going to drive it all the way to the edge here.
+ Then I'm going to start pushing up.
+ Rather than-- it can't rotate around here anymore.
+ It's going to rotate around here.
+ So it's going to start tipping up like this.
+ If I'm successful, it's going to start tipping up like this.
+ I can do that just by having my set point of my spring
+ so it's pushing in here, and then just lifting that up
+ a little bit.
+ That will cause a vertical component of my spring force,
+ because it's trying to go here.
+ So exactly what we did before.
+ But here's what's really cool.
+ What happens when I get to the top,
+ when I start getting high up here?
+ At some point, this is going to exceed its friction cone.
+ So I'm going to have no ability to push here and stay
+ inside the friction cone.
+ You just can't do that.
+ So this is going to slip.
+ In the previous model, if I was monitoring the forces,
+ monitoring the accelerations, trying to estimate
+ the moment of that slip, that's not a good way to go.
+ So if you have to wait for slip, detect slip instantaneously,
+ and then make a control decision,
+ you're not going to be successful in life.
+ People try that.
+ It's very, very hard to do.
+ The moment of slip is hard.
+ They call it incipient slip.
+ It's like the signals right before slip.
+ But that's a hard way to go.
+ Here's the cool thing.
+ If I can program my interaction in the right way
+ with enough colors of chalk, so that I'm here pulling on this,
+ and I've got virtual set point in some reasonably chosen
+ configuration, then it's going to push me into the wall.
+ It's going to tip me up.
+ But the moment this slips, I don't
+ have to change my controller.
+ It's going to be pushing down.
+ And it's still going to just try to pull itself here.
+ But I will convince you, I hope, that it
+ does exactly the right thing.
+ I have to stop and tell you.
+ OK.
+ Here we go.
+ See that?
+ Watch the set point here.
+ All I'm doing is moving straight here.
+ And I'm moving straight up.
+ Watch what happens.
+ Boom.
+ OK.
+ So at the moment of getting near the top,
+ it's still doing exactly the right thing.
+ All it's going to do is going to push me so
+ that the box is in the corner.
+ Push me so that the box is in the corner.
+ Solves the entire task.
+ No detailed reasoning about forces.
+ No detailed estimation of friction contacts,
+ friction cones, or whatever.
+ Easy solution.
+ That's not the one my daughter took.
+ But if she had a point finger, maybe.
+ This strategy is like a narrow example of the big concept.
+ But I think the concept of programming your interactions
+ instead of programming the forces directly, I think,
+ does work for a lot of different shapes, objects, tasks.
+ There are some classic ones.
+ People talk about wall following or welding or painting.
+ These kind of tasks that are done by traditional robotic
+ arms are well suited to these kind of controllers.
+ Does that make sense?
+ Yeah?
+ There's a paradigm shift of instead
+ of programming the forces directly,
+ you program the dynamics.
+ And what's interesting is when we go away-- on Thursday,
+ when we talk about going away from just assuming
+ you're a point contact, the controller that implemented
+ this, if we had to think about how
+ to take the equations of motion and implement this controller,
+ it's not hard.
+ It's going to be like if I just write the u, z component,
+ it's basically-- these terms have to go on the other side.
+ I get like a b z dot f minus k z minus z desired, which
+ looks a lot like a PD controller.
+ But I also have this gravity compensation.
+ So the way that this got implemented
+ was something that looks like a PD control for the point
+ finger case plus a gravity compensation.
+ And more generally, it's going to look
+ like a bunch of terms that are trying to cancel out
+ the dynamics of your robot and replace them, typically
+ in an end effector coordinates, with the dynamics
+ of a spring.
+ So if I had to do this with joints and make myself
+ act like a spring at the end point,
+ it's not going to be just a simple PD controller.
+ It's going to be mapped through some transformation
+ to the joints.
+ But I can still-- if I master my own robot's dynamics,
+ then I can control the contact forces, the contact
+ interactions.
+ Do people know what impedance control is?
+ I know there's a few people that had better
+ know what impedance control is if you're
+ working in Neville's lab, yeah?
+ So how does impedance control relate to this,
+ if anybody knows?
+ Impedance control is basically a generalization of this.
+ In fact, I would call this an impedance controller.
+ So it's only a generalization.
+ So the thing I did here is I just
+ changed the stiffness and damping.
+ And I didn't try to change the effective mass of the sphere.
+ So I can, with a pretty simple controller that
+ doesn't have to know too much, I can make my sphere
+ act like a spring mass damper with the same mass
+ it originally had, and just act as if it's
+ got a spring attached to it.
+ More generally, if you have a real mastery of your dynamics,
+ you can even change the effective mass.
+ So if someone were to push on me,
+ even if my robot's very heavy, you
+ can make it act very light.
+ That's a harder thing to implement.
+ And depending on how you implement it,
+ with acceleration terms or force terms or anything like this,
+ it can be subtle to get right.
+ And it's also subtle in the bandwidth
+ of your controller sense.
+ So I think impedance control is the right--
+ you could use impedance control for the stiffness control
+ and be completely OK.
+ You could talk to your friends at conferences,
+ say impedance control, and mean that.
+ It would be OK.
+ People do that.
+ Strictly, the full glory of impedance control
+ is realized if you're also trying to change your mass.
+ And I think that's less common, actually.
+ The full glory of impedance control, I think,
+ is maybe less realized, just because changing
+ masses is nasty business.
+ I think IWA doesn't do that.
+ I think they went-- you could sort of watch
+ the series of progression of their papers.
+ And there were times where they were really
+ trying to cancel that mass.
+ And the final controller just didn't do it.
+ OK, so you know what impedance control is, right?
+ I hope.
+ I mean, there is a very different way to teach that.
+ This is maybe a much more intuitive--
+ trying to appeal to your intuition way to do it.
+ But I think that is the core idea.
+ OK, let me just move to remote-centered compliance.
+ OK, so one of the best--
+ this is a line of work, all this force control and impedance
+ control.
+ Neville Hogan wrote the famous impedance control papers
+ in the early '80s, up to like '85.
+ This is core robotics wisdom.
+ It's also super relevant today.
+ If you're programming-- if you're
+ trying to train an RL controller,
+ and you have a choice, given your task,
+ about choosing a position command, an impedance command,
+ a torque command, those are going
+ to work very differently in your training procedures.
+ Knowing a few things about impedance control
+ is going to serve you well for a lot of tasks
+ that are contact-rich.
+ You have to understand when they work
+ and when they don't work.
+ But this is really core foundational knowledge.
+ And I would say, in that spirit of the '80s, where everybody
+ was trying to figure out all the different ways to think
+ about force control and do rich tasks,
+ there was a canonical task, which
+ was this peg-and-hole task.
+ Right?
+ It actually motivated some great work in motion planning,
+ in addition to great work in control.
+ OK?
+ So you've got a hole in the world,
+ and you've got a peg that's roughly the same size
+ as the hole in the world.
+ And you've got to get this in here.
+ Right?
+ And if you try to do that with pure position control mode,
+ it can be nasty.
+ Nasty things happen.
+ OK?
+ So how do we think about how to do this?
+ Well, first off, if you're actually
+ trying to do peg-and-hole, then it's
+ OK to cheat a little bit.
+ You kind of chamfer the corners, because that's just worth--
+ it doesn't take any effort, really,
+ and it's going to make everything better.
+ You might do it up here, too.
+ OK, that's fine.
+ But still, all this weird stuff happens.
+ In particular, the bad case--
+ if I'm coming down and I'm just a little bit out of alignment,
+ I might make contact here early.
+ Right?
+ Get some contact forces here.
+ If I were to continue to push down
+ without paying much attention, I'm
+ going to get very large forces out.
+ OK?
+ Even worse is if I get myself in this configuration,
+ where I'm making contact here.
+ I'm getting potentially large contact forces here.
+ I'm getting potentially large contact forces here.
+ You can actually get the peg jammed in the hole.
+ Just absolutely-- it's also in a place
+ where Coulomb friction isn't going to give you--
+ it's going to sort of be in the underdetermined problem
+ for Coulomb friction.
+ And in practice, your peg's going to get stuck.
+ OK?
+ So it was decided early on that it
+ pays to be compliant when you're doing this,
+ to try to be in a forced control mode or a compliant control
+ mode.
+ And in particular, you can do stiffness control
+ in orientation, too.
+ So you can program a rotational stiffness of the hand.
+ OK?
+ So in position, you'd like for the case--
+ you've estimated things just a little bit wrong,
+ and you're coming down like this.
+ OK?
+ You'd like to have some stiffness--
+ a spring sort of in the horizontal stiffness
+ so that the controller is OK with sliding a little bit
+ in order to go in.
+ That's the translational version.
+ And then up here, you'd like in that initial contact
+ to have some ability to have some rotational stiffness
+ so that the peg will align itself and go in.
+ But if you think for a few minutes
+ about how that rotational stiffness needs to look,
+ it needs to-- you need to have some center of your rotation,
+ some coordinate frame to represent the rotation about.
+ OK?
+ If you choose a rotational stiffness around here
+ and say that if I'm deviating from this,
+ I will pull myself back, that's going to do the wrong thing.
+ When I come down and go like this,
+ it's going to allow me to go to bend more this way.
+ That's not what you want.
+ What you need instead is to have an effective center
+ of compliance that's over here.
+ OK?
+ Typically at the end point, I've got too many pegs
+ lying around here.
+ Pegs coming in a little bit out of alignment.
+ OK?
+ Typically at the end or even beyond the end,
+ I want to think about having a stiffness programmed like this
+ so that if I were to push here, it will actually
+ cause the peg to rotate this way in order to come down and in.
+ OK?
+ So that concept is called a remote centered compliance,
+ often RCC.
+ It's really just the choice of where you parameterized
+ your orientation.
+ Yes?
+ [INAUDIBLE]
+ So let me draw it in.
+ Let's say that-- yeah, let me draw it more carefully.
+ Thank you for asking.
+ The question was, what the heck are you drawing?
+ So let's say I've got a desired orientation like this.
+ OK?
+ Now I come down, and I get some deviation from that position.
+ OK, so I'm getting some forces here.
+ That could cause me to deviate like this.
+ OK?
+ So I want to basically pull myself in this direction.
+ So if I get a force that's shoving me in that way,
+ I want it to act like a spring that's
+ pulling me towards that configuration.
+ OK?
+ And that'll align me and bring me down in.
+ OK.
+ So you can program that with stiffness control
+ and have some success.
+ But I would say one of the best things that happened
+ in all of this work is that people went through
+ and realized, actually, I don't even have to program that.
+ I can build a mechanical device that
+ acts like a spring that has a center of rotation
+ off the end of the tip.
+ OK?
+ So this is a passive remote center compliance.
+ And I just have to show you some of these old videos.
+ They're so good.
+ First of all, I was super--
+ I had forgotten, but it's totally
+ done by a guy named Drake, which is--
+ OK, so yeah, this is a thesis.
+ A lot of this work was done at MIT for some reason.
+ A lot of the Pagan-Hall early work on impedance control
+ was at MIT.
+ All the motion planning stuff was done at MIT.
+ And Pagan-Halls were big at MIT in the '70s and '80s.
+ OK?
+ And these are the pictures I was trying to show you.
+ So the horizontal stiffness, it looks like this.
+ It allows me to change my translational position.
+ This is right out of Drake's 1978 thesis.
+ OK?
+ And you have an orientational stiffness
+ that looks like this that allows me to align.
+ OK?
+ This is the device he built. OK?
+ It's crazy.
+ How do you make springs that are up here
+ act like the center of the spring is down here?
+ Right?
+ You can do it.
+ It's just a-- it's a geometric puzzle, roughly,
+ of how do you align the springs and counterweight this
+ and counterbalance this and whatever.
+ And you can build a device purely
+ in the end effector of the robot that
+ acts like it had its center of its rotation down here.
+ Remote-centered compliance.
+ OK?
+ The instant center side beam deflections are down here.
+ OK?
+ And this is kind of what they look like today.
+ If you were to go-- you can buy these devices still,
+ and they're still super useful to buy
+ a device that's got these sort of lined up springs like this.
+ And even-- I love these older videos.
+ OK?
+ This is the ATI, the company that will sell you one, right?
+ One of these devices.
+ And in parts assembly, right?
+ This is a case where--
+ I won't play the audio, but it's great.
+ But they have some mating--
+ they've got some small holes in the part that's
+ in the robot's hand, some small stand-ups right there
+ that they have to--
+ and they just sort of jam it down and just
+ rely on the passive compliance, remote-centered compliance
+ of this to do all that alignment,
+ both the horizontal and the rotational.
+ And they can do that--
+ all the controllers, especially then,
+ had bandwidth limitations.
+ Like, implementing that in software
+ is going to get you only so far, right?
+ You can only be so fast.
+ But the physical springs are instantaneous,
+ continuous time, right?
+ So for high-speed assembly operations,
+ these physical devices made the difference.
+ Yeah?
+ [INAUDIBLE]
+ Are the ligaments in my fingers doing remote-centered
+ compliance?
+ Is that--
+ [INAUDIBLE]
+ Right?
+ There's pretty complicated stuff going on there.
+ I don't know if they're really tuned up
+ to be remote-centered, right?
+ And they're also, of course--
+ I have an example.
+ OK.
+ There is actually a great example, maybe.
+ So it's one of my--
+ throughout the years, I've watched for cool animal tricks,
+ and eagles pulling mountain goats off the side of a mountain
+ and stuff like that.
+ I've got all those videos.
+ OK.
+ Have you ever thought about how a bird sits on a perch
+ and falls asleep and doesn't fall off?
+ It's actually really awesome.
+ OK.
+ So it's a little bit like this, right?
+ So they have a tendon that wraps around their talon,
+ up around--
+ it looks like the knee, but it's actually kind of their heel--
+ up into their torso, right?
+ So when they relax, it clamps their hands, right?
+ And provides all the clamping force they need,
+ so they don't fall off the perch.
+ That's kind of like a remote center compliance.
+ It's like a grasp thing.
+ So I have learned over the years--
+ there's other examples.
+ The reason that a horse can run faster than us
+ is because they have this huge tendon running down
+ the backside of their hip.
+ Typically, the understanding of how fast
+ you can swing your leg forward if you're a runner
+ is based on your muscle dynamics, and that's limiting.
+ You can only accelerate so fast.
+ But if you load up a catapult tendon during stance,
+ and you're basically winding up the catapult,
+ and then you lift it up and it goes and shoots it forward,
+ then you can run faster than a human, obviously.
+ So that's how horses do it.
+ And over and over and over, I've seen examples in animals
+ where there's very clever mechanical designs
+ and wirings of the tendons that make these things just amazing.
+ So I totally believe it.
+ Is it remote center compliance?
+ Something like that.
+ OK, I'm going to not mention hybrid force position control
+ now just because it's another thing,
+ but I think that's a pretty good place.
+ I mean, I just talked about birds on perches.
+ What else can you do beyond that?
+ So let's call it for today, and we will see you on Thursday.

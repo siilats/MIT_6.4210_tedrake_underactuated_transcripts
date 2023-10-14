@@ -1,0 +1,5904 @@
+1
+00:00:00,000 --> 00:00:04,460
+ Okay, I got my, I always wait till the 35 happens,
+
+2
+00:00:04,460 --> 00:00:06,120
+ but it's 35, here we go.
+
+3
+00:00:06,120 --> 00:00:07,920
+ Welcome back.
+
+4
+00:00:07,920 --> 00:00:12,400
+ Again, I got lots of good feedback on the survey.
+
+5
+00:00:12,400 --> 00:00:14,200
+ Thank you for doing that, keep it coming.
+
+6
+00:00:14,200 --> 00:00:16,640
+ I will try to not write on the bottom of the board.
+
+7
+00:00:16,640 --> 00:00:18,480
+ If I do, you can shout at me.
+
+8
+00:00:18,480 --> 00:00:21,520
+ Some things are kind of baked into muscle memory,
+
+9
+00:00:21,520 --> 00:00:25,200
+ and I will try to write bigger, and I will try my best.
+
+10
+00:00:25,200 --> 00:00:29,680
+ And I think about the Roman Empire every day,
+
+11
+00:00:29,680 --> 00:00:32,100
+ every single day, for sure.
+
+12
+00:00:32,100 --> 00:00:36,800
+ Okay, so I also got some feedback about just the pace,
+
+13
+00:00:36,800 --> 00:00:39,840
+ and some things are new.
+
+14
+00:00:39,840 --> 00:00:41,560
+ Could you go through a little bit more detail
+
+15
+00:00:41,560 --> 00:00:42,760
+ on these things?
+
+16
+00:00:42,760 --> 00:00:44,800
+ So today, it's kind of nice.
+
+17
+00:00:44,800 --> 00:00:47,280
+ I took a little longer than I meant to last time,
+
+18
+00:00:47,280 --> 00:00:50,200
+ so we're gonna still do differential inverse kinematics,
+
+19
+00:00:50,200 --> 00:00:52,440
+ but with optimization this time.
+
+20
+00:00:52,440 --> 00:00:54,640
+ But that gives me a chance to kind of go into
+
+21
+00:00:54,640 --> 00:00:55,760
+ some of the optimization.
+
+22
+00:00:55,760 --> 00:00:57,640
+ This is the first time we're gonna use optimization
+
+23
+00:00:57,640 --> 00:01:00,360
+ more heavily in the course, and we'll use it
+
+24
+00:01:00,360 --> 00:01:01,680
+ throughout the course.
+
+25
+00:01:01,680 --> 00:01:04,200
+ So it'll give me a chance to sort of slow down
+
+26
+00:01:04,200 --> 00:01:06,480
+ and do the optimization introduction properly today,
+
+27
+00:01:06,480 --> 00:01:07,920
+ which I think is great.
+
+28
+00:01:07,920 --> 00:01:10,920
+ And I'm hoping that I'll say enough about linear algebra
+
+29
+00:01:10,920 --> 00:01:12,520
+ for those of you that are experts.
+
+30
+00:01:12,520 --> 00:01:16,240
+ It will still be satisfying, but if you're new,
+
+31
+00:01:16,240 --> 00:01:19,200
+ it'll still be, it'll take you through some of the steps.
+
+32
+00:01:19,200 --> 00:01:23,120
+ Okay, so the recipe, you know well now.
+
+33
+00:01:23,120 --> 00:01:24,620
+ I've shown it a couple times, right?
+
+34
+00:01:24,620 --> 00:01:27,080
+ We had our basic pick and place idea.
+
+35
+00:01:27,080 --> 00:01:29,240
+ We went through the spatial algebra.
+
+36
+00:01:29,240 --> 00:01:33,000
+ We made a gripper plan.
+
+37
+00:01:33,000 --> 00:01:34,920
+ We talked about forward kinematics.
+
+38
+00:01:34,920 --> 00:01:38,000
+ And then we talked last time about
+
+39
+00:01:38,000 --> 00:01:40,560
+ differential inverse kinematics.
+
+40
+00:01:40,560 --> 00:01:43,520
+ Okay, and in particular, I thought I'd up to do this.
+
+41
+00:01:43,520 --> 00:01:46,680
+ So we talked about how taking the inverse there
+
+42
+00:01:46,680 --> 00:01:49,080
+ is in general not, it shouldn't even be written,
+
+43
+00:01:49,080 --> 00:01:51,720
+ really it should be a pseudo-inverse.
+
+44
+00:01:51,720 --> 00:01:56,720
+ Okay, and I wanna start today by talking about
+
+45
+00:01:57,200 --> 00:02:00,560
+ the pseudo-inverse through the lens of optimization.
+
+46
+00:02:00,560 --> 00:02:03,240
+ I told you about all the magical properties it has.
+
+47
+00:02:03,240 --> 00:02:05,120
+ Okay, and then when we see it through the lens
+
+48
+00:02:05,120 --> 00:02:08,080
+ of optimization, then we'll be able to extend it
+
+49
+00:02:08,080 --> 00:02:10,000
+ and see how we make things more robust
+
+50
+00:02:10,000 --> 00:02:13,020
+ to actually run on the real robot.
+
+51
+00:02:13,020 --> 00:02:15,800
+ Okay, so.
+
+52
+00:02:15,800 --> 00:02:18,540
+ (marker tapping)
+
+53
+00:02:18,540 --> 00:02:35,960
+ Right, so there's various ways that we'll write
+
+54
+00:02:35,960 --> 00:02:39,400
+ optimization problems, mathematical programs.
+
+55
+00:02:39,400 --> 00:02:41,840
+ I might write minimize, maximize,
+
+56
+00:02:41,840 --> 00:02:44,900
+ or just if there's no objective, I could just say fine.
+
+57
+00:02:44,900 --> 00:02:48,280
+ My goal in the pseudo-inverse is really to find me some v
+
+58
+00:02:48,280 --> 00:02:54,960
+ such that JG of Q, V is approximately equal
+
+59
+00:02:54,960 --> 00:03:02,720
+ to the spatial velocity of the gripper that I want.
+
+60
+00:03:02,720 --> 00:03:04,760
+ Maybe I could even write desired here.
+
+61
+00:03:04,760 --> 00:03:10,960
+ Okay, that's sort of the beginnings
+
+62
+00:03:10,960 --> 00:03:13,880
+ of a mathematical program, but this approximately equal
+
+63
+00:03:13,880 --> 00:03:14,900
+ needs to be made precise.
+
+64
+00:03:14,900 --> 00:03:15,960
+ And how are we gonna formulate that?
+
+65
+00:03:15,960 --> 00:03:17,660
+ How are we gonna think about that?
+
+66
+00:03:17,660 --> 00:03:23,520
+ Importantly, when Q is known or measured,
+
+67
+00:03:23,520 --> 00:03:29,120
+ this is a linear equation.
+
+68
+00:03:29,120 --> 00:03:37,440
+ Right, this just becomes a matrix.
+
+69
+00:03:37,440 --> 00:03:40,380
+ So it just becomes the stuff of linear algebra.
+
+70
+00:03:40,380 --> 00:03:43,900
+ This is just AX is approximately equal to B.
+
+71
+00:03:43,900 --> 00:03:46,360
+ It would be the way you'd see it in linear algebra.
+
+72
+00:03:46,360 --> 00:03:48,940
+ A is my Jacobian, B is my desired,
+
+73
+00:03:48,940 --> 00:03:52,740
+ but let's just think about it even in the purest form.
+
+74
+00:03:52,740 --> 00:03:55,620
+ We can forget about robots for just a moment
+
+75
+00:03:55,620 --> 00:03:57,260
+ and think about AX equals B.
+
+76
+00:03:57,260 --> 00:04:00,780
+ Super common in linear algebra.
+
+77
+00:04:00,780 --> 00:04:03,540
+ And actually, you probably have seen it in linear algebra.
+
+78
+00:04:03,540 --> 00:04:04,460
+ You've probably thought about it,
+
+79
+00:04:04,460 --> 00:04:07,340
+ but let's just think about it a bit graphically
+
+80
+00:04:07,340 --> 00:04:11,780
+ 'cause I wanna make these things visually compelling,
+
+81
+00:04:11,780 --> 00:04:13,220
+ I think, for you.
+
+82
+00:04:13,220 --> 00:04:17,780
+ So super simple to think about the scalar case,
+
+83
+00:04:17,780 --> 00:04:18,940
+ but helpful, I hope.
+
+84
+00:04:18,940 --> 00:04:22,780
+ Okay, so I just even said little aX,
+
+85
+00:04:22,780 --> 00:04:26,340
+ so that's a scalar, approximately equals B.
+
+86
+00:04:26,340 --> 00:04:31,020
+ Then the picture is very simple, right?
+
+87
+00:04:31,020 --> 00:04:32,740
+ I have X here.
+
+88
+00:04:32,740 --> 00:04:35,820
+ I've got some line that goes through the origin.
+
+89
+00:04:35,820 --> 00:04:39,840
+ It has slope A, and if I pick a B, I don't know, here,
+
+90
+00:04:39,840 --> 00:04:45,660
+ then I want this solution here, right?
+
+91
+00:04:45,660 --> 00:04:49,160
+ The place where aX equals B.
+
+92
+00:04:49,160 --> 00:04:55,340
+ So, and in particular, the solution is simple
+
+93
+00:04:55,340 --> 00:04:56,540
+ in closed form.
+
+94
+00:04:56,540 --> 00:04:59,180
+ We know that it's gonna be B over A.
+
+95
+00:05:04,100 --> 00:05:08,140
+ So I wanna make that approximately equal.
+
+96
+00:05:08,140 --> 00:05:10,380
+ In this case, it was exactly equal,
+
+97
+00:05:10,380 --> 00:05:13,260
+ but I wanna think about the generalization of that,
+
+98
+00:05:13,260 --> 00:05:17,420
+ a slightly more expressive way to write that.
+
+99
+00:05:17,420 --> 00:05:22,420
+ Let's write minimum over X, aX minus B squared.
+
+100
+00:05:22,420 --> 00:05:26,700
+ Okay, now that's a precise thing,
+
+101
+00:05:26,700 --> 00:05:29,880
+ saying that I have a quadratic cost function,
+
+102
+00:05:29,880 --> 00:05:33,340
+ the squared term here,
+
+103
+00:05:33,340 --> 00:05:36,540
+ and certainly if I can make aX equal to B,
+
+104
+00:05:36,540 --> 00:05:38,860
+ then the cost is zero, and that's as small as a,
+
+105
+00:05:38,860 --> 00:05:40,340
+ this is always gonna be a positive number,
+
+106
+00:05:40,340 --> 00:05:42,020
+ and if it can be made zero,
+
+107
+00:05:42,020 --> 00:05:43,780
+ that's the smallest it could be,
+
+108
+00:05:43,780 --> 00:05:45,380
+ so that's clearly the minimum.
+
+109
+00:05:45,380 --> 00:05:49,420
+ So the minimum of this, if aX can be equal to B,
+
+110
+00:05:49,420 --> 00:05:51,020
+ which it can in the scalar case, right,
+
+111
+00:05:51,020 --> 00:05:52,820
+ then it would be this.
+
+112
+00:05:52,820 --> 00:05:57,480
+ But think about the picture that's happening there.
+
+113
+00:05:57,480 --> 00:06:00,900
+ I'm gonna go to the bottom of the board,
+
+114
+00:06:00,900 --> 00:06:01,980
+ but the board is lifted,
+
+115
+00:06:01,980 --> 00:06:03,860
+ so I think that's still legit, yeah?
+
+116
+00:06:03,860 --> 00:06:04,700
+ Okay.
+
+117
+00:06:04,700 --> 00:06:11,780
+ So X, and now, let me plot the cost on this axis.
+
+118
+00:06:11,780 --> 00:06:16,260
+ Okay, so, and I'll pick a couple different values.
+
+119
+00:06:16,260 --> 00:06:19,660
+ Let's just set B equal to one,
+
+120
+00:06:19,660 --> 00:06:22,740
+ and I'll plot it for a couple different values of a here.
+
+121
+00:06:22,740 --> 00:06:25,180
+ But if a is one,
+
+122
+00:06:25,180 --> 00:06:30,880
+ then this is gonna look like a quadratic function.
+
+123
+00:06:30,880 --> 00:06:35,060
+ Imagine that's a perfectly symmetric parabola.
+
+124
+00:06:35,060 --> 00:06:36,620
+ My drawing's not perfect, but.
+
+125
+00:06:36,620 --> 00:06:43,380
+ Okay, and it also obtains a minimum, of course,
+
+126
+00:06:43,380 --> 00:06:47,940
+ when aX equals B, when X is B over A.
+
+127
+00:06:47,940 --> 00:06:52,260
+ Okay, so we've changed this picture into this picture,
+
+128
+00:06:52,260 --> 00:06:54,500
+ saying, I wanna find the bottom of that bowl.
+
+129
+00:06:57,320 --> 00:07:00,980
+ All right, so does this always have a solution?
+
+130
+00:07:00,980 --> 00:07:02,760
+ Yeah.
+
+131
+00:07:02,760 --> 00:07:06,040
+ Right, so every time you see a in the denominator,
+
+132
+00:07:06,040 --> 00:07:10,360
+ which is the same as taking a Jacobian inverse, right,
+
+133
+00:07:10,360 --> 00:07:11,880
+ we gotta watch out for things,
+
+134
+00:07:11,880 --> 00:07:16,400
+ if a were to go to zero, bad things could happen.
+
+135
+00:07:16,400 --> 00:07:17,760
+ And I also said, you know,
+
+136
+00:07:17,760 --> 00:07:21,240
+ it's gonna be very rare to go exactly to zero.
+
+137
+00:07:21,240 --> 00:07:23,760
+ It's more like you get close to zero.
+
+138
+00:07:23,760 --> 00:07:25,000
+ Let's just think about what's happening
+
+139
+00:07:25,000 --> 00:07:26,400
+ as a gets closer to zero.
+
+140
+00:07:26,400 --> 00:07:29,880
+ So this is my a equals one case.
+
+141
+00:07:29,880 --> 00:07:33,800
+ Okay, if I were to plot, I don't know,
+
+142
+00:07:33,800 --> 00:07:37,160
+ a equals two, or a equals, sorry, a equals a half,
+
+143
+00:07:37,160 --> 00:07:41,120
+ then I'll get, well, let's just do it out.
+
+144
+00:07:41,120 --> 00:07:43,760
+ If I did a equals half, so I get a squared,
+
+145
+00:07:43,760 --> 00:07:48,760
+ X squared minus two, aBX plus B squared, right?
+
+146
+00:07:48,760 --> 00:07:54,840
+ So the steepness of this parabola goes like a squared.
+
+147
+00:07:54,840 --> 00:07:59,840
+ If I choose a to a two, I actually get it to be
+
+148
+00:07:59,840 --> 00:08:06,840
+ a much less steep curve, right?
+
+149
+00:08:06,840 --> 00:08:11,440
+ I'm sorry, if a equals a half, is that wrong?
+
+150
+00:08:11,440 --> 00:08:13,440
+ Then the optimum becomes two,
+
+151
+00:08:13,440 --> 00:08:18,080
+ but the parabola shifts out, okay?
+
+152
+00:08:18,080 --> 00:08:20,400
+ If I did four, let's say,
+
+153
+00:08:22,400 --> 00:08:27,400
+ if I had a equals a fourth,
+
+154
+00:08:27,400 --> 00:08:35,000
+ I'm gonna get a picture like that.
+
+155
+00:08:35,000 --> 00:08:36,200
+ It attains its optima,
+
+156
+00:08:36,200 --> 00:08:39,400
+ that's supposed to hit the bottom down here, okay?
+
+157
+00:08:39,400 --> 00:08:42,120
+ But it's just getting flatter and flatter and flatter,
+
+158
+00:08:42,120 --> 00:08:46,760
+ and the solution is running off to the right, right?
+
+159
+00:08:46,760 --> 00:08:49,840
+ So that seems kind of simple and trivial,
+
+160
+00:08:49,840 --> 00:08:51,440
+ and that's what's happening in the scalar case.
+
+161
+00:08:51,440 --> 00:08:54,560
+ That's exactly what's happening in the Jacobian case,
+
+162
+00:08:54,560 --> 00:08:58,280
+ when you get close to a singularity, okay?
+
+163
+00:08:58,280 --> 00:09:00,400
+ So I want you to see all the way through to that
+
+164
+00:09:00,400 --> 00:09:01,240
+ in a second.
+
+165
+00:09:01,240 --> 00:09:07,920
+ And how are we gonna fix it?
+
+166
+00:09:07,920 --> 00:09:10,120
+ There's a bunch of different ways to fix it,
+
+167
+00:09:10,120 --> 00:09:13,320
+ but maybe the simplest way that I can see already
+
+168
+00:09:13,320 --> 00:09:17,600
+ in the scalar case would be to start adding constraints,
+
+169
+00:09:17,600 --> 00:09:18,480
+ okay?
+
+170
+00:09:18,480 --> 00:09:22,240
+ So what if I don't wanna send,
+
+171
+00:09:22,240 --> 00:09:24,600
+ or I don't wanna send a velocity command
+
+172
+00:09:24,600 --> 00:09:27,720
+ of very, very large to the robot?
+
+173
+00:09:27,720 --> 00:09:29,440
+ So even if the optimal solution,
+
+174
+00:09:29,440 --> 00:09:34,040
+ in order to match my desired velocity,
+
+175
+00:09:34,040 --> 00:09:36,720
+ if that optimal solution is too far to the right,
+
+176
+00:09:36,720 --> 00:09:38,880
+ maybe I don't wanna send that to the robot.
+
+177
+00:09:38,880 --> 00:09:41,960
+ So once we've got this language of optimization,
+
+178
+00:09:41,960 --> 00:09:44,440
+ we can start doing more interesting things.
+
+179
+00:09:44,440 --> 00:09:47,080
+ So I can do min over x,
+
+180
+00:09:47,080 --> 00:09:49,960
+ ax minus b squared,
+
+181
+00:09:49,960 --> 00:09:52,720
+ but I can add a constraint saying,
+
+182
+00:09:52,720 --> 00:09:55,160
+ but I don't want x, let's say,
+
+183
+00:09:55,160 --> 00:09:57,200
+ I want x to be less than or equal to two.
+
+184
+00:09:57,200 --> 00:10:01,240
+ Do your best to follow the command,
+
+185
+00:10:01,240 --> 00:10:05,000
+ but don't send velocities bigger than two, okay?
+
+186
+00:10:05,000 --> 00:10:08,840
+ And this seems arbitrary sort of here,
+
+187
+00:10:08,840 --> 00:10:09,800
+ but these are really,
+
+188
+00:10:09,800 --> 00:10:11,080
+ this is like a velocity limit
+
+189
+00:10:11,080 --> 00:10:12,240
+ that comes from your actuator.
+
+190
+00:10:12,240 --> 00:10:13,480
+ You really do have velocity.
+
+191
+00:10:13,480 --> 00:10:15,240
+ Or maybe you make it a little conservative.
+
+192
+00:10:15,240 --> 00:10:17,640
+ You make it a little less than the true velocity limit,
+
+193
+00:10:17,640 --> 00:10:19,880
+ 'cause you don't wanna send big velocity commands.
+
+194
+00:10:19,880 --> 00:10:23,560
+ Okay, and if you can solve this, which we can,
+
+195
+00:10:23,560 --> 00:10:24,840
+ we can solve these nicely.
+
+196
+00:10:24,840 --> 00:10:27,280
+ Certainly in the scalar case, it's trivial,
+
+197
+00:10:27,280 --> 00:10:28,640
+ but in the bigger case,
+
+198
+00:10:28,640 --> 00:10:31,880
+ it's also computationally very efficient to solve these.
+
+199
+00:10:31,880 --> 00:10:35,440
+ Then we're gonna be able to send more reliable,
+
+200
+00:10:35,440 --> 00:10:37,760
+ avoid sending very large numbers to the robot.
+
+201
+00:10:41,960 --> 00:10:45,720
+ So my statement is preferring this
+
+202
+00:10:45,720 --> 00:10:48,760
+ of being explicit about saying,
+
+203
+00:10:48,760 --> 00:10:52,200
+ I want Ax to be close to B.
+
+204
+00:10:52,200 --> 00:10:54,080
+ Do your best effort,
+
+205
+00:10:54,080 --> 00:10:55,560
+ but I'm allowed to add extra constraints.
+
+206
+00:10:55,560 --> 00:10:59,360
+ That's better than saying Ax must be exactly equal to B,
+
+207
+00:10:59,360 --> 00:11:02,560
+ which is too explicit of a,
+
+208
+00:11:02,560 --> 00:11:07,480
+ it doesn't leave me any room for satisfying other things.
+
+209
+00:11:08,480 --> 00:11:11,160
+ (air whooshing)
+
+210
+00:11:11,160 --> 00:11:14,960
+ Is that picture kind of clear?
+
+211
+00:11:14,960 --> 00:11:17,080
+ Simple in the scalar case, okay.
+
+212
+00:11:17,080 --> 00:11:19,200
+ In the matrix case, it's the same.
+
+213
+00:11:19,200 --> 00:11:24,200
+ It's just you could get confused more easily, I think,
+
+214
+00:11:24,200 --> 00:11:28,680
+ but the pictures,
+
+215
+00:11:28,680 --> 00:11:32,040
+ the geometry of the optimization is the same.
+
+216
+00:11:32,040 --> 00:11:37,040
+ So now we wanna say Ax minus B squared.
+
+217
+00:11:38,040 --> 00:11:41,040
+ Okay, so I'll say for instance,
+
+218
+00:11:41,040 --> 00:11:45,080
+ minimize over X, Ax minus B squared.
+
+219
+00:11:45,080 --> 00:11:46,320
+ We'll add constraints in a minute,
+
+220
+00:11:46,320 --> 00:11:49,120
+ but let's just think about that version of the problem.
+
+221
+00:11:49,120 --> 00:11:55,040
+ Analogously, if I were to multiply this out,
+
+222
+00:11:55,040 --> 00:12:00,040
+ I get X transpose A transpose Ax
+
+223
+00:12:00,040 --> 00:12:05,920
+ minus two X transpose A transpose B.
+
+224
+00:12:05,920 --> 00:12:10,920
+ A transpose B plus B transpose B.
+
+225
+00:12:10,920 --> 00:12:16,240
+ Those middle terms,
+
+226
+00:12:16,240 --> 00:12:19,040
+ I can combine the two middle terms because it's a scalar.
+
+227
+00:12:19,040 --> 00:12:23,040
+ So the transpose is equal to the number.
+
+228
+00:12:23,040 --> 00:12:24,880
+ That's why I get the minus two there.
+
+229
+00:12:24,880 --> 00:12:30,400
+ Okay, so the picture you should have in your head then
+
+230
+00:12:30,400 --> 00:12:33,880
+ is that this is gonna be now in more dimensions.
+
+231
+00:12:33,880 --> 00:12:35,680
+ Let me see if I can get even more 3D here.
+
+232
+00:12:35,680 --> 00:12:38,760
+ So a little slant here, a little slant here.
+
+233
+00:12:38,760 --> 00:12:41,600
+ This is X one, X two.
+
+234
+00:12:41,600 --> 00:12:44,080
+ This is my cost here.
+
+235
+00:12:44,080 --> 00:12:48,800
+ And I've got some sort of a parabola still,
+
+236
+00:12:48,800 --> 00:12:53,280
+ something like that.
+
+237
+00:12:53,280 --> 00:12:56,640
+ It obtains its minimum at a point.
+
+238
+00:12:56,640 --> 00:13:00,880
+ So depending on the properties of A, which we'll look at,
+
+239
+00:13:00,880 --> 00:13:02,680
+ if it can drive this completely zero,
+
+240
+00:13:02,680 --> 00:13:04,400
+ it might be able to drive this,
+
+241
+00:13:04,400 --> 00:13:07,240
+ it might be able to obtain the minimum at zero.
+
+242
+00:13:07,240 --> 00:13:09,480
+ And that's the point in X one, X two,
+
+243
+00:13:09,480 --> 00:13:11,720
+ that it obtains that minimum is the solution
+
+244
+00:13:11,720 --> 00:13:13,640
+ that makes Ax equal to B.
+
+245
+00:13:13,640 --> 00:13:18,400
+ Okay, but A of course could be not full rank
+
+246
+00:13:18,400 --> 00:13:20,600
+ or something like this, and we'll try to look at that.
+
+247
+00:13:20,600 --> 00:13:25,640
+ The shape of that parabola,
+
+248
+00:13:25,640 --> 00:13:28,960
+ I mean, it's gonna be potentially sort of slanted
+
+249
+00:13:28,960 --> 00:13:30,880
+ based on this term.
+
+250
+00:13:30,880 --> 00:13:34,640
+ It could be lifted off the bottom with this term,
+
+251
+00:13:34,640 --> 00:13:37,440
+ but really the shape of the parabola
+
+252
+00:13:37,440 --> 00:13:39,040
+ comes from the quadratic term,
+
+253
+00:13:39,040 --> 00:13:41,640
+ the same way that we looked at just the squared term
+
+254
+00:13:41,640 --> 00:13:43,200
+ to understand that curvature.
+
+255
+00:13:43,200 --> 00:13:50,080
+ So even if A is not a square matrix,
+
+256
+00:13:50,080 --> 00:13:52,920
+ it could be six by seven, for instance, okay?
+
+257
+00:13:52,920 --> 00:13:56,320
+ A transpose times A is a square matrix,
+
+258
+00:13:56,320 --> 00:14:00,520
+ and it's a real matrix, a real number,
+
+259
+00:14:00,520 --> 00:14:02,840
+ no complex numbers anywhere here.
+
+260
+00:14:02,840 --> 00:14:06,480
+ This is, and it's symmetric because of the A transpose A.
+
+261
+00:14:06,480 --> 00:14:09,960
+ So we know it's well-behaved in a lot of sense,
+
+262
+00:14:09,960 --> 00:14:13,280
+ it's got real eigenvalues for instance, okay?
+
+263
+00:14:13,280 --> 00:14:14,400
+ And it's the eigenvalues,
+
+264
+00:14:14,400 --> 00:14:17,880
+ so just to say that on the board if that helps,
+
+265
+00:14:17,880 --> 00:14:21,760
+ A transpose A is real and symmetric.
+
+266
+00:14:21,760 --> 00:14:27,400
+ So it has real eigenvalues.
+
+267
+00:14:27,400 --> 00:14:30,160
+ (board clacking)
+
+268
+00:14:30,160 --> 00:14:35,080
+ So the picture of a quadratic bowl is reasonable, yes?
+
+269
+00:14:35,080 --> 00:14:38,480
+ (audience member speaking faintly)
+
+270
+00:14:38,480 --> 00:14:40,320
+ They're all real to begin with in our case.
+
+271
+00:14:40,320 --> 00:14:42,360
+ So in the general linear algebra case,
+
+272
+00:14:42,360 --> 00:14:44,000
+ I would use a Hermitian transform
+
+273
+00:14:44,000 --> 00:14:46,520
+ since it's gonna be a Jacobian coming from real robots,
+
+274
+00:14:46,520 --> 00:14:49,000
+ I'm just gonna treat it as real, thank you for asking.
+
+275
+00:14:49,000 --> 00:14:53,760
+ And that's also why I'm willing to say
+
+276
+00:14:53,760 --> 00:14:55,480
+ it's real and symmetric, you know?
+
+277
+00:14:55,480 --> 00:14:56,920
+ It only is by assumption I guess
+
+278
+00:14:56,920 --> 00:14:59,240
+ in the pure linear algebra case.
+
+279
+00:14:59,240 --> 00:15:07,600
+ And it's the eigenvalues that tell me how elongated the,
+
+280
+00:15:07,600 --> 00:15:11,280
+ you know, if I were to draw this thing from above,
+
+281
+00:15:11,280 --> 00:15:13,760
+ over here, right?
+
+282
+00:15:13,760 --> 00:15:17,960
+ So if I were to look down from above,
+
+283
+00:15:17,960 --> 00:15:20,440
+ this is now X1, X2,
+
+284
+00:15:20,440 --> 00:15:22,360
+ then I'm gonna get some sort of, you know,
+
+285
+00:15:22,360 --> 00:15:24,000
+ quadratic, I'll just draw it around the origin
+
+286
+00:15:24,000 --> 00:15:28,680
+ to keep it simple here, but it's gonna look like
+
+287
+00:15:28,680 --> 00:15:30,120
+ I'm looking down into a bowl,
+
+288
+00:15:30,120 --> 00:15:33,640
+ these are level sets of that bowl, contours of the bowl,
+
+289
+00:15:33,640 --> 00:15:36,440
+ okay, and the axes that define,
+
+290
+00:15:36,440 --> 00:15:39,520
+ I'll tell you the elongation,
+
+291
+00:15:39,520 --> 00:15:46,640
+ these are the eigenvectors of A transpose A,
+
+292
+00:15:46,640 --> 00:15:53,520
+ and the scaling there, it goes by the eigenvalues,
+
+293
+00:15:53,520 --> 00:15:56,800
+ larger eigenvalue means it goes up steeper,
+
+294
+00:15:56,800 --> 00:16:00,840
+ so it's actually shorter in this bowl, okay?
+
+295
+00:16:00,840 --> 00:16:09,440
+ A small eigenvalue means that it's elongated here,
+
+296
+00:16:09,440 --> 00:16:11,000
+ grows up very slowly,
+
+297
+00:16:11,000 --> 00:16:13,680
+ and that's exactly this picture here, right?
+
+298
+00:16:13,680 --> 00:16:15,880
+ As the A gets smaller,
+
+299
+00:16:15,880 --> 00:16:18,080
+ then this thing is gonna get stretched
+
+300
+00:16:18,080 --> 00:16:21,360
+ and stretched and stretched, right?
+
+301
+00:16:22,360 --> 00:16:26,040
+ And potentially, if the B is not zero,
+
+302
+00:16:26,040 --> 00:16:28,240
+ you know, if that was a little bit offset,
+
+303
+00:16:28,240 --> 00:16:30,680
+ then as I stretch it, it's also gonna,
+
+304
+00:16:30,680 --> 00:16:33,840
+ the origin of that point is gonna be racing away
+
+305
+00:16:33,840 --> 00:16:36,800
+ from the origin of the coordinate system,
+
+306
+00:16:36,800 --> 00:16:39,760
+ it's gonna be asking me for large velocities
+
+307
+00:16:39,760 --> 00:16:41,560
+ to achieve the right end effector,
+
+308
+00:16:41,560 --> 00:16:43,040
+ the commanded IR end effector,
+
+309
+00:16:43,040 --> 00:16:44,520
+ but this is the picture you should have in your head
+
+310
+00:16:44,520 --> 00:16:46,280
+ about the math that's happening,
+
+311
+00:16:46,280 --> 00:16:47,880
+ is that it's a quadratic form
+
+312
+00:16:47,880 --> 00:16:50,400
+ that's getting flattened and shifted away,
+
+313
+00:16:50,400 --> 00:16:51,440
+ running away from me.
+
+314
+00:16:52,280 --> 00:16:53,120
+ Yeah?
+
+315
+00:16:53,120 --> 00:16:56,720
+ (audience member speaking)
+
+316
+00:16:56,720 --> 00:17:03,120
+ So in this picture, is it clear?
+
+317
+00:17:03,120 --> 00:17:09,200
+ So if, as the,
+
+318
+00:17:09,200 --> 00:17:13,200
+ as A gets smaller, X star is also getting bigger.
+
+319
+00:17:18,960 --> 00:17:22,520
+ So I, just because I used eigenvalues and eigenvectors,
+
+320
+00:17:22,520 --> 00:17:24,000
+ and I just was thinking about this,
+
+321
+00:17:24,000 --> 00:17:25,720
+ I drew this around the origin,
+
+322
+00:17:25,720 --> 00:17:27,640
+ but as soon as it's not around the origin,
+
+323
+00:17:27,640 --> 00:17:28,800
+ then the same thing's gonna happen,
+
+324
+00:17:28,800 --> 00:17:30,520
+ these terms, you know,
+
+325
+00:17:30,520 --> 00:17:32,400
+ it's like having the A in the denominator,
+
+326
+00:17:32,400 --> 00:17:35,720
+ so the steady state is gonna be running away.
+
+327
+00:17:35,720 --> 00:17:36,840
+ That's why I tried to draw this,
+
+328
+00:17:36,840 --> 00:17:38,600
+ because that's the intuition,
+
+329
+00:17:38,600 --> 00:17:41,640
+ it's gonna, you have A in the denominator,
+
+330
+00:17:41,640 --> 00:17:44,600
+ so it's gonna go to infinity like that.
+
+331
+00:17:47,880 --> 00:17:49,960
+ Is that sort of a helpful picture?
+
+332
+00:17:49,960 --> 00:17:54,060
+ Remember, actually, I said,
+
+333
+00:17:54,060 --> 00:18:00,040
+ I said don't just think about the rank of your Jacobian,
+
+334
+00:18:00,040 --> 00:18:04,320
+ think about the singular values of your Jacobian, right?
+
+335
+00:18:04,320 --> 00:18:08,080
+ And I can connect that here, if that's useful, right?
+
+336
+00:18:08,080 --> 00:18:13,080
+ So if I were to say that A is a singular value decomposition,
+
+337
+00:18:16,320 --> 00:18:18,320
+ I'm assuming, again, assuming it's real,
+
+338
+00:18:18,320 --> 00:18:20,160
+ so I have real singular values here.
+
+339
+00:18:20,160 --> 00:18:24,880
+ If you know SVD,
+
+340
+00:18:24,880 --> 00:18:29,000
+ if you should know SVD at some point, it's great,
+
+341
+00:18:29,000 --> 00:18:30,800
+ it's a very powerful thing, okay?
+
+342
+00:18:30,800 --> 00:18:35,320
+ But even if you're not,
+
+343
+00:18:35,320 --> 00:18:37,440
+ if you don't have all the geometry of SVD,
+
+344
+00:18:37,440 --> 00:18:41,480
+ it has this, it's a way to factorize a matrix
+
+345
+00:18:41,480 --> 00:18:44,200
+ into two unitary matrices.
+
+346
+00:18:44,200 --> 00:18:47,320
+ These are unitary,
+
+347
+00:18:47,320 --> 00:18:52,160
+ meaning that U, U transpose equals I, okay?
+
+348
+00:18:52,160 --> 00:18:55,040
+ And this one in the middle here is a diagonal
+
+349
+00:18:55,040 --> 00:19:01,880
+ matrix with the singular values on the axis.
+
+350
+00:19:01,880 --> 00:19:04,640
+ (marker tapping)
+
+351
+00:19:04,640 --> 00:19:20,920
+ So what I said is if your singular values
+
+352
+00:19:20,920 --> 00:19:23,560
+ get small, close to zero,
+
+353
+00:19:23,560 --> 00:19:26,680
+ then that's the case you have to worry about
+
+354
+00:19:26,680 --> 00:19:28,320
+ because you're close to losing rank
+
+355
+00:19:28,320 --> 00:19:31,240
+ and you might command big eigenvalues.
+
+356
+00:19:31,240 --> 00:19:33,880
+ I'm sorry, you might command big velocities.
+
+357
+00:19:33,880 --> 00:19:37,120
+ And that's exactly analogous to what I've said here,
+
+358
+00:19:37,120 --> 00:19:39,080
+ that if the eigenvalue,
+
+359
+00:19:39,080 --> 00:19:42,080
+ if the singular values go close to zero,
+
+360
+00:19:42,080 --> 00:19:45,760
+ then that's the same as the eigenvalues
+
+361
+00:19:45,760 --> 00:19:47,640
+ of A transpose A going to zero.
+
+362
+00:19:47,640 --> 00:19:50,160
+ With the unitary matrices,
+
+363
+00:19:50,160 --> 00:19:54,680
+ you have that A transpose A
+
+364
+00:19:54,680 --> 00:19:57,080
+ is still just U singular values,
+
+365
+00:19:57,080 --> 00:19:58,280
+ I'll just write squared.
+
+366
+00:19:58,280 --> 00:20:01,040
+ (marker tapping)
+
+367
+00:20:01,040 --> 00:20:07,800
+ So when the singular values go to zero,
+
+368
+00:20:07,800 --> 00:20:10,800
+ which is a singular value I can understand
+
+369
+00:20:10,800 --> 00:20:12,760
+ even for the six by seven matrix,
+
+370
+00:20:12,760 --> 00:20:16,640
+ and that corresponds to the eigenvalues
+
+371
+00:20:16,640 --> 00:20:19,480
+ of the square matrix going to zero,
+
+372
+00:20:19,480 --> 00:20:22,760
+ which is exactly what makes this thing expand.
+
+373
+00:20:22,760 --> 00:20:23,600
+ Yeah?
+
+374
+00:20:23,600 --> 00:20:26,520
+ (student speaking)
+
+375
+00:20:27,520 --> 00:20:28,360
+ Yeah.
+
+376
+00:20:28,360 --> 00:20:33,360
+ So I think we're gonna make it explicit by the constraints.
+
+377
+00:20:33,360 --> 00:20:35,480
+ So we're gonna say exactly what,
+
+378
+00:20:35,480 --> 00:20:38,840
+ we're gonna write these optimizations
+
+379
+00:20:38,840 --> 00:20:40,760
+ such that even if this becomes
+
+380
+00:20:40,760 --> 00:20:42,600
+ the singular values go close to zero,
+
+381
+00:20:42,600 --> 00:20:45,080
+ it will not violate our velocity limits.
+
+382
+00:20:45,080 --> 00:20:48,040
+ So therefore that takes the relative,
+
+383
+00:20:48,040 --> 00:20:51,840
+ you know, the sort of subjective part out of it.
+
+384
+00:20:55,520 --> 00:20:58,440
+ (student speaking)
+
+385
+00:20:58,440 --> 00:21:03,200
+ That make sense?
+
+386
+00:21:03,200 --> 00:21:06,800
+ So when your Jacobian loses rank,
+
+387
+00:21:06,800 --> 00:21:12,920
+ your quadratic function races off
+
+388
+00:21:12,920 --> 00:21:16,320
+ and that's the optimal value of trying to,
+
+389
+00:21:16,320 --> 00:21:18,680
+ if you just tried to minimize this,
+
+390
+00:21:18,680 --> 00:21:21,000
+ it would be asking for X to become very large.
+
+391
+00:21:21,000 --> 00:21:23,920
+ (student speaking)
+
+392
+00:21:23,920 --> 00:21:27,640
+ You don't look as happy as you could.
+
+393
+00:21:27,640 --> 00:21:32,520
+ Okay.
+
+394
+00:21:32,520 --> 00:21:37,400
+ If it's helpful, I mean,
+
+395
+00:21:37,400 --> 00:21:40,520
+ so the singular value decomposition
+
+396
+00:21:40,520 --> 00:21:45,000
+ is actually all immediately accessible to us now.
+
+397
+00:21:45,000 --> 00:21:47,240
+ If you wanted to derive the singular values,
+
+398
+00:21:47,240 --> 00:21:49,320
+ we've basically done the right things.
+
+399
+00:21:49,320 --> 00:21:52,360
+ So in particular,
+
+400
+00:21:52,360 --> 00:21:56,240
+ if you wanted to find the minimum of a quadratic form,
+
+401
+00:21:56,240 --> 00:21:57,800
+ even in the scalar case,
+
+402
+00:21:57,800 --> 00:22:00,320
+ how do you do it, right?
+
+403
+00:22:00,320 --> 00:22:05,320
+ So min over X, AX minus B squared,
+
+404
+00:22:05,320 --> 00:22:09,760
+ the slightly more general way to do that
+
+405
+00:22:09,760 --> 00:22:14,480
+ in the unconstrained case is to take the gradient of that,
+
+406
+00:22:14,480 --> 00:22:17,160
+ of this thing,
+
+407
+00:22:17,160 --> 00:22:20,080
+ (student speaking)
+
+408
+00:22:20,080 --> 00:22:23,640
+ and I want to figure out,
+
+409
+00:22:23,640 --> 00:22:26,440
+ the minimum is gonna be where the gradient equals zero.
+
+410
+00:22:26,440 --> 00:22:32,560
+ Okay, so I'll take the gradient of this thing,
+
+411
+00:22:32,560 --> 00:22:34,440
+ which I get,
+
+412
+00:22:34,440 --> 00:22:43,360
+ 2A squared X minus 2AB equals to zero.
+
+413
+00:22:44,880 --> 00:22:47,880
+ If I have to find the place where that's equal to zero,
+
+414
+00:22:47,880 --> 00:22:52,880
+ this tells me quickly that X star equals B over A
+
+415
+00:22:52,880 --> 00:22:57,280
+ just by finding the X that makes that equal to zero.
+
+416
+00:22:57,280 --> 00:23:02,600
+ Yeah.
+
+417
+00:23:02,600 --> 00:23:05,520
+ (student speaking)
+
+418
+00:23:05,520 --> 00:23:10,440
+ I'm about to do it in the matrix case.
+
+419
+00:23:10,440 --> 00:23:13,600
+ And then that operator is gonna be a vector
+
+420
+00:23:13,600 --> 00:23:16,240
+ or a matrix, yeah.
+
+421
+00:23:16,240 --> 00:23:18,920
+ I could have written that with a simpler derivative
+
+422
+00:23:18,920 --> 00:23:19,880
+ in the scalar case.
+
+423
+00:23:19,880 --> 00:23:24,720
+ I will try to repeat the questions.
+
+424
+00:23:24,720 --> 00:23:25,640
+ That was another feedback.
+
+425
+00:23:25,640 --> 00:23:28,600
+ I know that, I normally do that, but yeah.
+
+426
+00:23:28,600 --> 00:23:32,160
+ So he asked why use the partial derivative notation
+
+427
+00:23:32,160 --> 00:23:33,600
+ in this example.
+
+428
+00:23:33,600 --> 00:23:36,280
+ It's overkill in this example, but it will generalize.
+
+429
+00:23:36,280 --> 00:23:41,080
+ Okay, and then in the min,
+
+430
+00:23:41,520 --> 00:23:43,680
+ (student speaking)
+
+431
+00:23:43,680 --> 00:23:48,040
+ X, AX minus B case,
+
+432
+00:23:48,040 --> 00:23:53,280
+ it's the same machinery to find the minimum
+
+433
+00:23:53,280 --> 00:23:54,880
+ of this quadratic bowl.
+
+434
+00:23:54,880 --> 00:23:58,960
+ I'll just take the gradient of that middle term,
+
+435
+00:23:58,960 --> 00:24:04,480
+ which is now the gradient with respect to a vector
+
+436
+00:24:04,480 --> 00:24:07,480
+ of a scalar, which gives me a vector out.
+
+437
+00:24:09,680 --> 00:24:13,000
+ And you have to get a little bit used
+
+438
+00:24:13,000 --> 00:24:15,520
+ to the matrix math stuff, right?
+
+439
+00:24:15,520 --> 00:24:18,160
+ So if you haven't done a lot of it,
+
+440
+00:24:18,160 --> 00:24:24,560
+ there's a couple of things that make it easier.
+
+441
+00:24:24,560 --> 00:24:31,680
+ But it turns out the gradient of this thing is also,
+
+442
+00:24:31,680 --> 00:24:32,760
+ very analogous to this.
+
+443
+00:24:32,760 --> 00:24:37,280
+ It's two X transpose A transpose A,
+
+444
+00:24:38,720 --> 00:24:43,720
+ and then minus two B transpose A.
+
+445
+00:24:43,720 --> 00:24:46,440
+ I set that equal to zero.
+
+446
+00:24:46,440 --> 00:25:00,000
+ Since A is a square here, it's A transpose A,
+
+447
+00:25:00,000 --> 00:25:02,840
+ I know that it's gonna be positive definite or zero.
+
+448
+00:25:02,840 --> 00:25:06,160
+ So I know that my bowl's going up, it's not going down.
+
+449
+00:25:06,160 --> 00:25:09,160
+ (students breathing)
+
+450
+00:25:09,160 --> 00:25:16,160
+ And the solution to that,
+
+451
+00:25:16,160 --> 00:25:23,680
+ I could also just take the transpose,
+
+452
+00:25:23,680 --> 00:25:27,160
+ but the solution to that is, plus a transpose,
+
+453
+00:25:27,160 --> 00:25:32,160
+ is that the optimal value is A transpose A inverse,
+
+454
+00:25:32,160 --> 00:25:37,160
+ A transpose B.
+
+455
+00:25:37,160 --> 00:25:50,160
+ And this thing here, there's various forms of it
+
+456
+00:25:50,160 --> 00:25:51,920
+ and everything, but this thing here is basically
+
+457
+00:25:51,920 --> 00:25:54,520
+ what you get when you call the pseudo inverse.
+
+458
+00:25:54,520 --> 00:25:59,840
+ The reason that the pseudo inverse has magical properties
+
+459
+00:26:00,920 --> 00:26:03,960
+ is because it's actually solving
+
+460
+00:26:03,960 --> 00:26:07,880
+ that slightly richer specification, AX minus B.
+
+461
+00:26:07,880 --> 00:26:13,800
+ So when there's zero solutions,
+
+462
+00:26:13,800 --> 00:26:27,360
+ it finds the closest X star to minimize AX minus B.
+
+463
+00:26:28,040 --> 00:26:33,040
+ X star to minimize AX minus B.
+
+464
+00:26:33,040 --> 00:26:37,960
+ I said it minimized something in the least square sense,
+
+465
+00:26:37,960 --> 00:26:39,560
+ this is exactly what it's doing.
+
+466
+00:26:39,560 --> 00:26:43,000
+ When it has one solution,
+
+467
+00:26:43,000 --> 00:26:49,960
+ then it will return that solution.
+
+468
+00:26:49,960 --> 00:26:54,160
+ So it's as good as calling an inverse.
+
+469
+00:26:56,280 --> 00:26:58,120
+ When it has infinite solutions,
+
+470
+00:26:58,120 --> 00:27:01,440
+ then you're relying on the way you take the inverse
+
+471
+00:27:01,440 --> 00:27:02,280
+ and you'll get,
+
+472
+00:27:02,280 --> 00:27:07,520
+ the math will get you the closest to zero,
+
+473
+00:27:07,520 --> 00:27:09,760
+ but we're gonna talk about that, we're gonna settle that.
+
+474
+00:27:09,760 --> 00:27:13,260
+ (student speaking off mic)
+
+475
+00:27:13,260 --> 00:27:19,280
+ That's true, so there's slightly more robust ways
+
+476
+00:27:19,280 --> 00:27:21,880
+ to write this that handle the case even when this is zero.
+
+477
+00:27:21,880 --> 00:27:24,640
+ Yeah, yeah, I just did the simplest version, but yeah.
+
+478
+00:27:25,160 --> 00:27:28,660
+ (student speaking off mic)
+
+479
+00:27:28,660 --> 00:27:35,360
+ I mean, in practice, we're gonna set up
+
+480
+00:27:35,360 --> 00:27:37,520
+ the optimization problem so this never happens,
+
+481
+00:27:37,520 --> 00:27:40,120
+ is the real, I think the answer for this class.
+
+482
+00:27:40,120 --> 00:27:43,960
+ So we're gonna put, I think if you've left
+
+483
+00:27:43,960 --> 00:27:47,320
+ your optimization landscape to have zeros in some direction,
+
+484
+00:27:47,320 --> 00:27:50,280
+ then you haven't fully specified your problem.
+
+485
+00:27:50,280 --> 00:27:53,720
+ So I'm gonna recommend that you look for those directions
+
+486
+00:27:53,720 --> 00:27:55,200
+ and add some extra terms into them,
+
+487
+00:27:55,200 --> 00:27:57,040
+ and there's an elegant way to do that.
+
+488
+00:27:57,040 --> 00:27:59,000
+ Yes.
+
+489
+00:27:59,000 --> 00:28:10,680
+ This one?
+
+490
+00:28:10,680 --> 00:28:11,880
+ That one up there, yeah?
+
+491
+00:28:11,880 --> 00:28:16,960
+ It's a transpose of it,
+
+492
+00:28:16,960 --> 00:28:19,080
+ but they're the same since they're a scalar.
+
+493
+00:28:19,080 --> 00:28:22,120
+ Good call, yeah, so the question was,
+
+494
+00:28:22,120 --> 00:28:24,760
+ why did I write it there, why did I write it there?
+
+495
+00:28:24,760 --> 00:28:27,760
+ I guess my brain is inconsistent, but those are equivalent.
+
+496
+00:28:27,760 --> 00:28:30,320
+ It would have been more beautiful
+
+497
+00:28:30,320 --> 00:28:32,480
+ if I had written it the same way two times.
+
+498
+00:28:32,480 --> 00:28:37,000
+ Yeah.
+
+499
+00:28:37,000 --> 00:28:39,760
+ Great, great questions.
+
+500
+00:28:39,760 --> 00:28:48,380
+ So the natural thing that we're leading to here
+
+501
+00:28:48,380 --> 00:28:52,700
+ is just like we could avoid things going to infinity
+
+502
+00:28:52,700 --> 00:28:54,420
+ by adding constraints,
+
+503
+00:28:54,420 --> 00:28:56,820
+ we can do the same thing now in the matrix case.
+
+504
+00:28:56,820 --> 00:28:59,660
+ (pen scribbling)
+
+505
+00:29:00,660 --> 00:29:03,420
+ (pen scribbling)
+
+506
+00:29:04,380 --> 00:29:07,140
+ (pen scribbling)
+
+507
+00:29:31,220 --> 00:29:35,420
+ So the more general version of this will be minimize over x.
+
+508
+00:29:35,420 --> 00:29:37,900
+ Let's say, well, in this case,
+
+509
+00:29:37,900 --> 00:29:41,500
+ I can do ax minus b squared,
+
+510
+00:29:41,500 --> 00:29:46,060
+ subject to cx less than or equal to d, okay?
+
+511
+00:29:46,060 --> 00:29:48,740
+ And let me just take a moment
+
+512
+00:29:48,740 --> 00:29:51,700
+ to give you the language of optimization.
+
+513
+00:29:51,700 --> 00:29:55,500
+ So these are my decision variables.
+
+514
+00:30:00,540 --> 00:30:01,700
+ Trying to find x.
+
+515
+00:30:01,700 --> 00:30:04,020
+ This is my objective.
+
+516
+00:30:04,020 --> 00:30:09,940
+ These are my constraints here.
+
+517
+00:30:09,940 --> 00:30:19,860
+ You can read this as subject to,
+
+518
+00:30:19,860 --> 00:30:22,180
+ is the way I would typically spell it out.
+
+519
+00:30:22,180 --> 00:30:28,460
+ Yeah.
+
+520
+00:30:28,460 --> 00:30:31,380
+ (student speaking)
+
+521
+00:30:31,380 --> 00:30:34,580
+ So, well, this is a vector.
+
+522
+00:30:34,580 --> 00:30:37,380
+ This is element-wise inequality of a vector.
+
+523
+00:30:37,380 --> 00:30:40,180
+ Yep, element-wise inequality of a vector.
+
+524
+00:30:40,180 --> 00:30:41,020
+ Yep.
+
+525
+00:30:41,020 --> 00:30:43,740
+ And I've pulled this out of a hat,
+
+526
+00:30:43,740 --> 00:30:47,060
+ but I'm just saying there's a natural generalization
+
+527
+00:30:47,060 --> 00:30:47,900
+ of that idea.
+
+528
+00:30:47,900 --> 00:30:50,900
+ Certainly, if I wanted to write vector x,
+
+529
+00:30:50,900 --> 00:30:53,260
+ every element of a vector x less than or equal to two,
+
+530
+00:30:53,260 --> 00:30:56,460
+ I could do that with this form.
+
+531
+00:30:57,460 --> 00:30:58,300
+ Okay.
+
+532
+00:30:58,300 --> 00:31:00,580
+ Okay.
+
+533
+00:31:00,580 --> 00:31:04,060
+ And even, you know, if I were to write this out,
+
+534
+00:31:04,060 --> 00:31:06,380
+ there's a slightly more generic way to write that.
+
+535
+00:31:06,380 --> 00:31:07,620
+ If I were to say,
+
+536
+00:31:07,620 --> 00:31:12,340
+ min over x, x transpose qx,
+
+537
+00:31:12,340 --> 00:31:14,780
+ plus b transpose x, let's say,
+
+538
+00:31:14,780 --> 00:31:19,940
+ plus c, that's just maybe slightly more general than this.
+
+539
+00:31:19,940 --> 00:31:22,620
+ Okay.
+
+540
+00:31:24,380 --> 00:31:27,100
+ So in this case, these are quadratic objectives.
+
+541
+00:31:27,100 --> 00:31:35,260
+ And these are linear constraints.
+
+542
+00:31:35,260 --> 00:31:40,940
+ So problems in that form,
+
+543
+00:31:40,940 --> 00:31:43,420
+ where you have a quadratic objective
+
+544
+00:31:43,420 --> 00:31:45,220
+ and a linear constraint,
+
+545
+00:31:45,220 --> 00:31:47,820
+ that falls into the land of quadratic programming.
+
+546
+00:31:47,820 --> 00:31:49,980
+ (tapping)
+
+547
+00:31:49,980 --> 00:32:03,660
+ You'll hear me use,
+
+548
+00:32:03,660 --> 00:32:05,580
+ everybody call it QP.
+
+549
+00:32:05,580 --> 00:32:08,460
+ Okay.
+
+550
+00:32:08,460 --> 00:32:09,580
+ QP, QP, yeah.
+
+551
+00:32:09,580 --> 00:32:14,140
+ I was just about to say that, yeah.
+
+552
+00:32:14,140 --> 00:32:15,700
+ So quadratic program,
+
+553
+00:32:15,820 --> 00:32:19,020
+ the word quadratic programming is not limited to PSD,
+
+554
+00:32:19,020 --> 00:32:21,300
+ but if, you know,
+
+555
+00:32:21,300 --> 00:32:25,620
+ Q is symmetric and has real eigenvalues,
+
+556
+00:32:25,620 --> 00:32:31,220
+ say lambda of QI is all greater than equal to zero,
+
+557
+00:32:31,220 --> 00:32:33,340
+ positive semi-definite case,
+
+558
+00:32:33,340 --> 00:32:37,500
+ then we call that a convex quadratic program.
+
+559
+00:32:37,500 --> 00:32:40,060
+ Those are the ones we want.
+
+560
+00:32:40,060 --> 00:32:41,740
+ The non-convex quadratic programs,
+
+561
+00:32:41,740 --> 00:32:43,300
+ solving them can be NP-hard.
+
+562
+00:32:44,140 --> 00:32:44,980
+ You know,
+
+563
+00:32:44,980 --> 00:32:47,180
+ hard.
+
+564
+00:32:47,180 --> 00:32:48,100
+ Yeah, okay.
+
+565
+00:32:48,100 --> 00:32:50,380
+ And in general,
+
+566
+00:32:50,380 --> 00:32:52,900
+ but the convex ones, we have very good solutions.
+
+567
+00:32:52,900 --> 00:32:56,220
+ So that's all the bowls that are going up, good.
+
+568
+00:32:56,220 --> 00:32:57,820
+ Bowls going down, bad.
+
+569
+00:32:57,820 --> 00:33:00,100
+ Well, you know, bowls going up or down in some directions,
+
+570
+00:33:00,100 --> 00:33:00,940
+ bad.
+
+571
+00:33:00,940 --> 00:33:02,660
+ When they're all going up, great.
+
+572
+00:33:02,660 --> 00:33:05,380
+ Because then the minimum is the, you know,
+
+573
+00:33:05,380 --> 00:33:07,180
+ the place where the gradient obtains a minimum
+
+574
+00:33:07,180 --> 00:33:08,700
+ is the solution.
+
+575
+00:33:08,700 --> 00:33:12,700
+ If it's going down and you have constraints,
+
+576
+00:33:12,700 --> 00:33:15,140
+ then you have to potentially check the intersection
+
+577
+00:33:15,140 --> 00:33:18,020
+ of your upside down bowl with all of the constraints.
+
+578
+00:33:18,020 --> 00:33:20,220
+ And since there can be exponential number
+
+579
+00:33:20,220 --> 00:33:21,180
+ of those constraints,
+
+580
+00:33:21,180 --> 00:33:23,460
+ that's where the hardness comes from.
+
+581
+00:33:23,460 --> 00:33:24,980
+ So up is good.
+
+582
+00:33:24,980 --> 00:33:25,820
+ Yeah.
+
+583
+00:33:25,820 --> 00:33:32,580
+ That makes sense.
+
+584
+00:33:32,580 --> 00:33:34,500
+ So we've just upgraded our class of problems
+
+585
+00:33:34,500 --> 00:33:35,940
+ from just calling pseudo-inverse
+
+586
+00:33:35,940 --> 00:33:37,540
+ to calling a quadratic program.
+
+587
+00:33:37,540 --> 00:33:40,420
+ So we get to be able to,
+
+588
+00:33:42,300 --> 00:33:45,780
+ you know, put guardrails on our Jacobian controller.
+
+589
+00:33:45,780 --> 00:33:50,180
+ I should have said this earlier,
+
+590
+00:33:50,180 --> 00:33:52,700
+ but I forgot, so I'll skip it.
+
+591
+00:33:52,700 --> 00:33:53,700
+ Okay, so,
+
+592
+00:33:53,700 --> 00:33:57,580
+ when I, if you look at like the Drake website,
+
+593
+00:33:57,580 --> 00:34:00,940
+ there's kind of three things we say it does.
+
+594
+00:34:00,940 --> 00:34:04,980
+ One of them is systems, modeling dynamical systems,
+
+595
+00:34:04,980 --> 00:34:07,980
+ block diagrams, you know, being able to compose them,
+
+596
+00:34:07,980 --> 00:34:09,700
+ do interesting operations on them.
+
+597
+00:34:11,020 --> 00:34:12,940
+ Another one is specifically the physics engine.
+
+598
+00:34:12,940 --> 00:34:15,220
+ We're really proud of the physics engine inside Drake,
+
+599
+00:34:15,220 --> 00:34:16,580
+ which is just one of those systems,
+
+600
+00:34:16,580 --> 00:34:18,060
+ the multi-body plant and scene graph,
+
+601
+00:34:18,060 --> 00:34:20,020
+ but two of those systems.
+
+602
+00:34:20,020 --> 00:34:21,700
+ Okay, but the other thing it does,
+
+603
+00:34:21,700 --> 00:34:23,020
+ which is pretty unique,
+
+604
+00:34:23,020 --> 00:34:24,900
+ is gives you a nice library
+
+605
+00:34:24,900 --> 00:34:27,820
+ for solving optimization problems.
+
+606
+00:34:27,820 --> 00:34:30,660
+ Okay, and the language looks something like this.
+
+607
+00:34:30,660 --> 00:34:34,820
+ So you can just say, ask for a mathematical program.
+
+608
+00:34:34,820 --> 00:34:37,180
+ So mathematical program and optimization problem
+
+609
+00:34:37,180 --> 00:34:39,340
+ are almost synonymous.
+
+610
+00:34:39,340 --> 00:34:43,860
+ I mean, if I had a problem that didn't have an objective,
+
+611
+00:34:43,860 --> 00:34:45,940
+ and I said, find an X,
+
+612
+00:34:45,940 --> 00:34:46,820
+ subject to some constraints,
+
+613
+00:34:46,820 --> 00:34:48,020
+ I would call that a mathematical program.
+
+614
+00:34:48,020 --> 00:34:50,260
+ I might not call it an optimization problem.
+
+615
+00:34:50,260 --> 00:34:52,740
+ The mathematical program is a little bit bigger of a name,
+
+616
+00:34:52,740 --> 00:34:56,780
+ but almost exactly the same as optimization, okay?
+
+617
+00:34:56,780 --> 00:34:58,380
+ So you make your mathematical program.
+
+618
+00:34:58,380 --> 00:35:02,340
+ You just say, I've got a new decision variable, X, right?
+
+619
+00:35:02,340 --> 00:35:04,340
+ And then you can just start adding constraints.
+
+620
+00:35:04,340 --> 00:35:06,700
+ Add constraints, you can type in,
+
+621
+00:35:06,700 --> 00:35:11,500
+ in natural, numpy kind of form, your constraints.
+
+622
+00:35:11,500 --> 00:35:12,340
+ This isn't the most,
+
+623
+00:35:12,340 --> 00:35:14,500
+ this is using a symbolic engine to make it.
+
+624
+00:35:14,500 --> 00:35:16,940
+ If you are trying to make things run super fast on a robot,
+
+625
+00:35:16,940 --> 00:35:18,740
+ you might avoid the symbolic computations
+
+626
+00:35:18,740 --> 00:35:20,540
+ and write it differently, but,
+
+627
+00:35:20,540 --> 00:35:21,500
+ and then you just call solve,
+
+628
+00:35:21,500 --> 00:35:24,580
+ and it gives you a result, okay?
+
+629
+00:35:24,580 --> 00:35:29,900
+ There's actually lots of good tutorials.
+
+630
+00:35:29,900 --> 00:35:32,660
+ This is just to pull one open here.
+
+631
+00:35:32,660 --> 00:35:37,100
+ This is the QP tutorial right in Drake.
+
+632
+00:35:37,100 --> 00:35:40,300
+ It's not in Course Notes, it's in Drake,
+
+633
+00:35:40,300 --> 00:35:41,900
+ but you should know it's there.
+
+634
+00:35:41,900 --> 00:35:46,460
+ And just to give you an example here,
+
+635
+00:35:46,460 --> 00:35:50,500
+ that's another example, just new mathematical program.
+
+636
+00:35:50,500 --> 00:35:51,700
+ I've got three decision variables,
+
+637
+00:35:51,700 --> 00:35:54,180
+ started adding some quadratic costs,
+
+638
+00:35:54,180 --> 00:35:57,540
+ and add a couple of different things, okay?
+
+639
+00:35:57,540 --> 00:35:59,900
+ You run it, and for quadratic programs,
+
+640
+00:35:59,900 --> 00:36:01,540
+ it basically instantly will find a solution
+
+641
+00:36:01,540 --> 00:36:03,380
+ for pretty big problems.
+
+642
+00:36:03,380 --> 00:36:04,660
+ And then I worked hard on this this summer,
+
+643
+00:36:04,660 --> 00:36:05,500
+ so here you go.
+
+644
+00:36:05,500 --> 00:36:07,700
+ So now you can render it in LaTeX.
+
+645
+00:36:07,700 --> 00:36:09,380
+ That's cool, right?
+
+646
+00:36:09,380 --> 00:36:10,220
+ Yeah?
+
+647
+00:36:10,220 --> 00:36:15,180
+ Yeah, they should be polynomial time
+
+648
+00:36:15,180 --> 00:36:17,700
+ in the size of the, I mean, in everything,
+
+649
+00:36:17,700 --> 00:36:19,540
+ in all the relevant quantities, yeah.
+
+650
+00:36:20,380 --> 00:36:25,040
+ (audience member speaking indistinctly)
+
+651
+00:36:25,040 --> 00:36:40,740
+ Yep, so actually, so the question was,
+
+652
+00:36:40,740 --> 00:36:44,180
+ why choose the L2 norm, and why maybe,
+
+653
+00:36:44,180 --> 00:36:45,820
+ so the L1 norm would give a linear program
+
+654
+00:36:45,820 --> 00:36:46,860
+ instead of a quadratic program,
+
+655
+00:36:46,860 --> 00:36:48,220
+ which could solve even faster.
+
+656
+00:36:48,220 --> 00:36:50,980
+ In fact, one of the, the last version I'll show you today
+
+657
+00:36:50,980 --> 00:36:54,460
+ is a linear program, and it does solve a little faster,
+
+658
+00:36:54,460 --> 00:36:56,180
+ but these are so easy problems
+
+659
+00:36:56,180 --> 00:36:58,080
+ that it doesn't make a big difference.
+
+660
+00:36:58,080 --> 00:37:01,680
+ Yeah, I think, mostly I was trying to connect back
+
+661
+00:37:01,680 --> 00:37:05,300
+ to the pseudo-inverse, and I think this is a natural choice,
+
+662
+00:37:05,300 --> 00:37:07,400
+ but it's not a uniquely good choice.
+
+663
+00:37:07,400 --> 00:37:09,620
+ Good question.
+
+664
+00:37:09,620 --> 00:37:17,460
+ Okay, so let's think about now,
+
+665
+00:37:17,460 --> 00:37:22,460
+ just make the connection back to the Jacobians and the like.
+
+666
+00:37:22,460 --> 00:37:28,420
+ So we have this new power of doing quadratic programs,
+
+667
+00:37:28,420 --> 00:37:38,780
+ and it's okay to write a little system in Drake
+
+668
+00:37:38,780 --> 00:37:43,020
+ that solves this basically on every time step.
+
+669
+00:37:43,020 --> 00:37:45,360
+ That's okay, these things solve fast,
+
+670
+00:37:46,360 --> 00:37:47,660
+ and we do it all the time.
+
+671
+00:37:47,660 --> 00:37:52,900
+ So the question is, what's the right set of costs
+
+672
+00:37:52,900 --> 00:37:54,820
+ and constraints to write?
+
+673
+00:37:54,820 --> 00:37:59,820
+ So using our Jacobian syntax again,
+
+674
+00:37:59,820 --> 00:38:03,140
+ if we're doing something like find me a velocity,
+
+675
+00:38:03,140 --> 00:38:06,800
+ joint velocity, remember this is joint velocities,
+
+676
+00:38:06,800 --> 00:38:14,220
+ okay, that minimizes the difference, let's say,
+
+677
+00:38:14,220 --> 00:38:19,220
+ between the actual end effector, if I took that velocity,
+
+678
+00:38:19,220 --> 00:38:22,680
+ versus the desired end effector,
+
+679
+00:38:22,680 --> 00:38:26,360
+ if I took that velocity squared.
+
+680
+00:38:26,360 --> 00:38:29,980
+ That's the analogy, yeah.
+
+681
+00:38:29,980 --> 00:38:36,060
+ What is a quadratic?
+
+682
+00:38:36,060 --> 00:38:38,080
+ I mean, I think I tried to define it,
+
+683
+00:38:38,080 --> 00:38:40,240
+ so it's any mathematical program here
+
+684
+00:38:40,240 --> 00:38:43,320
+ where the objective is a quadratic function
+
+685
+00:38:43,320 --> 00:38:46,120
+ of the decision variables, and the costs are linear.
+
+686
+00:38:46,120 --> 00:38:48,320
+ That's what defines the quadratic program.
+
+687
+00:38:48,320 --> 00:38:50,240
+ And then again, the convex quadratic program
+
+688
+00:38:50,240 --> 00:38:53,440
+ is if Q is positive definite, positive semi-definite.
+
+689
+00:38:53,440 --> 00:39:07,240
+ Great question.
+
+690
+00:39:07,240 --> 00:39:09,920
+ He says, so let me get to that part.
+
+691
+00:39:09,920 --> 00:39:14,920
+ So the natural thing that we would do here
+
+692
+00:39:14,920 --> 00:39:20,480
+ would be, for instance, V min, V max,
+
+693
+00:39:20,480 --> 00:39:24,540
+ if these are like joint velocity limits, right?
+
+694
+00:39:24,540 --> 00:39:38,160
+ This would be a more robust way to sort of solve that.
+
+695
+00:39:38,160 --> 00:39:40,800
+ I'm gonna address your point very clearly in a second.
+
+696
+00:39:40,800 --> 00:39:43,640
+ And first of all, I wanna point out,
+
+697
+00:39:43,640 --> 00:39:46,200
+ even before I address that point,
+
+698
+00:39:46,200 --> 00:39:50,640
+ I wanna point out that this is actually stronger
+
+699
+00:39:50,640 --> 00:39:54,120
+ than if you were to, let's say, optimize this
+
+700
+00:39:54,120 --> 00:39:56,300
+ and then just clip the values.
+
+701
+00:39:56,300 --> 00:39:59,520
+ You might think, I'm just gonna find the minimum value
+
+702
+00:39:59,520 --> 00:40:01,280
+ of this with pseudo-inverse,
+
+703
+00:40:01,280 --> 00:40:02,580
+ and then if something was too big,
+
+704
+00:40:02,580 --> 00:40:05,800
+ I'll just go element-wise and clip it, okay?
+
+705
+00:40:05,800 --> 00:40:09,640
+ But that is not as good as solving this
+
+706
+00:40:09,640 --> 00:40:11,080
+ subject to those constraints.
+
+707
+00:40:11,080 --> 00:40:13,600
+ We could probably make a picture for that, right?
+
+708
+00:40:13,600 --> 00:40:18,600
+ So let's say I have X1 in here, X2 in here.
+
+709
+00:40:18,600 --> 00:40:27,400
+ So I'm saying these are my valid constraints.
+
+710
+00:40:27,400 --> 00:40:30,640
+ So you're allowed to be sort of anywhere in here.
+
+711
+00:40:30,640 --> 00:40:31,720
+ Those are the good places
+
+712
+00:40:31,720 --> 00:40:33,880
+ that satisfy the velocity limits.
+
+713
+00:40:33,880 --> 00:40:37,340
+ Then, let's see, what if your objective,
+
+714
+00:40:37,340 --> 00:40:41,440
+ if this told you to do something like,
+
+715
+00:40:41,440 --> 00:40:42,280
+ what do I have to do here?
+
+716
+00:40:42,280 --> 00:40:45,280
+ Maybe something long like this.
+
+717
+00:40:45,280 --> 00:40:50,680
+ Okay, so the minimum of the unconstrained problem
+
+718
+00:40:50,680 --> 00:40:51,520
+ would be here.
+
+719
+00:40:51,520 --> 00:40:55,660
+ But if I were to just solve the unconstrained problem
+
+720
+00:40:55,660 --> 00:40:58,000
+ and then clip all the values,
+
+721
+00:40:58,000 --> 00:40:59,960
+ I might end up kind of at this point.
+
+722
+00:40:59,960 --> 00:41:02,960
+ But actually, the lowest,
+
+723
+00:41:02,960 --> 00:41:05,680
+ if these are the contours of the cost function,
+
+724
+00:41:05,680 --> 00:41:08,180
+ I could possibly do better by coming up here, yeah?
+
+725
+00:41:08,180 --> 00:41:13,240
+ Did I say that well enough?
+
+726
+00:41:13,240 --> 00:41:15,240
+ I could get lower on the quadratic bowl
+
+727
+00:41:15,240 --> 00:41:19,880
+ than the one that would be just happened automatically
+
+728
+00:41:19,880 --> 00:41:22,360
+ if I clipped after the fact.
+
+729
+00:41:22,360 --> 00:41:24,840
+ So it's better to solve these simultaneously.
+
+730
+00:41:24,840 --> 00:41:26,200
+ And that gets even more true
+
+731
+00:41:26,200 --> 00:41:28,160
+ as I add more interesting constraints.
+
+732
+00:41:32,280 --> 00:41:34,120
+ I hope I said that right, yeah, okay.
+
+733
+00:41:34,120 --> 00:41:38,920
+ All right, so but let's just visualize now,
+
+734
+00:41:38,920 --> 00:41:42,360
+ and I tried to make you understand the geometry of that.
+
+735
+00:41:42,360 --> 00:41:45,120
+ So the geometry is overloaded,
+
+736
+00:41:45,120 --> 00:41:47,920
+ but there's a geometry of the optimization problem also.
+
+737
+00:41:47,920 --> 00:42:00,720
+ Okay, so let me show you the geometry,
+
+738
+00:42:00,720 --> 00:42:02,880
+ just like I like to print the mathematical program
+
+739
+00:42:02,880 --> 00:42:06,280
+ as a LaTeX, I also like to plot everything I can, okay?
+
+740
+00:42:06,280 --> 00:42:12,360
+ All right, check this out.
+
+741
+00:42:12,360 --> 00:42:14,680
+ So here we go.
+
+742
+00:42:14,680 --> 00:42:17,900
+ And actually, just to remember what this is,
+
+743
+00:42:17,900 --> 00:42:19,400
+ you remember this example here
+
+744
+00:42:19,400 --> 00:42:23,500
+ where I was going in and out of singularities?
+
+745
+00:42:23,500 --> 00:42:28,360
+ So what I did is I took the EWA, which has seven links,
+
+746
+00:42:28,360 --> 00:42:31,800
+ and I just welded all but two of the links
+
+747
+00:42:31,800 --> 00:42:35,400
+ so that the EWA is effectively this robot, okay?
+
+748
+00:42:35,400 --> 00:42:38,200
+ And that's what you're seeing now in this visualization here.
+
+749
+00:42:38,200 --> 00:42:40,440
+ There's, it's like the EWA is effectively
+
+750
+00:42:40,440 --> 00:42:43,840
+ that kind of a robot, okay?
+
+751
+00:42:43,840 --> 00:42:45,920
+ So that's just here for reference.
+
+752
+00:42:45,920 --> 00:42:50,520
+ And then I took the objective, this objective,
+
+753
+00:42:50,520 --> 00:42:53,400
+ and I just plotted the quadratic bowl, okay?
+
+754
+00:42:53,400 --> 00:42:57,360
+ So the x-axis here is velocity one,
+
+755
+00:42:57,360 --> 00:42:59,160
+ the y-axis is velocity two,
+
+756
+00:42:59,160 --> 00:43:01,760
+ and the z-axis of the green thing is the objective.
+
+757
+00:43:01,760 --> 00:43:07,000
+ And then I took and plotted the constraints in red.
+
+758
+00:43:07,000 --> 00:43:11,800
+ That's actually when a constraint is violated, it's shaded.
+
+759
+00:43:11,800 --> 00:43:14,600
+ I have a little, that's just a plotting bug.
+
+760
+00:43:14,600 --> 00:43:15,600
+ Forget about that corner, okay?
+
+761
+00:43:15,600 --> 00:43:18,680
+ They're just linear constraints, okay?
+
+762
+00:43:18,680 --> 00:43:21,160
+ This is what the landscape looks like.
+
+763
+00:43:21,160 --> 00:43:22,520
+ So it's interesting, yeah.
+
+764
+00:43:27,160 --> 00:43:29,720
+ So in this picture, so what matters is
+
+765
+00:43:29,720 --> 00:43:33,200
+ what's the bottom of the quadratic bowl, okay?
+
+766
+00:43:33,200 --> 00:43:34,760
+ And so what it would mean would be,
+
+767
+00:43:34,760 --> 00:43:39,560
+ if the command I sent, if I just solved this,
+
+768
+00:43:39,560 --> 00:43:41,760
+ would be outside of those constraints,
+
+769
+00:43:41,760 --> 00:43:43,680
+ it would be sending a velocity that is greater
+
+770
+00:43:43,680 --> 00:43:48,160
+ or less than my joint limits, my joint velocity limits.
+
+771
+00:43:48,160 --> 00:43:50,200
+ So what I wanna do is solve the optimization problem
+
+772
+00:43:50,200 --> 00:43:51,800
+ subject to those constraints.
+
+773
+00:43:56,360 --> 00:43:57,200
+ Okay.
+
+774
+00:43:57,200 --> 00:44:01,120
+ Ooh, look at this.
+
+775
+00:44:01,120 --> 00:44:05,040
+ So this is what happens as you go in and out of singularity.
+
+776
+00:44:05,040 --> 00:44:07,560
+ That make sense?
+
+777
+00:44:07,560 --> 00:44:08,400
+ It's going in and out of singularity
+
+778
+00:44:08,400 --> 00:44:10,200
+ just like we did last time.
+
+779
+00:44:10,200 --> 00:44:13,000
+ And what's happening is when the thing gets singular,
+
+780
+00:44:13,000 --> 00:44:15,280
+ it goes flat.
+
+781
+00:44:15,280 --> 00:44:19,840
+ And the minimum it obtains runs away to infinity.
+
+782
+00:44:19,840 --> 00:44:22,360
+ And it actually flips sign when you go to the other side,
+
+783
+00:44:22,360 --> 00:44:23,360
+ which would be bad too, right?
+
+784
+00:44:23,360 --> 00:44:27,080
+ So you want to go negative infinity velocity
+
+785
+00:44:27,080 --> 00:44:30,320
+ and then instantaneously positive infinity.
+
+786
+00:44:30,320 --> 00:44:33,680
+ Not the kind of thing you wanna send to your motors, right?
+
+787
+00:44:33,680 --> 00:44:36,320
+ This one still, as I've written it, is discontinuous.
+
+788
+00:44:36,320 --> 00:44:38,440
+ It jumps from here to there,
+
+789
+00:44:38,440 --> 00:44:41,600
+ but at least it's not sending massive velocities.
+
+790
+00:44:41,600 --> 00:44:43,960
+ I'll just run it one more time
+
+791
+00:44:43,960 --> 00:44:46,000
+ 'cause I worked hard on that.
+
+792
+00:44:46,000 --> 00:44:46,840
+ Okay.
+
+793
+00:44:46,840 --> 00:44:49,480
+ You see this?
+
+794
+00:44:49,480 --> 00:44:51,600
+ This is the minimum value that it was,
+
+795
+00:44:51,600 --> 00:44:54,240
+ that's the solution to the quadratic program.
+
+796
+00:44:54,240 --> 00:44:56,040
+ And it stops at the boundaries
+
+797
+00:44:56,040 --> 00:44:59,280
+ because of the constraints.
+
+798
+00:44:59,280 --> 00:45:01,160
+ Yeah.
+
+799
+00:45:01,160 --> 00:45:04,160
+ - So what if I'm changing the value here
+
+800
+00:45:04,160 --> 00:45:05,840
+ or is this a function?
+
+801
+00:45:05,840 --> 00:45:07,880
+ - Okay, so if this is a function,
+
+802
+00:45:07,880 --> 00:45:10,400
+ so I was plotting it as if it's a fixed value.
+
+803
+00:45:10,400 --> 00:45:12,240
+ I'm just commanding a fixed value.
+
+804
+00:45:12,240 --> 00:45:13,160
+ I see.
+
+805
+00:45:13,160 --> 00:45:14,960
+ It could be that I could have changed it
+
+806
+00:45:14,960 --> 00:45:16,640
+ as a function of that.
+
+807
+00:45:16,640 --> 00:45:17,920
+ And in fact, I didn't do that.
+
+808
+00:45:17,920 --> 00:45:20,160
+ I was just, I didn't do that.
+
+809
+00:45:20,160 --> 00:45:21,000
+ That's great.
+
+810
+00:45:21,000 --> 00:45:21,840
+ That would be a nice addition.
+
+811
+00:45:21,840 --> 00:45:23,320
+ I could do that.
+
+812
+00:45:23,320 --> 00:45:25,040
+ Thank you for pointing out that.
+
+813
+00:45:25,040 --> 00:45:26,560
+ I didn't even think of doing that.
+
+814
+00:45:26,560 --> 00:45:27,400
+ Yes.
+
+815
+00:45:27,400 --> 00:45:30,960
+ - So what if I'm changing the value here
+
+816
+00:45:30,960 --> 00:45:33,560
+ and I'm changing the value here?
+
+817
+00:45:33,560 --> 00:45:44,760
+ Do you think that the value of the function
+
+818
+00:45:44,760 --> 00:45:48,640
+ is going to be the same as the value of the function?
+
+819
+00:45:48,640 --> 00:45:49,800
+ - That's a great question.
+
+820
+00:45:49,800 --> 00:45:52,400
+ So he says if you're solving a lot of these problems
+
+821
+00:45:52,400 --> 00:45:54,960
+ simultaneously, why do you want to solve them
+
+822
+00:45:54,960 --> 00:45:57,080
+ from the, you know, every time as if you just woke up
+
+823
+00:45:57,080 --> 00:45:58,520
+ and had a new problem?
+
+824
+00:45:58,520 --> 00:46:01,040
+ Because the problem data is only changing a small amount.
+
+825
+00:46:01,040 --> 00:46:02,640
+ So that would be, so you can do,
+
+826
+00:46:02,640 --> 00:46:06,280
+ you can warm start your solution, that's what it's called.
+
+827
+00:46:06,280 --> 00:46:08,640
+ You basically save the results of some computation
+
+828
+00:46:08,640 --> 00:46:09,600
+ on the previous.
+
+829
+00:46:09,600 --> 00:46:11,200
+ You would warm start your solver for the next time.
+
+830
+00:46:11,200 --> 00:46:13,360
+ That's absolutely a good idea in this case.
+
+831
+00:46:13,360 --> 00:46:17,960
+ But these problems are so fast that you don't have to.
+
+832
+00:46:17,960 --> 00:46:18,800
+ Yeah.
+
+833
+00:46:18,800 --> 00:46:22,960
+ (audience member speaking off mic)
+
+834
+00:46:22,960 --> 00:46:31,680
+ You can put a lot of these things in
+
+835
+00:46:31,680 --> 00:46:33,800
+ and we're gonna put a few of them in in a minute.
+
+836
+00:46:33,800 --> 00:46:35,120
+ Yeah, so the question was like,
+
+837
+00:46:35,120 --> 00:46:36,960
+ what about jamming into a table, force limits,
+
+838
+00:46:36,960 --> 00:46:37,920
+ things like that.
+
+839
+00:46:37,920 --> 00:46:40,000
+ How much can you put into the QP?
+
+840
+00:46:40,000 --> 00:46:42,640
+ And there's limits and you take approximations,
+
+841
+00:46:42,640 --> 00:46:44,760
+ but you can put a lot of things in there.
+
+842
+00:46:44,760 --> 00:46:49,020
+ (audience member speaking off mic)
+
+843
+00:46:49,020 --> 00:47:03,240
+ I just said VG desired to a constant for the visualization,
+
+844
+00:47:03,240 --> 00:47:04,800
+ but I should make that function of time.
+
+845
+00:47:04,800 --> 00:47:05,840
+ That would be better.
+
+846
+00:47:05,840 --> 00:47:09,400
+ Okay, cool.
+
+847
+00:47:09,400 --> 00:47:10,240
+ So,
+
+848
+00:47:14,200 --> 00:47:15,040
+ let's do that now.
+
+849
+00:47:15,040 --> 00:47:17,280
+ Let's see what other constraints could we add in here
+
+850
+00:47:17,280 --> 00:47:18,360
+ that sort of work.
+
+851
+00:47:18,360 --> 00:47:21,080
+ So, the first one you might think would be,
+
+852
+00:47:21,080 --> 00:47:23,160
+ let's say position and acceleration constraints.
+
+853
+00:47:23,160 --> 00:47:24,760
+ Those would be useful.
+
+854
+00:47:24,760 --> 00:47:27,200
+ If you had joint limits you wanna satisfy,
+
+855
+00:47:27,200 --> 00:47:32,200
+ and subject to that, how would you do joint limits?
+
+856
+00:47:32,200 --> 00:47:41,640
+ I mean, meeting Q can only go to a certain amount.
+
+857
+00:47:41,640 --> 00:47:42,880
+ I'll start a fresh board.
+
+858
+00:47:43,840 --> 00:47:45,920
+ (coughs)
+
+859
+00:47:45,920 --> 00:47:57,000
+ Because now I'm gonna have multiple velocities
+
+860
+00:47:57,000 --> 00:47:57,840
+ flying around.
+
+861
+00:47:57,840 --> 00:47:59,320
+ I'm gonna have my current velocity
+
+862
+00:47:59,320 --> 00:48:01,800
+ and my proposed velocity.
+
+863
+00:48:01,800 --> 00:48:09,160
+ So, let me rewrite it like this.
+
+864
+00:48:09,160 --> 00:48:13,840
+ So, how about if I minimize over my next velocity?
+
+865
+00:48:13,840 --> 00:48:14,680
+ So,
+
+866
+00:48:14,680 --> 00:48:24,400
+ the velocity I want to achieve versus the one I'm in,
+
+867
+00:48:24,400 --> 00:48:25,800
+ which I'll call V.
+
+868
+00:48:25,800 --> 00:48:36,400
+ I wanna solve this subject to some desired squared,
+
+869
+00:48:36,400 --> 00:48:37,920
+ same as before.
+
+870
+00:48:38,920 --> 00:48:41,080
+ (tapping)
+
+871
+00:48:41,080 --> 00:48:45,120
+ Velocity limits.
+
+872
+00:48:45,120 --> 00:48:47,600
+ Then it's sort of,
+
+873
+00:48:47,600 --> 00:48:50,040
+ the way we would typically do something like that,
+
+874
+00:48:50,040 --> 00:48:52,680
+ is we would take sort of an Euler approximation.
+
+875
+00:48:52,680 --> 00:48:53,520
+ So,
+
+876
+00:48:53,520 --> 00:48:56,680
+ the N in the constraint.
+
+877
+00:48:56,680 --> 00:48:57,520
+ Thank you.
+
+878
+00:48:57,520 --> 00:48:58,400
+ Yeah, good call.
+
+879
+00:48:58,400 --> 00:49:03,240
+ So, what I'm gonna say is if I know my current velocity,
+
+880
+00:49:03,240 --> 00:49:05,400
+ then I'm gonna say that Q at N,
+
+881
+00:49:05,400 --> 00:49:09,520
+ Q next is gonna be approximately equal to my current Q
+
+882
+00:49:09,520 --> 00:49:12,800
+ plus some time constant times my VN.
+
+883
+00:49:12,800 --> 00:49:15,280
+ This would be like a backwards Euler integration.
+
+884
+00:49:15,280 --> 00:49:16,120
+ So,
+
+885
+00:49:16,120 --> 00:49:18,400
+ call that a time step.
+
+886
+00:49:18,400 --> 00:49:23,400
+ Could be a characteristic time constant of my manipulator,
+
+887
+00:49:23,400 --> 00:49:26,320
+ but more often it's the sampling time I'm calling diff IK.
+
+888
+00:49:26,320 --> 00:49:30,040
+ Okay, and then I can just write,
+
+889
+00:49:30,040 --> 00:49:30,880
+ again,
+
+890
+00:49:33,080 --> 00:49:38,080
+ linear constraints 'cause Q is data,
+
+891
+00:49:38,080 --> 00:49:41,080
+ not a decision variable.
+
+892
+00:49:41,080 --> 00:49:42,200
+ H is fixed,
+
+893
+00:49:42,200 --> 00:49:44,720
+ and VN is a decision variable.
+
+894
+00:49:44,720 --> 00:49:50,640
+ So, that's still a linear constraint,
+
+895
+00:49:50,640 --> 00:49:53,000
+ and that allows you to obey joint limits.
+
+896
+00:49:53,000 --> 00:49:57,320
+ And you could do more
+
+897
+00:49:57,320 --> 00:49:59,320
+ if you wanted to do acceleration limits.
+
+898
+00:50:00,960 --> 00:50:05,960
+ So, the time derivative of V is limited.
+
+899
+00:50:05,960 --> 00:50:09,800
+ Then I could do something like VN minus V
+
+900
+00:50:09,800 --> 00:50:11,960
+ divided by H
+
+901
+00:50:11,960 --> 00:50:18,040
+ is in my acceleration limits, right?
+
+902
+00:50:18,040 --> 00:50:22,400
+ So, this is joint position limits,
+
+903
+00:50:22,400 --> 00:50:29,800
+ joint acceleration limits.
+
+904
+00:50:29,800 --> 00:50:32,560
+ (marker tapping)
+
+905
+00:50:32,560 --> 00:50:39,480
+ Now, you asked about force.
+
+906
+00:50:39,480 --> 00:50:42,760
+ So, force limits can also be done
+
+907
+00:50:42,760 --> 00:50:44,760
+ with the same basic approach,
+
+908
+00:50:44,760 --> 00:50:46,560
+ but you have to use the manipulator equations.
+
+909
+00:50:46,560 --> 00:50:48,680
+ You have to use the dynamics equations,
+
+910
+00:50:48,680 --> 00:50:51,600
+ which again can become nice
+
+911
+00:50:51,600 --> 00:50:53,320
+ or can be linearized to be nice
+
+912
+00:50:53,320 --> 00:50:57,000
+ if Q is known and V is known instantaneously,
+
+913
+00:50:57,000 --> 00:50:59,960
+ then you can figure out how tau,
+
+914
+00:50:59,960 --> 00:51:03,640
+ the torque applied, can change as a linear constraint.
+
+915
+00:51:03,640 --> 00:51:06,000
+ You can do that.
+
+916
+00:51:06,000 --> 00:51:08,520
+ Yes.
+
+917
+00:51:08,520 --> 00:51:22,720
+ That's what I was trying to draw here,
+
+918
+00:51:22,720 --> 00:51:24,640
+ would be if you solved it without this
+
+919
+00:51:24,640 --> 00:51:27,120
+ and then just projected back to the solution,
+
+920
+00:51:27,120 --> 00:51:29,720
+ you might get a suboptimal thing,
+
+921
+00:51:29,720 --> 00:51:33,160
+ which doesn't look so terrible maybe in that simple picture,
+
+922
+00:51:33,160 --> 00:51:34,360
+ but it gets arbitrarily bad
+
+923
+00:51:34,360 --> 00:51:37,120
+ in more complicated cost and constraints.
+
+924
+00:51:37,120 --> 00:51:38,600
+ Yep, good question.
+
+925
+00:51:38,600 --> 00:51:46,040
+ Okay, so that still works.
+
+926
+00:51:46,040 --> 00:51:47,720
+ Another thing maybe you implied, Yishan,
+
+927
+00:51:47,720 --> 00:51:50,240
+ was the collision constraint.
+
+928
+00:51:50,240 --> 00:51:52,200
+ If you had a geometry constraint in the world
+
+929
+00:51:52,200 --> 00:51:55,520
+ that was not necessarily involved,
+
+930
+00:51:55,520 --> 00:51:58,880
+ like the distance between my end effector and...
+
+931
+00:51:58,880 --> 00:52:03,520
+ So one example that you've seen at TRI, for instance,
+
+932
+00:52:03,520 --> 00:52:06,320
+ is you've got a bimanual thing
+
+933
+00:52:06,320 --> 00:52:07,520
+ and we're trying to tele-op them
+
+934
+00:52:07,520 --> 00:52:09,760
+ and we don't want the hands to run into each other.
+
+935
+00:52:09,760 --> 00:52:12,120
+ So in our differential inverse kinematics,
+
+936
+00:52:12,120 --> 00:52:15,080
+ we put a collision avoidance constraint,
+
+937
+00:52:15,080 --> 00:52:16,200
+ which takes the current.
+
+938
+00:52:16,200 --> 00:52:18,240
+ If you look at the current Q,
+
+939
+00:52:18,240 --> 00:52:20,400
+ you compute the distances between those bodies,
+
+940
+00:52:20,400 --> 00:52:23,200
+ you linearize them to get the Jacobian,
+
+941
+00:52:23,200 --> 00:52:25,520
+ and then you make this exact kind of approximation.
+
+942
+00:52:25,520 --> 00:52:27,400
+ And you can put collision avoidance constraints
+
+943
+00:52:27,400 --> 00:52:30,360
+ in this, if I case, which is pretty slick.
+
+944
+00:52:30,360 --> 00:52:36,960
+ Yes.
+
+945
+00:52:36,960 --> 00:52:50,280
+ Yes, we're gonna solve these at 100 hertz, for instance.
+
+946
+00:52:50,280 --> 00:52:51,120
+ You don't have to solve it
+
+947
+00:52:51,120 --> 00:52:53,160
+ maybe at the 10 kilohertz motor level,
+
+948
+00:52:53,160 --> 00:52:55,480
+ but something like 100 hertz would be totally reasonable.
+
+949
+00:52:55,480 --> 00:52:56,880
+ I mean, I think we end up solving them
+
+950
+00:52:56,880 --> 00:52:59,800
+ higher than that, 500 hertz or something.
+
+951
+00:52:59,800 --> 00:53:00,640
+ Yes.
+
+952
+00:53:17,680 --> 00:53:21,200
+ So, yeah, so once I start thinking about putting this in,
+
+953
+00:53:21,200 --> 00:53:23,240
+ this becomes Q measured, right?
+
+954
+00:53:23,240 --> 00:53:26,200
+ So it's my current measurement of the robot.
+
+955
+00:53:26,200 --> 00:53:29,280
+ In fact, actually, the EWO will filter
+
+956
+00:53:29,280 --> 00:53:30,640
+ some of those positions for us,
+
+957
+00:53:30,640 --> 00:53:33,400
+ so we actually get pretty clean signals off.
+
+958
+00:53:33,400 --> 00:53:34,760
+ If I was building my own robot
+
+959
+00:53:34,760 --> 00:53:36,080
+ and I had wires coming out of the motor
+
+960
+00:53:36,080 --> 00:53:37,280
+ and I would have to write a filter
+
+961
+00:53:37,280 --> 00:53:39,120
+ before I put it into this, you're right.
+
+962
+00:53:39,120 --> 00:53:40,200
+ Otherwise, we would send,
+
+963
+00:53:40,200 --> 00:53:41,360
+ or you could filter on the output,
+
+964
+00:53:41,360 --> 00:53:43,560
+ but typically I would filter Q
+
+965
+00:53:43,560 --> 00:53:45,320
+ and send a smooth version of Q in.
+
+966
+00:53:45,320 --> 00:53:47,280
+ But that is true.
+
+967
+00:53:47,280 --> 00:53:49,840
+ That's a concern that you would have to address.
+
+968
+00:53:49,840 --> 00:53:54,080
+ So the EWO driver is sampling at a high rate
+
+969
+00:53:54,080 --> 00:53:55,280
+ and filtering at a high rate
+
+970
+00:53:55,280 --> 00:53:58,280
+ and then sending us relatively lower rate signals
+
+971
+00:53:58,280 --> 00:54:01,080
+ over the network interface.
+
+972
+00:54:01,080 --> 00:54:03,360
+ So that's probably a big reason why they're,
+
+973
+00:54:03,360 --> 00:54:05,680
+ and they need the filtering for their controller too.
+
+974
+00:54:05,680 --> 00:54:08,240
+ So that's why we get these nice filtered signals out.
+
+975
+00:54:08,240 --> 00:54:11,000
+ Yeah.
+
+976
+00:54:11,120 --> 00:54:15,780
+ (audience member speaking indistinctly)
+
+977
+00:54:15,780 --> 00:54:30,840
+ So if you had an external force,
+
+978
+00:54:30,840 --> 00:54:35,680
+ we'd have to decide exactly how you're gonna model that.
+
+979
+00:54:35,680 --> 00:54:39,880
+ But typically that is only accessible to these controllers
+
+980
+00:54:39,880 --> 00:54:41,600
+ if you free a joint torque.
+
+981
+00:54:41,600 --> 00:54:42,640
+ So it would actually come in,
+
+982
+00:54:42,640 --> 00:54:45,400
+ you would need some model of what this human is
+
+983
+00:54:45,400 --> 00:54:47,520
+ and what the response needs to be.
+
+984
+00:54:47,520 --> 00:54:50,800
+ But ultimately that would be very similar to a torque limit.
+
+985
+00:54:50,800 --> 00:54:51,760
+ Yeah.
+
+986
+00:54:51,760 --> 00:54:53,680
+ It would be mapped possibly through a Jacobian
+
+987
+00:54:53,680 --> 00:54:56,660
+ to turn it from a torque back into a force at some point.
+
+988
+00:54:56,660 --> 00:54:59,120
+ We're gonna go into a lot of those details
+
+989
+00:54:59,120 --> 00:55:02,840
+ when we do control, like impedance control and the like later.
+
+990
+00:55:02,840 --> 00:55:03,680
+ Yeah.
+
+991
+00:55:03,680 --> 00:55:06,720
+ (audience member speaking indistinctly)
+
+992
+00:55:06,720 --> 00:55:09,320
+ This is very much like an MPC with time step up one.
+
+993
+00:55:09,320 --> 00:55:12,120
+ (audience member speaking indistinctly)
+
+994
+00:55:12,120 --> 00:55:14,160
+ So this is better.
+
+995
+00:55:14,160 --> 00:55:17,160
+ So MPC is model predictive control.
+
+996
+00:55:17,160 --> 00:55:18,760
+ Sometimes we do, for control,
+
+997
+00:55:18,760 --> 00:55:22,040
+ we do something that looks like this for many time steps.
+
+998
+00:55:22,040 --> 00:55:27,040
+ The magic, so one is a magic number in the MPC sort of sense
+
+999
+00:55:27,040 --> 00:55:31,680
+ because I know Q exactly for one.
+
+1000
+00:55:31,680 --> 00:55:33,080
+ But as soon as it's two,
+
+1001
+00:55:33,080 --> 00:55:35,220
+ then I would need to predict forward Q
+
+1002
+00:55:35,220 --> 00:55:36,500
+ and I would have a decision variable
+
+1003
+00:55:36,500 --> 00:55:38,520
+ that enters my non-linearity.
+
+1004
+00:55:38,520 --> 00:55:40,520
+ So these problems, many of these problems
+
+1005
+00:55:40,520 --> 00:55:42,960
+ are only linear in the one step case
+
+1006
+00:55:42,960 --> 00:55:45,080
+ and they're not linear or quadratic in this case,
+
+1007
+00:55:45,080 --> 00:55:46,920
+ in the many step case.
+
+1008
+00:55:46,920 --> 00:55:47,760
+ Yeah.
+
+1009
+00:55:47,760 --> 00:55:49,440
+ The one is really the magic number here.
+
+1010
+00:55:49,440 --> 00:55:50,280
+ Yeah.
+
+1011
+00:55:50,280 --> 00:55:54,120
+ (audience member speaking indistinctly)
+
+1012
+00:55:54,120 --> 00:55:55,360
+ Oh, I'm still gonna get to that.
+
+1013
+00:55:55,360 --> 00:55:57,400
+ I promise I haven't forgotten.
+
+1014
+00:55:57,400 --> 00:55:58,240
+ Yeah.
+
+1015
+00:55:58,240 --> 00:56:02,260
+ But let's make that point now though.
+
+1016
+00:56:02,260 --> 00:56:05,520
+ So one of the problems would be
+
+1017
+00:56:05,520 --> 00:56:09,000
+ if I worked really hard and I planned a path for my robot,
+
+1018
+00:56:09,000 --> 00:56:13,440
+ okay, and then suddenly I run up against joint limits,
+
+1019
+00:56:13,440 --> 00:56:16,040
+ this is gonna do its best effort,
+
+1020
+00:56:16,040 --> 00:56:19,000
+ but it won't necessarily have the same,
+
+1021
+00:56:19,000 --> 00:56:21,280
+ take the same path through space.
+
+1022
+00:56:21,280 --> 00:56:24,340
+ It might actually, if I hit a joint velocity limit
+
+1023
+00:56:24,340 --> 00:56:27,040
+ at like joint three,
+
+1024
+00:56:27,040 --> 00:56:28,440
+ then it could actually cause my hand
+
+1025
+00:56:28,440 --> 00:56:31,580
+ to deviate the desired path, right?
+
+1026
+00:56:31,580 --> 00:56:34,580
+ And that is something that we will try to remedy by the end.
+
+1027
+00:56:35,580 --> 00:56:38,260
+ (audience member speaking indistinctly)
+
+1028
+00:56:38,260 --> 00:56:41,140
+ Okay, so this is a pretty rich sort of language.
+
+1029
+00:56:41,140 --> 00:56:42,980
+ It's only good up to the linearizations,
+
+1030
+00:56:42,980 --> 00:56:45,060
+ but the big point is that
+
+1031
+00:56:45,060 --> 00:56:46,380
+ when you're doing the one step thing,
+
+1032
+00:56:46,380 --> 00:56:48,720
+ you're really making instantaneous decisions.
+
+1033
+00:56:48,720 --> 00:56:51,100
+ And even the ugly stuff that the world throws at you
+
+1034
+00:56:51,100 --> 00:56:52,300
+ is kind of simple.
+
+1035
+00:56:52,300 --> 00:56:54,540
+ You can linearize them in the one step case.
+
+1036
+00:56:54,540 --> 00:56:58,780
+ But really all we've talked about here is outer limits
+
+1037
+00:56:58,780 --> 00:57:01,740
+ sort of to protect us
+
+1038
+00:57:01,740 --> 00:57:03,900
+ if we were gonna send very large velocities.
+
+1039
+00:57:03,900 --> 00:57:05,680
+ But we also, like I said,
+
+1040
+00:57:05,680 --> 00:57:09,940
+ you kind of don't wanna leave the problem under specified.
+
+1041
+00:57:09,940 --> 00:57:11,500
+ If you have a zero,
+
+1042
+00:57:11,500 --> 00:57:12,940
+ if no objective in some direction,
+
+1043
+00:57:12,940 --> 00:57:15,780
+ it's kind of feels like you haven't done your homework.
+
+1044
+00:57:15,780 --> 00:57:16,620
+ Just pick.
+
+1045
+00:57:16,620 --> 00:57:19,940
+ If I have many ways I could solve the problem,
+
+1046
+00:57:19,940 --> 00:57:22,940
+ why don't you tell me how to solve the problem first, okay?
+
+1047
+00:57:22,940 --> 00:57:29,540
+ So there's a really beautiful thing that people do
+
+1048
+00:57:29,540 --> 00:57:31,820
+ about on the other side, which is redundancy.
+
+1049
+00:57:32,740 --> 00:57:34,260
+ So for infinite solutions.
+
+1050
+00:57:34,260 --> 00:57:51,580
+ So for instance, if I have a seven degree of freedom arm
+
+1051
+00:57:51,580 --> 00:57:52,840
+ and I have some goals here,
+
+1052
+00:57:52,840 --> 00:57:56,380
+ it might be that there's a manifold of possible joint angles
+
+1053
+00:57:56,380 --> 00:57:59,020
+ that could accomplish the same end effector.
+
+1054
+00:57:59,020 --> 00:58:01,020
+ That's kind of an easy thing to think about,
+
+1055
+00:58:01,020 --> 00:58:03,020
+ but hard thing to do.
+
+1056
+00:58:03,020 --> 00:58:06,540
+ I have at least seven degrees of freedom.
+
+1057
+00:58:06,540 --> 00:58:10,540
+ But it's actually also true in velocity space.
+
+1058
+00:58:10,540 --> 00:58:13,020
+ That same kinematic redundancy
+
+1059
+00:58:13,020 --> 00:58:14,420
+ manifests itself in velocity space.
+
+1060
+00:58:14,420 --> 00:58:16,740
+ There could be many velocities that I could command
+
+1061
+00:58:16,740 --> 00:58:19,060
+ that would all make the hand move in the same six
+
+1062
+00:58:19,060 --> 00:58:20,500
+ 'cause I'm only commanding six variables
+
+1063
+00:58:20,500 --> 00:58:23,780
+ and I have seven velocities from which to decide it.
+
+1064
+00:58:23,780 --> 00:58:24,800
+ So really it seems like there should be
+
+1065
+00:58:24,800 --> 00:58:26,000
+ something else I can do.
+
+1066
+00:58:26,000 --> 00:58:30,960
+ And there's a beautiful idea from robotics,
+
+1067
+00:58:30,960 --> 00:58:32,220
+ from kinematic theory.
+
+1068
+00:58:32,220 --> 00:58:43,020
+ Task prioritization via the null space.
+
+1069
+00:58:55,980 --> 00:58:57,260
+ Okay, so basically,
+
+1070
+00:58:57,260 --> 00:59:03,120
+ the J, if it's six by seven,
+
+1071
+00:59:03,120 --> 00:59:04,760
+ then it has a null space.
+
+1072
+00:59:04,760 --> 00:59:07,360
+ So there's extra degrees of freedom
+
+1073
+00:59:07,360 --> 00:59:10,240
+ and the linear algebra setting tells us exactly
+
+1074
+00:59:10,240 --> 00:59:11,540
+ what those extra degrees of freedom are
+
+1075
+00:59:11,540 --> 00:59:14,000
+ that we haven't fully specified in our objective.
+
+1076
+00:59:14,000 --> 00:59:18,440
+ So that tells us exactly the place that we can work
+
+1077
+00:59:18,440 --> 00:59:22,360
+ with our extra solutions to add our preferences in.
+
+1078
+00:59:22,360 --> 00:59:23,200
+ And you should.
+
+1079
+00:59:23,200 --> 00:59:25,240
+ Don't let the solver pick for you.
+
+1080
+00:59:25,240 --> 00:59:29,360
+ So whenever J has a null space,
+
+1081
+00:59:29,360 --> 00:59:31,760
+ then you can put,
+
+1082
+00:59:31,760 --> 00:59:34,060
+ people would call it a secondary objective
+
+1083
+00:59:34,060 --> 00:59:37,400
+ in the null space of the primary objective.
+
+1084
+00:59:37,400 --> 00:59:40,120
+ That's why I call it task prioritization.
+
+1085
+00:59:40,120 --> 00:59:44,600
+ Okay, so for instance, if we call P
+
+1086
+00:59:44,600 --> 00:59:47,440
+ some orthonormal basis,
+
+1087
+00:59:47,440 --> 00:59:50,000
+ not the orthonormal basis,
+
+1088
+00:59:50,000 --> 00:59:52,880
+ a and orthonormal basis,
+
+1089
+00:59:52,880 --> 00:59:55,880
+ (keyboard clicking)
+
+1090
+00:59:55,880 --> 01:00:01,980
+ of the null space of J.
+
+1091
+01:00:01,980 --> 01:00:09,240
+ And there's a couple of ways you can do that.
+
+1092
+01:00:09,240 --> 01:00:12,240
+ I mean, modern linear algebra packages
+
+1093
+01:00:12,240 --> 01:00:13,760
+ typically just have that,
+
+1094
+01:00:13,760 --> 01:00:15,600
+ you just ask for the basis of a null space.
+
+1095
+01:00:15,600 --> 01:00:18,980
+ But typically in robotics papers,
+
+1096
+01:00:18,980 --> 01:00:20,760
+ we would have written,
+
+1097
+01:00:20,760 --> 01:00:25,040
+ we'd write something like the pseudo inverse form of that.
+
+1098
+01:00:25,040 --> 01:00:26,280
+ We'll give you a P.
+
+1099
+01:00:26,280 --> 01:00:29,080
+ Yeah.
+
+1100
+01:00:29,080 --> 01:00:32,660
+ (audience member speaking)
+
+1101
+01:00:32,660 --> 01:00:35,520
+ So far we're talking about the objective function,
+
+1102
+01:00:35,520 --> 01:00:37,680
+ the null space of the objective function, that's right.
+
+1103
+01:00:37,680 --> 01:00:38,880
+ In particular, I'm talking about the null space
+
+1104
+01:00:38,880 --> 01:00:40,680
+ of the Jacobian,
+
+1105
+01:00:40,680 --> 01:00:43,080
+ which has a very physical manifestation.
+
+1106
+01:00:43,080 --> 01:00:49,040
+ Okay, then if I originally had this problem,
+
+1107
+01:00:49,960 --> 01:00:50,800
+ problem,
+
+1108
+01:00:50,800 --> 01:00:55,800
+ I'm gonna forgo the Gs,
+
+1109
+01:00:55,800 --> 01:00:57,880
+ just not because I'm not a gripper,
+
+1110
+01:00:57,880 --> 01:01:00,520
+ but just because I wanna be a little consistent here,
+
+1111
+01:01:00,520 --> 01:01:02,000
+ but, and not write as much.
+
+1112
+01:01:02,000 --> 01:01:10,600
+ But I could put a secondary objective
+
+1113
+01:01:10,600 --> 01:01:14,080
+ by putting, by pre-multiplying
+
+1114
+01:01:14,080 --> 01:01:17,280
+ by this null space projection thing.
+
+1115
+01:01:17,280 --> 01:01:22,280
+ Okay, and maybe I have like J2 over here, okay?
+
+1116
+01:01:22,280 --> 01:01:26,520
+ Maybe, and V2 that I had,
+
+1117
+01:01:26,520 --> 01:01:27,680
+ I'll call it J2 on the bottom
+
+1118
+01:01:27,680 --> 01:01:29,280
+ so it doesn't look like squared.
+
+1119
+01:01:29,280 --> 01:01:35,200
+ This would be like a secondary objective.
+
+1120
+01:01:35,200 --> 01:01:40,860
+ So what this is saying is basically,
+
+1121
+01:01:40,860 --> 01:01:45,360
+ this, do anything you can to reduce this,
+
+1122
+01:01:45,360 --> 01:01:48,040
+ and then in the null space of that constraint,
+
+1123
+01:01:48,040 --> 01:01:49,600
+ in the place where, if there's any axes
+
+1124
+01:01:49,600 --> 01:01:52,640
+ where the coordinate system is flat,
+
+1125
+01:01:52,640 --> 01:01:56,160
+ then we're gonna add only in that dimension,
+
+1126
+01:01:56,160 --> 01:01:57,240
+ this extra objective.
+
+1127
+01:01:57,240 --> 01:01:59,480
+ Yeah.
+
+1128
+01:01:59,480 --> 01:02:01,600
+ Is it matrix?
+
+1129
+01:02:01,600 --> 01:02:10,440
+ Yeah, you're right, I shouldn't have written that.
+
+1130
+01:02:10,440 --> 01:02:11,880
+ What did I mean to write?
+
+1131
+01:02:11,880 --> 01:02:14,280
+ I guess I just wrote it like,
+
+1132
+01:02:14,280 --> 01:02:15,120
+ I was trying to make it too cute.
+
+1133
+01:02:15,120 --> 01:02:16,680
+ Good call, I wrote that wrong.
+
+1134
+01:02:16,680 --> 01:02:22,160
+ I was summarizing, and I wrote that bad.
+
+1135
+01:02:22,160 --> 01:02:24,660
+ This is the one I was gonna work towards here.
+
+1136
+01:02:24,660 --> 01:02:32,520
+ So, and I'll tell you what this means,
+
+1137
+01:02:32,520 --> 01:02:35,800
+ but we could have made it work in the other case too,
+
+1138
+01:02:35,800 --> 01:02:37,560
+ but you're right, I wrote that incorrectly.
+
+1139
+01:02:37,560 --> 01:02:42,080
+ So, so this would be saying I want V to be close
+
+1140
+01:02:42,080 --> 01:02:45,780
+ to somehow spring times some position.
+
+1141
+01:02:45,780 --> 01:02:51,120
+ This would be my standard joint centering constraint.
+
+1142
+01:02:51,120 --> 01:02:53,000
+ It wasn't supposed to write at the bottom of the board.
+
+1143
+01:02:53,000 --> 01:02:55,560
+ This one can't move.
+
+1144
+01:02:55,560 --> 01:03:04,760
+ This is a very common secondary objective, okay?
+
+1145
+01:03:04,760 --> 01:03:08,040
+ Which basically says, do everything I can to do this,
+
+1146
+01:03:08,040 --> 01:03:10,440
+ but then I'll pick some desired Q,
+
+1147
+01:03:10,440 --> 01:03:12,440
+ maybe my comfortable position of my arm,
+
+1148
+01:03:12,440 --> 01:03:15,480
+ and in the null space of that primary objective,
+
+1149
+01:03:15,480 --> 01:03:18,080
+ I want to be as close as possible
+
+1150
+01:03:18,080 --> 01:03:21,700
+ to the null space of that, to my desired position.
+
+1151
+01:03:21,700 --> 01:03:24,600
+ Does that make sense?
+
+1152
+01:03:24,600 --> 01:03:30,360
+ And actually, in bigger problems,
+
+1153
+01:03:30,360 --> 01:03:33,040
+ so an EWA has seven joint angles,
+
+1154
+01:03:33,040 --> 01:03:34,840
+ and typically you're commanding six things,
+
+1155
+01:03:34,840 --> 01:03:36,600
+ so you don't have a lot of room to play with.
+
+1156
+01:03:36,600 --> 01:03:38,280
+ But if you go to like a humanoid,
+
+1157
+01:03:38,280 --> 01:03:41,400
+ this becomes an extremely powerful toolbox.
+
+1158
+01:03:41,400 --> 01:03:43,640
+ So when we were working with Atlas, for instance,
+
+1159
+01:03:43,640 --> 01:03:45,520
+ we would do things like the primary objective
+
+1160
+01:03:45,520 --> 01:03:48,080
+ is to keep the center of mass in some regular,
+
+1161
+01:03:48,080 --> 01:03:50,800
+ you know, we command where the center of mass should be.
+
+1162
+01:03:50,800 --> 01:03:53,920
+ In the secondary objective, we'll say move the arm around.
+
+1163
+01:03:53,920 --> 01:03:55,200
+ You'll see Spot do this, for instance,
+
+1164
+01:03:55,200 --> 01:03:56,880
+ if you command the arm to go forward,
+
+1165
+01:03:56,880 --> 01:03:58,800
+ it'll lean backwards, right?
+
+1166
+01:03:58,800 --> 01:04:01,080
+ And that second arm has plenty of degrees of freedom
+
+1167
+01:04:01,080 --> 01:04:03,560
+ to work with to move the second arm,
+
+1168
+01:04:03,560 --> 01:04:05,680
+ and then maybe your left arm is in the null space of that,
+
+1169
+01:04:05,680 --> 01:04:09,600
+ right, and you can make an entire hierarchy of priorities
+
+1170
+01:04:09,600 --> 01:04:13,040
+ where each of these Ps becomes the null space
+
+1171
+01:04:13,040 --> 01:04:16,680
+ of all of the objectives that came before it.
+
+1172
+01:04:16,680 --> 01:04:17,520
+ Yeah.
+
+1173
+01:04:17,520 --> 01:04:21,020
+ (audience member speaking)
+
+1174
+01:04:21,020 --> 01:04:26,900
+ Yeah, yeah, so I went off my plan.
+
+1175
+01:04:26,900 --> 01:04:30,600
+ What do I want exactly?
+
+1176
+01:04:31,440 --> 01:04:35,020
+ (audience member speaking)
+
+1177
+01:04:35,020 --> 01:04:41,900
+ Yeah, I put the norm of that is the standard thing.
+
+1178
+01:04:41,900 --> 01:04:46,300
+ Yeah, good call.
+
+1179
+01:04:46,300 --> 01:04:48,120
+ Yes.
+
+1180
+01:04:48,120 --> 01:04:51,620
+ (audience member speaking)
+
+1181
+01:04:51,620 --> 01:04:53,760
+ Say it a little louder.
+
+1182
+01:04:53,760 --> 01:04:59,120
+ I would say that this represents the secondary task.
+
+1183
+01:04:59,120 --> 01:05:03,120
+ I want V to be close to some spring times
+
+1184
+01:05:03,120 --> 01:05:04,620
+ the difference in my position.
+
+1185
+01:05:04,620 --> 01:05:08,140
+ This secondary task, if I were to just add it in directly,
+
+1186
+01:05:08,140 --> 01:05:10,480
+ would interfere with the first task.
+
+1187
+01:05:10,480 --> 01:05:12,620
+ So what I do is I project that down
+
+1188
+01:05:12,620 --> 01:05:15,240
+ so that it's only everything that is outside
+
+1189
+01:05:15,240 --> 01:05:18,600
+ the null space of the primary task gets turned into zero.
+
+1190
+01:05:18,600 --> 01:05:22,220
+ So it's only in the directions that are completely flat
+
+1191
+01:05:22,220 --> 01:05:24,640
+ that I allow this thing to take a value,
+
+1192
+01:05:24,640 --> 01:05:26,900
+ and it takes enough of a, since this thing is,
+
+1193
+01:05:26,900 --> 01:05:28,600
+ this joint centering is typically
+
+1194
+01:05:28,600 --> 01:05:30,260
+ your last constraint always,
+
+1195
+01:05:30,260 --> 01:05:33,200
+ and it's just round in every direction.
+
+1196
+01:05:33,200 --> 01:05:35,760
+ So it will take any direction that's completely flat
+
+1197
+01:05:35,760 --> 01:05:37,780
+ and give you some objective.
+
+1198
+01:05:37,780 --> 01:05:39,920
+ Yeah.
+
+1199
+01:05:39,920 --> 01:05:43,500
+ (audience member speaking)
+
+1200
+01:05:43,500 --> 01:05:49,640
+ So I guess, so I would think that this is, again,
+
+1201
+01:05:49,640 --> 01:05:52,800
+ gets to the frailty of rank and null space, right?
+
+1202
+01:05:52,800 --> 01:05:54,440
+ Because in the singularity,
+
+1203
+01:05:54,440 --> 01:05:57,300
+ you're never gonna get to perfectly zero.
+
+1204
+01:05:57,300 --> 01:05:59,820
+ So I think this would typically not pick a,
+
+1205
+01:05:59,820 --> 01:06:01,380
+ I mean, you're gonna have some thresholds
+
+1206
+01:06:01,380 --> 01:06:03,420
+ in your eigenvalue library about where you say
+
+1207
+01:06:03,420 --> 01:06:04,920
+ your null space is, you know.
+
+1208
+01:06:04,920 --> 01:06:08,580
+ So, but I don't think you wanna use it in that space.
+
+1209
+01:06:08,580 --> 01:06:11,420
+ I think you probably wanna not go into the singularity.
+
+1210
+01:06:11,420 --> 01:06:12,980
+ That's a good question, though, yeah.
+
+1211
+01:06:12,980 --> 01:06:16,480
+ (audience member speaking)
+
+1212
+01:06:16,480 --> 01:06:18,420
+ That's exactly right.
+
+1213
+01:06:18,420 --> 01:06:20,860
+ This is the task, and then it projects it
+
+1214
+01:06:20,860 --> 01:06:22,100
+ down into the null space.
+
+1215
+01:06:23,200 --> 01:06:26,540
+ (audience member speaking)
+
+1216
+01:06:26,540 --> 01:06:29,500
+ Yeah, so I said it more quickly than I meant to,
+
+1217
+01:06:29,500 --> 01:06:33,700
+ but I think of this as, this is just a gain,
+
+1218
+01:06:33,700 --> 01:06:35,900
+ like a stiffness.
+
+1219
+01:06:35,900 --> 01:06:40,180
+ That's lower than I wanted to write.
+
+1220
+01:06:40,180 --> 01:06:45,020
+ Okay, but, so if I were to, if I had a physical spring
+
+1221
+01:06:45,020 --> 01:06:48,380
+ that was pulling me back towards a nominal joint position,
+
+1222
+01:06:48,380 --> 01:06:50,300
+ it would take that form.
+
+1223
+01:06:50,300 --> 01:06:52,780
+ So this is just a way to write an objective,
+
+1224
+01:06:52,780 --> 01:06:54,860
+ a lot like a proportional control
+
+1225
+01:06:54,860 --> 01:06:57,500
+ that would just drive me back in that direction.
+
+1226
+01:06:57,500 --> 01:06:58,340
+ Yeah.
+
+1227
+01:06:58,340 --> 01:07:01,920
+ (audience member speaking)
+
+1228
+01:07:01,920 --> 01:07:08,680
+ Yeah, we would typically, this would have units,
+
+1229
+01:07:08,680 --> 01:07:10,980
+ you're right, so it shouldn't just be stiffness,
+
+1230
+01:07:10,980 --> 01:07:13,140
+ it should be a stiffness, a scaled stiffness
+
+1231
+01:07:13,140 --> 01:07:15,460
+ with the units of the matched velocity.
+
+1232
+01:07:15,460 --> 01:07:17,580
+ There's a characteristic time constant in that.
+
+1233
+01:07:18,580 --> 01:07:22,160
+ (audience member speaking)
+
+1234
+01:07:22,160 --> 01:07:26,320
+ I should have written it carefully there, I hope.
+
+1235
+01:07:26,320 --> 01:07:28,980
+ I just called it a proportional gain.
+
+1236
+01:07:28,980 --> 01:07:31,180
+ I didn't call it a stiffness there, yeah.
+
+1237
+01:07:31,180 --> 01:07:32,020
+ Yes.
+
+1238
+01:07:32,020 --> 01:07:35,520
+ (audience member speaking)
+
+1239
+01:07:35,520 --> 01:07:44,700
+ That's a great question.
+
+1240
+01:07:44,700 --> 01:07:47,860
+ So what about having just a small constant here?
+
+1241
+01:07:47,860 --> 01:07:52,700
+ I think that gets into the game of cost function tuning.
+
+1242
+01:07:52,700 --> 01:07:55,140
+ It's kind of the game people play
+
+1243
+01:07:55,140 --> 01:07:56,440
+ in reinforcement learning these days.
+
+1244
+01:07:56,440 --> 01:07:58,180
+ So you start putting a lot of those costs in
+
+1245
+01:07:58,180 --> 01:07:59,220
+ and you start turning the knobs,
+
+1246
+01:07:59,220 --> 01:08:00,580
+ but I don't like playing those games.
+
+1247
+01:08:00,580 --> 01:08:03,700
+ I think it's way cleaner to put it in the null space.
+
+1248
+01:08:03,700 --> 01:08:06,300
+ In practice, so you'll see there actually is
+
+1249
+01:08:06,300 --> 01:08:08,060
+ a small constant in front of this,
+
+1250
+01:08:08,060 --> 01:08:09,420
+ but that's for a subtle reason,
+
+1251
+01:08:09,420 --> 01:08:11,620
+ which is because if I write this,
+
+1252
+01:08:11,620 --> 01:08:13,500
+ everything is perfect, everything is clean.
+
+1253
+01:08:13,500 --> 01:08:17,460
+ As soon as I started combining this with other constraints,
+
+1254
+01:08:17,460 --> 01:08:18,940
+ the constraints can actually interfere
+
+1255
+01:08:18,940 --> 01:08:20,420
+ with the null space logic.
+
+1256
+01:08:20,420 --> 01:08:23,780
+ So then you still put a small gain in front of there
+
+1257
+01:08:23,780 --> 01:08:24,980
+ in order to accomplish that.
+
+1258
+01:08:24,980 --> 01:08:27,580
+ But I still would prefer to do the clean projection
+
+1259
+01:08:27,580 --> 01:08:29,940
+ so that changing numbers here really doesn't interfere
+
+1260
+01:08:29,940 --> 01:08:32,220
+ with my primary objective.
+
+1261
+01:08:32,220 --> 01:08:33,060
+ Yes.
+
+1262
+01:08:33,060 --> 01:08:36,640
+ (audience member speaking)
+
+1263
+01:08:36,640 --> 01:08:40,140
+ (audience member speaking)
+
+1264
+01:08:40,140 --> 01:08:43,640
+ (audience member speaking)
+
+1265
+01:08:43,640 --> 01:08:47,060
+ (audience member speaking)
+
+1266
+01:08:47,060 --> 01:08:50,560
+ (audience member speaking)
+
+1267
+01:08:50,560 --> 01:08:54,060
+ (audience member speaking)
+
+1268
+01:08:54,060 --> 01:08:58,120
+ Maybe I don't completely understand the question.
+
+1269
+01:08:58,120 --> 01:09:00,200
+ So let me say it my way and then if I don't answer you,
+
+1270
+01:09:00,200 --> 01:09:01,440
+ then not.
+
+1271
+01:09:01,440 --> 01:09:04,200
+ So imagine in two dimensions,
+
+1272
+01:09:04,200 --> 01:09:08,040
+ if my primary objective would look like a trough.
+
+1273
+01:09:08,040 --> 01:09:12,200
+ Is that kind of sort of clear?
+
+1274
+01:09:12,200 --> 01:09:16,060
+ If I had something that looked like this, okay.
+
+1275
+01:09:16,060 --> 01:09:18,600
+ Then what happens if I have my secondary objective,
+
+1276
+01:09:18,600 --> 01:09:21,280
+ this one is gonna be sort of full.
+
+1277
+01:09:21,280 --> 01:09:24,480
+ The joint centering is nice as a last objective
+
+1278
+01:09:24,480 --> 01:09:27,300
+ because it always looks like a bowl.
+
+1279
+01:09:27,300 --> 01:09:31,800
+ What this P projection is gonna do
+
+1280
+01:09:31,800 --> 01:09:33,360
+ is it's gonna say any direction
+
+1281
+01:09:33,360 --> 01:09:37,000
+ that has curvature here is gonna be zero.
+
+1282
+01:09:37,000 --> 01:09:41,000
+ So now it's gonna test my artistic abilities here,
+
+1283
+01:09:41,000 --> 01:09:43,240
+ but it's gonna somehow turn this into something
+
+1284
+01:09:43,240 --> 01:09:46,520
+ that's only adding content in that other direction.
+
+1285
+01:09:46,520 --> 01:09:53,640
+ By multiplying by P, it's gonna kill all the terms
+
+1286
+01:09:53,640 --> 01:09:55,480
+ that are in the direction that is curvature,
+
+1287
+01:09:55,480 --> 01:09:56,960
+ and it's gonna add curvature in the place
+
+1288
+01:09:56,960 --> 01:10:00,800
+ where there's no preference in the first objective.
+
+1289
+01:10:00,800 --> 01:10:03,280
+ That's the picture you should have.
+
+1290
+01:10:03,280 --> 01:10:05,400
+ And it gets more and more complicated in high dimensions.
+
+1291
+01:10:05,400 --> 01:10:08,040
+ But multiplying by P turns this into this.
+
+1292
+01:10:08,040 --> 01:10:16,000
+ Because P is a matrix that will zero elements
+
+1293
+01:10:16,000 --> 01:10:19,520
+ that are along the eigenvalues that have,
+
+1294
+01:10:19,520 --> 01:10:23,080
+ the eigenvectors that have non-zero eigenvalues.
+
+1295
+01:10:23,080 --> 01:10:28,700
+ So you have to, solving this is one way to get it,
+
+1296
+01:10:28,700 --> 01:10:30,760
+ but you have to find that matrix
+
+1297
+01:10:30,760 --> 01:10:35,760
+ which does exactly set those, make those values to zero.
+
+1298
+01:10:35,760 --> 01:10:39,600
+ But that matrix exists,
+
+1299
+01:10:39,600 --> 01:10:41,860
+ and there's good algorithms for finding it.
+
+1300
+01:10:41,860 --> 01:10:43,880
+ Yeah?
+
+1301
+01:10:43,880 --> 01:10:48,500
+ (audience member speaking)
+
+1302
+01:10:48,500 --> 01:10:53,040
+ Yep.
+
+1303
+01:10:59,660 --> 01:11:01,580
+ So I speak to that.
+
+1304
+01:11:01,580 --> 01:11:06,580
+ So this is, so because you can put constraints in,
+
+1305
+01:11:06,580 --> 01:11:11,380
+ it is possible when the constraints are active
+
+1306
+01:11:11,380 --> 01:11:13,780
+ that the null space could,
+
+1307
+01:11:13,780 --> 01:11:16,080
+ this secondary objective could interfere
+
+1308
+01:11:16,080 --> 01:11:17,380
+ with the first one.
+
+1309
+01:11:17,380 --> 01:11:19,980
+ It's kind of like, you hope that doesn't happen very much,
+
+1310
+01:11:19,980 --> 01:11:22,020
+ but it can happen.
+
+1311
+01:11:22,020 --> 01:11:25,220
+ So that's why we multiply this by a small number.
+
+1312
+01:11:25,220 --> 01:11:29,400
+ Now, I typically multiply it by 0.01,
+
+1313
+01:11:29,400 --> 01:11:30,340
+ and never touch it.
+
+1314
+01:11:30,340 --> 01:11:32,940
+ I don't wanna, I hate cost function tuning.
+
+1315
+01:11:32,940 --> 01:11:34,980
+ And the motivation for that is that
+
+1316
+01:11:34,980 --> 01:11:36,780
+ it really should only turn on
+
+1317
+01:11:36,780 --> 01:11:38,420
+ when you're in these active constraints,
+
+1318
+01:11:38,420 --> 01:11:41,020
+ and the active constraints have to be in such a way
+
+1319
+01:11:41,020 --> 01:11:45,420
+ that they're pushing against your orthonormal space.
+
+1320
+01:11:45,420 --> 01:11:47,460
+ So I kind of put that in as a protection.
+
+1321
+01:11:48,280 --> 01:11:51,860
+ (audience member speaking)
+
+1322
+01:11:51,860 --> 01:12:00,480
+ It's subtle.
+
+1323
+01:12:00,480 --> 01:12:02,600
+ So the question was, could I change k
+
+1324
+01:12:02,600 --> 01:12:04,700
+ so that the epsilon term was not possible?
+
+1325
+01:12:04,700 --> 01:12:08,360
+ You absolutely could, but it could be configuration
+
+1326
+01:12:08,360 --> 01:12:10,240
+ and constraint dependent.
+
+1327
+01:12:10,240 --> 01:12:13,640
+ So in order to sort of pick k once and fix it,
+
+1328
+01:12:13,640 --> 01:12:15,680
+ and then be able to mess with other things
+
+1329
+01:12:15,680 --> 01:12:18,720
+ without affecting that, this is the choice.
+
+1330
+01:12:18,720 --> 01:12:21,160
+ Yeah.
+
+1331
+01:12:21,160 --> 01:12:25,320
+ (audience member speaking)
+
+1332
+01:12:25,320 --> 01:12:26,800
+ We're gonna see some very similar things
+
+1333
+01:12:26,800 --> 01:12:29,080
+ when we start working with Jacobian transpose and torques,
+
+1334
+01:12:29,080 --> 01:12:30,320
+ and the like later.
+
+1335
+01:12:30,320 --> 01:12:36,720
+ This is effectively a PID controller at the last level.
+
+1336
+01:12:36,720 --> 01:12:40,300
+ So do everything smart, and then in the very last thing,
+
+1337
+01:12:40,300 --> 01:12:41,640
+ do a PID control.
+
+1338
+01:12:41,640 --> 01:12:43,480
+ This is P control.
+
+1339
+01:12:44,480 --> 01:12:48,060
+ (audience member speaking)
+
+1340
+01:12:48,060 --> 01:12:51,800
+ I'm sorry, say it again.
+
+1341
+01:12:51,800 --> 01:12:56,380
+ (audience member speaking)
+
+1342
+01:12:56,380 --> 01:13:00,620
+ I see.
+
+1343
+01:13:00,620 --> 01:13:05,480
+ So IK has, so he said maybe we could do IK,
+
+1344
+01:13:05,480 --> 01:13:07,720
+ and then just a P controller.
+
+1345
+01:13:07,720 --> 01:13:09,600
+ Not that you can't do that, but you have to be,
+
+1346
+01:13:09,600 --> 01:13:11,840
+ you have to get your IK solution to be consistent
+
+1347
+01:13:11,840 --> 01:13:15,440
+ so that it never pops between multiple solutions of IK.
+
+1348
+01:13:15,440 --> 01:13:18,740
+ The differential form is always smooth and nice,
+
+1349
+01:13:18,740 --> 01:13:20,080
+ and thinks about your current configuration,
+
+1350
+01:13:20,080 --> 01:13:21,280
+ and looks for incremental changes.
+
+1351
+01:13:21,280 --> 01:13:23,640
+ That's what makes the differential IK more valuable.
+
+1352
+01:13:23,640 --> 01:13:25,160
+ Let me move on a little bit.
+
+1353
+01:13:25,160 --> 01:13:26,720
+ I got one more thing I wanna make sure I say,
+
+1354
+01:13:26,720 --> 01:13:30,000
+ and then I'll take as many questions as we have time for.
+
+1355
+01:13:30,000 --> 01:13:31,400
+ And I'll stick around after.
+
+1356
+01:13:31,400 --> 01:13:35,080
+ But I love the questions, I do.
+
+1357
+01:13:35,080 --> 01:13:38,880
+ Okay, so yeah, the last,
+
+1358
+01:13:38,880 --> 01:13:41,920
+ so partly 'cause I promised you like four times
+
+1359
+01:13:41,920 --> 01:13:43,640
+ that I was gonna answer this question.
+
+1360
+01:13:43,640 --> 01:13:45,120
+ So I kind of have to do that.
+
+1361
+01:13:45,120 --> 01:13:53,160
+ So the way we actually, the default diff IK in Drake,
+
+1362
+01:13:53,160 --> 01:13:57,280
+ when you call, so in the notebooks of this chapter,
+
+1363
+01:13:57,280 --> 01:13:59,680
+ you'll see we wrote a few pseudo-inverse controllers,
+
+1364
+01:13:59,680 --> 01:14:01,180
+ which have the simple form.
+
+1365
+01:14:01,180 --> 01:14:03,360
+ We have a few that implement some of the versions
+
+1366
+01:14:03,360 --> 01:14:04,440
+ we wrote on the board.
+
+1367
+01:14:04,440 --> 01:14:08,300
+ But then the last notebook just calls add diff IK,
+
+1368
+01:14:08,300 --> 01:14:11,200
+ which is Drake's, the one we use on all the robots,
+
+1369
+01:14:11,200 --> 01:14:12,740
+ version of diff IK.
+
+1370
+01:14:12,740 --> 01:14:15,060
+ And that has a slightly different form.
+
+1371
+01:14:15,060 --> 01:14:16,440
+ And I'll explain it to you.
+
+1372
+01:14:16,440 --> 01:14:19,300
+ So it's a linear program, it turns out.
+
+1373
+01:14:19,300 --> 01:14:25,440
+ So we say max, we're gonna choose V next, and alpha.
+
+1374
+01:14:25,440 --> 01:14:31,580
+ We're gonna maximize alpha, subject to JG V next,
+
+1375
+01:14:31,580 --> 01:14:37,080
+ equals alpha VG.
+
+1376
+01:14:37,080 --> 01:14:40,080
+ (keyboard clacking)
+
+1377
+01:14:40,080 --> 01:14:44,460
+ One, plus all of our additional constraints
+
+1378
+01:14:44,460 --> 01:14:45,460
+ that we talked about.
+
+1379
+01:14:45,460 --> 01:14:48,460
+ (keyboard clacking)
+
+1380
+01:14:48,460 --> 01:14:57,780
+ Okay, so let's just think about what's that doing.
+
+1381
+01:14:57,780 --> 01:14:59,540
+ First of all, I think you have to convince yourself,
+
+1382
+01:14:59,540 --> 01:15:02,920
+ so alpha you should think about as a velocity scaling.
+
+1383
+01:15:04,460 --> 01:15:09,200
+ So it's as if, so I want the commanded velocity
+
+1384
+01:15:09,200 --> 01:15:13,840
+ to be equal to a scaled version of the actual velocity
+
+1385
+01:15:13,840 --> 01:15:16,280
+ to be equal to a scaled version of the commanded velocity.
+
+1386
+01:15:16,280 --> 01:15:20,800
+ Okay, so translational velocity,
+
+1387
+01:15:20,800 --> 01:15:22,200
+ certainly you can make it smaller
+
+1388
+01:15:22,200 --> 01:15:23,640
+ by scaling it with a scalar.
+
+1389
+01:15:23,640 --> 01:15:27,760
+ Angular velocity, you should just check yourself.
+
+1390
+01:15:27,760 --> 01:15:32,760
+ Multiplying by a scalar, an angular velocity is okay too.
+
+1391
+01:15:32,960 --> 01:15:36,520
+ Remember the angular velocity vector has the interpretation
+
+1392
+01:15:36,520 --> 01:15:40,040
+ where the direction is the instantaneous axis of rotation
+
+1393
+01:15:40,040 --> 01:15:43,100
+ and the magnitude is the rate of rotation.
+
+1394
+01:15:43,100 --> 01:15:44,780
+ So scaling, multiply by a scalar
+
+1395
+01:15:44,780 --> 01:15:47,760
+ is just reducing the rate of rotation, okay?
+
+1396
+01:15:47,760 --> 01:15:50,180
+ So what this says is if I've commanded
+
+1397
+01:15:50,180 --> 01:15:53,380
+ an end effector velocity to go like this,
+
+1398
+01:15:53,380 --> 01:15:58,020
+ you must stay in the direction of that spatial velocity.
+
+1399
+01:15:58,020 --> 01:16:00,540
+ The end effector must move in that direction.
+
+1400
+01:16:00,540 --> 01:16:02,440
+ But you're allowed to slow down.
+
+1401
+01:16:02,440 --> 01:16:03,540
+ You can't speed up.
+
+1402
+01:16:03,540 --> 01:16:05,500
+ Alpha's gotta be between zero and one.
+
+1403
+01:16:05,500 --> 01:16:07,180
+ Can't go the opposite direction,
+
+1404
+01:16:07,180 --> 01:16:10,460
+ but you're allowed to slow down if necessary.
+
+1405
+01:16:10,460 --> 01:16:14,620
+ Now I said equality is too rigid.
+
+1406
+01:16:14,620 --> 01:16:15,900
+ I said that early on in the lecture, right?
+
+1407
+01:16:15,900 --> 01:16:16,900
+ You don't wanna put the equality
+
+1408
+01:16:16,900 --> 01:16:19,140
+ 'cause you can't necessarily find it.
+
+1409
+01:16:19,140 --> 01:16:23,180
+ But in this case, alpha equals zero
+
+1410
+01:16:23,180 --> 01:16:28,340
+ and Vn equal to zero is always a valid solution.
+
+1411
+01:16:28,340 --> 01:16:32,380
+ Okay, so the worst case is if you get up against something
+
+1412
+01:16:32,380 --> 01:16:36,280
+ you can't do, it will stop, which is pretty reasonable.
+
+1413
+01:16:36,280 --> 01:16:37,480
+ Yeah?
+
+1414
+01:16:37,480 --> 01:16:39,480
+ So this has the nice property
+
+1415
+01:16:39,480 --> 01:16:41,320
+ that if you've done a really careful motion plan
+
+1416
+01:16:41,320 --> 01:16:42,440
+ for your hand or something like this,
+
+1417
+01:16:42,440 --> 01:16:45,000
+ you're trying to maybe slide along a table
+
+1418
+01:16:45,000 --> 01:16:46,120
+ or something like this,
+
+1419
+01:16:46,120 --> 01:16:48,060
+ your end effector command will be obeyed,
+
+1420
+01:16:48,060 --> 01:16:49,760
+ but it will slow down as necessary
+
+1421
+01:16:49,760 --> 01:16:50,900
+ to satisfy the constraint.
+
+1422
+01:16:50,900 --> 01:16:53,040
+ Now if you stop, you're stuck.
+
+1423
+01:16:53,040 --> 01:16:55,160
+ You have to somehow, it's not gonna get out
+
+1424
+01:16:55,160 --> 01:16:57,160
+ of singularities like that or anything like this.
+
+1425
+01:16:57,160 --> 01:17:00,600
+ You'll have to go back and make a new plan to get out.
+
+1426
+01:17:00,600 --> 01:17:03,880
+ Okay, but it's more common to see this thing
+
+1427
+01:17:03,880 --> 01:17:07,240
+ slowing down your command in order to not collide
+
+1428
+01:17:07,240 --> 01:17:08,540
+ or something like this.
+
+1429
+01:17:08,540 --> 01:17:10,120
+ Yeah, did you have a question?
+
+1430
+01:17:10,120 --> 01:17:11,640
+ You're good, okay.
+
+1431
+01:17:11,640 --> 01:17:12,480
+ Okay, good.
+
+1432
+01:17:12,480 --> 01:17:16,240
+ Satisfied?
+
+1433
+01:17:16,240 --> 01:17:17,280
+ All right.
+
+1434
+01:17:17,280 --> 01:17:18,280
+ Yes, yes.
+
+1435
+01:17:18,280 --> 01:17:21,860
+ (student speaking off mic)
+
+1436
+01:17:21,860 --> 01:17:47,240
+ Right, so in the case where I've got a trajectory of this,
+
+1437
+01:17:47,240 --> 01:17:48,400
+ which maybe came out of,
+
+1438
+01:17:48,400 --> 01:17:51,640
+ I made my piecewise pose,
+
+1439
+01:17:51,640 --> 01:17:53,200
+ I took my derivative of my piecewise pose,
+
+1440
+01:17:53,200 --> 01:17:54,720
+ I got a VGT,
+
+1441
+01:17:54,720 --> 01:17:59,320
+ then this is really going to only instantaneously follow.
+
+1442
+01:17:59,320 --> 01:18:01,260
+ The interesting thing is if you just blindly played
+
+1443
+01:18:01,260 --> 01:18:03,080
+ that velocity trajectory forward,
+
+1444
+01:18:03,080 --> 01:18:05,520
+ it could be that my velocity command changed.
+
+1445
+01:18:05,520 --> 01:18:07,160
+ The integral would be wrong,
+
+1446
+01:18:07,160 --> 01:18:08,280
+ but maybe I'll get to a point
+
+1447
+01:18:08,280 --> 01:18:10,640
+ where it's commanding a different velocity
+
+1448
+01:18:10,640 --> 01:18:13,120
+ and it would get out of singularity or something like this.
+
+1449
+01:18:13,120 --> 01:18:17,120
+ But this is not handling any of the higher level logic.
+
+1450
+01:18:17,120 --> 01:18:20,200
+ Maybe I didn't quite hear the meat of the question.
+
+1451
+01:18:20,200 --> 01:18:38,120
+ So I didn't do that for VG in the other program.
+
+1452
+01:18:38,120 --> 01:18:42,920
+ I did that for interpolating the joint velocities.
+
+1453
+01:18:42,920 --> 01:18:46,040
+ I could have done it for VG,
+
+1454
+01:18:46,040 --> 01:18:50,680
+ but the thing I wrote before was saying that VN was like V+,
+
+1455
+01:18:50,680 --> 01:18:55,680
+ or QN was like Q plus HVN.
+
+1456
+01:18:55,680 --> 01:19:00,400
+ I did all of the Euler interpolation stuff in joint space.
+
+1457
+01:19:00,400 --> 01:19:02,120
+ It's not that I couldn't have done something similar there,
+
+1458
+01:19:02,120 --> 01:19:03,440
+ but that's not what I did.
+
+1459
+01:19:03,440 --> 01:19:08,360
+ So this is a pretty solid implementation.
+
+1460
+01:19:08,360 --> 01:19:10,480
+ You won't break your robot.
+
+1461
+01:19:10,480 --> 01:19:11,800
+ You might not follow things perfectly.
+
+1462
+01:19:11,800 --> 01:19:14,840
+ You might get behind the additional logic,
+
+1463
+01:19:14,840 --> 01:19:17,520
+ but you can send these commands to the robot.
+
+1464
+01:19:17,520 --> 01:19:19,600
+ QP is solved beautifully fast
+
+1465
+01:19:19,600 --> 01:19:21,240
+ and they're pretty easy to write.
+
+1466
+01:19:21,240 --> 01:19:25,320
+ And you know what a quadratic program is.
+
+1467
+01:19:25,320 --> 01:19:28,720
+ This one, by important observation,
+
+1468
+01:19:28,720 --> 01:19:30,160
+ I guess this is actually,
+
+1469
+01:19:30,160 --> 01:19:32,120
+ there's not a quadratic objective.
+
+1470
+01:19:32,120 --> 01:19:33,480
+ This is a linear objective.
+
+1471
+01:19:33,480 --> 01:19:35,320
+ So this is actually a linear program,
+
+1472
+01:19:35,320 --> 01:19:40,280
+ which has even stronger solvers.
+
+1473
+01:19:40,280 --> 01:19:43,040
+ (marker tapping)
+
+1474
+01:19:43,040 --> 01:19:49,240
+ But these problems are so easy that it doesn't really matter.
+
+1475
+01:19:49,240 --> 01:19:51,400
+ Okay, good.
+
+1476
+01:19:51,400 --> 01:20:02,240
+ - Is that simulation you showed?
+

@@ -1,0 +1,5904 @@
+1
+00:00:00,000 --> 00:00:05,080
+ [SIDE CONVERSATION]
+
+2
+00:00:05,080 --> 00:00:08,040
+ All right, welcome back, everybody.
+
+3
+00:00:08,040 --> 00:00:08,800
+ We'll get started.
+
+4
+00:00:08,800 --> 00:00:16,520
+ So today is the sort of second day of manipulation
+
+5
+00:00:16,520 --> 00:00:18,880
+ with clutter, a.k.a.
+
+6
+00:00:18,880 --> 00:00:19,880
+ bin picking.
+
+7
+00:00:19,880 --> 00:00:24,560
+ There's a couple of different terms I've used for it.
+
+8
+00:00:24,560 --> 00:00:27,440
+ Let me just make sure to put the roadmap up again, just
+
+9
+00:00:27,440 --> 00:00:31,040
+ so we remember why we're doing what we're doing.
+
+10
+00:00:31,040 --> 00:00:35,240
+ So we started with basically a single known object,
+
+11
+00:00:35,240 --> 00:00:37,840
+ assuming we knew the pose.
+
+12
+00:00:37,840 --> 00:00:42,120
+ We advanced to a single known object with an unknown pose.
+
+13
+00:00:42,120 --> 00:00:44,760
+ And we spent some time thinking about geometric approaches
+
+14
+00:00:44,760 --> 00:00:50,040
+ for pose estimation, with point cloud registration,
+
+15
+00:00:50,040 --> 00:00:52,480
+ iterative closest point, for instance.
+
+16
+00:00:52,480 --> 00:00:54,320
+ And what we've been graduating to now
+
+17
+00:00:54,320 --> 00:00:59,040
+ is trying to do many diverse, potentially unknown objects
+
+18
+00:00:59,040 --> 00:01:01,480
+ with unknown poses.
+
+19
+00:01:01,480 --> 00:01:05,120
+ But while that could encompass the rest of manipulation,
+
+20
+00:01:05,120 --> 00:01:07,600
+ we're doing a relatively simple version of that
+
+21
+00:01:07,600 --> 00:01:10,080
+ and looking at a case where you can get a lot done
+
+22
+00:01:10,080 --> 00:01:15,040
+ without knowing a lot about what the objects are, effectively.
+
+23
+00:01:15,040 --> 00:01:17,960
+ So this clutter clearing task is this sort of nice task
+
+24
+00:01:17,960 --> 00:01:20,200
+ that I showed you last time, where you kind of pick up
+
+25
+00:01:20,200 --> 00:01:23,040
+ anything from one bin, put it in the other bin,
+
+26
+00:01:23,040 --> 00:01:24,640
+ and that turns out to be a great way
+
+27
+00:01:24,640 --> 00:01:28,160
+ to sort of feed the data pipeline when
+
+28
+00:01:28,160 --> 00:01:31,360
+ we want to start generating lots of random instances,
+
+29
+00:01:31,360 --> 00:01:33,280
+ lots of random picks, and start doing
+
+30
+00:01:33,280 --> 00:01:35,720
+ more learning-based manipulation.
+
+31
+00:01:35,720 --> 00:01:42,040
+ So the problem for today is you've
+
+32
+00:01:42,040 --> 00:01:44,460
+ got a camera, but a depth camera.
+
+33
+00:01:44,460 --> 00:01:47,720
+ So it's both RGB and depth available.
+
+34
+00:01:47,720 --> 00:01:50,640
+ You're looking down into a box of stuff.
+
+35
+00:01:50,640 --> 00:01:54,080
+ And it's got Cheez-Its and Spam cans and mustard bottles
+
+36
+00:01:54,080 --> 00:01:59,800
+ and all the great things you find in the YCB data set.
+
+37
+00:01:59,800 --> 00:02:02,860
+ The question is, where should you grab?
+
+38
+00:02:02,860 --> 00:02:05,060
+ And that's what we're going to talk a lot about today
+
+39
+00:02:05,060 --> 00:02:07,800
+ is we're going to talk a bit about grasp analysis, grasp
+
+40
+00:02:07,800 --> 00:02:11,680
+ selection, our basic strategy, how do you get it
+
+41
+00:02:11,680 --> 00:02:13,800
+ from point clouds.
+
+42
+00:02:13,800 --> 00:02:15,600
+ And we'll go into some details.
+
+43
+00:02:20,160 --> 00:02:23,520
+ But let me just, since I ended a bit before I meant to last time,
+
+44
+00:02:23,520 --> 00:02:25,120
+ and I'm not going to go into details,
+
+45
+00:02:25,120 --> 00:02:29,080
+ but I just want to sort of make sure
+
+46
+00:02:29,080 --> 00:02:31,680
+ that the roadmap from last time was clear.
+
+47
+00:02:31,680 --> 00:02:35,360
+ We talked about a couple of different ways for--
+
+48
+00:02:35,360 --> 00:02:38,400
+ well, I tried to show you that we're doing more advanced
+
+49
+00:02:38,400 --> 00:02:41,960
+ simulation now, and we need to understand our simulator
+
+50
+00:02:41,960 --> 00:02:42,800
+ a little bit better.
+
+51
+00:02:42,800 --> 00:02:45,440
+ If you get yourself into weird situations,
+
+52
+00:02:45,440 --> 00:02:47,240
+ I hope I gave you a little bit of intuition
+
+53
+00:02:47,240 --> 00:02:49,900
+ about the complexity that lies underneath.
+
+54
+00:02:49,900 --> 00:02:52,360
+ But there's a few parameters, like the time step
+
+55
+00:02:52,360 --> 00:02:54,440
+ or the stiffness of your contacts,
+
+56
+00:02:54,440 --> 00:02:57,560
+ that can have a big effect on how accurately you simulate
+
+57
+00:02:57,560 --> 00:02:59,760
+ or how fast you simulate.
+
+58
+00:02:59,760 --> 00:03:02,320
+ There's also a bunch of subtleties, like the fact
+
+59
+00:03:02,320 --> 00:03:06,080
+ that we use extra collision geometries.
+
+60
+00:03:06,080 --> 00:03:09,160
+ For instance, if we represent a box,
+
+61
+00:03:09,160 --> 00:03:13,360
+ we actually drop in a few extra spheres
+
+62
+00:03:13,360 --> 00:03:16,760
+ for our collision geometries.
+
+63
+00:03:16,760 --> 00:03:19,080
+ I've written this all up in the notes.
+
+64
+00:03:19,080 --> 00:03:21,840
+ And you've been working on it on your problem set.
+
+65
+00:03:21,840 --> 00:03:25,120
+ I've given some examples here.
+
+66
+00:03:25,120 --> 00:03:27,160
+ But the key idea I was trying to get to there
+
+67
+00:03:27,160 --> 00:03:32,080
+ was that we're going to start our simulation
+
+68
+00:03:32,080 --> 00:03:33,640
+ in some initial conditions.
+
+69
+00:03:33,640 --> 00:03:36,860
+ We've got a bunch of random objects and random poses.
+
+70
+00:03:36,860 --> 00:03:40,000
+ What is the defining feature of that initial condition?
+
+71
+00:03:40,000 --> 00:03:43,320
+ Well, everything's still.
+
+72
+00:03:43,320 --> 00:03:46,280
+ So that puts some pretty strong priors
+
+73
+00:03:46,280 --> 00:03:49,320
+ on where the objects could possibly be.
+
+74
+00:03:49,320 --> 00:03:52,240
+ If I've generated a bunch of random objects,
+
+75
+00:03:52,240 --> 00:03:55,520
+ there's only a subset of possible configurations
+
+76
+00:03:55,520 --> 00:03:57,840
+ that are viable initial conditions, where
+
+77
+00:03:57,840 --> 00:04:00,240
+ everything is at rest.
+
+78
+00:04:00,240 --> 00:04:03,440
+ You can write down with your free body diagrams
+
+79
+00:04:03,440 --> 00:04:06,680
+ the conditions for finding an equilibrium where
+
+80
+00:04:06,680 --> 00:04:08,800
+ the forces balance on all of the objects.
+
+81
+00:04:08,800 --> 00:04:11,000
+ It would imply that everything is at rest.
+
+82
+00:04:11,000 --> 00:04:12,460
+ And that's the kind of thing you're
+
+83
+00:04:12,460 --> 00:04:15,320
+ going to do on the problem set.
+
+84
+00:04:15,320 --> 00:04:18,040
+ One of the key ideas there is this friction cone.
+
+85
+00:04:18,040 --> 00:04:21,080
+ So we have contact frames.
+
+86
+00:04:21,080 --> 00:04:22,240
+ And we have a friction cone.
+
+87
+00:04:22,240 --> 00:04:23,740
+ I drew two different friction cones
+
+88
+00:04:23,740 --> 00:04:26,760
+ in this particular picture.
+
+89
+00:04:26,760 --> 00:04:30,640
+ And I hope all the simple versions of the equations
+
+90
+00:04:30,640 --> 00:04:34,400
+ are in the notes for this example.
+
+91
+00:04:34,400 --> 00:04:37,200
+ So you can imagine writing a small optimization,
+
+92
+00:04:37,200 --> 00:04:40,240
+ saying, OK, I'll take some random initial poses.
+
+93
+00:04:40,240 --> 00:04:41,760
+ They might have some penetration.
+
+94
+00:04:41,760 --> 00:04:43,760
+ They might be floating in space.
+
+95
+00:04:43,760 --> 00:04:46,640
+ And I'll solve an optimization problem, which solves
+
+96
+00:04:46,640 --> 00:04:48,960
+ for the static equilibrium.
+
+97
+00:04:48,960 --> 00:04:50,000
+ I like this very much.
+
+98
+00:04:50,000 --> 00:04:54,320
+ I think that should be the right way to sort of bring
+
+99
+00:04:54,320 --> 00:04:57,760
+ an initial guess that is not a viable initial condition
+
+100
+00:04:57,760 --> 00:05:00,320
+ into alignment with the viable initial conditions.
+
+101
+00:05:00,320 --> 00:05:02,760
+ That's a beautiful way to think about it.
+
+102
+00:05:02,760 --> 00:05:04,440
+ And no one does it.
+
+103
+00:05:04,440 --> 00:05:05,760
+ And it makes me very sad.
+
+104
+00:05:05,760 --> 00:05:06,720
+ I don't do it.
+
+105
+00:05:06,720 --> 00:05:09,120
+ And it makes me very, very sad.
+
+106
+00:05:09,120 --> 00:05:14,640
+ And the reason is that the optimization problems, when
+
+107
+00:05:14,640 --> 00:05:17,520
+ things start in deep penetration,
+
+108
+00:05:17,520 --> 00:05:19,200
+ have all the problems that we've talked
+
+109
+00:05:19,200 --> 00:05:22,040
+ about with the collision geometries and strange normals
+
+110
+00:05:22,040 --> 00:05:24,080
+ flipping signs and things like this.
+
+111
+00:05:24,080 --> 00:05:28,280
+ It's a very ugly, very bad optimization problem.
+
+112
+00:05:28,280 --> 00:05:32,080
+ So you'll get local minima where objects are still
+
+113
+00:05:32,080 --> 00:05:33,120
+ stuck inside each other.
+
+114
+00:05:33,120 --> 00:05:34,120
+ And they're-- it will--
+
+115
+00:05:34,120 --> 00:05:36,320
+ SNOPT will fail to solve.
+
+116
+00:05:36,320 --> 00:05:41,000
+ So instead, what we do is we just start things clearly out
+
+117
+00:05:41,000 --> 00:05:44,560
+ of penetration by just staggering them vertically.
+
+118
+00:05:44,560 --> 00:05:47,400
+ We run our simulator, wait till everything settles.
+
+119
+00:05:47,400 --> 00:05:49,880
+ It's like, it makes me really sad that we do that.
+
+120
+00:05:49,880 --> 00:05:54,680
+ But I mean, OK, so what's the positive spin on that?
+
+121
+00:05:54,680 --> 00:05:58,760
+ The physics engines are solving optimization problems also,
+
+122
+00:05:58,760 --> 00:06:03,120
+ right, but are just highly optimized.
+
+123
+00:06:03,120 --> 00:06:05,120
+ They're solving these things very, very fast.
+
+124
+00:06:05,120 --> 00:06:07,360
+ But they've optimized the case where things are not
+
+125
+00:06:07,360 --> 00:06:09,920
+ in deep penetration.
+
+126
+00:06:09,920 --> 00:06:13,960
+ And staying out of penetration, everything is clean and good.
+
+127
+00:06:13,960 --> 00:06:18,840
+ And you can use your physics engine to advance time
+
+128
+00:06:18,840 --> 00:06:24,040
+ and get pretty quickly to a steady state solution.
+
+129
+00:06:24,040 --> 00:06:26,720
+ Pulling yourself out of penetration
+
+130
+00:06:26,720 --> 00:06:28,720
+ is just the hard version of the problem.
+
+131
+00:06:28,720 --> 00:06:32,080
+ And I think for our optimization, for SNOPT,
+
+132
+00:06:32,080 --> 00:06:35,360
+ for instance, to compete with the simulator,
+
+133
+00:06:35,360 --> 00:06:38,800
+ you'd have to bring loads of all these clever optimizations
+
+134
+00:06:38,800 --> 00:06:40,600
+ that the simulation people have done.
+
+135
+00:06:40,600 --> 00:06:42,520
+ Even though they're solving sometimes the wrong problem,
+
+136
+00:06:42,520 --> 00:06:45,040
+ they're just forward simulating and waiting till it settles.
+
+137
+00:06:45,040 --> 00:06:49,240
+ And you could say, just go straight to the equilibrium.
+
+138
+00:06:49,240 --> 00:06:51,640
+ The advantage that you get from just
+
+139
+00:06:51,640 --> 00:06:55,040
+ having all these super highly optimized codes,
+
+140
+00:06:55,040 --> 00:06:57,800
+ SNOPT isn't competing with yet.
+
+141
+00:06:57,800 --> 00:07:00,280
+ I think we'll slowly bring more of them into SNOPT
+
+142
+00:07:00,280 --> 00:07:03,160
+ and eventually be able to do these kind of things.
+
+143
+00:07:03,160 --> 00:07:03,660
+ [INAUDIBLE]
+
+144
+00:07:03,660 --> 00:07:13,840
+ OK, so the question was, why do we even
+
+145
+00:07:13,840 --> 00:07:16,880
+ want static equilibrium as an-- I
+
+146
+00:07:16,880 --> 00:07:20,680
+ guess I'm thinking that we're walking up to the sink.
+
+147
+00:07:20,680 --> 00:07:23,120
+ Things probably aren't moving.
+
+148
+00:07:23,120 --> 00:07:25,840
+ The initial conditions, in my mind, of the world
+
+149
+00:07:25,840 --> 00:07:28,320
+ have settled at some times.
+
+150
+00:07:28,320 --> 00:07:30,840
+ And so there's a set of equilibrium.
+
+151
+00:07:30,840 --> 00:07:32,160
+ There's probably nothing floating
+
+152
+00:07:32,160 --> 00:07:34,120
+ in the air that's still falling.
+
+153
+00:07:34,120 --> 00:07:35,160
+ There's nothing sliding.
+
+154
+00:07:35,160 --> 00:07:37,080
+ It's already slid.
+
+155
+00:07:37,080 --> 00:07:40,120
+ So I think the reasonable initial conditions
+
+156
+00:07:40,120 --> 00:07:42,640
+ of walking up to a sink and you start to pick
+
+157
+00:07:42,640 --> 00:07:44,160
+ are things that have already settled.
+
+158
+00:07:44,160 --> 00:07:45,280
+ And so the question is just, how do you
+
+159
+00:07:45,280 --> 00:07:47,520
+ find the already settled configurations,
+
+160
+00:07:47,520 --> 00:07:49,240
+ the viable physical configurations,
+
+161
+00:07:49,240 --> 00:07:50,080
+ as well as possible?
+
+162
+00:07:50,080 --> 00:07:53,720
+ Good.
+
+163
+00:07:53,720 --> 00:07:54,280
+ Good question.
+
+164
+00:07:58,120 --> 00:07:58,680
+ Is that clear?
+
+165
+00:07:58,680 --> 00:08:07,360
+ The problem with this approach, of course,
+
+166
+00:08:07,360 --> 00:08:10,160
+ is that it works for clutter clearing.
+
+167
+00:08:10,160 --> 00:08:12,120
+ But I think I said it in the notes.
+
+168
+00:08:12,120 --> 00:08:14,760
+ If you were trying to populate random kitchens,
+
+169
+00:08:14,760 --> 00:08:17,760
+ you probably don't just drop refrigerators and toasters
+
+170
+00:08:17,760 --> 00:08:20,560
+ and stuff from the sky and hope they land in reasonable places.
+
+171
+00:08:20,560 --> 00:08:23,680
+ When your scene has more context, more structure,
+
+172
+00:08:23,680 --> 00:08:25,000
+ then this approach doesn't work.
+
+173
+00:08:25,000 --> 00:08:27,280
+ And then I think that's where the optimization-based
+
+174
+00:08:27,280 --> 00:08:31,560
+ approaches can somehow take some prior of, for instance,
+
+175
+00:08:31,560 --> 00:08:34,480
+ like toasters tend to be on the table and other things,
+
+176
+00:08:34,480 --> 00:08:36,680
+ some initial guess, and then lock it in with physics.
+
+177
+00:08:36,680 --> 00:08:44,520
+ OK.
+
+178
+00:08:44,520 --> 00:08:47,920
+ So that was a bunch of talk about simulation
+
+179
+00:08:47,920 --> 00:08:49,600
+ and how we get here.
+
+180
+00:08:49,600 --> 00:08:50,480
+ But now we're here.
+
+181
+00:08:50,480 --> 00:08:51,880
+ We've got our image.
+
+182
+00:08:51,880 --> 00:08:53,160
+ We've got our point cloud.
+
+183
+00:08:53,160 --> 00:08:55,640
+ And I want to talk today about how
+
+184
+00:08:55,640 --> 00:08:58,360
+ do we start deciding what to do in that point cloud.
+
+185
+00:08:58,360 --> 00:09:00,840
+ Where do we pick?
+
+186
+00:09:00,840 --> 00:09:07,200
+ OK, this is the Springer Handbook of Robotics.
+
+187
+00:09:07,200 --> 00:09:10,480
+ It's pretty big, second edition.
+
+188
+00:09:10,480 --> 00:09:11,120
+ It's awesome.
+
+189
+00:09:11,120 --> 00:09:12,280
+ It's a really good resource.
+
+190
+00:09:12,280 --> 00:09:13,440
+ And it's all online, so you don't
+
+191
+00:09:13,440 --> 00:09:14,860
+ have to carry around the big book.
+
+192
+00:09:14,860 --> 00:09:18,920
+ But it's a really, really good resource.
+
+193
+00:09:18,920 --> 00:09:26,480
+ So on page 955, there's an amazingly good chapter
+
+194
+00:09:26,480 --> 00:09:28,480
+ on grasping.
+
+195
+00:09:28,480 --> 00:09:30,200
+ And it has pictures like this, what
+
+196
+00:09:30,200 --> 00:09:31,480
+ I'm showing on the screen here.
+
+197
+00:09:31,480 --> 00:09:35,200
+ That's figure two, I guess, from that chapter.
+
+198
+00:09:35,200 --> 00:09:36,840
+ And there's just this huge wealth
+
+199
+00:09:36,840 --> 00:09:41,760
+ of literature on grasp analysis and grasp optimization.
+
+200
+00:09:41,760 --> 00:09:45,320
+ And it dominated manipulation for many years.
+
+201
+00:09:45,320 --> 00:09:47,400
+ And we're spending relatively little time on it
+
+202
+00:09:47,400 --> 00:09:48,200
+ in this class.
+
+203
+00:09:48,200 --> 00:09:49,960
+ I almost feel like it's sacrilegious.
+
+204
+00:09:49,960 --> 00:09:52,640
+ OK, sorry.
+
+205
+00:09:52,640 --> 00:09:55,360
+ But here's the thing.
+
+206
+00:09:55,360 --> 00:09:59,400
+ So this was done in a different time,
+
+207
+00:09:59,400 --> 00:10:01,240
+ I mean, with a different set of objectives,
+
+208
+00:10:01,240 --> 00:10:04,180
+ where the assumptions were that you
+
+209
+00:10:04,180 --> 00:10:06,240
+ knew a lot about the object.
+
+210
+00:10:06,240 --> 00:10:08,360
+ You potentially knew a lot about your hand.
+
+211
+00:10:08,360 --> 00:10:12,440
+ And you had to optimize against torque limits in your fingers,
+
+212
+00:10:12,440 --> 00:10:13,600
+ things like this.
+
+213
+00:10:13,600 --> 00:10:17,160
+ And there's a lot of good things to know in there.
+
+214
+00:10:17,160 --> 00:10:19,320
+ We're going to use some of them over and over again.
+
+215
+00:10:19,320 --> 00:10:21,560
+ For instance, if you wanted to evaluate
+
+216
+00:10:21,560 --> 00:10:24,840
+ the largest possible wrench, if someone were to come up
+
+217
+00:10:24,840 --> 00:10:26,480
+ and pull something out of your object,
+
+218
+00:10:26,480 --> 00:10:28,880
+ what's the largest possible wrench
+
+219
+00:10:28,880 --> 00:10:31,360
+ that someone could pull on the object such
+
+220
+00:10:31,360 --> 00:10:34,440
+ that you stay inside your torque limits,
+
+221
+00:10:34,440 --> 00:10:36,720
+ and therefore inside your friction limits,
+
+222
+00:10:36,720 --> 00:10:39,120
+ and you can sort of say you'll resist a wrench?
+
+223
+00:10:39,120 --> 00:10:40,520
+ These are the kind of optimizations
+
+224
+00:10:40,520 --> 00:10:42,080
+ that you'll find in this book.
+
+225
+00:10:42,080 --> 00:10:44,080
+ And they're really good.
+
+226
+00:10:44,080 --> 00:10:46,280
+ But they assume a lot about your hand,
+
+227
+00:10:46,280 --> 00:10:48,400
+ knowing a lot about your hand, which is probably OK.
+
+228
+00:10:48,400 --> 00:10:50,280
+ But well, even that, I mean, I think
+
+229
+00:10:50,280 --> 00:10:52,440
+ we don't really have torque sources in our fingers
+
+230
+00:10:52,440 --> 00:10:53,160
+ most of the time.
+
+231
+00:10:53,160 --> 00:10:54,660
+ We have little itty bitty actuators
+
+232
+00:10:54,660 --> 00:10:58,280
+ on cables that are kind of not perfectly modeled.
+
+233
+00:10:58,280 --> 00:11:01,240
+ But it also just assumes a lot about the geometry
+
+234
+00:11:01,240 --> 00:11:04,080
+ of the object, the mass properties of the object,
+
+235
+00:11:04,080 --> 00:11:06,840
+ the friction properties of the object.
+
+236
+00:11:06,840 --> 00:11:10,040
+ So there's been, I think, along with the deep learning
+
+237
+00:11:10,040 --> 00:11:14,800
+ revolution and the geometric depth camera revolution,
+
+238
+00:11:14,800 --> 00:11:17,640
+ there's been a change in the basic formulations.
+
+239
+00:11:17,640 --> 00:11:20,560
+ So we don't think quite as-- we use a lot of the tools
+
+240
+00:11:20,560 --> 00:11:21,720
+ from this.
+
+241
+00:11:21,720 --> 00:11:24,600
+ But I think we're going to try to do it
+
+242
+00:11:24,600 --> 00:11:28,440
+ in a slightly more messy situation.
+
+243
+00:11:28,440 --> 00:11:31,040
+ So there was this sort of wave of new results
+
+244
+00:11:31,040 --> 00:11:33,320
+ that came in a handful of years ago.
+
+245
+00:11:33,320 --> 00:11:39,440
+ These are 2016, 2017, 2018 kind of dates.
+
+246
+00:11:39,440 --> 00:11:42,600
+ And they just, I think, did a really nice job
+
+247
+00:11:42,600 --> 00:11:46,800
+ of sort of turning the problem statement on its head.
+
+248
+00:11:46,800 --> 00:11:50,280
+ All three of those were powered by deep learning.
+
+249
+00:11:50,280 --> 00:11:53,440
+ But I think more important than the way they solved it first,
+
+250
+00:11:53,440 --> 00:11:56,720
+ it was just changing the problem specification, where it really
+
+251
+00:11:56,720 --> 00:11:58,320
+ was more like this clutter clearing.
+
+252
+00:11:58,320 --> 00:12:03,000
+ This is the first one that I spent time
+
+253
+00:12:03,000 --> 00:12:06,560
+ understanding by Rob Platt.
+
+254
+00:12:06,560 --> 00:12:09,760
+ They all sort of came out in similar times.
+
+255
+00:12:09,760 --> 00:12:15,560
+ But this was a very big surprising thing.
+
+256
+00:12:15,560 --> 00:12:17,880
+ I mean, it was not the way people typically
+
+257
+00:12:17,880 --> 00:12:20,800
+ formulated grasp problems, where you really just
+
+258
+00:12:20,800 --> 00:12:21,880
+ dumped random objects.
+
+259
+00:12:21,880 --> 00:12:23,080
+ You don't know what they are.
+
+260
+00:12:23,080 --> 00:12:25,420
+ I mean, we've been saying this for clutter clearing.
+
+261
+00:12:25,420 --> 00:12:27,880
+ But this was a new thing then.
+
+262
+00:12:27,880 --> 00:12:29,840
+ And it was very interesting to ask,
+
+263
+00:12:29,840 --> 00:12:32,640
+ how do you take some of the stuff from the handbook
+
+264
+00:12:32,640 --> 00:12:36,080
+ and apply it to a problem like that?
+
+265
+00:12:36,080 --> 00:12:39,280
+ And the basic story in most of these papers
+
+266
+00:12:39,280 --> 00:12:42,360
+ is that you learn from a map from the depth
+
+267
+00:12:42,360 --> 00:12:44,080
+ cloud about where to grasp.
+
+268
+00:12:44,080 --> 00:12:47,280
+ Or typically, you will learn a grasp evaluator,
+
+269
+00:12:47,280 --> 00:12:49,520
+ basically, where you say, if I were to grab here,
+
+270
+00:12:49,520 --> 00:12:53,240
+ what score do I expect to get?
+
+271
+00:12:53,240 --> 00:12:54,080
+ But this was cool.
+
+272
+00:12:54,080 --> 00:12:55,540
+ This was like the first time we saw
+
+273
+00:12:55,540 --> 00:12:58,680
+ robots sort of manipulating random objects like ropes.
+
+274
+00:12:58,680 --> 00:13:01,600
+ I mean, there's a couple objects here that were intentionally
+
+275
+00:13:01,600 --> 00:13:03,400
+ like, ah, you've never seen a robot really
+
+276
+00:13:03,400 --> 00:13:07,240
+ manipulate a rope before or a cord before.
+
+277
+00:13:07,240 --> 00:13:11,240
+ And so when we started thinking more about this
+
+278
+00:13:11,240 --> 00:13:18,280
+ and watched this revolution, I think deep learning gave us
+
+279
+00:13:18,280 --> 00:13:21,440
+ the sort of the bold--
+
+280
+00:13:21,440 --> 00:13:24,440
+ the ability to sort of push beyond what we had originally
+
+281
+00:13:24,440 --> 00:13:24,940
+ done.
+
+282
+00:13:24,940 --> 00:13:26,640
+ It was sort of like confidence, I guess.
+
+283
+00:13:26,640 --> 00:13:28,520
+ Deep learning gave us the confidence.
+
+284
+00:13:28,520 --> 00:13:30,560
+ But I don't think it actually--
+
+285
+00:13:30,560 --> 00:13:33,680
+ I think people underestimate how well the geometric tools still
+
+286
+00:13:33,680 --> 00:13:34,920
+ work on those problems.
+
+287
+00:13:34,920 --> 00:13:37,640
+ So as we're going to transition from--
+
+288
+00:13:37,640 --> 00:13:39,400
+ this is our lecture from transitioning
+
+289
+00:13:39,400 --> 00:13:42,120
+ from the geometric methods to the deep methods,
+
+290
+00:13:42,120 --> 00:13:43,520
+ let's spend a little bit more time
+
+291
+00:13:43,520 --> 00:13:47,960
+ with point clouds and geometry to do this task.
+
+292
+00:13:47,960 --> 00:13:49,480
+ The reason I want to do that is--
+
+293
+00:13:49,480 --> 00:13:50,320
+ this is another one.
+
+294
+00:13:50,320 --> 00:13:53,200
+ This was from a local--
+
+295
+00:13:53,200 --> 00:13:55,840
+ well, I guess Andy Zeng was the first author
+
+296
+00:13:55,840 --> 00:14:01,120
+ on all the visual parts of the perception parts.
+
+297
+00:14:01,120 --> 00:14:04,560
+ But this was an effort along with Alberto's lab
+
+298
+00:14:04,560 --> 00:14:06,200
+ here at MIT, M3.
+
+299
+00:14:06,200 --> 00:14:13,040
+ Did I pick a really boring part of the video to start?
+
+300
+00:14:13,040 --> 00:14:14,200
+ Yeah, I guess.
+
+301
+00:14:14,200 --> 00:14:20,080
+ But OK, they're talking through this idea
+
+302
+00:14:20,080 --> 00:14:23,920
+ that you take RGB images, you learn basically good places
+
+303
+00:14:23,920 --> 00:14:24,960
+ to suck.
+
+304
+00:14:24,960 --> 00:14:26,160
+ OK, this is suction, sorry.
+
+305
+00:14:27,120 --> 00:14:27,640
+ Right.
+
+306
+00:14:27,640 --> 00:14:36,160
+ OK, but Lucas was in lab at the time,
+
+307
+00:14:36,160 --> 00:14:40,360
+ and he spent time thinking about what--
+
+308
+00:14:40,360 --> 00:14:41,840
+ do we actually need deep learning
+
+309
+00:14:41,840 --> 00:14:42,760
+ for this kind of things?
+
+310
+00:14:42,760 --> 00:14:45,080
+ This was when we weren't sure how well deep learning was
+
+311
+00:14:45,080 --> 00:14:46,680
+ really working.
+
+312
+00:14:46,680 --> 00:14:49,720
+ And so he implemented this system,
+
+313
+00:14:49,720 --> 00:14:51,360
+ which was based on not--
+
+314
+00:14:51,360 --> 00:14:54,240
+ no deep learning, just geometry alone.
+
+315
+00:14:54,240 --> 00:14:56,840
+ And the basic strategy we're going to cover here
+
+316
+00:14:56,840 --> 00:14:59,560
+ is about looking for antipodal grasps, which
+
+317
+00:14:59,560 --> 00:15:01,280
+ I will tell you about.
+
+318
+00:15:01,280 --> 00:15:03,520
+ And basically just looking for a good place to grasp
+
+319
+00:15:03,520 --> 00:15:06,280
+ based on the geometry of the scene.
+
+320
+00:15:06,280 --> 00:15:07,720
+ And this does pretty darn well.
+
+321
+00:15:07,720 --> 00:15:10,080
+ Like it achieved rates pretty similar.
+
+322
+00:15:10,080 --> 00:15:10,960
+ There's limitations.
+
+323
+00:15:10,960 --> 00:15:13,560
+ There's things that the deep learning approaches can do
+
+324
+00:15:13,560 --> 00:15:14,720
+ that this cannot do.
+
+325
+00:15:14,720 --> 00:15:16,320
+ And we'll talk about those.
+
+326
+00:15:16,320 --> 00:15:18,360
+ But this is the basic setup.
+
+327
+00:15:18,360 --> 00:15:21,320
+ Let's do this geometry-based first.
+
+328
+00:15:22,320 --> 00:15:22,820
+ OK.
+
+329
+00:15:22,820 --> 00:15:28,240
+ Good.
+
+330
+00:15:28,240 --> 00:15:32,440
+ So that was my little old and new background
+
+331
+00:15:32,440 --> 00:15:34,280
+ on grasp analysis.
+
+332
+00:15:34,280 --> 00:15:35,080
+ OK.
+
+333
+00:15:35,080 --> 00:15:39,240
+ So let's start our basic strategy for grasp selection.
+
+334
+00:15:39,240 --> 00:15:39,740
+ OK.
+
+335
+00:15:39,740 --> 00:15:47,880
+ The basic strategy is going to be very simple.
+
+336
+00:15:47,880 --> 00:16:01,880
+ I'm going to reach down, obtain a point cloud.
+
+337
+00:16:01,880 --> 00:16:10,480
+ We have to clean it up a bit.
+
+338
+00:16:10,480 --> 00:16:13,120
+ We're going to have multiple cameras looking at the scene
+
+339
+00:16:13,120 --> 00:16:15,560
+ so that we can see from all sides of the object,
+
+340
+00:16:15,560 --> 00:16:16,960
+ hopefully, roughly.
+
+341
+00:16:16,960 --> 00:16:18,880
+ We're going to have to merge the point clouds,
+
+342
+00:16:18,880 --> 00:16:21,760
+ crop the point clouds, estimate different quantities
+
+343
+00:16:21,760 --> 00:16:22,720
+ on the point clouds.
+
+344
+00:16:22,720 --> 00:16:23,220
+ OK.
+
+345
+00:16:23,220 --> 00:16:28,640
+ Then we're going to look for antipodal grasps.
+
+346
+00:16:28,640 --> 00:16:29,140
+ OK.
+
+347
+00:16:29,140 --> 00:16:37,680
+ What's an antipodal grasp?
+
+348
+00:16:37,680 --> 00:16:38,180
+ OK.
+
+349
+00:16:38,180 --> 00:16:44,880
+ So I have some interestingly shaped object.
+
+350
+00:16:44,880 --> 00:16:45,400
+ OK.
+
+351
+00:16:45,400 --> 00:16:48,760
+ Anywhere along the object-- I have my colored chalk
+
+352
+00:16:48,760 --> 00:16:49,440
+ here somewhere.
+
+353
+00:16:49,440 --> 00:16:59,520
+ I left them here last time.
+
+354
+00:16:59,520 --> 00:17:06,460
+ OK.
+
+355
+00:17:06,460 --> 00:17:09,160
+ At any point on the surface of the object,
+
+356
+00:17:09,160 --> 00:17:11,920
+ I can define sort of the normal to the surface
+
+357
+00:17:11,920 --> 00:17:13,320
+ and the tangent to the surface.
+
+358
+00:17:13,320 --> 00:17:15,360
+ Right?
+
+359
+00:17:15,360 --> 00:17:15,840
+ OK.
+
+360
+00:17:15,840 --> 00:17:18,680
+ And I can evaluate this in lots of places.
+
+361
+00:17:18,680 --> 00:17:20,960
+ OK.
+
+362
+00:17:20,960 --> 00:17:26,120
+ And what I want to do is find places
+
+363
+00:17:26,120 --> 00:17:27,800
+ where I can put my hand around it.
+
+364
+00:17:27,800 --> 00:17:30,160
+ That might be too big, depending on how big your hand is.
+
+365
+00:17:30,160 --> 00:17:30,960
+ OK.
+
+366
+00:17:30,960 --> 00:17:35,480
+ I'd like to find places to put my enormous hand.
+
+367
+00:17:35,480 --> 00:17:37,440
+ That was a little bigger than I had in my head
+
+368
+00:17:37,440 --> 00:17:38,320
+ when I started this.
+
+369
+00:17:38,320 --> 00:17:41,880
+ But OK.
+
+370
+00:17:41,880 --> 00:17:43,200
+ Enormous hand coming in.
+
+371
+00:17:43,200 --> 00:17:43,880
+ OK.
+
+372
+00:17:43,880 --> 00:17:48,040
+ I'd like to find places where the hand is going
+
+373
+00:17:48,040 --> 00:17:52,320
+ to touch the object at two places
+
+374
+00:17:52,320 --> 00:17:55,560
+ where the normals are pointing in opposite directions.
+
+375
+00:17:55,560 --> 00:17:56,960
+ They're antipodal.
+
+376
+00:17:56,960 --> 00:17:59,400
+ They're pointing in the opposite directions.
+
+377
+00:17:59,400 --> 00:18:00,480
+ OK.
+
+378
+00:18:00,480 --> 00:18:07,600
+ Now that might be not as true if I were to pick here and here.
+
+379
+00:18:07,600 --> 00:18:08,100
+ Right?
+
+380
+00:18:08,100 --> 00:18:09,880
+ If I picked here, I squeeze too hard,
+
+381
+00:18:09,880 --> 00:18:12,920
+ it'll shoot out potentially out the side or whatever.
+
+382
+00:18:12,920 --> 00:18:13,760
+ OK.
+
+383
+00:18:13,760 --> 00:18:15,800
+ Idea of picking antipodal grasps is
+
+384
+00:18:15,800 --> 00:18:19,800
+ going to be central to our thinking.
+
+385
+00:18:19,800 --> 00:18:20,300
+ OK.
+
+386
+00:18:20,300 --> 00:18:37,680
+ And importantly, we can start estimating antipodalness
+
+387
+00:18:37,680 --> 00:18:39,160
+ based just right from the point cloud
+
+388
+00:18:39,160 --> 00:18:40,800
+ without knowing exactly the object.
+
+389
+00:18:40,800 --> 00:18:42,240
+ OK.
+
+390
+00:18:42,240 --> 00:18:47,080
+ And then we're going to avoid collisions,
+
+391
+00:18:47,080 --> 00:18:58,360
+ try to respect joint limits, et cetera.
+
+392
+00:18:58,360 --> 00:19:00,120
+ OK.
+
+393
+00:19:00,120 --> 00:19:01,960
+ This is going to be our strongest heuristic.
+
+394
+00:19:01,960 --> 00:19:03,600
+ We're going to look down in the pile,
+
+395
+00:19:03,600 --> 00:19:06,000
+ try to find a place where we can stick our hand around,
+
+396
+00:19:06,000 --> 00:19:08,960
+ get a good antipodal grasp, and pick.
+
+397
+00:19:08,960 --> 00:19:09,460
+ Yeah.
+
+398
+00:19:09,700 --> 00:19:13,180
+ So for the antipodal normal vectors,
+
+399
+00:19:13,180 --> 00:19:15,140
+ they have to point in opposite directions.
+
+400
+00:19:15,140 --> 00:19:18,140
+ So do they all have to be collinear?
+
+401
+00:19:18,140 --> 00:19:18,640
+ Yes.
+
+402
+00:19:18,640 --> 00:19:19,140
+ Sorry.
+
+403
+00:19:19,140 --> 00:19:19,640
+ Good.
+
+404
+00:19:19,640 --> 00:19:23,260
+ So you'll see when we get there.
+
+405
+00:19:23,260 --> 00:19:26,460
+ So we want them to be both antipodal and collinear.
+
+406
+00:19:26,460 --> 00:19:26,960
+ Yes.
+
+407
+00:19:26,960 --> 00:19:34,100
+ Because that's going to be embedded in our sampling
+
+408
+00:19:34,100 --> 00:19:34,940
+ strategy, you'll see.
+
+409
+00:19:34,940 --> 00:19:36,540
+ But yeah, we're going to actually,
+
+410
+00:19:36,540 --> 00:19:38,740
+ when we find a normal, we're going to just penetrate
+
+411
+00:19:38,740 --> 00:19:40,780
+ through directly and ask what the normal is
+
+412
+00:19:40,780 --> 00:19:41,660
+ on the other side.
+
+413
+00:19:41,660 --> 00:19:43,260
+ So it becomes for yes.
+
+414
+00:19:43,260 --> 00:19:47,820
+ But we'd like the places where-- so if I had, let's see,
+
+415
+00:19:47,820 --> 00:19:51,620
+ this and this, for instance, could be almost antipodal,
+
+416
+00:19:51,620 --> 00:19:53,060
+ but they're not in the same line.
+
+417
+00:19:53,060 --> 00:19:56,020
+ So that's no good to me as a grasp.
+
+418
+00:19:56,020 --> 00:19:59,260
+ They need to be antipodal and along the same line.
+
+419
+00:19:59,260 --> 00:19:59,760
+ Yes.
+
+420
+00:19:59,760 --> 00:20:02,760
+ So in two-dimensional, it's clear that this always
+
+421
+00:20:02,760 --> 00:20:06,760
+ exists, but in 3D, it's not possible to see that you can
+
+422
+00:20:06,760 --> 00:20:09,240
+ always find an antipodal grasp on an object,
+
+423
+00:20:09,240 --> 00:20:13,240
+ especially if you only have the object in 3D.
+
+424
+00:20:13,240 --> 00:20:16,640
+ So the question is, in 3D, can you always
+
+425
+00:20:16,640 --> 00:20:18,560
+ find an antipodal grasp on an object?
+
+426
+00:20:18,560 --> 00:20:21,060
+ I don't know that there's any guarantee that you can always
+
+427
+00:20:21,060 --> 00:20:22,520
+ find an antipodal grasp.
+
+428
+00:20:22,520 --> 00:20:25,280
+ I think you'd like to find the most antipodal grasp.
+
+429
+00:20:25,280 --> 00:20:27,200
+ That's the heuristic we're going to use.
+
+430
+00:20:27,200 --> 00:20:29,240
+ Whether you can find something that's perfectly
+
+431
+00:20:29,240 --> 00:20:31,160
+ antipodal, I don't think there's any guarantee.
+
+432
+00:20:31,160 --> 00:20:34,160
+ Even in 2D, it's not clear that you always
+
+433
+00:20:34,160 --> 00:20:38,800
+ find one collinear antipodal grasp in 2D, right?
+
+434
+00:20:38,800 --> 00:20:39,300
+ [INAUDIBLE]
+
+435
+00:20:39,300 --> 00:20:44,600
+ But it might not be collinear.
+
+436
+00:20:44,600 --> 00:20:58,720
+ Like a star.
+
+437
+00:20:58,720 --> 00:21:00,840
+ I'm trying to think of-- there's probably adversarial shapes
+
+438
+00:21:00,840 --> 00:21:02,040
+ or something like this, right?
+
+439
+00:21:02,040 --> 00:21:09,200
+ Yeah, I'm not saying that there is any guarantee
+
+440
+00:21:09,200 --> 00:21:13,160
+ that a perfectly antipodal collinear grasp exists.
+
+441
+00:21:13,160 --> 00:21:17,280
+ We're going to prefer grasps that are more antipodal.
+
+442
+00:21:17,280 --> 00:21:17,780
+ Yeah?
+
+443
+00:21:17,780 --> 00:21:18,280
+ [INAUDIBLE]
+
+444
+00:21:18,280 --> 00:21:28,040
+ Exactly.
+
+445
+00:21:28,040 --> 00:21:30,240
+ Awesome.
+
+446
+00:21:30,240 --> 00:21:32,200
+ So if my hand was not enormous, if I
+
+447
+00:21:32,200 --> 00:21:33,580
+ had a little hand coming in here,
+
+448
+00:21:33,580 --> 00:21:35,560
+ this would be no good to me, right?
+
+449
+00:21:35,560 --> 00:21:37,440
+ So we're going to bring that in through asking
+
+450
+00:21:37,440 --> 00:21:41,480
+ for-- to try to find these kind of possible grasps
+
+451
+00:21:41,480 --> 00:21:43,880
+ and find one that, if I were to put my hand there,
+
+452
+00:21:43,880 --> 00:21:45,960
+ it's not going to be in collision with the object
+
+453
+00:21:45,960 --> 00:21:49,760
+ already, so that when I squeeze, I'll be outside the object.
+
+454
+00:21:49,760 --> 00:21:50,260
+ [INAUDIBLE]
+
+455
+00:21:51,260 --> 00:21:54,720
+ Do you have to continuously solve for the optimum ones?
+
+456
+00:21:54,720 --> 00:21:56,180
+ Because I think they want to start
+
+457
+00:21:56,180 --> 00:21:57,720
+ coming into contact with the object.
+
+458
+00:21:57,720 --> 00:22:00,720
+ The object might itself start changing shape
+
+459
+00:22:00,720 --> 00:22:02,220
+ like a star or something like that.
+
+460
+00:22:02,220 --> 00:22:02,820
+ Awesome.
+
+461
+00:22:02,820 --> 00:22:04,740
+ OK, so the question is, are we sort
+
+462
+00:22:04,740 --> 00:22:09,020
+ of updating our antipodal estimations on the fly?
+
+463
+00:22:09,020 --> 00:22:11,620
+ OK, because like squishy objects,
+
+464
+00:22:11,620 --> 00:22:16,340
+ they might change their normals as you grab them.
+
+465
+00:22:16,340 --> 00:22:20,540
+ So here's the dirty sort of secret of manipulation,
+
+466
+00:22:20,540 --> 00:22:24,140
+ is that all the grasp analysis, like this entire book-- well,
+
+467
+00:22:24,140 --> 00:22:27,580
+ not-- just the manipulation chapters of the handbook,
+
+468
+00:22:27,580 --> 00:22:28,420
+ right?
+
+469
+00:22:28,420 --> 00:22:32,980
+ They analyze the system when it's already making contact.
+
+470
+00:22:32,980 --> 00:22:39,140
+ The dynamics of going from out of contact to in contact,
+
+471
+00:22:39,140 --> 00:22:40,980
+ we pretty much just kind of go like this
+
+472
+00:22:40,980 --> 00:22:43,540
+ and hope for the best, right?
+
+473
+00:22:43,540 --> 00:22:46,740
+ People do use simulation to try to--
+
+474
+00:22:46,740 --> 00:22:49,700
+ so one grasp metric that people like
+
+475
+00:22:49,700 --> 00:22:53,100
+ is actually to train a deep learning system, for instance.
+
+476
+00:22:53,100 --> 00:22:58,980
+ You might pick up a thing at a certain point on the point
+
+477
+00:22:58,980 --> 00:23:01,400
+ cloud, and then lift it up and shake it,
+
+478
+00:23:01,400 --> 00:23:03,220
+ and then just see if it stayed in your hand.
+
+479
+00:23:03,220 --> 00:23:05,540
+ That's like a way to sort of test,
+
+480
+00:23:05,540 --> 00:23:07,340
+ and if that gives you some score,
+
+481
+00:23:07,340 --> 00:23:10,020
+ and then you train whether that worked or not.
+
+482
+00:23:10,020 --> 00:23:12,420
+ But in general, the grasp analysis
+
+483
+00:23:12,420 --> 00:23:16,980
+ has always been about statics and not about dynamics,
+
+484
+00:23:16,980 --> 00:23:21,060
+ because the coming into contact dynamics is very complicated.
+
+485
+00:23:21,060 --> 00:23:22,220
+ We know how to simulate it.
+
+486
+00:23:22,220 --> 00:23:24,300
+ We don't know as much how to optimize through it.
+
+487
+00:23:24,300 --> 00:23:24,800
+ Yeah?
+
+488
+00:23:24,800 --> 00:23:27,660
+ Are we only looking for the antipodal grasp
+
+489
+00:23:27,660 --> 00:23:30,140
+ on the context of the object?
+
+490
+00:23:30,140 --> 00:23:32,540
+ Or can I also get them on the normal point
+
+491
+00:23:32,540 --> 00:23:33,980
+ and then use those?
+
+492
+00:23:33,980 --> 00:23:35,860
+ So this is-- so the question would
+
+493
+00:23:35,860 --> 00:23:40,700
+ be like, if I had an hourglass, for instance, right?
+
+494
+00:23:40,700 --> 00:23:44,420
+ If I found those, that might not be a very good grasp
+
+495
+00:23:44,420 --> 00:23:45,580
+ candidate, right?
+
+496
+00:23:45,580 --> 00:23:47,580
+ I think that was sort of your implication, maybe.
+
+497
+00:23:47,580 --> 00:23:49,500
+ It was the question was, are we looking only
+
+498
+00:23:49,500 --> 00:23:52,300
+ for the concave antipodal grasps?
+
+499
+00:23:52,300 --> 00:23:54,340
+ Yeah, I was going to say the normal [INAUDIBLE]
+
+500
+00:23:54,340 --> 00:24:00,940
+ on the hourglass, or I could [INAUDIBLE]
+
+501
+00:24:00,940 --> 00:24:01,900
+ Let's go through that.
+
+502
+00:24:01,900 --> 00:24:04,820
+ OK, so we're going to try to define the normals.
+
+503
+00:24:04,820 --> 00:24:06,740
+ I mean, so you could say that the normals could
+
+504
+00:24:06,740 --> 00:24:08,020
+ be pointing in or pointing out.
+
+505
+00:24:08,020 --> 00:24:10,940
+ We're going to always try to have them pointing out.
+
+506
+00:24:10,940 --> 00:24:13,740
+ And the curvature does tell us something, right?
+
+507
+00:24:13,740 --> 00:24:16,200
+ And we are going to be able to estimate the curvature very
+
+508
+00:24:16,200 --> 00:24:19,940
+ easily, or from the point clauses directly, right?
+
+509
+00:24:19,940 --> 00:24:22,420
+ But I haven't included it.
+
+510
+00:24:22,420 --> 00:24:25,780
+ The heuristics, the examples I've given you in the notes
+
+511
+00:24:25,780 --> 00:24:27,700
+ are a fairly simple grasp strategy,
+
+512
+00:24:27,700 --> 00:24:29,660
+ but they don't involve any notion
+
+513
+00:24:29,660 --> 00:24:32,100
+ of the curvature in the score.
+
+514
+00:24:32,100 --> 00:24:33,980
+ This kind of a grasp would be ruled out more
+
+515
+00:24:33,980 --> 00:24:35,100
+ by the collision again.
+
+516
+00:24:37,660 --> 00:24:41,100
+ So these two together get you pretty far.
+
+517
+00:24:41,100 --> 00:24:41,780
+ These are great.
+
+518
+00:24:41,780 --> 00:24:42,680
+ I love the questions.
+
+519
+00:24:42,680 --> 00:24:47,100
+ So please keep chiming in.
+
+520
+00:24:47,100 --> 00:24:53,100
+ OK, so let's see.
+
+521
+00:24:53,100 --> 00:24:55,460
+ Back before deep learning, if you
+
+522
+00:24:55,460 --> 00:24:57,460
+ were doing image processing, there
+
+523
+00:24:57,460 --> 00:24:59,740
+ was sort of a library of things that you would
+
+524
+00:24:59,740 --> 00:25:01,860
+ learn how to do with images.
+
+525
+00:25:01,860 --> 00:25:04,020
+ You could find edges in images.
+
+526
+00:25:04,020 --> 00:25:07,620
+ You could expand blobs to try to find regions of similar color.
+
+527
+00:25:07,620 --> 00:25:11,220
+ There's sort of a library of image processing techniques.
+
+528
+00:25:11,220 --> 00:25:12,140
+ They still exist.
+
+529
+00:25:12,140 --> 00:25:14,700
+ They didn't disappear, but they're not as necessary now,
+
+530
+00:25:14,700 --> 00:25:18,460
+ because we just pattern match everything.
+
+531
+00:25:18,460 --> 00:25:20,620
+ There's a similar library of things
+
+532
+00:25:20,620 --> 00:25:23,980
+ you can do with point clouds.
+
+533
+00:25:23,980 --> 00:25:25,620
+ There's no books on them, unfortunately,
+
+534
+00:25:25,620 --> 00:25:28,580
+ but there's documentation for the software.
+
+535
+00:25:28,580 --> 00:25:31,620
+ The PCL library's documentation is extremely good.
+
+536
+00:25:31,620 --> 00:25:35,500
+ And I feel sort of sad that there's not
+
+537
+00:25:35,500 --> 00:25:39,380
+ like a point cloud processing book that I know of.
+
+538
+00:25:39,380 --> 00:25:43,740
+ But I pointed to the few references that I know.
+
+539
+00:25:43,740 --> 00:25:46,280
+ But there's lots of good things you can do with point clouds.
+
+540
+00:25:46,280 --> 00:25:46,820
+ And we're going to do--
+
+541
+00:25:46,820 --> 00:25:48,340
+ I'll step you through a few of them.
+
+542
+00:25:48,340 --> 00:25:52,980
+ Some of them are natural, but they're
+
+543
+00:25:52,980 --> 00:25:54,340
+ going to be very important here.
+
+544
+00:25:54,340 --> 00:26:10,500
+ So in general, let me just even set this up.
+
+545
+00:26:10,500 --> 00:26:21,460
+ So this notebook here, I've got a hairy mustard bottle.
+
+546
+00:26:21,460 --> 00:26:23,820
+ Let me make it less hairy for a second here.
+
+547
+00:26:23,820 --> 00:26:29,460
+ Good, so I've set this up where I
+
+548
+00:26:29,460 --> 00:26:31,100
+ have the initial point clouds.
+
+549
+00:26:31,100 --> 00:26:32,380
+ I have three cameras.
+
+550
+00:26:32,380 --> 00:26:34,260
+ This is the same situation I gave you before.
+
+551
+00:26:34,260 --> 00:26:36,180
+ It's three cameras around the mustard bottle.
+
+552
+00:26:36,180 --> 00:26:38,940
+ So those cameras see--
+
+553
+00:26:38,940 --> 00:26:40,660
+ they're going to see the mustard bottle.
+
+554
+00:26:40,660 --> 00:26:41,460
+ They're going to see the bin.
+
+555
+00:26:41,460 --> 00:26:43,780
+ If I put it in the bin, they see the other cameras.
+
+556
+00:26:43,780 --> 00:26:47,460
+ I get returns from the first camera looking this way that
+
+557
+00:26:47,460 --> 00:26:51,100
+ gets off all of these different objects.
+
+558
+00:26:51,100 --> 00:26:52,780
+ There's another camera over here that
+
+559
+00:26:52,780 --> 00:26:54,780
+ sees that side of the object.
+
+560
+00:26:54,780 --> 00:26:57,340
+ And there's another camera.
+
+561
+00:26:57,340 --> 00:26:59,580
+ See, that's point cloud one and point cloud two.
+
+562
+00:26:59,580 --> 00:27:04,460
+ So altogether, I've got three pretty good views
+
+563
+00:27:04,460 --> 00:27:06,220
+ of the objects.
+
+564
+00:27:06,220 --> 00:27:08,580
+ But I need to do some basic processing,
+
+565
+00:27:08,580 --> 00:27:12,820
+ get rid of these junk outside.
+
+566
+00:27:12,820 --> 00:27:17,220
+ I'll crop them, merge them, estimate normals on them,
+
+567
+00:27:17,220 --> 00:27:19,540
+ down sample them.
+
+568
+00:27:19,540 --> 00:27:21,140
+ Sort of reasonable operations.
+
+569
+00:27:21,140 --> 00:27:22,580
+ I think the most interesting one is
+
+570
+00:27:22,580 --> 00:27:24,980
+ the normal estimation because you get local curvature
+
+571
+00:27:24,980 --> 00:27:27,700
+ information from that too.
+
+572
+00:27:27,700 --> 00:27:29,500
+ But there's a basic library of these things.
+
+573
+00:27:29,500 --> 00:27:33,620
+ So cropping a point cloud is pretty reasonable.
+
+574
+00:27:33,620 --> 00:27:36,140
+ If I've got a bunch of x, y, z points,
+
+575
+00:27:36,140 --> 00:27:37,700
+ I tend to put a bounding box.
+
+576
+00:27:37,700 --> 00:27:39,500
+ If you think I'm going to reach into a bin
+
+577
+00:27:39,500 --> 00:27:41,620
+ or I'm looking at the top of the table,
+
+578
+00:27:41,620 --> 00:27:43,980
+ then just making a bounding box in the frame
+
+579
+00:27:43,980 --> 00:27:47,940
+ to get the points of interest to rule out the cameras.
+
+580
+00:27:51,660 --> 00:27:59,380
+ Very simple operation and essential.
+
+581
+00:27:59,380 --> 00:28:06,420
+ I'll write them down and we'll go
+
+582
+00:28:06,420 --> 00:28:08,840
+ through the normal estimation a little bit more carefully.
+
+583
+00:28:08,840 --> 00:28:14,340
+ But we can estimate the normals, which
+
+584
+00:28:14,340 --> 00:28:16,460
+ is what I showed with the vectors
+
+585
+00:28:16,460 --> 00:28:19,620
+ here that looks like a crazy pin cushion thing.
+
+586
+00:28:19,620 --> 00:28:21,260
+ That's a normal estimation.
+
+587
+00:28:21,260 --> 00:28:23,100
+ At every surface point here, there's
+
+588
+00:28:23,100 --> 00:28:26,100
+ a vector coming off showing the local normals of the point
+
+589
+00:28:26,100 --> 00:28:26,600
+ cloud.
+
+590
+00:28:26,600 --> 00:28:33,020
+ Say a bit about that.
+
+591
+00:28:33,020 --> 00:28:35,860
+ We can take those three separate point clouds
+
+592
+00:28:35,860 --> 00:28:45,100
+ and merge them into a single point cloud,
+
+593
+00:28:45,100 --> 00:28:48,540
+ some fusion operation.
+
+594
+00:28:48,540 --> 00:28:49,580
+ And we can down sample.
+
+595
+00:28:49,580 --> 00:28:56,060
+ Now, before we dig into each of them,
+
+596
+00:28:56,060 --> 00:28:57,980
+ let me just say that I've chosen to do them
+
+597
+00:28:57,980 --> 00:29:01,020
+ in this order for a reason.
+
+598
+00:29:01,020 --> 00:29:02,980
+ I think the order does matter.
+
+599
+00:29:02,980 --> 00:29:03,700
+ It's cropping.
+
+600
+00:29:03,700 --> 00:29:05,200
+ Just get rid of the extra points you
+
+601
+00:29:05,200 --> 00:29:06,980
+ know you don't need right away.
+
+602
+00:29:06,980 --> 00:29:11,340
+ But the normal estimation should come before down sampling,
+
+603
+00:29:11,340 --> 00:29:13,180
+ for instance, because you're going
+
+604
+00:29:13,180 --> 00:29:14,860
+ to try to use as many points as possible
+
+605
+00:29:14,860 --> 00:29:16,260
+ to try to estimate those normals.
+
+606
+00:29:16,260 --> 00:29:19,220
+ You get the densest point cloud you can deal with.
+
+607
+00:29:19,220 --> 00:29:22,820
+ It will give you more accurate normals.
+
+608
+00:29:22,820 --> 00:29:24,340
+ But the normal estimation also is
+
+609
+00:29:24,340 --> 00:29:28,380
+ going to come before the merging the point clouds.
+
+610
+00:29:28,380 --> 00:29:31,700
+ Anybody know why I want to do the normal estimation before?
+
+611
+00:29:31,700 --> 00:29:32,200
+ [INAUDIBLE]
+
+612
+00:29:32,200 --> 00:29:41,780
+ So she says, so you can merge similar normals better
+
+613
+00:29:41,780 --> 00:29:42,540
+ together.
+
+614
+00:29:42,540 --> 00:29:46,380
+ That's pretty much what I want to say.
+
+615
+00:29:46,380 --> 00:29:49,100
+ There's a twist on it that matters, I guess.
+
+616
+00:29:49,100 --> 00:29:56,220
+ I mean, we talked about it before, too, when we said,
+
+617
+00:29:56,220 --> 00:29:59,300
+ you lose some information when you go from the depth
+
+618
+00:29:59,300 --> 00:30:02,140
+ image to the point cloud.
+
+619
+00:30:02,140 --> 00:30:04,140
+ As soon as I've merged the point clouds together
+
+620
+00:30:04,140 --> 00:30:08,140
+ into one big cloud, then I've kind of implicitly forgotten
+
+621
+00:30:08,140 --> 00:30:10,820
+ where my cameras were, or I don't know which ones--
+
+622
+00:30:10,820 --> 00:30:13,140
+ which corresponded to which camera.
+
+623
+00:30:13,140 --> 00:30:16,060
+ So in this question that Alex was asking here--
+
+624
+00:30:16,060 --> 00:30:18,540
+ so I'm getting some returns here.
+
+625
+00:30:18,540 --> 00:30:24,460
+ I have a question of which of these is my normal?
+
+626
+00:30:24,460 --> 00:30:25,540
+ Is it the one pointing in?
+
+627
+00:30:25,540 --> 00:30:26,340
+ Is it pointing out?
+
+628
+00:30:26,340 --> 00:30:28,860
+ How do you robustly find the point cloud,
+
+629
+00:30:28,860 --> 00:30:32,260
+ the normal pointing out?
+
+630
+00:30:32,260 --> 00:30:35,260
+ My camera's coming this way.
+
+631
+00:30:35,260 --> 00:30:36,820
+ In all these point cloud libraries,
+
+632
+00:30:36,820 --> 00:30:39,220
+ there's a flip normals towards camera,
+
+633
+00:30:39,220 --> 00:30:41,900
+ where you basically say, here's my camera position.
+
+634
+00:30:41,900 --> 00:30:43,540
+ Here's my list of normals.
+
+635
+00:30:43,540 --> 00:30:48,780
+ Flip them so they're all pointing towards the camera.
+
+636
+00:30:48,780 --> 00:30:52,860
+ So I can do that on the unmerged point clouds
+
+637
+00:30:52,860 --> 00:30:56,700
+ and get my normals pointing in the right direction.
+
+638
+00:30:56,700 --> 00:30:59,940
+ Then I'll merge them together, which in general can
+
+639
+00:30:59,940 --> 00:31:03,140
+ be a fusion operator, like the point cloud,
+
+640
+00:31:03,140 --> 00:31:05,820
+ the iterative closest point type algorithm.
+
+641
+00:31:05,820 --> 00:31:07,980
+ And then we'll use voxels for downsampling.
+
+642
+00:31:11,100 --> 00:31:13,340
+ Let me tell you a little bit about normal estimation.
+
+643
+00:31:13,340 --> 00:31:37,460
+ So how do we get those porcupine normals out
+
+644
+00:31:37,460 --> 00:31:38,700
+ of a dense point cloud?
+
+645
+00:31:38,980 --> 00:31:42,380
+ [WRITING ON BOARD]
+
+646
+00:31:42,380 --> 00:32:00,620
+ In broad strokes, we're going to find the k-nearest neighbor
+
+647
+00:32:00,620 --> 00:32:05,140
+ for every point, let me say, for every pixel,
+
+648
+00:32:05,140 --> 00:32:10,100
+ every point, find the k-nearest neighbors.
+
+649
+00:32:10,100 --> 00:32:16,780
+ You can put a max distance so you don't find--
+
+650
+00:32:16,780 --> 00:32:19,060
+ if you don't have k local nearest neighbors,
+
+651
+00:32:19,060 --> 00:32:22,100
+ you don't end up including somebody too far away.
+
+652
+00:32:32,420 --> 00:32:35,300
+ We're going to fit a plane similar to what
+
+653
+00:32:35,300 --> 00:32:40,340
+ you did in the ransack problem to the local point cloud.
+
+654
+00:32:40,340 --> 00:32:45,980
+ And then flip the normals.
+
+655
+00:32:45,980 --> 00:33:00,900
+ We're going to be able to get out-- the way we fit the plane,
+
+656
+00:33:00,900 --> 00:33:04,180
+ we're going to be able to get out the curvature too.
+
+657
+00:33:04,180 --> 00:33:08,180
+ It's pretty elegant.
+
+658
+00:33:08,180 --> 00:33:11,180
+ But finding the k-nearest neighbors,
+
+659
+00:33:11,180 --> 00:33:13,220
+ let me even show you what that looks like here.
+
+660
+00:33:13,220 --> 00:33:18,620
+ I've got a-- hopefully my thing is still alive here.
+
+661
+00:33:18,620 --> 00:33:23,340
+ For those of you watching the slides.com,
+
+662
+00:33:23,340 --> 00:33:25,260
+ I'm sorry, I'm going to flip to--
+
+663
+00:33:25,260 --> 00:33:26,920
+ you might want to flip to just the video
+
+664
+00:33:26,920 --> 00:33:27,960
+ stream for a second here.
+
+665
+00:33:27,960 --> 00:33:42,920
+ [VIDEO PLAYBACK]
+
+666
+00:33:42,920 --> 00:33:45,400
+ I spent a ridiculous-- you guys wouldn't
+
+667
+00:33:45,400 --> 00:33:50,120
+ know what I go through with some of these, but let's see.
+
+668
+00:33:50,120 --> 00:33:52,160
+ I almost have DeepNote working for everything.
+
+669
+00:33:52,160 --> 00:33:54,160
+ By tonight, I think I will have everything
+
+670
+00:33:54,160 --> 00:33:55,920
+ ported to DeepNote.
+
+671
+00:33:55,920 --> 00:33:58,200
+ Open3D, which I was using for some of the point cloud
+
+672
+00:33:58,200 --> 00:33:59,920
+ processing, doesn't work.
+
+673
+00:33:59,920 --> 00:34:03,960
+ The versions that we use doesn't work on Mac 3.--
+
+674
+00:34:03,960 --> 00:34:06,160
+ Python greater than 3.7.
+
+675
+00:34:06,160 --> 00:34:08,960
+ But everything else is using Python 3.9 on Mac.
+
+676
+00:34:08,960 --> 00:34:10,440
+ And it's on, on, on.
+
+677
+00:34:10,440 --> 00:34:13,160
+ Anyways, I'm running it from Colab today.
+
+678
+00:34:13,160 --> 00:34:15,000
+ But tonight, everything will be good again.
+
+679
+00:34:15,000 --> 00:34:24,500
+ Nice.
+
+680
+00:34:24,500 --> 00:34:42,340
+ Let's see if I can get a new tunnel without--
+
+681
+00:34:42,340 --> 00:34:50,980
+ it's encouraging.
+
+682
+00:34:50,980 --> 00:35:10,780
+ [END PLAYBACK]
+
+683
+00:35:10,780 --> 00:35:12,820
+ You only get two tunnels.
+
+684
+00:35:12,820 --> 00:35:15,060
+ So if this one doesn't work, I'm dead.
+
+685
+00:35:15,060 --> 00:35:17,900
+ But I'll have to restart Colab.
+
+686
+00:35:17,900 --> 00:35:22,300
+ Two free tunnels, and then you have to pay for ngrok.
+
+687
+00:35:22,300 --> 00:35:24,500
+ And I can't pay for ngrok on Colab.
+
+688
+00:35:24,500 --> 00:35:25,540
+ I don't mind paying.
+
+689
+00:35:25,540 --> 00:35:28,700
+ I just don't know how to do it on the cloud,
+
+690
+00:35:28,700 --> 00:35:31,300
+ where my IP address is different every time.
+
+691
+00:35:31,300 --> 00:35:36,660
+ So this is roughly what I want you to see here.
+
+692
+00:35:36,660 --> 00:35:39,980
+ My normal estimation-- it's very hard to see in this.
+
+693
+00:35:39,980 --> 00:35:42,500
+ Let's see if I can make that bigger.
+
+694
+00:35:42,500 --> 00:35:45,700
+ And I tried to make it brighter, but the old meshcat
+
+695
+00:35:45,700 --> 00:35:46,300
+ won't let me.
+
+696
+00:35:46,300 --> 00:35:50,660
+ [AUDIO OUT]
+
+697
+00:35:50,660 --> 00:35:52,660
+ You can kind of see this, what's going on there.
+
+698
+00:35:52,660 --> 00:35:54,780
+ There's a blue line there, a red line there.
+
+699
+00:35:54,780 --> 00:35:59,100
+ Yeah, that's my triad sitting there.
+
+700
+00:35:59,100 --> 00:36:00,420
+ So I pick a sample point.
+
+701
+00:36:00,420 --> 00:36:02,580
+ And I've got a little GUI for you here,
+
+702
+00:36:02,580 --> 00:36:05,180
+ where you can just literally just change
+
+703
+00:36:05,180 --> 00:36:07,460
+ which pixel am I centered on.
+
+704
+00:36:07,460 --> 00:36:09,540
+ And there's a lot of pixels, 10,000 some,
+
+705
+00:36:09,540 --> 00:36:14,060
+ or 15,000 pixels in the mustard bottle point cloud.
+
+706
+00:36:14,060 --> 00:36:16,420
+ And for each pixel, I'll just use that
+
+707
+00:36:16,420 --> 00:36:18,260
+ and find the k nearest neighbor.
+
+708
+00:36:18,260 --> 00:36:19,920
+ That's going to give me the blue region.
+
+709
+00:36:19,920 --> 00:36:22,380
+ I'll only pick one that's not inside another blue region
+
+710
+00:36:22,380 --> 00:36:23,620
+ on the French's label.
+
+711
+00:36:23,620 --> 00:36:31,020
+ And there you go.
+
+712
+00:36:31,020 --> 00:36:34,740
+ So I'm going to pick a handful of nearest neighbors.
+
+713
+00:36:34,740 --> 00:36:38,620
+ I'm going to fit a plane to that, take the z-axis to be
+
+714
+00:36:38,620 --> 00:36:39,300
+ the--
+
+715
+00:36:39,300 --> 00:36:41,260
+ we're going to see the math for how to do that,
+
+716
+00:36:41,260 --> 00:36:42,620
+ to find the z-axis.
+
+717
+00:36:42,620 --> 00:36:44,820
+ And actually, we're going to draw the other two axes
+
+718
+00:36:44,820 --> 00:36:51,060
+ of the frame along the dimensions of relatively
+
+719
+00:36:51,060 --> 00:36:55,500
+ maximum and secondary curvature.
+
+720
+00:36:55,500 --> 00:36:57,580
+ Now, what's amazing to me about this--
+
+721
+00:36:57,580 --> 00:37:00,140
+ and I remember when we first started
+
+722
+00:37:00,140 --> 00:37:01,580
+ doing a lot more of this.
+
+723
+00:37:01,580 --> 00:37:03,220
+ I was like, surely you're not going
+
+724
+00:37:03,220 --> 00:37:07,380
+ to go through every single point of a dense point cloud,
+
+725
+00:37:07,380 --> 00:37:10,140
+ take every k nearest neighbor, fit a plane,
+
+726
+00:37:10,140 --> 00:37:13,100
+ and then go to the next point for 15,000 points
+
+727
+00:37:13,100 --> 00:37:15,140
+ in a real-time perception algorithm.
+
+728
+00:37:15,140 --> 00:37:17,300
+ And my students who were doing that at the time
+
+729
+00:37:17,300 --> 00:37:19,580
+ were like, no, it's fine.
+
+730
+00:37:19,580 --> 00:37:20,500
+ And I was just wrong.
+
+731
+00:37:20,500 --> 00:37:22,920
+ I think that people do that, and people do it all the time.
+
+732
+00:37:22,920 --> 00:37:24,820
+ And that was a few years ago.
+
+733
+00:37:24,820 --> 00:37:27,700
+ And now computers are even faster, more parallel.
+
+734
+00:37:27,700 --> 00:37:28,200
+ Yeah?
+
+735
+00:37:28,200 --> 00:37:28,700
+ [INAUDIBLE]
+
+736
+00:37:28,700 --> 00:37:34,980
+ It seems expensive.
+
+737
+00:37:34,980 --> 00:37:35,700
+ I agree.
+
+738
+00:37:35,700 --> 00:37:37,580
+ But it's in this--
+
+739
+00:37:37,580 --> 00:37:38,380
+ computers are fast.
+
+740
+00:37:38,620 --> 00:37:40,620
+ [LAUGHTER]
+
+741
+00:37:40,620 --> 00:37:43,420
+ So people do this all the time.
+
+742
+00:37:43,420 --> 00:37:46,580
+ It's a standard pre-processing step
+
+743
+00:37:46,580 --> 00:37:48,620
+ where you go through your even dense point cloud.
+
+744
+00:37:48,620 --> 00:37:51,700
+ In fact, dense is recommended because--
+
+745
+00:37:51,700 --> 00:37:53,380
+ I mean, you could choose to evaluate it
+
+746
+00:37:53,380 --> 00:37:54,780
+ as a subset of the points.
+
+747
+00:37:54,780 --> 00:37:57,300
+ But you'd like to find dense nearest neighbors
+
+748
+00:37:57,300 --> 00:37:59,580
+ to get a more accurate representation
+
+749
+00:37:59,580 --> 00:38:02,460
+ of the local curvature.
+
+750
+00:38:02,460 --> 00:38:04,020
+ So I've done it for the entire thing
+
+751
+00:38:04,020 --> 00:38:05,340
+ and drawn most of the normals.
+
+752
+00:38:08,100 --> 00:38:09,940
+ And in general, I would say that is a theme,
+
+753
+00:38:09,940 --> 00:38:13,020
+ that people do pretty significant processing
+
+754
+00:38:13,020 --> 00:38:14,260
+ on the point clouds.
+
+755
+00:38:14,260 --> 00:38:17,300
+ And it's faster than you'd think, than I would think.
+
+756
+00:38:17,300 --> 00:38:17,800
+ [INAUDIBLE]
+
+757
+00:38:17,800 --> 00:38:22,460
+ It is true.
+
+758
+00:38:22,460 --> 00:38:24,460
+ So the point was about the k-nearest neighbor.
+
+759
+00:38:24,460 --> 00:38:26,300
+ So the k-nearest neighbor uses typically
+
+760
+00:38:26,300 --> 00:38:30,500
+ FLAN, which is a fast lookup.
+
+761
+00:38:30,500 --> 00:38:32,300
+ I don't know, approximate nearest neighbor.
+
+762
+00:38:32,300 --> 00:38:33,980
+ But it's a common library that people
+
+763
+00:38:33,980 --> 00:38:36,620
+ use in robotics for fast nearest neighbor lookups.
+
+764
+00:38:37,060 --> 00:38:45,180
+ And yes, I think having very good data structures
+
+765
+00:38:45,180 --> 00:38:47,660
+ for very fast approximate nearest neighbor queries
+
+766
+00:38:47,660 --> 00:38:49,340
+ is essential to making this work.
+
+767
+00:38:49,340 --> 00:38:49,860
+ No question.
+
+768
+00:38:49,860 --> 00:38:57,180
+ So how do you fit a plane to a local point cloud?
+
+769
+00:38:57,180 --> 00:38:59,260
+ If you've got a bunch of points-- now,
+
+770
+00:38:59,260 --> 00:39:02,260
+ what I want you to see, at least at broad strokes,
+
+771
+00:39:02,260 --> 00:39:04,580
+ is that this looks like the optimizations we were already
+
+772
+00:39:04,580 --> 00:39:05,260
+ doing.
+
+773
+00:39:05,260 --> 00:39:07,740
+ And there's some geometry about that problem
+
+774
+00:39:07,740 --> 00:39:09,620
+ that I think will help you understand how you
+
+775
+00:39:09,620 --> 00:39:12,420
+ can get the curvature out, too.
+
+776
+00:39:12,420 --> 00:39:13,860
+ Let me just step through that one.
+
+777
+00:39:13,860 --> 00:39:39,820
+ [SIDE CONVERSATION]
+
+778
+00:39:39,820 --> 00:39:40,580
+ OK.
+
+779
+00:39:40,580 --> 00:39:42,340
+ I've got a bunch of points.
+
+780
+00:39:42,340 --> 00:39:45,980
+ I'd like to fit a local normal.
+
+781
+00:39:45,980 --> 00:39:48,620
+ And I'll do that by sort of fitting
+
+782
+00:39:48,620 --> 00:39:53,060
+ a local plane to my points.
+
+783
+00:39:53,060 --> 00:39:55,540
+ The normal I'm going to write here.
+
+784
+00:39:55,540 --> 00:40:04,020
+ I'm going to ask the normal to have magnitude 1.
+
+785
+00:40:04,020 --> 00:40:07,260
+ And I'm going to define the plane in terms
+
+786
+00:40:07,260 --> 00:40:10,660
+ of the normal and the point at which the point P--
+
+787
+00:40:10,660 --> 00:40:25,060
+ let me draw here-- the normal plus the point
+
+788
+00:40:25,060 --> 00:40:28,860
+ can define that local plane.
+
+789
+00:40:28,860 --> 00:40:31,700
+ So what I want to do is now search for n and P
+
+790
+00:40:31,700 --> 00:40:36,900
+ in order to maximize the fit of these points.
+
+791
+00:40:36,900 --> 00:40:50,820
+ So the distance from any sample point to the plane
+
+792
+00:40:50,820 --> 00:40:52,460
+ I can write with a dot product.
+
+793
+00:40:52,460 --> 00:40:59,140
+ So I'll take a dot product between the vector here.
+
+794
+00:40:59,140 --> 00:41:01,660
+ I've got some vector.
+
+795
+00:41:01,660 --> 00:41:03,460
+ This is Pi.
+
+796
+00:41:03,460 --> 00:41:06,580
+ This is my P. So I'll write Pi minus P here.
+
+797
+00:41:07,140 --> 00:41:10,780
+ And the distance from the point to the plane
+
+798
+00:41:10,780 --> 00:41:15,220
+ is the dot product of this vector with this vector.
+
+799
+00:41:15,220 --> 00:41:23,260
+ So I drew that small.
+
+800
+00:41:23,260 --> 00:41:23,820
+ Is that clear?
+
+801
+00:41:23,820 --> 00:41:25,440
+ I could make it bigger if it's helpful.
+
+802
+00:41:35,700 --> 00:41:37,460
+ Dot product gives me this distance,
+
+803
+00:41:37,460 --> 00:41:40,220
+ which is the distance from the point to the plane.
+
+804
+00:41:40,220 --> 00:41:49,620
+ So I'll take this vector and I'll dot product with n.
+
+805
+00:41:49,620 --> 00:41:53,740
+ So that gives me a scalar number.
+
+806
+00:41:53,740 --> 00:42:00,180
+ I want to minimize the magnitude of this number.
+
+807
+00:42:00,180 --> 00:42:03,940
+ So if I were to just take this and say minimize that,
+
+808
+00:42:03,940 --> 00:42:07,180
+ it would drive me to very big negative numbers.
+
+809
+00:42:07,180 --> 00:42:10,580
+ So I'm going to take the squared of this
+
+810
+00:42:10,580 --> 00:42:13,500
+ and sum over all of my points.
+
+811
+00:42:13,500 --> 00:42:21,460
+ And I'd like to minimize over P and n, subject to a constraint
+
+812
+00:42:21,460 --> 00:42:23,660
+ that n equals 1.
+
+813
+00:42:23,660 --> 00:42:31,780
+ This looks scary.
+
+814
+00:42:31,780 --> 00:42:33,740
+ It turns out that it has a nice solution.
+
+815
+00:42:33,740 --> 00:42:41,220
+ The reason it has a nice solution
+
+816
+00:42:41,220 --> 00:42:45,500
+ is that you can actually solve for P as a function--
+
+817
+00:42:45,500 --> 00:42:48,940
+ the optimal P as a function of n,
+
+818
+00:42:48,940 --> 00:42:51,140
+ just like we did in the other point cloud processing
+
+819
+00:42:51,140 --> 00:42:51,640
+ algorithms.
+
+820
+00:42:51,640 --> 00:42:54,340
+ It's not surprising that the strategy
+
+821
+00:42:54,340 --> 00:42:55,340
+ will be pretty similar.
+
+822
+00:42:55,340 --> 00:42:59,080
+ Bless you.
+
+823
+00:42:59,080 --> 00:43:05,920
+ [WRITING]
+
+824
+00:43:05,920 --> 00:43:08,120
+ I went through it in the notes before,
+
+825
+00:43:08,120 --> 00:43:09,440
+ but not on the board before.
+
+826
+00:43:09,440 --> 00:43:13,000
+ I don't know if people want or don't want this.
+
+827
+00:43:13,000 --> 00:43:16,600
+ I'll subject it to you this time and you can tell me after.
+
+828
+00:43:16,600 --> 00:43:21,800
+ So the way you try to optimize a constrained optimization
+
+829
+00:43:21,800 --> 00:43:23,880
+ is you write the Lagrangian.
+
+830
+00:43:23,880 --> 00:43:26,840
+ You bring the constraint in to the optimization.
+
+831
+00:43:26,840 --> 00:43:29,160
+ So I can write the Lagrangian, which
+
+832
+00:43:29,160 --> 00:43:32,080
+ is my original cost function.
+
+833
+00:43:32,080 --> 00:43:37,600
+ If this is foreign to you, try to appreciate it
+
+834
+00:43:37,600 --> 00:43:38,360
+ at a higher level.
+
+835
+00:43:38,360 --> 00:43:43,120
+ And it's written up in the notes.
+
+836
+00:43:43,120 --> 00:43:46,080
+ So this is my original objective.
+
+837
+00:43:46,080 --> 00:43:48,560
+ I'm going to write plus a Lagrange multiplier times
+
+838
+00:43:48,560 --> 00:43:54,080
+ my constraint, which I could write
+
+839
+00:43:54,080 --> 00:43:55,600
+ a handful of different ways.
+
+840
+00:43:55,600 --> 00:43:56,680
+ I'll write it like that.
+
+841
+00:43:56,680 --> 00:44:03,840
+ It's called the Lagrangian of the constrained optimization.
+
+842
+00:44:03,840 --> 00:44:21,920
+ The amazing thing about Lagrange multipliers
+
+843
+00:44:21,920 --> 00:44:25,480
+ is that if I take the gradient of this Lagrangian--
+
+844
+00:44:25,480 --> 00:44:27,240
+ so this is called the Lagrange multiplier.
+
+845
+00:44:27,240 --> 00:44:35,960
+ That one I think you've seen in various capacities.
+
+846
+00:44:35,960 --> 00:44:41,400
+ But it turns out that the optimal solution
+
+847
+00:44:41,400 --> 00:44:43,480
+ of the constrained problem is going
+
+848
+00:44:43,480 --> 00:44:47,880
+ to be a stationary point of this problem, which
+
+849
+00:44:47,880 --> 00:44:50,880
+ means the gradients of this with respect to the parameters
+
+850
+00:44:50,880 --> 00:44:52,840
+ and with respect to the Lagrange multipliers
+
+851
+00:44:52,840 --> 00:44:53,920
+ are going to have to be 0.
+
+852
+00:44:54,920 --> 00:44:58,800
+ So that was a long way to say if I
+
+853
+00:44:58,800 --> 00:45:01,480
+ were to take the gradient of this with respect to p,
+
+854
+00:45:01,480 --> 00:45:03,240
+ at an optimal, it's going to be 0.
+
+855
+00:45:03,240 --> 00:45:10,400
+ So I can write the gradient of that with respect to p.
+
+856
+00:45:10,400 --> 00:45:10,960
+ Let me expand.
+
+857
+00:45:10,960 --> 00:45:20,000
+ It's a little bit-- you've got to get your head around that,
+
+858
+00:45:20,000 --> 00:45:21,680
+ this thing being squared.
+
+859
+00:45:21,680 --> 00:45:31,000
+ But I'll write it out completely in transpose pi minus p.
+
+860
+00:45:31,000 --> 00:45:38,120
+ And these terms don't depend on p.
+
+861
+00:45:44,760 --> 00:45:52,200
+ So partial L, partial p, it gets to looking like this,
+
+862
+00:45:52,200 --> 00:45:57,600
+ minus 2n, n transpose.
+
+863
+00:45:57,600 --> 00:45:59,360
+ I'm going to write the transpose of it just
+
+864
+00:45:59,360 --> 00:46:02,400
+ to keep it looking a little bit more friendly.
+
+865
+00:46:02,400 --> 00:46:03,800
+ It looks like this.
+
+866
+00:46:03,800 --> 00:46:06,080
+ This is just a quadratic form.
+
+867
+00:46:06,080 --> 00:46:08,640
+ It looks a little scary, but it just looks like that.
+
+868
+00:46:14,040 --> 00:46:22,000
+ OK, this has special structure because n is unit magnitude.
+
+869
+00:46:22,000 --> 00:46:25,560
+ But mostly, the thing that it implies for me
+
+870
+00:46:25,560 --> 00:46:27,800
+ is that if I want this to be equal to 0,
+
+871
+00:46:27,800 --> 00:46:31,520
+ then the sum of these has to be equal to 0.
+
+872
+00:46:31,520 --> 00:46:38,800
+ Sort of a simple version of it.
+
+873
+00:46:43,800 --> 00:46:48,960
+ And p star equals 1 over n sum over i pi.
+
+874
+00:46:48,960 --> 00:46:56,160
+ There's a few steps there, but it gives you
+
+875
+00:46:56,160 --> 00:46:59,120
+ roughly what you'd expect from the original--
+
+876
+00:46:59,120 --> 00:47:01,080
+ the same thing we saw in the point cloud--
+
+877
+00:47:01,080 --> 00:47:04,840
+ or in the point registration problem
+
+878
+00:47:04,840 --> 00:47:08,280
+ where the optimal p is like your average p.
+
+879
+00:47:12,160 --> 00:47:14,520
+ I think geometrically, that's not surprising.
+
+880
+00:47:14,520 --> 00:47:16,640
+ And it comes through an optimization.
+
+881
+00:47:16,640 --> 00:47:18,880
+ And the steps are also in the notes, I hope.
+
+882
+00:47:18,880 --> 00:47:20,480
+ You don't have to write everything down
+
+883
+00:47:20,480 --> 00:47:21,840
+ if you're worried about it.
+
+884
+00:47:21,840 --> 00:47:27,960
+ OK, if I substitute this back in,
+
+885
+00:47:27,960 --> 00:47:32,880
+ then I can write the entire optimization.
+
+886
+00:47:32,880 --> 00:47:34,680
+ I can solve away p.
+
+887
+00:47:34,680 --> 00:47:39,760
+ I can write the entire optimization now in terms of n.
+
+888
+00:47:39,760 --> 00:47:48,680
+ And it just looks like this, where
+
+889
+00:47:48,680 --> 00:47:50,960
+ W is our data matrix, just like we did before.
+
+890
+00:47:50,960 --> 00:47:54,440
+ [WRITING ON BOARD]
+
+891
+00:47:54,440 --> 00:48:19,000
+ OK, I actually don't care as much.
+
+892
+00:48:19,000 --> 00:48:22,400
+ I don't care as much about the algebra steps.
+
+893
+00:48:22,400 --> 00:48:25,720
+ I want you to understand the intuition here.
+
+894
+00:48:25,720 --> 00:48:32,280
+ Is that this optimization is now a quadratic form in n.
+
+895
+00:48:32,280 --> 00:48:38,920
+ So if I were to plot the 2D version of it, I had n1 and n2.
+
+896
+00:48:38,920 --> 00:48:43,080
+ W is this symmetric quadratic form.
+
+897
+00:48:43,080 --> 00:48:44,920
+ It's going to be a convex objective.
+
+898
+00:48:44,920 --> 00:48:50,280
+ So I'm going to have the level sets of W of x transpose W
+
+899
+00:48:50,280 --> 00:48:51,280
+ is looking like this.
+
+900
+00:48:51,280 --> 00:48:55,960
+ So this is n transpose Wn equals 3.
+
+901
+00:48:55,960 --> 00:48:57,680
+ This is equals 2.
+
+902
+00:48:57,680 --> 00:49:02,480
+ So this is my quadratic bowl I had before.
+
+903
+00:49:02,480 --> 00:49:04,320
+ OK, and it goes through the origin,
+
+904
+00:49:04,320 --> 00:49:06,440
+ despite my artwork not being great.
+
+905
+00:49:09,520 --> 00:49:16,680
+ I also have the unit circle constraint.
+
+906
+00:49:16,680 --> 00:49:20,080
+ This is the n equals 1.
+
+907
+00:49:20,080 --> 00:49:28,040
+ So now, what's the optimal solution?
+
+908
+00:49:28,040 --> 00:49:35,880
+ Where is the optimum for this problem?
+
+909
+00:49:39,040 --> 00:49:41,600
+ I'm trying to minimize this objective
+
+910
+00:49:41,600 --> 00:49:42,940
+ where I've drawn the level sets.
+
+911
+00:49:42,940 --> 00:49:44,960
+ It's 0 if n was 0.
+
+912
+00:49:44,960 --> 00:49:47,000
+ It's going up.
+
+913
+00:49:47,000 --> 00:49:49,560
+ It has to live on this equality constraint.
+
+914
+00:49:49,560 --> 00:49:50,520
+ Yeah?
+
+915
+00:49:50,520 --> 00:49:51,000
+ [INAUDIBLE]
+
+916
+00:49:51,000 --> 00:49:58,880
+ This tangent or this tangent?
+
+917
+00:49:58,880 --> 00:50:02,280
+ The second one, right?
+
+918
+00:50:02,280 --> 00:50:04,080
+ So that is an optimal point.
+
+919
+00:50:04,080 --> 00:50:06,720
+ That's inside the lower level set.
+
+920
+00:50:06,720 --> 00:50:11,240
+ It's the lowest level set that touches the constraint.
+
+921
+00:50:11,240 --> 00:50:12,640
+ It's also at this one.
+
+922
+00:50:12,640 --> 00:50:16,200
+ Again, artwork, that should be touching there too
+
+923
+00:50:16,200 --> 00:50:18,720
+ if I was a better artist.
+
+924
+00:50:18,720 --> 00:50:21,560
+ So there's two equally good normals.
+
+925
+00:50:21,560 --> 00:50:24,920
+ They're just the opposite of each other, a sine flip away
+
+926
+00:50:24,920 --> 00:50:25,760
+ from each other.
+
+927
+00:50:25,760 --> 00:50:27,320
+ And that's exactly what we're-- that's
+
+928
+00:50:27,320 --> 00:50:30,040
+ the into the object and out of the object
+
+929
+00:50:30,040 --> 00:50:31,440
+ would fit the plane just as well.
+
+930
+00:50:35,360 --> 00:50:42,280
+ So this corresponds with one of the eigenvalues
+
+931
+00:50:42,280 --> 00:50:43,360
+ of the optimization.
+
+932
+00:50:43,360 --> 00:50:45,800
+ And this other direction here, actually, is a second.
+
+933
+00:50:45,800 --> 00:50:52,960
+ This is the eigenvector corresponding
+
+934
+00:50:52,960 --> 00:50:56,240
+ to the eigenvalue.
+
+935
+00:50:56,240 --> 00:50:59,320
+ Eigenvector 2 corresponding to eigenvalue 2.
+
+936
+00:50:59,320 --> 00:51:04,000
+ So which one's the bigger eigenvalue?
+
+937
+00:51:04,000 --> 00:51:18,880
+ Which one's the bigger eigenvalue?
+
+938
+00:51:18,880 --> 00:51:24,640
+ This one?
+
+939
+00:51:24,640 --> 00:51:25,140
+ This one.
+
+940
+00:51:32,360 --> 00:51:34,040
+ This should be the smallest eigenvalue.
+
+941
+00:51:34,040 --> 00:51:35,160
+ It's like twisting, right?
+
+942
+00:51:35,160 --> 00:51:44,760
+ For a unit length here, I get a smaller number there.
+
+943
+00:51:44,760 --> 00:51:54,440
+ The cool thing is that I have these other directions here.
+
+944
+00:51:54,440 --> 00:51:59,120
+ This is actually the steepest descent.
+
+945
+00:51:59,120 --> 00:52:02,160
+ So this is the place where the cost function
+
+946
+00:52:02,160 --> 00:52:05,960
+ is largest, this vector along here.
+
+947
+00:52:05,960 --> 00:52:09,480
+ And if I did it in 3D, I have two other eigenvectors
+
+948
+00:52:09,480 --> 00:52:11,480
+ that are corresponding to two other eigenvalues.
+
+949
+00:52:11,480 --> 00:52:22,240
+ The larger eigenvalues correspond to a larger value
+
+950
+00:52:22,240 --> 00:52:30,120
+ here, which corresponds with a larger dot
+
+951
+00:52:30,120 --> 00:52:33,000
+ product with the points.
+
+952
+00:52:33,000 --> 00:52:33,640
+ So let me see.
+
+953
+00:52:33,640 --> 00:52:39,880
+ So if I had a point that were along some local curvature,
+
+954
+00:52:39,880 --> 00:52:42,320
+ and I'm trying to fit a plane to it,
+
+955
+00:52:42,320 --> 00:52:47,520
+ then there's a vector that goes through this point, which
+
+956
+00:52:47,520 --> 00:52:50,480
+ fits these points with the highest possible dot product.
+
+957
+00:52:58,520 --> 00:53:01,380
+ The largest eigenvalue should go with the place
+
+958
+00:53:01,380 --> 00:53:03,880
+ of lowest curvature.
+
+959
+00:53:03,880 --> 00:53:06,000
+ The smallest eigenvalue is going to be my normal.
+
+960
+00:53:06,000 --> 00:53:12,560
+ And the middle eigenvalue is going
+
+961
+00:53:12,560 --> 00:53:18,880
+ to be my other normal-- because the eigenvectors are going
+
+962
+00:53:18,880 --> 00:53:22,680
+ to make an orthonormal matrix, the third eigenvector
+
+963
+00:53:22,680 --> 00:53:28,480
+ is going to give me my last row of middle curvature.
+
+964
+00:53:28,480 --> 00:53:33,080
+ So it actually parametrizes the surface
+
+965
+00:53:33,080 --> 00:53:38,520
+ in terms of it ordered by the directions of curvature.
+
+966
+00:53:38,520 --> 00:53:42,280
+ So some of the grasp heuristics-- this
+
+967
+00:53:42,280 --> 00:53:45,320
+ gets to Alex's question earlier--
+
+968
+00:53:45,320 --> 00:53:46,780
+ do use local curvature.
+
+969
+00:53:46,780 --> 00:53:49,600
+ They might find a place that has a good antipodal grasp,
+
+970
+00:53:49,600 --> 00:53:51,640
+ but is also curved in.
+
+971
+00:53:51,640 --> 00:53:53,640
+ That's an easy thing to now include in your grasp
+
+972
+00:53:53,640 --> 00:53:56,200
+ heuristics.
+
+973
+00:53:56,200 --> 00:54:02,680
+ Now, I did do this real-time estimate.
+
+974
+00:54:02,680 --> 00:54:06,280
+ I realized when I typed it in-- so every once in a while,
+
+975
+00:54:06,280 --> 00:54:08,920
+ you'll find a point that doesn't obey the right-hand rule.
+
+976
+00:54:08,920 --> 00:54:10,620
+ You could still get an improper rotation
+
+977
+00:54:10,620 --> 00:54:12,120
+ if you just take the eigenvectors.
+
+978
+00:54:12,120 --> 00:54:12,840
+ So that's my bad.
+
+979
+00:54:12,840 --> 00:54:14,360
+ I'll fix that, too.
+
+980
+00:54:14,360 --> 00:54:17,960
+ But if you just took the eigenvectors out
+
+981
+00:54:17,960 --> 00:54:19,680
+ of your random eigenvector algorithm,
+
+982
+00:54:19,680 --> 00:54:21,060
+ there's no reason that they would
+
+983
+00:54:21,060 --> 00:54:23,840
+ be ordered in a way that would obey the right-hand rule.
+
+984
+00:54:23,840 --> 00:54:26,240
+ So you have to sort of check for improper rotations
+
+985
+00:54:26,240 --> 00:54:28,240
+ and flip them and other things.
+
+986
+00:54:28,240 --> 00:54:32,000
+ And that will be happening in this notebook shortly.
+
+987
+00:54:32,000 --> 00:54:32,560
+ I apologize.
+
+988
+00:54:32,560 --> 00:54:35,120
+ I forgot to do it.
+
+989
+00:54:35,120 --> 00:54:37,000
+ The things you notice right before lecture.
+
+990
+00:54:37,000 --> 00:54:43,240
+ So that's pretty cool, right?
+
+991
+00:54:43,240 --> 00:54:47,320
+ Local point processing, little optimization,
+
+992
+00:54:47,320 --> 00:54:50,360
+ solved in closed form just by taking eigenvectors
+
+993
+00:54:50,360 --> 00:54:51,520
+ and eigenvalues.
+
+994
+00:54:51,520 --> 00:54:54,520
+ Gives me normals, gives me local curvature,
+
+995
+00:54:54,520 --> 00:54:58,080
+ fast enough to run on a whole dense point cloud.
+
+996
+00:54:58,080 --> 00:55:00,040
+ It's part of your library, part of your toolkit.
+
+997
+00:55:00,040 --> 00:55:09,480
+ Once we do that, merging the point clouds,
+
+998
+00:55:09,480 --> 00:55:11,060
+ the next step is merging point clouds.
+
+999
+00:55:11,060 --> 00:55:20,740
+ So if you have two-- think about the way
+
+1000
+00:55:20,740 --> 00:55:24,360
+ that these point clouds look, these partial point clouds.
+
+1001
+00:55:24,360 --> 00:55:29,480
+ So I'm going to flip back to this one.
+
+1002
+00:55:29,480 --> 00:55:32,460
+ [VIDEO PLAYBACK]
+
+1003
+00:55:32,460 --> 00:55:58,960
+ [END PLAYBACK]
+
+1004
+00:55:58,960 --> 00:55:59,460
+ OK.
+
+1005
+00:55:59,460 --> 00:56:01,040
+ I've got two point clouds here.
+
+1006
+00:56:01,040 --> 00:56:04,100
+ Point cloud one, point cloud two.
+
+1007
+00:56:04,100 --> 00:56:06,540
+ How do I find their alignment?
+
+1008
+00:56:06,540 --> 00:56:09,980
+ How do I merge them into a single point cloud?
+
+1009
+00:56:09,980 --> 00:56:13,500
+ If I know my relative camera positions perfectly,
+
+1010
+00:56:13,500 --> 00:56:16,840
+ and I think the points are clean enough,
+
+1011
+00:56:16,840 --> 00:56:18,940
+ then you really can just add them together.
+
+1012
+00:56:18,940 --> 00:56:20,960
+ But in reality-- and so in simulation,
+
+1013
+00:56:20,960 --> 00:56:22,700
+ that's actually what I did.
+
+1014
+00:56:22,700 --> 00:56:24,580
+ In reality, you don't do that typically,
+
+1015
+00:56:24,580 --> 00:56:26,740
+ unless you've got really good camera calibration
+
+1016
+00:56:26,740 --> 00:56:29,360
+ and you have rules so that nobody leans on the cameras.
+
+1017
+00:56:29,360 --> 00:56:31,620
+ And you can always tell a theorist
+
+1018
+00:56:31,620 --> 00:56:33,740
+ when they come near a robot, because they're like,
+
+1019
+00:56:33,740 --> 00:56:34,660
+ lean on your cameras.
+
+1020
+00:56:34,660 --> 00:56:36,900
+ You're like, I just spent an hour calibrating that.
+
+1021
+00:56:36,900 --> 00:56:40,060
+ So I like theorists, but I just don't like
+
+1022
+00:56:40,060 --> 00:56:43,220
+ when they bump my camera.
+
+1023
+00:56:43,220 --> 00:56:44,020
+ OK.
+
+1024
+00:56:44,020 --> 00:56:45,860
+ So in general, we already have the tools
+
+1025
+00:56:45,860 --> 00:56:50,820
+ for estimating these, to find these things into alignment.
+
+1026
+00:56:50,820 --> 00:56:54,820
+ So if I have point clouds that overlap in some capacity,
+
+1027
+00:56:54,820 --> 00:56:57,060
+ I can just run a point registration algorithm.
+
+1028
+00:56:57,060 --> 00:57:00,280
+ ICP is sort of the right tool for taking
+
+1029
+00:57:00,280 --> 00:57:02,200
+ these almost aligned point clouds
+
+1030
+00:57:02,200 --> 00:57:06,860
+ and snapping them into place, or ICP and its variants.
+
+1031
+00:57:06,860 --> 00:57:08,660
+ So the full version of merging point clouds
+
+1032
+00:57:08,660 --> 00:57:11,000
+ is really just running a point registration algorithm.
+
+1033
+00:57:11,000 --> 00:57:12,780
+ We talked about it before as having
+
+1034
+00:57:12,780 --> 00:57:15,120
+ an object-specific point cloud.
+
+1035
+00:57:15,120 --> 00:57:16,880
+ You can do it on the dense point cloud that
+
+1036
+00:57:16,880 --> 00:57:17,640
+ has lots of objects.
+
+1037
+00:57:17,640 --> 00:57:18,360
+ There's no reason.
+
+1038
+00:57:18,360 --> 00:57:20,560
+ You're just doing-- it's also called scan matching.
+
+1039
+00:57:20,560 --> 00:57:22,240
+ You just bring two scans into alignment.
+
+1040
+00:57:22,240 --> 00:57:26,800
+ Good.
+
+1041
+00:57:26,800 --> 00:57:30,360
+ And then downsampling is the last big step.
+
+1042
+00:57:30,360 --> 00:57:36,080
+ And this is really just a simple algorithm.
+
+1043
+00:57:36,080 --> 00:57:37,500
+ And the question is really, what's
+
+1044
+00:57:37,500 --> 00:57:41,480
+ the right data structures that enabled this to be fast?
+
+1045
+00:57:41,480 --> 00:57:45,480
+ And the right data structures tend to be voxel grids.
+
+1046
+00:57:50,360 --> 00:58:01,520
+ So you're going to tile your space with a bunch of cubes,
+
+1047
+00:58:01,520 --> 00:58:04,920
+ cubes of a certain fixed size typically,
+
+1048
+00:58:04,920 --> 00:58:11,640
+ and just fill your space with a whole grid of these cubes.
+
+1049
+00:58:11,640 --> 00:58:16,600
+ We'll use good data structures so that we only represent
+
+1050
+00:58:16,600 --> 00:58:17,920
+ the cubes we're actually using.
+
+1051
+00:58:17,920 --> 00:58:20,680
+ We don't actually enumerate all of the cubes.
+
+1052
+00:58:20,680 --> 00:58:21,180
+ Yeah?
+
+1053
+00:58:21,180 --> 00:58:23,180
+ AUDIENCE: When you're doing the point cloud merging
+
+1054
+00:58:23,180 --> 00:58:26,880
+ with the ICP, does it matter which point cloud
+
+1055
+00:58:26,880 --> 00:58:29,520
+ you use as the target point cloud?
+
+1056
+00:58:29,520 --> 00:58:30,120
+ Good question.
+
+1057
+00:58:30,120 --> 00:58:34,800
+ So in the ICP, we specified the model versus the scene points.
+
+1058
+00:58:34,800 --> 00:58:37,000
+ Now I've just got two scene points roughly.
+
+1059
+00:58:37,000 --> 00:58:41,080
+ Doesn't matter which one you calibrate to.
+
+1060
+00:58:41,080 --> 00:58:43,760
+ I mean, the math should be symmetric.
+
+1061
+00:58:43,760 --> 00:58:46,880
+ So you should be able to either translate camera 2
+
+1062
+00:58:46,880 --> 00:58:50,240
+ into camera 1's frame, camera 1 into camera 2's frame.
+
+1063
+00:58:50,240 --> 00:58:52,280
+ So up to the heuristics, when you
+
+1064
+00:58:52,280 --> 00:58:55,120
+ start doing nearest neighbor--
+
+1065
+00:58:55,120 --> 00:58:57,080
+ there's places where you break that symmetry
+
+1066
+00:58:57,080 --> 00:58:59,320
+ in the optimization with some of the tricks we used.
+
+1067
+00:58:59,320 --> 00:59:01,740
+ But the basic operation is roughly symmetric.
+
+1068
+00:59:01,740 --> 00:59:02,240
+ Yeah?
+
+1069
+00:59:02,240 --> 00:59:14,640
+ So voxelization is sort of the standard strategy
+
+1070
+00:59:14,640 --> 00:59:18,000
+ for downsampling your point cloud.
+
+1071
+00:59:18,000 --> 00:59:23,160
+ If I wanted to now run it into a more expensive grasp selection
+
+1072
+00:59:23,160 --> 00:59:26,540
+ algorithm, I probably don't want to carry on 15,000 points
+
+1073
+00:59:26,540 --> 00:59:27,640
+ in my point cloud.
+
+1074
+00:59:27,640 --> 00:59:31,600
+ So I'm going to take my sort of a representative 1,000 of them,
+
+1075
+00:59:31,600 --> 00:59:33,920
+ let's say, or 100 of them.
+
+1076
+00:59:33,920 --> 00:59:35,980
+ The way that people do that is they
+
+1077
+00:59:35,980 --> 00:59:41,080
+ will break the space up into little cubes, voxels,
+
+1078
+00:59:41,080 --> 00:59:43,440
+ take all of the points that land inside the voxel,
+
+1079
+00:59:43,440 --> 00:59:45,880
+ and summarize them with a single point.
+
+1080
+00:59:45,880 --> 00:59:47,840
+ The cheap way to do it is you put a point--
+
+1081
+00:59:47,840 --> 00:59:50,640
+ if there's any points inside the voxel,
+
+1082
+00:59:50,640 --> 00:59:52,200
+ you just use the middle of the voxel
+
+1083
+00:59:52,200 --> 00:59:55,160
+ as your point in the point cloud.
+
+1084
+00:59:55,160 --> 00:59:58,040
+ If your voxels are small enough, that's fine.
+
+1085
+00:59:58,040 --> 01:00:00,320
+ A slightly more expensive one that they did in PCL--
+
+1086
+01:00:00,320 --> 01:00:03,240
+ I don't think they do it in Open3D--
+
+1087
+01:00:03,240 --> 01:00:04,880
+ is that you just take-- of all the points
+
+1088
+01:00:04,880 --> 01:00:07,400
+ inside that little voxel, you take the centroid.
+
+1089
+01:00:07,400 --> 01:00:09,320
+ Just a little bit marginally more expensive,
+
+1090
+01:00:09,320 --> 01:00:14,360
+ but it gives you slightly better down sampled points out.
+
+1091
+01:00:14,360 --> 01:00:17,640
+ But roughly, collapse all of the points in some small volume
+
+1092
+01:00:17,640 --> 01:00:18,680
+ into one point.
+
+1093
+01:00:18,680 --> 01:00:21,360
+ That's a natural way to sort of down sample.
+
+1094
+01:00:21,360 --> 01:00:24,760
+ This is a version with the voxels being pretty darn big
+
+1095
+01:00:24,760 --> 01:00:27,040
+ and kept the color code from there.
+
+1096
+01:00:27,040 --> 01:00:29,600
+ But you can make your voxels pretty small.
+
+1097
+01:00:29,600 --> 01:00:31,800
+ And they use sparse data structures.
+
+1098
+01:00:31,800 --> 01:00:34,600
+ And you can get arbitrarily good reproductions
+
+1099
+01:00:34,600 --> 01:00:37,000
+ of your original as the resolution gets down.
+
+1100
+01:00:38,000 --> 01:00:40,980
+ OK?
+
+1101
+01:00:40,980 --> 01:00:45,960
+ I want to make sure that there's no hole on the--
+
+1102
+01:00:45,960 --> 01:00:49,080
+ There's no guarantees of watertight.
+
+1103
+01:00:49,080 --> 01:00:51,640
+ So the question was, are there going to be any holes?
+
+1104
+01:00:51,640 --> 01:00:54,600
+ Most of these things do not guarantee watertightness
+
+1105
+01:00:54,600 --> 01:00:55,520
+ or anything like that.
+
+1106
+01:00:55,520 --> 01:00:57,520
+ You will often-- like, for instance,
+
+1107
+01:00:57,520 --> 01:01:01,400
+ the bottom of the mustard bottle is always going to be empty.
+
+1108
+01:01:01,400 --> 01:01:04,480
+ So it's always going to look hollow in that sense.
+
+1109
+01:01:04,480 --> 01:01:05,480
+ Yeah?
+
+1110
+01:01:05,480 --> 01:01:09,360
+ [INAUDIBLE]
+
+1111
+01:01:09,360 --> 01:01:10,280
+ Yes, so good.
+
+1112
+01:01:10,280 --> 01:01:13,000
+ So typically, you'll average the normals, too.
+
+1113
+01:01:13,000 --> 01:01:14,680
+ So if you have to take all those points,
+
+1114
+01:01:14,680 --> 01:01:18,240
+ and you just take an average of the normals.
+
+1115
+01:01:18,240 --> 01:01:22,480
+ Even the people that just keep the centroid
+
+1116
+01:01:22,480 --> 01:01:24,120
+ will average the normals.
+
+1117
+01:01:24,120 --> 01:01:25,040
+ Yeah.
+
+1118
+01:01:25,040 --> 01:01:29,560
+ Because it doesn't make sense to do anything else.
+
+1119
+01:01:29,560 --> 01:01:30,060
+ Cool.
+
+1120
+01:01:34,320 --> 01:01:38,320
+ Let me flip back to this.
+
+1121
+01:01:38,320 --> 01:01:41,120
+ OK, so putting this together, we've
+
+1122
+01:01:41,120 --> 01:01:45,960
+ got our local estimating normals and local curvature.
+
+1123
+01:01:45,960 --> 01:01:48,280
+ Now, how are we going to use all that information
+
+1124
+01:01:48,280 --> 01:01:50,080
+ to score a grasp candidate?
+
+1125
+01:01:50,080 --> 01:01:51,680
+ OK, I made a little GUI.
+
+1126
+01:01:51,680 --> 01:01:54,720
+ But let me tell you my rough-- my coarse approximation,
+
+1127
+01:01:54,720 --> 01:01:59,280
+ sort of simplified version of the heuristics people use,
+
+1128
+01:01:59,280 --> 01:02:00,880
+ which is going to take my hand.
+
+1129
+01:02:00,880 --> 01:02:01,380
+ OK?
+
+1130
+01:02:01,380 --> 01:02:06,820
+ [WRITING]
+
+1131
+01:02:06,820 --> 01:02:08,240
+ It's got my mustard bottle here.
+
+1132
+01:02:08,240 --> 01:02:15,780
+ OK, I'm going to first crop the point cloud.
+
+1133
+01:02:15,780 --> 01:02:18,340
+ I'm going to move the point cloud into the hand frame.
+
+1134
+01:02:18,340 --> 01:02:31,740
+ [WRITING]
+
+1135
+01:02:31,740 --> 01:02:34,060
+ You can apply those rigid transforms
+
+1136
+01:02:34,060 --> 01:02:35,300
+ on the dense point clouds.
+
+1137
+01:02:35,300 --> 01:02:36,300
+ It's efficient enough.
+
+1138
+01:02:36,300 --> 01:02:37,580
+ OK?
+
+1139
+01:02:37,580 --> 01:02:40,900
+ And then I'm going to crop all the points that
+
+1140
+01:02:40,900 --> 01:02:42,060
+ are not between the fingers.
+
+1141
+01:02:42,060 --> 01:02:54,900
+ [WRITING]
+
+1142
+01:02:54,900 --> 01:02:57,100
+ OK, so I'm just going to take-- I
+
+1143
+01:02:57,100 --> 01:03:01,020
+ want to only consider points sort of in that region.
+
+1144
+01:03:01,020 --> 01:03:02,860
+ So I'll just crop my point cloud down
+
+1145
+01:03:02,860 --> 01:03:05,580
+ to just being that region.
+
+1146
+01:03:05,580 --> 01:03:06,740
+ OK?
+
+1147
+01:03:06,740 --> 01:03:08,460
+ And then each of those points has
+
+1148
+01:03:08,460 --> 01:03:11,220
+ a normal associated with it.
+
+1149
+01:03:11,220 --> 01:03:22,420
+ I'm going to score the grasp as being good
+
+1150
+01:03:22,420 --> 01:03:26,180
+ by summing up the component of the normal that
+
+1151
+01:03:26,180 --> 01:03:30,980
+ is aligned with my hand, aligned with the x-axis of my--
+
+1152
+01:03:30,980 --> 01:03:32,260
+ I forget which axis it is.
+
+1153
+01:03:32,260 --> 01:03:41,540
+ But basically taking a dot product with the line
+
+1154
+01:03:41,540 --> 01:03:45,060
+ here and trying to reward points that contribute
+
+1155
+01:03:45,060 --> 01:03:47,620
+ a normal close to this vector.
+
+1156
+01:03:47,620 --> 01:03:50,260
+ The more points you get, the more reward you get.
+
+1157
+01:03:50,260 --> 01:03:52,260
+ And for each point, you get more reward
+
+1158
+01:03:52,260 --> 01:03:55,660
+ if you're aligned with the normal.
+
+1159
+01:03:55,660 --> 01:03:57,700
+ That's not a super special magic.
+
+1160
+01:03:57,700 --> 01:03:58,900
+ This is the best thing to do.
+
+1161
+01:03:58,900 --> 01:04:00,940
+ This is just one of the heuristics people use out
+
+1162
+01:04:00,940 --> 01:04:03,180
+ there for antipodal grasping.
+
+1163
+01:04:03,180 --> 01:04:04,180
+ You can invent your own.
+
+1164
+01:04:04,180 --> 01:04:07,660
+ You'll find cases where this one does something you don't like.
+
+1165
+01:04:07,660 --> 01:04:09,060
+ And you might tweak it.
+
+1166
+01:04:09,060 --> 01:04:13,820
+ I don't have a magically better optimal solution for you.
+
+1167
+01:04:13,820 --> 01:04:25,180
+ OK, but I do have a cool GUI for you, which I hope runs here.
+
+1168
+01:04:30,180 --> 01:04:33,700
+ OK, here's my cameras and my bins,
+
+1169
+01:04:33,700 --> 01:04:39,140
+ my hand with magic glowing point clouds that are the ones that
+
+1170
+01:04:39,140 --> 01:04:40,300
+ survived my cropping.
+
+1171
+01:04:40,300 --> 01:04:43,420
+ Let me see if I can orient this a little better.
+
+1172
+01:04:43,420 --> 01:04:45,540
+ You see what's happening there?
+
+1173
+01:04:45,540 --> 01:04:50,540
+ And I have sliders so you can move the hand around
+
+1174
+01:04:50,540 --> 01:04:53,420
+ and evaluate your score.
+
+1175
+01:04:53,420 --> 01:05:00,020
+ OK, so this is a cost negative 39.97.
+
+1176
+01:05:00,020 --> 01:05:00,740
+ That's pretty good.
+
+1177
+01:05:00,740 --> 01:05:05,580
+ I don't want to play with this in front of you.
+
+1178
+01:05:05,580 --> 01:05:07,380
+ I want you to play with it.
+
+1179
+01:05:07,380 --> 01:05:08,860
+ It's in the notebook, right?
+
+1180
+01:05:08,860 --> 01:05:12,860
+ So what happened there is I went down a little too far.
+
+1181
+01:05:12,860 --> 01:05:14,620
+ And the top of the mustard bottle
+
+1182
+01:05:14,620 --> 01:05:18,100
+ is intersecting with the geometry of the hand.
+
+1183
+01:05:18,100 --> 01:05:19,340
+ So I got an infinite cost.
+
+1184
+01:05:19,340 --> 01:05:22,140
+ Gripper is colliding with the point cloud.
+
+1185
+01:05:22,140 --> 01:05:25,580
+ But you can lift up, check out your costs,
+
+1186
+01:05:25,580 --> 01:05:26,500
+ check out your normals.
+
+1187
+01:05:26,500 --> 01:05:28,420
+ You can roll the hand around.
+
+1188
+01:05:28,420 --> 01:05:38,620
+ And putting those basic point cloud operations together
+
+1189
+01:05:38,620 --> 01:05:41,500
+ gives you something that you can evaluate quickly at runtime
+
+1190
+01:05:41,500 --> 01:05:44,580
+ and give you some geometric heuristic for how good
+
+1191
+01:05:44,580 --> 01:05:48,100
+ that grasp is going to be.
+
+1192
+01:05:48,100 --> 01:05:51,180
+ So why is that antipodal a good heuristic?
+
+1193
+01:05:51,180 --> 01:05:52,260
+ I think-- oh, please.
+
+1194
+01:05:53,060 --> 01:05:56,060
+ For that first step where we move the point cloud
+
+1195
+01:05:56,060 --> 01:05:59,060
+ to gripper frame, we do have to make a choice of where
+
+1196
+01:05:59,060 --> 01:06:01,820
+ we're going to put the gripper with respect to-- do we just
+
+1197
+01:06:01,820 --> 01:06:03,500
+ like search a bunch and--
+
+1198
+01:06:03,500 --> 01:06:04,020
+ Good.
+
+1199
+01:06:04,020 --> 01:06:07,180
+ So my setup so far here is we talked
+
+1200
+01:06:07,180 --> 01:06:08,460
+ about point cloud processing.
+
+1201
+01:06:08,460 --> 01:06:11,060
+ And then this is scoring grasp candidates.
+
+1202
+01:06:11,060 --> 01:06:13,820
+ So I'm telling you where the hand is.
+
+1203
+01:06:13,820 --> 01:06:15,540
+ You give me a number.
+
+1204
+01:06:15,540 --> 01:06:18,020
+ The next step is going to be how do you find a good one.
+
+1205
+01:06:18,020 --> 01:06:21,900
+ And that's where you start making those choices.
+
+1206
+01:06:21,900 --> 01:06:24,260
+ So it's not surprising that the antipodal
+
+1207
+01:06:24,260 --> 01:06:28,380
+ would be good from just trying to make good contact.
+
+1208
+01:06:28,380 --> 01:06:30,080
+ But why do you want to make good contact?
+
+1209
+01:06:30,080 --> 01:06:32,260
+ I think there is an important lesson
+
+1210
+01:06:32,260 --> 01:06:39,380
+ that you should have from the handbook of robotics.
+
+1211
+01:06:39,380 --> 01:06:46,580
+ So if I'm making contact at these points
+
+1212
+01:06:46,580 --> 01:06:53,980
+ as I'm about to squeeze, then the contact I have
+
+1213
+01:06:53,980 --> 01:06:56,220
+ is going to produce some amount of friction.
+
+1214
+01:06:56,220 --> 01:06:57,820
+ It's going to give me a friction cone.
+
+1215
+01:06:57,820 --> 01:07:03,180
+ Each of these places, it'll be attached to that normal.
+
+1216
+01:07:03,180 --> 01:07:05,500
+ I had to pick to draw next to the finger.
+
+1217
+01:07:05,500 --> 01:07:07,860
+ But when it collides, that friction cone
+
+1218
+01:07:07,860 --> 01:07:12,540
+ will be at the side of the bottle.
+
+1219
+01:07:12,540 --> 01:07:18,200
+ The other thing I have is I have a gravity vector.
+
+1220
+01:07:18,200 --> 01:07:20,740
+ Or maybe adversarially I have somebody pulling on the bottle
+
+1221
+01:07:20,740 --> 01:07:22,280
+ and trying to get it out of my hands.
+
+1222
+01:07:22,280 --> 01:07:26,040
+ But let's just say we have a gravity vector.
+
+1223
+01:07:26,040 --> 01:07:28,900
+ Now to get static equilibrium, as you're
+
+1224
+01:07:28,900 --> 01:07:33,220
+ doing your problem set, you have to find a vector
+
+1225
+01:07:33,220 --> 01:07:38,180
+ inside these friction cones such that everything's
+
+1226
+01:07:38,180 --> 01:07:38,780
+ in equilibrium.
+
+1227
+01:07:38,780 --> 01:07:42,300
+ So those two forces have to equal and opposite balance
+
+1228
+01:07:42,300 --> 01:07:44,380
+ in order to have equilibrium.
+
+1229
+01:07:44,380 --> 01:07:47,100
+ The horizontal components and the vertical components
+
+1230
+01:07:47,100 --> 01:07:50,740
+ has to be enough just to cancel out gravity.
+
+1231
+01:07:50,740 --> 01:07:54,100
+ So you need that friction cone to be big enough
+
+1232
+01:07:54,100 --> 01:07:56,660
+ and tilted away from gravity.
+
+1233
+01:07:56,660 --> 01:07:58,460
+ So you can imagine other heuristics too.
+
+1234
+01:07:58,460 --> 01:08:01,260
+ In fact, I do put a heuristic saying your hand shouldn't
+
+1235
+01:08:01,260 --> 01:08:03,820
+ be too tilted because you'd like to have
+
+1236
+01:08:03,820 --> 01:08:09,020
+ your normals oriented horizontally there.
+
+1237
+01:08:09,020 --> 01:08:10,020
+ But that's the picture.
+
+1238
+01:08:10,020 --> 01:08:12,780
+ These forces have to fight this gravity that's
+
+1239
+01:08:12,780 --> 01:08:16,740
+ trying to pull it out of your hand.
+
+1240
+01:08:16,740 --> 01:08:19,900
+ So the bigger the friction cone, the better off you are.
+
+1241
+01:08:19,900 --> 01:08:24,300
+ Having antipodal grasps, potentially with curvature,
+
+1242
+01:08:24,300 --> 01:08:26,460
+ gives you more-- it's kind of a subtle argument.
+
+1243
+01:08:26,460 --> 01:08:28,180
+ It gives you more friction because you're
+
+1244
+01:08:28,180 --> 01:08:31,340
+ going to have more surface contact in the object.
+
+1245
+01:08:31,340 --> 01:08:33,740
+ So you imagine that actually changing your friction cone.
+
+1246
+01:08:33,740 --> 01:08:39,500
+ And that will resist a bigger wrench.
+
+1247
+01:08:39,500 --> 01:08:40,740
+ That's the thought process.
+
+1248
+01:08:40,740 --> 01:08:46,520
+ Yes?
+
+1249
+01:08:46,520 --> 01:08:49,060
+ AUDIENCE: How do you actually know what the friction cone is?
+
+1250
+01:08:49,060 --> 01:08:49,980
+ PROFESSOR: You don't.
+
+1251
+01:08:49,980 --> 01:08:50,540
+ Good question.
+
+1252
+01:08:50,540 --> 01:08:52,420
+ So how do you know what the friction cone is?
+
+1253
+01:08:52,420 --> 01:08:55,980
+ You say 0.8.
+
+1254
+01:08:55,980 --> 01:08:56,500
+ Roughly.
+
+1255
+01:08:56,500 --> 01:08:56,980
+ No, no.
+
+1256
+01:08:56,980 --> 01:08:57,940
+ That's just being silly.
+
+1257
+01:08:57,940 --> 01:09:01,980
+ But I think it is not something that you
+
+1258
+01:09:01,980 --> 01:09:03,580
+ know with high accuracy.
+
+1259
+01:09:03,580 --> 01:09:05,940
+ And I think that is a place where
+
+1260
+01:09:05,940 --> 01:09:09,380
+ some of the original works that were very model-based,
+
+1261
+01:09:09,380 --> 01:09:12,340
+ you would say, I have a detailed model of my hand.
+
+1262
+01:09:12,340 --> 01:09:13,860
+ And that's very fragile.
+
+1263
+01:09:13,860 --> 01:09:18,300
+ So it's safe to underestimate your friction cone.
+
+1264
+01:09:18,300 --> 01:09:21,460
+ But picking a number and going with it
+
+1265
+01:09:21,460 --> 01:09:22,860
+ is sort of the strategy.
+
+1266
+01:09:22,860 --> 01:09:25,220
+ The antipodal grasps don't actually
+
+1267
+01:09:25,220 --> 01:09:27,660
+ use the coefficient of friction anywhere.
+
+1268
+01:09:27,660 --> 01:09:31,340
+ They just say, between two things that are equal,
+
+1269
+01:09:31,340 --> 01:09:34,860
+ pick the one that is likely to have a bigger friction, better
+
+1270
+01:09:34,860 --> 01:09:37,220
+ surface contact, and therefore a better friction cone.
+
+1271
+01:09:37,220 --> 01:09:39,980
+ So it doesn't have any explicit dependence on the number that
+
+1272
+01:09:39,980 --> 01:09:42,020
+ is your friction.
+
+1273
+01:09:42,020 --> 01:09:43,260
+ It's a good question.
+
+1274
+01:09:43,260 --> 01:09:45,260
+ So I think assuming you know the friction
+
+1275
+01:09:45,260 --> 01:09:51,500
+ is a bad assumption, typically.
+
+1276
+01:09:51,500 --> 01:09:54,220
+ OK, so now the question is, I have a scoring function.
+
+1277
+01:09:54,220 --> 01:09:55,380
+ I have an objective.
+
+1278
+01:09:55,380 --> 01:09:59,380
+ How do I pick where my hand should be?
+
+1279
+01:09:59,380 --> 01:10:01,160
+ We said non-penetration constraints
+
+1280
+01:10:01,160 --> 01:10:03,060
+ are difficult optimization constraints.
+
+1281
+01:10:03,060 --> 01:10:06,620
+ We could use SNOP to get stuck sometimes.
+
+1282
+01:10:06,620 --> 01:10:08,300
+ This one is a very hard optimization
+
+1283
+01:10:08,300 --> 01:10:10,580
+ with all these point clouds in the middle and everything
+
+1284
+01:10:10,580 --> 01:10:11,460
+ like that.
+
+1285
+01:10:11,460 --> 01:10:14,980
+ So we don't hand this one to SNOP.
+
+1286
+01:10:14,980 --> 01:10:16,860
+ We just sample a bunch of candidates,
+
+1287
+01:10:16,860 --> 01:10:19,300
+ and we take the best.
+
+1288
+01:10:19,300 --> 01:10:21,580
+ It's partly because the SNOP formulation
+
+1289
+01:10:21,580 --> 01:10:25,220
+ would be very hard in terms of the solver would get stuck.
+
+1290
+01:10:25,220 --> 01:10:27,300
+ It'd have lots of local minima.
+
+1291
+01:10:27,300 --> 01:10:30,180
+ It's also because we have pretty good heuristics for where
+
+1292
+01:10:30,180 --> 01:10:31,300
+ to sample.
+
+1293
+01:10:31,300 --> 01:10:33,660
+ We can use our geometry intuition
+
+1294
+01:10:33,660 --> 01:10:37,620
+ to pick reasonable sampling heuristics.
+
+1295
+01:10:37,620 --> 01:10:41,300
+ So the one that I use in the notebook
+
+1296
+01:10:41,300 --> 01:10:45,820
+ there is going to be-- I'm going to take an arbitrary point,
+
+1297
+01:10:45,820 --> 01:10:49,180
+ take its normal, align the hand.
+
+1298
+01:10:49,180 --> 01:10:50,980
+ I'm going to sample a grasp.
+
+1299
+01:10:50,980 --> 01:10:54,380
+ It could be a grasp at any orientation, which
+
+1300
+01:10:54,380 --> 01:10:58,140
+ puts the finger's normal in alignment
+
+1301
+01:10:58,140 --> 01:11:02,300
+ with the normal coming off the bottle,
+
+1302
+01:11:02,300 --> 01:11:05,700
+ and just backed off by some amount.
+
+1303
+01:11:05,700 --> 01:11:07,000
+ Then I'm going to shoot through.
+
+1304
+01:11:07,000 --> 01:11:11,060
+ This is the question about collinear.
+
+1305
+01:11:11,060 --> 01:11:14,700
+ I'm actually going to do a raycast operation, effectively.
+
+1306
+01:11:14,700 --> 01:11:19,660
+ Find the normal that's directly on the other side of it,
+
+1307
+01:11:19,660 --> 01:11:24,900
+ and ask, can I basically-- actually, that's not true.
+
+1308
+01:11:24,900 --> 01:11:27,100
+ What I ended up doing in the notes,
+
+1309
+01:11:27,100 --> 01:11:30,180
+ because Open3D didn't have raycast,
+
+1310
+01:11:30,180 --> 01:11:31,400
+ was I just put the hand here.
+
+1311
+01:11:31,400 --> 01:11:34,380
+ I just picked this number arbitrarily, put the hand here,
+
+1312
+01:11:34,380 --> 01:11:37,460
+ and then did that evaluation of cropping the point cloud
+
+1313
+01:11:37,460 --> 01:11:39,780
+ and asking how good my score is.
+
+1314
+01:11:39,780 --> 01:11:42,060
+ And am I in collision?
+
+1315
+01:11:42,060 --> 01:11:47,460
+ So I'm going to just pick a point at random in my point
+
+1316
+01:11:47,460 --> 01:11:51,700
+ cloud, pick a grasp where my thumb is a little bit away
+
+1317
+01:11:51,700 --> 01:11:54,540
+ from that, but aligned with that particular normal,
+
+1318
+01:11:54,540 --> 01:11:57,980
+ and just pick a bunch of grasps like that, rotating just
+
+1319
+01:11:57,980 --> 01:12:01,800
+ around in that one axis around that normal.
+
+1320
+01:12:01,800 --> 01:12:03,920
+ And I'll just go through and pick a bunch of them.
+
+1321
+01:12:03,920 --> 01:12:07,000
+ And I'll take the best five, or something like this.
+
+1322
+01:12:07,000 --> 01:12:10,600
+ How many did I keep?
+
+1323
+01:12:10,600 --> 01:12:12,840
+ I drew a handful of them.
+
+1324
+01:12:12,840 --> 01:12:13,840
+ That was a bad--
+
+1325
+01:12:13,840 --> 01:12:33,300
+, OK.
+
+1326
+01:12:33,300 --> 01:12:35,380
+ Each time, I don't know why it was disconnecting,
+
+1327
+01:12:35,380 --> 01:12:38,700
+ but I threw a bunch of random bins in the--
+
+1328
+01:12:38,700 --> 01:12:40,740
+ lots of objects in the bin.
+
+1329
+01:12:40,740 --> 01:12:43,540
+ I ran my little sampling strategy like this,
+
+1330
+01:12:43,540 --> 01:12:48,080
+ kept the best handful, and you get typically
+
+1331
+01:12:48,080 --> 01:12:52,320
+ a pretty diverse set of interesting grasps.
+
+1332
+01:12:52,320 --> 01:12:54,920
+ Yeah, see?
+
+1333
+01:12:54,920 --> 01:12:57,040
+ And then you just pick the best one, for instance.
+
+1334
+01:12:57,040 --> 01:13:00,000
+ I drew the best end, but typically, you
+
+1335
+01:13:00,000 --> 01:13:01,640
+ pick the best one.
+
+1336
+01:13:01,640 --> 01:13:02,140
+ Yes?
+
+1337
+01:13:02,140 --> 01:13:04,060
+ So when you're doing the sampling procedures,
+
+1338
+01:13:04,060 --> 01:13:05,560
+ is there any utility on maybe doing
+
+1339
+01:13:05,560 --> 01:13:08,920
+ a handful of gradient descent steps on your best candidate?
+
+1340
+01:13:08,920 --> 01:13:10,480
+ Or is it just trying to like, [INAUDIBLE]??
+
+1341
+01:13:10,480 --> 01:13:11,360
+ It's a good question.
+
+1342
+01:13:11,360 --> 01:13:13,780
+ The question is, is there any utility?
+
+1343
+01:13:13,780 --> 01:13:15,880
+ I said the optimization problem is hard.
+
+1344
+01:13:15,880 --> 01:13:17,580
+ Why not do at least a local optimization
+
+1345
+01:13:17,580 --> 01:13:19,820
+ after you've sampled?
+
+1346
+01:13:19,820 --> 01:13:24,140
+ I think the question is just how to shove that data, what data
+
+1347
+01:13:24,140 --> 01:13:25,620
+ to shove into the optimizer.
+
+1348
+01:13:25,620 --> 01:13:27,980
+ I think it'd be great to try.
+
+1349
+01:13:27,980 --> 01:13:30,660
+ People, I think, typically don't.
+
+1350
+01:13:30,660 --> 01:13:31,580
+ But I would like it.
+
+1351
+01:13:31,580 --> 01:13:38,540
+ OK, so this gets you pretty far.
+
+1352
+01:13:38,540 --> 01:13:43,880
+ So roughly, reach down, find the antipodal grasps,
+
+1353
+01:13:43,880 --> 01:13:47,080
+ avoid collisions, reject anything that has a collision,
+
+1354
+01:13:47,080 --> 01:13:49,100
+ keep the best one, grab, pick it up,
+
+1355
+01:13:49,100 --> 01:13:52,040
+ and drop it off at the other side.
+
+1356
+01:13:52,040 --> 01:13:55,460
+ That gets pretty far in clutter clearing.
+
+1357
+01:13:55,460 --> 01:13:56,720
+ What can't it do?
+
+1358
+01:13:56,720 --> 01:13:58,680
+ I hope you'll play around with those notebooks.
+
+1359
+01:13:58,680 --> 01:14:03,680
+ There are limits, I think, really,
+
+1360
+01:14:03,680 --> 01:14:07,200
+ sort of fundamental limits to the geometric-only version
+
+1361
+01:14:07,200 --> 01:14:08,480
+ of it.
+
+1362
+01:14:08,480 --> 01:14:12,520
+ It really doesn't have any sense of what an object is.
+
+1363
+01:14:12,520 --> 01:14:14,680
+ And we'll rewind that here.
+
+1364
+01:14:14,680 --> 01:14:17,240
+ So one of the things it does, for instance,
+
+1365
+01:14:17,240 --> 01:14:19,360
+ is it will do these double picks.
+
+1366
+01:14:19,360 --> 01:14:20,960
+ Sorry that the angle's not good there.
+
+1367
+01:14:20,960 --> 01:14:25,000
+ But there were two boxes with the sides
+
+1368
+01:14:25,000 --> 01:14:27,320
+ like happened to be lined up.
+
+1369
+01:14:27,320 --> 01:14:29,120
+ There's absolutely no way that it
+
+1370
+01:14:29,120 --> 01:14:31,200
+ can understand that those are two objects.
+
+1371
+01:14:31,200 --> 01:14:34,240
+ Just geometrically, it just doesn't have that concept.
+
+1372
+01:14:34,240 --> 01:14:36,520
+ So you could train a system that would understand
+
+1373
+01:14:36,520 --> 01:14:38,360
+ that those things should be separate objects
+
+1374
+01:14:38,360 --> 01:14:39,520
+ and should not be picked together.
+
+1375
+01:14:39,520 --> 01:14:41,240
+ But the geometry doesn't tell you it.
+
+1376
+01:14:41,240 --> 01:14:43,520
+ There's something more you have, some more information
+
+1377
+01:14:43,520 --> 01:14:44,760
+ you have.
+
+1378
+01:14:44,760 --> 01:14:46,960
+ Another common case would be like you pick up a hammer.
+
+1379
+01:14:46,960 --> 01:14:50,200
+ I think this is Rachel's research.
+
+1380
+01:14:50,200 --> 01:14:54,080
+ You pick up a hammer, right, or an eraser here.
+
+1381
+01:14:54,080 --> 01:14:56,800
+ And by my grasp candidate, this is just as good of a place
+
+1382
+01:14:56,800 --> 01:14:58,000
+ to pick up as this.
+
+1383
+01:14:58,000 --> 01:15:00,440
+ There's no concept of object anywhere in the scene.
+
+1384
+01:15:00,440 --> 01:15:02,240
+ So the notion that the center of mass
+
+1385
+01:15:02,240 --> 01:15:03,960
+ would be a good place to pick it up
+
+1386
+01:15:03,960 --> 01:15:05,520
+ doesn't exist anywhere in this metric.
+
+1387
+01:15:05,520 --> 01:15:07,760
+ I have just as good of a chance of picking it up here.
+
+1388
+01:15:07,760 --> 01:15:09,300
+ And then I've got a big torque that's
+
+1389
+01:15:09,300 --> 01:15:11,360
+ trying to wrench it out of my hand.
+
+1390
+01:15:11,360 --> 01:15:15,040
+ And that's just missing from this formulation.
+
+1391
+01:15:15,040 --> 01:15:17,000
+ Partial views.
+
+1392
+01:15:17,000 --> 01:15:19,800
+ So I do think that there's some opportunity for a deep learning
+
+1393
+01:15:19,800 --> 01:15:23,920
+ sort of approach to learn, having picked things up,
+
+1394
+01:15:23,920 --> 01:15:26,200
+ basically what the backside of an object looks like.
+
+1395
+01:15:26,200 --> 01:15:29,040
+ If I had a point cloud that was only coming from this side,
+
+1396
+01:15:29,040 --> 01:15:32,760
+ the geometry alone, the instantaneous geometry alone,
+
+1397
+01:15:32,760 --> 01:15:34,840
+ doesn't tell me anything about the backside.
+
+1398
+01:15:34,840 --> 01:15:37,840
+ And it would limit my ability to try to take a grasp
+
+1399
+01:15:37,840 --> 01:15:39,560
+ on something I can't see.
+
+1400
+01:15:39,560 --> 01:15:43,320
+ There's nothing I said here about hallucinating normals
+
+1401
+01:15:43,320 --> 01:15:45,840
+ in places where you don't have them.
+
+1402
+01:15:45,840 --> 01:15:48,400
+ But if I trained and picked things up and dropped it,
+
+1403
+01:15:48,400 --> 01:15:49,980
+ you could potentially learn something
+
+1404
+01:15:49,980 --> 01:15:52,600
+ that sort of hallucinated the backside of objects.
+
+1405
+01:15:52,600 --> 01:15:54,960
+ People do-- explicitly, there's a whole field
+
+1406
+01:15:54,960 --> 01:15:56,960
+ of sort of shape completion that you
+
+1407
+01:15:56,960 --> 01:15:58,280
+ could do with a neural network.
+
+1408
+01:15:58,280 --> 01:15:59,960
+ But this is doing it sort of implicitly.
+
+1409
+01:15:59,960 --> 01:16:01,560
+ If you just say, find good places
+
+1410
+01:16:01,560 --> 01:16:03,960
+ to grasp on these point clouds, you
+
+1411
+01:16:03,960 --> 01:16:06,280
+ might be able to find something that sort of does
+
+1412
+01:16:06,280 --> 01:16:08,080
+ a little bit of shape completion for you.
+
+1413
+01:16:08,080 --> 01:16:13,280
+ Another reason-- another limitation of this
+
+1414
+01:16:13,280 --> 01:16:16,120
+ would be the fact that we talked about our limitations of just
+
+1415
+01:16:16,120 --> 01:16:17,120
+ the point cloud sensors.
+
+1416
+01:16:17,120 --> 01:16:19,160
+ If you're fully dependent on point clouds
+
+1417
+01:16:19,160 --> 01:16:21,960
+ and you want to pick up a transparent bottle,
+
+1418
+01:16:21,960 --> 01:16:24,960
+ you're going to be sad.
+
+1419
+01:16:24,960 --> 01:16:28,760
+ So RGB-based methods are going to work better for that.
+
+1420
+01:16:28,760 --> 01:16:31,360
+ But overall, this is a pretty effective strategy.
+
+1421
+01:16:31,360 --> 01:16:35,120
+ It really can move a lot of different things out of the way
+
+1422
+01:16:35,120 --> 01:16:37,520
+ and feed your data--
+
+1423
+01:16:37,520 --> 01:16:39,840
+ feed your data pipeline.
+
+1424
+01:16:39,840 --> 01:16:41,880
+ I will say that when we started implementing this
+
+1425
+01:16:41,880 --> 01:16:45,520
+ and tried to make it useful, there
+
+1426
+01:16:45,520 --> 01:16:48,520
+ are a bunch of corner cases that you have to start dealing with.
+
+1427
+01:16:48,520 --> 01:16:54,720
+ So big shunk hand getting into the corners of the bins
+
+1428
+01:16:54,720 --> 01:16:55,760
+ is bad news.
+
+1429
+01:16:55,760 --> 01:16:58,080
+ It just doesn't-- or there's kinematic limitations
+
+1430
+01:16:58,080 --> 01:17:00,480
+ of the arm that come into play.
+
+1431
+01:17:00,480 --> 01:17:03,400
+ I separated now good positions from the hand.
+
+1432
+01:17:03,400 --> 01:17:05,600
+ I didn't actually think of the kinematic limitations
+
+1433
+01:17:05,600 --> 01:17:06,720
+ of the arms.
+
+1434
+01:17:06,720 --> 01:17:09,040
+ So in practice, things would have a way of--
+
+1435
+01:17:09,040 --> 01:17:12,120
+ the remote control would always get in the bottom back corner.
+
+1436
+01:17:12,120 --> 01:17:14,000
+ So if you watch that clutter clearing video,
+
+1437
+01:17:14,000 --> 01:17:16,440
+ again, you'll see that there's extra little things that
+
+1438
+01:17:16,440 --> 01:17:19,840
+ will try to brush things out of the corner into the center.
+
+1439
+01:17:19,840 --> 01:17:24,280
+ And then it'll flip back to the antipodal grasp.
+
+1440
+01:17:24,280 --> 01:17:28,920
+ But if you layer a few of those pretty simple, very general
+
+1441
+01:17:28,920 --> 01:17:31,320
+ point cloud-based operations together,
+
+1442
+01:17:31,320 --> 01:17:32,960
+ then you get a pretty darn good system.
+
+1443
+01:17:32,960 --> 01:17:40,600
+ Any other questions about that?
+
+1444
+01:17:40,600 --> 01:17:41,100
+ Yeah?
+
+1445
+01:17:41,100 --> 01:17:42,880
+ Just to clarify, the collision detection
+
+1446
+01:17:42,880 --> 01:17:44,880
+ does not just take the collision onto objects.
+
+1447
+01:17:44,880 --> 01:17:47,960
+ It's going to grasp it for other objects.
+
+1448
+01:17:47,960 --> 01:17:48,480
+ Awesome.
+
+1449
+01:17:48,480 --> 01:17:51,080
+ So the question is about the collision detection.
+
+1450
+01:17:51,080 --> 01:17:55,840
+ So we have collision geometry, simple collision geometries
+
+1451
+01:17:55,840 --> 01:17:58,840
+ of the gripper, maybe of the bins,
+
+1452
+01:17:58,840 --> 01:18:00,360
+ maybe of the cameras.
+
+1453
+01:18:00,360 --> 01:18:01,840
+ So we want those to not collide.
+
+1454
+01:18:01,840 --> 01:18:04,000
+ But we also want the points in the point cloud
+
+1455
+01:18:04,000 --> 01:18:06,080
+ to not collide with the geometry.
+
+1456
+01:18:06,080 --> 01:18:07,840
+ Now, if you had noisy point clouds,
+
+1457
+01:18:07,840 --> 01:18:09,840
+ you'd have to probably threshold that and allow
+
+1458
+01:18:09,840 --> 01:18:11,800
+ a little bit of collision.
+
+1459
+01:18:11,800 --> 01:18:14,280
+ But in general, I'm actually collision-checking
+
+1460
+01:18:14,280 --> 01:18:17,880
+ the point cloud with the closed-form geometry of the hand.
+
+1461
+01:18:17,880 --> 01:18:21,960
+ So if there's any points inside my simple geometry collision.
+
+1462
+01:18:21,960 --> 01:18:24,600
+ [INAUDIBLE]
+
+1463
+01:18:24,600 --> 01:18:26,400
+ Yes, there's no notion of--
+
+1464
+01:18:26,400 --> 01:18:27,720
+ so that's exactly right.
+
+1465
+01:18:27,720 --> 01:18:31,840
+ So I think if you were to think about grasp selection one
+
+1466
+01:18:31,840 --> 01:18:35,320
+ object at a time, you would get a very different answer
+
+1467
+01:18:35,320 --> 01:18:37,720
+ than what's a good grasp given you're sticking
+
+1468
+01:18:37,720 --> 01:18:39,000
+ this thing in clutter.
+
+1469
+01:18:39,000 --> 01:18:41,840
+ Because the places where you can actually grab
+
+1470
+01:18:41,840 --> 01:18:44,920
+ are very highly constrained by the objects that are around it.
+
+1471
+01:18:44,920 --> 01:18:47,760
+ And those collisions are essential to take into account.
+
+1472
+01:18:47,760 --> 01:18:49,560
+ So there is no objectness here.
+
+1473
+01:18:49,560 --> 01:18:52,680
+ It's just the big pile of points that
+
+1474
+01:18:52,680 --> 01:18:55,200
+ may be one or more objects that I should not collide with.
+
+1475
+01:18:55,200 --> 01:18:58,560
+ [AUDIO OUT]
+
+1476
+01:18:58,560 --> 01:19:03,120
+ Good.
+

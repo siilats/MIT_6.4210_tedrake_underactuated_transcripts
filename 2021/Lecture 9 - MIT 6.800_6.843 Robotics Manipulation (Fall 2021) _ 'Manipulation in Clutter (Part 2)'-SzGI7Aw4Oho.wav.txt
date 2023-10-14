@@ -1,0 +1,1476 @@
+ [SIDE CONVERSATION]
+ All right, welcome back, everybody.
+ We'll get started.
+ So today is the sort of second day of manipulation
+ with clutter, a.k.a.
+ bin picking.
+ There's a couple of different terms I've used for it.
+ Let me just make sure to put the roadmap up again, just
+ so we remember why we're doing what we're doing.
+ So we started with basically a single known object,
+ assuming we knew the pose.
+ We advanced to a single known object with an unknown pose.
+ And we spent some time thinking about geometric approaches
+ for pose estimation, with point cloud registration,
+ iterative closest point, for instance.
+ And what we've been graduating to now
+ is trying to do many diverse, potentially unknown objects
+ with unknown poses.
+ But while that could encompass the rest of manipulation,
+ we're doing a relatively simple version of that
+ and looking at a case where you can get a lot done
+ without knowing a lot about what the objects are, effectively.
+ So this clutter clearing task is this sort of nice task
+ that I showed you last time, where you kind of pick up
+ anything from one bin, put it in the other bin,
+ and that turns out to be a great way
+ to sort of feed the data pipeline when
+ we want to start generating lots of random instances,
+ lots of random picks, and start doing
+ more learning-based manipulation.
+ So the problem for today is you've
+ got a camera, but a depth camera.
+ So it's both RGB and depth available.
+ You're looking down into a box of stuff.
+ And it's got Cheez-Its and Spam cans and mustard bottles
+ and all the great things you find in the YCB data set.
+ The question is, where should you grab?
+ And that's what we're going to talk a lot about today
+ is we're going to talk a bit about grasp analysis, grasp
+ selection, our basic strategy, how do you get it
+ from point clouds.
+ And we'll go into some details.
+ But let me just, since I ended a bit before I meant to last time,
+ and I'm not going to go into details,
+ but I just want to sort of make sure
+ that the roadmap from last time was clear.
+ We talked about a couple of different ways for--
+ well, I tried to show you that we're doing more advanced
+ simulation now, and we need to understand our simulator
+ a little bit better.
+ If you get yourself into weird situations,
+ I hope I gave you a little bit of intuition
+ about the complexity that lies underneath.
+ But there's a few parameters, like the time step
+ or the stiffness of your contacts,
+ that can have a big effect on how accurately you simulate
+ or how fast you simulate.
+ There's also a bunch of subtleties, like the fact
+ that we use extra collision geometries.
+ For instance, if we represent a box,
+ we actually drop in a few extra spheres
+ for our collision geometries.
+ I've written this all up in the notes.
+ And you've been working on it on your problem set.
+ I've given some examples here.
+ But the key idea I was trying to get to there
+ was that we're going to start our simulation
+ in some initial conditions.
+ We've got a bunch of random objects and random poses.
+ What is the defining feature of that initial condition?
+ Well, everything's still.
+ So that puts some pretty strong priors
+ on where the objects could possibly be.
+ If I've generated a bunch of random objects,
+ there's only a subset of possible configurations
+ that are viable initial conditions, where
+ everything is at rest.
+ You can write down with your free body diagrams
+ the conditions for finding an equilibrium where
+ the forces balance on all of the objects.
+ It would imply that everything is at rest.
+ And that's the kind of thing you're
+ going to do on the problem set.
+ One of the key ideas there is this friction cone.
+ So we have contact frames.
+ And we have a friction cone.
+ I drew two different friction cones
+ in this particular picture.
+ And I hope all the simple versions of the equations
+ are in the notes for this example.
+ So you can imagine writing a small optimization,
+ saying, OK, I'll take some random initial poses.
+ They might have some penetration.
+ They might be floating in space.
+ And I'll solve an optimization problem, which solves
+ for the static equilibrium.
+ I like this very much.
+ I think that should be the right way to sort of bring
+ an initial guess that is not a viable initial condition
+ into alignment with the viable initial conditions.
+ That's a beautiful way to think about it.
+ And no one does it.
+ And it makes me very sad.
+ I don't do it.
+ And it makes me very, very sad.
+ And the reason is that the optimization problems, when
+ things start in deep penetration,
+ have all the problems that we've talked
+ about with the collision geometries and strange normals
+ flipping signs and things like this.
+ It's a very ugly, very bad optimization problem.
+ So you'll get local minima where objects are still
+ stuck inside each other.
+ And they're-- it will--
+ SNOPT will fail to solve.
+ So instead, what we do is we just start things clearly out
+ of penetration by just staggering them vertically.
+ We run our simulator, wait till everything settles.
+ It's like, it makes me really sad that we do that.
+ But I mean, OK, so what's the positive spin on that?
+ The physics engines are solving optimization problems also,
+ right, but are just highly optimized.
+ They're solving these things very, very fast.
+ But they've optimized the case where things are not
+ in deep penetration.
+ And staying out of penetration, everything is clean and good.
+ And you can use your physics engine to advance time
+ and get pretty quickly to a steady state solution.
+ Pulling yourself out of penetration
+ is just the hard version of the problem.
+ And I think for our optimization, for SNOPT,
+ for instance, to compete with the simulator,
+ you'd have to bring loads of all these clever optimizations
+ that the simulation people have done.
+ Even though they're solving sometimes the wrong problem,
+ they're just forward simulating and waiting till it settles.
+ And you could say, just go straight to the equilibrium.
+ The advantage that you get from just
+ having all these super highly optimized codes,
+ SNOPT isn't competing with yet.
+ I think we'll slowly bring more of them into SNOPT
+ and eventually be able to do these kind of things.
+ [INAUDIBLE]
+ OK, so the question was, why do we even
+ want static equilibrium as an-- I
+ guess I'm thinking that we're walking up to the sink.
+ Things probably aren't moving.
+ The initial conditions, in my mind, of the world
+ have settled at some times.
+ And so there's a set of equilibrium.
+ There's probably nothing floating
+ in the air that's still falling.
+ There's nothing sliding.
+ It's already slid.
+ So I think the reasonable initial conditions
+ of walking up to a sink and you start to pick
+ are things that have already settled.
+ And so the question is just, how do you
+ find the already settled configurations,
+ the viable physical configurations,
+ as well as possible?
+ Good.
+ Good question.
+ Is that clear?
+ The problem with this approach, of course,
+ is that it works for clutter clearing.
+ But I think I said it in the notes.
+ If you were trying to populate random kitchens,
+ you probably don't just drop refrigerators and toasters
+ and stuff from the sky and hope they land in reasonable places.
+ When your scene has more context, more structure,
+ then this approach doesn't work.
+ And then I think that's where the optimization-based
+ approaches can somehow take some prior of, for instance,
+ like toasters tend to be on the table and other things,
+ some initial guess, and then lock it in with physics.
+ OK.
+ So that was a bunch of talk about simulation
+ and how we get here.
+ But now we're here.
+ We've got our image.
+ We've got our point cloud.
+ And I want to talk today about how
+ do we start deciding what to do in that point cloud.
+ Where do we pick?
+ OK, this is the Springer Handbook of Robotics.
+ It's pretty big, second edition.
+ It's awesome.
+ It's a really good resource.
+ And it's all online, so you don't
+ have to carry around the big book.
+ But it's a really, really good resource.
+ So on page 955, there's an amazingly good chapter
+ on grasping.
+ And it has pictures like this, what
+ I'm showing on the screen here.
+ That's figure two, I guess, from that chapter.
+ And there's just this huge wealth
+ of literature on grasp analysis and grasp optimization.
+ And it dominated manipulation for many years.
+ And we're spending relatively little time on it
+ in this class.
+ I almost feel like it's sacrilegious.
+ OK, sorry.
+ But here's the thing.
+ So this was done in a different time,
+ I mean, with a different set of objectives,
+ where the assumptions were that you
+ knew a lot about the object.
+ You potentially knew a lot about your hand.
+ And you had to optimize against torque limits in your fingers,
+ things like this.
+ And there's a lot of good things to know in there.
+ We're going to use some of them over and over again.
+ For instance, if you wanted to evaluate
+ the largest possible wrench, if someone were to come up
+ and pull something out of your object,
+ what's the largest possible wrench
+ that someone could pull on the object such
+ that you stay inside your torque limits,
+ and therefore inside your friction limits,
+ and you can sort of say you'll resist a wrench?
+ These are the kind of optimizations
+ that you'll find in this book.
+ And they're really good.
+ But they assume a lot about your hand,
+ knowing a lot about your hand, which is probably OK.
+ But well, even that, I mean, I think
+ we don't really have torque sources in our fingers
+ most of the time.
+ We have little itty bitty actuators
+ on cables that are kind of not perfectly modeled.
+ But it also just assumes a lot about the geometry
+ of the object, the mass properties of the object,
+ the friction properties of the object.
+ So there's been, I think, along with the deep learning
+ revolution and the geometric depth camera revolution,
+ there's been a change in the basic formulations.
+ So we don't think quite as-- we use a lot of the tools
+ from this.
+ But I think we're going to try to do it
+ in a slightly more messy situation.
+ So there was this sort of wave of new results
+ that came in a handful of years ago.
+ These are 2016, 2017, 2018 kind of dates.
+ And they just, I think, did a really nice job
+ of sort of turning the problem statement on its head.
+ All three of those were powered by deep learning.
+ But I think more important than the way they solved it first,
+ it was just changing the problem specification, where it really
+ was more like this clutter clearing.
+ This is the first one that I spent time
+ understanding by Rob Platt.
+ They all sort of came out in similar times.
+ But this was a very big surprising thing.
+ I mean, it was not the way people typically
+ formulated grasp problems, where you really just
+ dumped random objects.
+ You don't know what they are.
+ I mean, we've been saying this for clutter clearing.
+ But this was a new thing then.
+ And it was very interesting to ask,
+ how do you take some of the stuff from the handbook
+ and apply it to a problem like that?
+ And the basic story in most of these papers
+ is that you learn from a map from the depth
+ cloud about where to grasp.
+ Or typically, you will learn a grasp evaluator,
+ basically, where you say, if I were to grab here,
+ what score do I expect to get?
+ But this was cool.
+ This was like the first time we saw
+ robots sort of manipulating random objects like ropes.
+ I mean, there's a couple objects here that were intentionally
+ like, ah, you've never seen a robot really
+ manipulate a rope before or a cord before.
+ And so when we started thinking more about this
+ and watched this revolution, I think deep learning gave us
+ the sort of the bold--
+ the ability to sort of push beyond what we had originally
+ done.
+ It was sort of like confidence, I guess.
+ Deep learning gave us the confidence.
+ But I don't think it actually--
+ I think people underestimate how well the geometric tools still
+ work on those problems.
+ So as we're going to transition from--
+ this is our lecture from transitioning
+ from the geometric methods to the deep methods,
+ let's spend a little bit more time
+ with point clouds and geometry to do this task.
+ The reason I want to do that is--
+ this is another one.
+ This was from a local--
+ well, I guess Andy Zeng was the first author
+ on all the visual parts of the perception parts.
+ But this was an effort along with Alberto's lab
+ here at MIT, M3.
+ Did I pick a really boring part of the video to start?
+ Yeah, I guess.
+ But OK, they're talking through this idea
+ that you take RGB images, you learn basically good places
+ to suck.
+ OK, this is suction, sorry.
+ Right.
+ OK, but Lucas was in lab at the time,
+ and he spent time thinking about what--
+ do we actually need deep learning
+ for this kind of things?
+ This was when we weren't sure how well deep learning was
+ really working.
+ And so he implemented this system,
+ which was based on not--
+ no deep learning, just geometry alone.
+ And the basic strategy we're going to cover here
+ is about looking for antipodal grasps, which
+ I will tell you about.
+ And basically just looking for a good place to grasp
+ based on the geometry of the scene.
+ And this does pretty darn well.
+ Like it achieved rates pretty similar.
+ There's limitations.
+ There's things that the deep learning approaches can do
+ that this cannot do.
+ And we'll talk about those.
+ But this is the basic setup.
+ Let's do this geometry-based first.
+ OK.
+ Good.
+ So that was my little old and new background
+ on grasp analysis.
+ OK.
+ So let's start our basic strategy for grasp selection.
+ OK.
+ The basic strategy is going to be very simple.
+ I'm going to reach down, obtain a point cloud.
+ We have to clean it up a bit.
+ We're going to have multiple cameras looking at the scene
+ so that we can see from all sides of the object,
+ hopefully, roughly.
+ We're going to have to merge the point clouds,
+ crop the point clouds, estimate different quantities
+ on the point clouds.
+ OK.
+ Then we're going to look for antipodal grasps.
+ OK.
+ What's an antipodal grasp?
+ OK.
+ So I have some interestingly shaped object.
+ OK.
+ Anywhere along the object-- I have my colored chalk
+ here somewhere.
+ I left them here last time.
+ OK.
+ At any point on the surface of the object,
+ I can define sort of the normal to the surface
+ and the tangent to the surface.
+ Right?
+ OK.
+ And I can evaluate this in lots of places.
+ OK.
+ And what I want to do is find places
+ where I can put my hand around it.
+ That might be too big, depending on how big your hand is.
+ OK.
+ I'd like to find places to put my enormous hand.
+ That was a little bigger than I had in my head
+ when I started this.
+ But OK.
+ Enormous hand coming in.
+ OK.
+ I'd like to find places where the hand is going
+ to touch the object at two places
+ where the normals are pointing in opposite directions.
+ They're antipodal.
+ They're pointing in the opposite directions.
+ OK.
+ Now that might be not as true if I were to pick here and here.
+ Right?
+ If I picked here, I squeeze too hard,
+ it'll shoot out potentially out the side or whatever.
+ OK.
+ Idea of picking antipodal grasps is
+ going to be central to our thinking.
+ OK.
+ And importantly, we can start estimating antipodalness
+ based just right from the point cloud
+ without knowing exactly the object.
+ OK.
+ And then we're going to avoid collisions,
+ try to respect joint limits, et cetera.
+ OK.
+ This is going to be our strongest heuristic.
+ We're going to look down in the pile,
+ try to find a place where we can stick our hand around,
+ get a good antipodal grasp, and pick.
+ Yeah.
+ So for the antipodal normal vectors,
+ they have to point in opposite directions.
+ So do they all have to be collinear?
+ Yes.
+ Sorry.
+ Good.
+ So you'll see when we get there.
+ So we want them to be both antipodal and collinear.
+ Yes.
+ Because that's going to be embedded in our sampling
+ strategy, you'll see.
+ But yeah, we're going to actually,
+ when we find a normal, we're going to just penetrate
+ through directly and ask what the normal is
+ on the other side.
+ So it becomes for yes.
+ But we'd like the places where-- so if I had, let's see,
+ this and this, for instance, could be almost antipodal,
+ but they're not in the same line.
+ So that's no good to me as a grasp.
+ They need to be antipodal and along the same line.
+ Yes.
+ So in two-dimensional, it's clear that this always
+ exists, but in 3D, it's not possible to see that you can
+ always find an antipodal grasp on an object,
+ especially if you only have the object in 3D.
+ So the question is, in 3D, can you always
+ find an antipodal grasp on an object?
+ I don't know that there's any guarantee that you can always
+ find an antipodal grasp.
+ I think you'd like to find the most antipodal grasp.
+ That's the heuristic we're going to use.
+ Whether you can find something that's perfectly
+ antipodal, I don't think there's any guarantee.
+ Even in 2D, it's not clear that you always
+ find one collinear antipodal grasp in 2D, right?
+ [INAUDIBLE]
+ But it might not be collinear.
+ Like a star.
+ I'm trying to think of-- there's probably adversarial shapes
+ or something like this, right?
+ Yeah, I'm not saying that there is any guarantee
+ that a perfectly antipodal collinear grasp exists.
+ We're going to prefer grasps that are more antipodal.
+ Yeah?
+ [INAUDIBLE]
+ Exactly.
+ Awesome.
+ So if my hand was not enormous, if I
+ had a little hand coming in here,
+ this would be no good to me, right?
+ So we're going to bring that in through asking
+ for-- to try to find these kind of possible grasps
+ and find one that, if I were to put my hand there,
+ it's not going to be in collision with the object
+ already, so that when I squeeze, I'll be outside the object.
+ [INAUDIBLE]
+ Do you have to continuously solve for the optimum ones?
+ Because I think they want to start
+ coming into contact with the object.
+ The object might itself start changing shape
+ like a star or something like that.
+ Awesome.
+ OK, so the question is, are we sort
+ of updating our antipodal estimations on the fly?
+ OK, because like squishy objects,
+ they might change their normals as you grab them.
+ So here's the dirty sort of secret of manipulation,
+ is that all the grasp analysis, like this entire book-- well,
+ not-- just the manipulation chapters of the handbook,
+ right?
+ They analyze the system when it's already making contact.
+ The dynamics of going from out of contact to in contact,
+ we pretty much just kind of go like this
+ and hope for the best, right?
+ People do use simulation to try to--
+ so one grasp metric that people like
+ is actually to train a deep learning system, for instance.
+ You might pick up a thing at a certain point on the point
+ cloud, and then lift it up and shake it,
+ and then just see if it stayed in your hand.
+ That's like a way to sort of test,
+ and if that gives you some score,
+ and then you train whether that worked or not.
+ But in general, the grasp analysis
+ has always been about statics and not about dynamics,
+ because the coming into contact dynamics is very complicated.
+ We know how to simulate it.
+ We don't know as much how to optimize through it.
+ Yeah?
+ Are we only looking for the antipodal grasp
+ on the context of the object?
+ Or can I also get them on the normal point
+ and then use those?
+ So this is-- so the question would
+ be like, if I had an hourglass, for instance, right?
+ If I found those, that might not be a very good grasp
+ candidate, right?
+ I think that was sort of your implication, maybe.
+ It was the question was, are we looking only
+ for the concave antipodal grasps?
+ Yeah, I was going to say the normal [INAUDIBLE]
+ on the hourglass, or I could [INAUDIBLE]
+ Let's go through that.
+ OK, so we're going to try to define the normals.
+ I mean, so you could say that the normals could
+ be pointing in or pointing out.
+ We're going to always try to have them pointing out.
+ And the curvature does tell us something, right?
+ And we are going to be able to estimate the curvature very
+ easily, or from the point clauses directly, right?
+ But I haven't included it.
+ The heuristics, the examples I've given you in the notes
+ are a fairly simple grasp strategy,
+ but they don't involve any notion
+ of the curvature in the score.
+ This kind of a grasp would be ruled out more
+ by the collision again.
+ So these two together get you pretty far.
+ These are great.
+ I love the questions.
+ So please keep chiming in.
+ OK, so let's see.
+ Back before deep learning, if you
+ were doing image processing, there
+ was sort of a library of things that you would
+ learn how to do with images.
+ You could find edges in images.
+ You could expand blobs to try to find regions of similar color.
+ There's sort of a library of image processing techniques.
+ They still exist.
+ They didn't disappear, but they're not as necessary now,
+ because we just pattern match everything.
+ There's a similar library of things
+ you can do with point clouds.
+ There's no books on them, unfortunately,
+ but there's documentation for the software.
+ The PCL library's documentation is extremely good.
+ And I feel sort of sad that there's not
+ like a point cloud processing book that I know of.
+ But I pointed to the few references that I know.
+ But there's lots of good things you can do with point clouds.
+ And we're going to do--
+ I'll step you through a few of them.
+ Some of them are natural, but they're
+ going to be very important here.
+ So in general, let me just even set this up.
+ So this notebook here, I've got a hairy mustard bottle.
+ Let me make it less hairy for a second here.
+ Good, so I've set this up where I
+ have the initial point clouds.
+ I have three cameras.
+ This is the same situation I gave you before.
+ It's three cameras around the mustard bottle.
+ So those cameras see--
+ they're going to see the mustard bottle.
+ They're going to see the bin.
+ If I put it in the bin, they see the other cameras.
+ I get returns from the first camera looking this way that
+ gets off all of these different objects.
+ There's another camera over here that
+ sees that side of the object.
+ And there's another camera.
+ See, that's point cloud one and point cloud two.
+ So altogether, I've got three pretty good views
+ of the objects.
+ But I need to do some basic processing,
+ get rid of these junk outside.
+ I'll crop them, merge them, estimate normals on them,
+ down sample them.
+ Sort of reasonable operations.
+ I think the most interesting one is
+ the normal estimation because you get local curvature
+ information from that too.
+ But there's a basic library of these things.
+ So cropping a point cloud is pretty reasonable.
+ If I've got a bunch of x, y, z points,
+ I tend to put a bounding box.
+ If you think I'm going to reach into a bin
+ or I'm looking at the top of the table,
+ then just making a bounding box in the frame
+ to get the points of interest to rule out the cameras.
+ Very simple operation and essential.
+ I'll write them down and we'll go
+ through the normal estimation a little bit more carefully.
+ But we can estimate the normals, which
+ is what I showed with the vectors
+ here that looks like a crazy pin cushion thing.
+ That's a normal estimation.
+ At every surface point here, there's
+ a vector coming off showing the local normals of the point
+ cloud.
+ Say a bit about that.
+ We can take those three separate point clouds
+ and merge them into a single point cloud,
+ some fusion operation.
+ And we can down sample.
+ Now, before we dig into each of them,
+ let me just say that I've chosen to do them
+ in this order for a reason.
+ I think the order does matter.
+ It's cropping.
+ Just get rid of the extra points you
+ know you don't need right away.
+ But the normal estimation should come before down sampling,
+ for instance, because you're going
+ to try to use as many points as possible
+ to try to estimate those normals.
+ You get the densest point cloud you can deal with.
+ It will give you more accurate normals.
+ But the normal estimation also is
+ going to come before the merging the point clouds.
+ Anybody know why I want to do the normal estimation before?
+ [INAUDIBLE]
+ So she says, so you can merge similar normals better
+ together.
+ That's pretty much what I want to say.
+ There's a twist on it that matters, I guess.
+ I mean, we talked about it before, too, when we said,
+ you lose some information when you go from the depth
+ image to the point cloud.
+ As soon as I've merged the point clouds together
+ into one big cloud, then I've kind of implicitly forgotten
+ where my cameras were, or I don't know which ones--
+ which corresponded to which camera.
+ So in this question that Alex was asking here--
+ so I'm getting some returns here.
+ I have a question of which of these is my normal?
+ Is it the one pointing in?
+ Is it pointing out?
+ How do you robustly find the point cloud,
+ the normal pointing out?
+ My camera's coming this way.
+ In all these point cloud libraries,
+ there's a flip normals towards camera,
+ where you basically say, here's my camera position.
+ Here's my list of normals.
+ Flip them so they're all pointing towards the camera.
+ So I can do that on the unmerged point clouds
+ and get my normals pointing in the right direction.
+ Then I'll merge them together, which in general can
+ be a fusion operator, like the point cloud,
+ the iterative closest point type algorithm.
+ And then we'll use voxels for downsampling.
+ Let me tell you a little bit about normal estimation.
+ So how do we get those porcupine normals out
+ of a dense point cloud?
+ [WRITING ON BOARD]
+ In broad strokes, we're going to find the k-nearest neighbor
+ for every point, let me say, for every pixel,
+ every point, find the k-nearest neighbors.
+ You can put a max distance so you don't find--
+ if you don't have k local nearest neighbors,
+ you don't end up including somebody too far away.
+ We're going to fit a plane similar to what
+ you did in the ransack problem to the local point cloud.
+ And then flip the normals.
+ We're going to be able to get out-- the way we fit the plane,
+ we're going to be able to get out the curvature too.
+ It's pretty elegant.
+ But finding the k-nearest neighbors,
+ let me even show you what that looks like here.
+ I've got a-- hopefully my thing is still alive here.
+ For those of you watching the slides.com,
+ I'm sorry, I'm going to flip to--
+ you might want to flip to just the video
+ stream for a second here.
+ [VIDEO PLAYBACK]
+ I spent a ridiculous-- you guys wouldn't
+ know what I go through with some of these, but let's see.
+ I almost have DeepNote working for everything.
+ By tonight, I think I will have everything
+ ported to DeepNote.
+ Open3D, which I was using for some of the point cloud
+ processing, doesn't work.
+ The versions that we use doesn't work on Mac 3.--
+ Python greater than 3.7.
+ But everything else is using Python 3.9 on Mac.
+ And it's on, on, on.
+ Anyways, I'm running it from Colab today.
+ But tonight, everything will be good again.
+ Nice.
+ Let's see if I can get a new tunnel without--
+ it's encouraging.
+ [END PLAYBACK]
+ You only get two tunnels.
+ So if this one doesn't work, I'm dead.
+ But I'll have to restart Colab.
+ Two free tunnels, and then you have to pay for ngrok.
+ And I can't pay for ngrok on Colab.
+ I don't mind paying.
+ I just don't know how to do it on the cloud,
+ where my IP address is different every time.
+ So this is roughly what I want you to see here.
+ My normal estimation-- it's very hard to see in this.
+ Let's see if I can make that bigger.
+ And I tried to make it brighter, but the old meshcat
+ won't let me.
+ [AUDIO OUT]
+ You can kind of see this, what's going on there.
+ There's a blue line there, a red line there.
+ Yeah, that's my triad sitting there.
+ So I pick a sample point.
+ And I've got a little GUI for you here,
+ where you can just literally just change
+ which pixel am I centered on.
+ And there's a lot of pixels, 10,000 some,
+ or 15,000 pixels in the mustard bottle point cloud.
+ And for each pixel, I'll just use that
+ and find the k nearest neighbor.
+ That's going to give me the blue region.
+ I'll only pick one that's not inside another blue region
+ on the French's label.
+ And there you go.
+ So I'm going to pick a handful of nearest neighbors.
+ I'm going to fit a plane to that, take the z-axis to be
+ the--
+ we're going to see the math for how to do that,
+ to find the z-axis.
+ And actually, we're going to draw the other two axes
+ of the frame along the dimensions of relatively
+ maximum and secondary curvature.
+ Now, what's amazing to me about this--
+ and I remember when we first started
+ doing a lot more of this.
+ I was like, surely you're not going
+ to go through every single point of a dense point cloud,
+ take every k nearest neighbor, fit a plane,
+ and then go to the next point for 15,000 points
+ in a real-time perception algorithm.
+ And my students who were doing that at the time
+ were like, no, it's fine.
+ And I was just wrong.
+ I think that people do that, and people do it all the time.
+ And that was a few years ago.
+ And now computers are even faster, more parallel.
+ Yeah?
+ [INAUDIBLE]
+ It seems expensive.
+ I agree.
+ But it's in this--
+ computers are fast.
+ [LAUGHTER]
+ So people do this all the time.
+ It's a standard pre-processing step
+ where you go through your even dense point cloud.
+ In fact, dense is recommended because--
+ I mean, you could choose to evaluate it
+ as a subset of the points.
+ But you'd like to find dense nearest neighbors
+ to get a more accurate representation
+ of the local curvature.
+ So I've done it for the entire thing
+ and drawn most of the normals.
+ And in general, I would say that is a theme,
+ that people do pretty significant processing
+ on the point clouds.
+ And it's faster than you'd think, than I would think.
+ [INAUDIBLE]
+ It is true.
+ So the point was about the k-nearest neighbor.
+ So the k-nearest neighbor uses typically
+ FLAN, which is a fast lookup.
+ I don't know, approximate nearest neighbor.
+ But it's a common library that people
+ use in robotics for fast nearest neighbor lookups.
+ And yes, I think having very good data structures
+ for very fast approximate nearest neighbor queries
+ is essential to making this work.
+ No question.
+ So how do you fit a plane to a local point cloud?
+ If you've got a bunch of points-- now,
+ what I want you to see, at least at broad strokes,
+ is that this looks like the optimizations we were already
+ doing.
+ And there's some geometry about that problem
+ that I think will help you understand how you
+ can get the curvature out, too.
+ Let me just step through that one.
+ [SIDE CONVERSATION]
+ OK.
+ I've got a bunch of points.
+ I'd like to fit a local normal.
+ And I'll do that by sort of fitting
+ a local plane to my points.
+ The normal I'm going to write here.
+ I'm going to ask the normal to have magnitude 1.
+ And I'm going to define the plane in terms
+ of the normal and the point at which the point P--
+ let me draw here-- the normal plus the point
+ can define that local plane.
+ So what I want to do is now search for n and P
+ in order to maximize the fit of these points.
+ So the distance from any sample point to the plane
+ I can write with a dot product.
+ So I'll take a dot product between the vector here.
+ I've got some vector.
+ This is Pi.
+ This is my P. So I'll write Pi minus P here.
+ And the distance from the point to the plane
+ is the dot product of this vector with this vector.
+ So I drew that small.
+ Is that clear?
+ I could make it bigger if it's helpful.
+ Dot product gives me this distance,
+ which is the distance from the point to the plane.
+ So I'll take this vector and I'll dot product with n.
+ So that gives me a scalar number.
+ I want to minimize the magnitude of this number.
+ So if I were to just take this and say minimize that,
+ it would drive me to very big negative numbers.
+ So I'm going to take the squared of this
+ and sum over all of my points.
+ And I'd like to minimize over P and n, subject to a constraint
+ that n equals 1.
+ This looks scary.
+ It turns out that it has a nice solution.
+ The reason it has a nice solution
+ is that you can actually solve for P as a function--
+ the optimal P as a function of n,
+ just like we did in the other point cloud processing
+ algorithms.
+ It's not surprising that the strategy
+ will be pretty similar.
+ Bless you.
+ [WRITING]
+ I went through it in the notes before,
+ but not on the board before.
+ I don't know if people want or don't want this.
+ I'll subject it to you this time and you can tell me after.
+ So the way you try to optimize a constrained optimization
+ is you write the Lagrangian.
+ You bring the constraint in to the optimization.
+ So I can write the Lagrangian, which
+ is my original cost function.
+ If this is foreign to you, try to appreciate it
+ at a higher level.
+ And it's written up in the notes.
+ So this is my original objective.
+ I'm going to write plus a Lagrange multiplier times
+ my constraint, which I could write
+ a handful of different ways.
+ I'll write it like that.
+ It's called the Lagrangian of the constrained optimization.
+ The amazing thing about Lagrange multipliers
+ is that if I take the gradient of this Lagrangian--
+ so this is called the Lagrange multiplier.
+ That one I think you've seen in various capacities.
+ But it turns out that the optimal solution
+ of the constrained problem is going
+ to be a stationary point of this problem, which
+ means the gradients of this with respect to the parameters
+ and with respect to the Lagrange multipliers
+ are going to have to be 0.
+ So that was a long way to say if I
+ were to take the gradient of this with respect to p,
+ at an optimal, it's going to be 0.
+ So I can write the gradient of that with respect to p.
+ Let me expand.
+ It's a little bit-- you've got to get your head around that,
+ this thing being squared.
+ But I'll write it out completely in transpose pi minus p.
+ And these terms don't depend on p.
+ So partial L, partial p, it gets to looking like this,
+ minus 2n, n transpose.
+ I'm going to write the transpose of it just
+ to keep it looking a little bit more friendly.
+ It looks like this.
+ This is just a quadratic form.
+ It looks a little scary, but it just looks like that.
+ OK, this has special structure because n is unit magnitude.
+ But mostly, the thing that it implies for me
+ is that if I want this to be equal to 0,
+ then the sum of these has to be equal to 0.
+ Sort of a simple version of it.
+ And p star equals 1 over n sum over i pi.
+ There's a few steps there, but it gives you
+ roughly what you'd expect from the original--
+ the same thing we saw in the point cloud--
+ or in the point registration problem
+ where the optimal p is like your average p.
+ I think geometrically, that's not surprising.
+ And it comes through an optimization.
+ And the steps are also in the notes, I hope.
+ You don't have to write everything down
+ if you're worried about it.
+ OK, if I substitute this back in,
+ then I can write the entire optimization.
+ I can solve away p.
+ I can write the entire optimization now in terms of n.
+ And it just looks like this, where
+ W is our data matrix, just like we did before.
+ [WRITING ON BOARD]
+ OK, I actually don't care as much.
+ I don't care as much about the algebra steps.
+ I want you to understand the intuition here.
+ Is that this optimization is now a quadratic form in n.
+ So if I were to plot the 2D version of it, I had n1 and n2.
+ W is this symmetric quadratic form.
+ It's going to be a convex objective.
+ So I'm going to have the level sets of W of x transpose W
+ is looking like this.
+ So this is n transpose Wn equals 3.
+ This is equals 2.
+ So this is my quadratic bowl I had before.
+ OK, and it goes through the origin,
+ despite my artwork not being great.
+ I also have the unit circle constraint.
+ This is the n equals 1.
+ So now, what's the optimal solution?
+ Where is the optimum for this problem?
+ I'm trying to minimize this objective
+ where I've drawn the level sets.
+ It's 0 if n was 0.
+ It's going up.
+ It has to live on this equality constraint.
+ Yeah?
+ [INAUDIBLE]
+ This tangent or this tangent?
+ The second one, right?
+ So that is an optimal point.
+ That's inside the lower level set.
+ It's the lowest level set that touches the constraint.
+ It's also at this one.
+ Again, artwork, that should be touching there too
+ if I was a better artist.
+ So there's two equally good normals.
+ They're just the opposite of each other, a sine flip away
+ from each other.
+ And that's exactly what we're-- that's
+ the into the object and out of the object
+ would fit the plane just as well.
+ So this corresponds with one of the eigenvalues
+ of the optimization.
+ And this other direction here, actually, is a second.
+ This is the eigenvector corresponding
+ to the eigenvalue.
+ Eigenvector 2 corresponding to eigenvalue 2.
+ So which one's the bigger eigenvalue?
+ Which one's the bigger eigenvalue?
+ This one?
+ This one.
+ This should be the smallest eigenvalue.
+ It's like twisting, right?
+ For a unit length here, I get a smaller number there.
+ The cool thing is that I have these other directions here.
+ This is actually the steepest descent.
+ So this is the place where the cost function
+ is largest, this vector along here.
+ And if I did it in 3D, I have two other eigenvectors
+ that are corresponding to two other eigenvalues.
+ The larger eigenvalues correspond to a larger value
+ here, which corresponds with a larger dot
+ product with the points.
+ So let me see.
+ So if I had a point that were along some local curvature,
+ and I'm trying to fit a plane to it,
+ then there's a vector that goes through this point, which
+ fits these points with the highest possible dot product.
+ The largest eigenvalue should go with the place
+ of lowest curvature.
+ The smallest eigenvalue is going to be my normal.
+ And the middle eigenvalue is going
+ to be my other normal-- because the eigenvectors are going
+ to make an orthonormal matrix, the third eigenvector
+ is going to give me my last row of middle curvature.
+ So it actually parametrizes the surface
+ in terms of it ordered by the directions of curvature.
+ So some of the grasp heuristics-- this
+ gets to Alex's question earlier--
+ do use local curvature.
+ They might find a place that has a good antipodal grasp,
+ but is also curved in.
+ That's an easy thing to now include in your grasp
+ heuristics.
+ Now, I did do this real-time estimate.
+ I realized when I typed it in-- so every once in a while,
+ you'll find a point that doesn't obey the right-hand rule.
+ You could still get an improper rotation
+ if you just take the eigenvectors.
+ So that's my bad.
+ I'll fix that, too.
+ But if you just took the eigenvectors out
+ of your random eigenvector algorithm,
+ there's no reason that they would
+ be ordered in a way that would obey the right-hand rule.
+ So you have to sort of check for improper rotations
+ and flip them and other things.
+ And that will be happening in this notebook shortly.
+ I apologize.
+ I forgot to do it.
+ The things you notice right before lecture.
+ So that's pretty cool, right?
+ Local point processing, little optimization,
+ solved in closed form just by taking eigenvectors
+ and eigenvalues.
+ Gives me normals, gives me local curvature,
+ fast enough to run on a whole dense point cloud.
+ It's part of your library, part of your toolkit.
+ Once we do that, merging the point clouds,
+ the next step is merging point clouds.
+ So if you have two-- think about the way
+ that these point clouds look, these partial point clouds.
+ So I'm going to flip back to this one.
+ [VIDEO PLAYBACK]
+ [END PLAYBACK]
+ OK.
+ I've got two point clouds here.
+ Point cloud one, point cloud two.
+ How do I find their alignment?
+ How do I merge them into a single point cloud?
+ If I know my relative camera positions perfectly,
+ and I think the points are clean enough,
+ then you really can just add them together.
+ But in reality-- and so in simulation,
+ that's actually what I did.
+ In reality, you don't do that typically,
+ unless you've got really good camera calibration
+ and you have rules so that nobody leans on the cameras.
+ And you can always tell a theorist
+ when they come near a robot, because they're like,
+ lean on your cameras.
+ You're like, I just spent an hour calibrating that.
+ So I like theorists, but I just don't like
+ when they bump my camera.
+ OK.
+ So in general, we already have the tools
+ for estimating these, to find these things into alignment.
+ So if I have point clouds that overlap in some capacity,
+ I can just run a point registration algorithm.
+ ICP is sort of the right tool for taking
+ these almost aligned point clouds
+ and snapping them into place, or ICP and its variants.
+ So the full version of merging point clouds
+ is really just running a point registration algorithm.
+ We talked about it before as having
+ an object-specific point cloud.
+ You can do it on the dense point cloud that
+ has lots of objects.
+ There's no reason.
+ You're just doing-- it's also called scan matching.
+ You just bring two scans into alignment.
+ Good.
+ And then downsampling is the last big step.
+ And this is really just a simple algorithm.
+ And the question is really, what's
+ the right data structures that enabled this to be fast?
+ And the right data structures tend to be voxel grids.
+ So you're going to tile your space with a bunch of cubes,
+ cubes of a certain fixed size typically,
+ and just fill your space with a whole grid of these cubes.
+ We'll use good data structures so that we only represent
+ the cubes we're actually using.
+ We don't actually enumerate all of the cubes.
+ Yeah?
+ AUDIENCE: When you're doing the point cloud merging
+ with the ICP, does it matter which point cloud
+ you use as the target point cloud?
+ Good question.
+ So in the ICP, we specified the model versus the scene points.
+ Now I've just got two scene points roughly.
+ Doesn't matter which one you calibrate to.
+ I mean, the math should be symmetric.
+ So you should be able to either translate camera 2
+ into camera 1's frame, camera 1 into camera 2's frame.
+ So up to the heuristics, when you
+ start doing nearest neighbor--
+ there's places where you break that symmetry
+ in the optimization with some of the tricks we used.
+ But the basic operation is roughly symmetric.
+ Yeah?
+ So voxelization is sort of the standard strategy
+ for downsampling your point cloud.
+ If I wanted to now run it into a more expensive grasp selection
+ algorithm, I probably don't want to carry on 15,000 points
+ in my point cloud.
+ So I'm going to take my sort of a representative 1,000 of them,
+ let's say, or 100 of them.
+ The way that people do that is they
+ will break the space up into little cubes, voxels,
+ take all of the points that land inside the voxel,
+ and summarize them with a single point.
+ The cheap way to do it is you put a point--
+ if there's any points inside the voxel,
+ you just use the middle of the voxel
+ as your point in the point cloud.
+ If your voxels are small enough, that's fine.
+ A slightly more expensive one that they did in PCL--
+ I don't think they do it in Open3D--
+ is that you just take-- of all the points
+ inside that little voxel, you take the centroid.
+ Just a little bit marginally more expensive,
+ but it gives you slightly better down sampled points out.
+ But roughly, collapse all of the points in some small volume
+ into one point.
+ That's a natural way to sort of down sample.
+ This is a version with the voxels being pretty darn big
+ and kept the color code from there.
+ But you can make your voxels pretty small.
+ And they use sparse data structures.
+ And you can get arbitrarily good reproductions
+ of your original as the resolution gets down.
+ OK?
+ I want to make sure that there's no hole on the--
+ There's no guarantees of watertight.
+ So the question was, are there going to be any holes?
+ Most of these things do not guarantee watertightness
+ or anything like that.
+ You will often-- like, for instance,
+ the bottom of the mustard bottle is always going to be empty.
+ So it's always going to look hollow in that sense.
+ Yeah?
+ [INAUDIBLE]
+ Yes, so good.
+ So typically, you'll average the normals, too.
+ So if you have to take all those points,
+ and you just take an average of the normals.
+ Even the people that just keep the centroid
+ will average the normals.
+ Yeah.
+ Because it doesn't make sense to do anything else.
+ Cool.
+ Let me flip back to this.
+ OK, so putting this together, we've
+ got our local estimating normals and local curvature.
+ Now, how are we going to use all that information
+ to score a grasp candidate?
+ OK, I made a little GUI.
+ But let me tell you my rough-- my coarse approximation,
+ sort of simplified version of the heuristics people use,
+ which is going to take my hand.
+ OK?
+ [WRITING]
+ It's got my mustard bottle here.
+ OK, I'm going to first crop the point cloud.
+ I'm going to move the point cloud into the hand frame.
+ [WRITING]
+ You can apply those rigid transforms
+ on the dense point clouds.
+ It's efficient enough.
+ OK?
+ And then I'm going to crop all the points that
+ are not between the fingers.
+ [WRITING]
+ OK, so I'm just going to take-- I
+ want to only consider points sort of in that region.
+ So I'll just crop my point cloud down
+ to just being that region.
+ OK?
+ And then each of those points has
+ a normal associated with it.
+ I'm going to score the grasp as being good
+ by summing up the component of the normal that
+ is aligned with my hand, aligned with the x-axis of my--
+ I forget which axis it is.
+ But basically taking a dot product with the line
+ here and trying to reward points that contribute
+ a normal close to this vector.
+ The more points you get, the more reward you get.
+ And for each point, you get more reward
+ if you're aligned with the normal.
+ That's not a super special magic.
+ This is the best thing to do.
+ This is just one of the heuristics people use out
+ there for antipodal grasping.
+ You can invent your own.
+ You'll find cases where this one does something you don't like.
+ And you might tweak it.
+ I don't have a magically better optimal solution for you.
+ OK, but I do have a cool GUI for you, which I hope runs here.
+ OK, here's my cameras and my bins,
+ my hand with magic glowing point clouds that are the ones that
+ survived my cropping.
+ Let me see if I can orient this a little better.
+ You see what's happening there?
+ And I have sliders so you can move the hand around
+ and evaluate your score.
+ OK, so this is a cost negative 39.97.
+ That's pretty good.
+ I don't want to play with this in front of you.
+ I want you to play with it.
+ It's in the notebook, right?
+ So what happened there is I went down a little too far.
+ And the top of the mustard bottle
+ is intersecting with the geometry of the hand.
+ So I got an infinite cost.
+ Gripper is colliding with the point cloud.
+ But you can lift up, check out your costs,
+ check out your normals.
+ You can roll the hand around.
+ And putting those basic point cloud operations together
+ gives you something that you can evaluate quickly at runtime
+ and give you some geometric heuristic for how good
+ that grasp is going to be.
+ So why is that antipodal a good heuristic?
+ I think-- oh, please.
+ For that first step where we move the point cloud
+ to gripper frame, we do have to make a choice of where
+ we're going to put the gripper with respect to-- do we just
+ like search a bunch and--
+ Good.
+ So my setup so far here is we talked
+ about point cloud processing.
+ And then this is scoring grasp candidates.
+ So I'm telling you where the hand is.
+ You give me a number.
+ The next step is going to be how do you find a good one.
+ And that's where you start making those choices.
+ So it's not surprising that the antipodal
+ would be good from just trying to make good contact.
+ But why do you want to make good contact?
+ I think there is an important lesson
+ that you should have from the handbook of robotics.
+ So if I'm making contact at these points
+ as I'm about to squeeze, then the contact I have
+ is going to produce some amount of friction.
+ It's going to give me a friction cone.
+ Each of these places, it'll be attached to that normal.
+ I had to pick to draw next to the finger.
+ But when it collides, that friction cone
+ will be at the side of the bottle.
+ The other thing I have is I have a gravity vector.
+ Or maybe adversarially I have somebody pulling on the bottle
+ and trying to get it out of my hands.
+ But let's just say we have a gravity vector.
+ Now to get static equilibrium, as you're
+ doing your problem set, you have to find a vector
+ inside these friction cones such that everything's
+ in equilibrium.
+ So those two forces have to equal and opposite balance
+ in order to have equilibrium.
+ The horizontal components and the vertical components
+ has to be enough just to cancel out gravity.
+ So you need that friction cone to be big enough
+ and tilted away from gravity.
+ So you can imagine other heuristics too.
+ In fact, I do put a heuristic saying your hand shouldn't
+ be too tilted because you'd like to have
+ your normals oriented horizontally there.
+ But that's the picture.
+ These forces have to fight this gravity that's
+ trying to pull it out of your hand.
+ So the bigger the friction cone, the better off you are.
+ Having antipodal grasps, potentially with curvature,
+ gives you more-- it's kind of a subtle argument.
+ It gives you more friction because you're
+ going to have more surface contact in the object.
+ So you imagine that actually changing your friction cone.
+ And that will resist a bigger wrench.
+ That's the thought process.
+ Yes?
+ AUDIENCE: How do you actually know what the friction cone is?
+ PROFESSOR: You don't.
+ Good question.
+ So how do you know what the friction cone is?
+ You say 0.8.
+ Roughly.
+ No, no.
+ That's just being silly.
+ But I think it is not something that you
+ know with high accuracy.
+ And I think that is a place where
+ some of the original works that were very model-based,
+ you would say, I have a detailed model of my hand.
+ And that's very fragile.
+ So it's safe to underestimate your friction cone.
+ But picking a number and going with it
+ is sort of the strategy.
+ The antipodal grasps don't actually
+ use the coefficient of friction anywhere.
+ They just say, between two things that are equal,
+ pick the one that is likely to have a bigger friction, better
+ surface contact, and therefore a better friction cone.
+ So it doesn't have any explicit dependence on the number that
+ is your friction.
+ It's a good question.
+ So I think assuming you know the friction
+ is a bad assumption, typically.
+ OK, so now the question is, I have a scoring function.
+ I have an objective.
+ How do I pick where my hand should be?
+ We said non-penetration constraints
+ are difficult optimization constraints.
+ We could use SNOP to get stuck sometimes.
+ This one is a very hard optimization
+ with all these point clouds in the middle and everything
+ like that.
+ So we don't hand this one to SNOP.
+ We just sample a bunch of candidates,
+ and we take the best.
+ It's partly because the SNOP formulation
+ would be very hard in terms of the solver would get stuck.
+ It'd have lots of local minima.
+ It's also because we have pretty good heuristics for where
+ to sample.
+ We can use our geometry intuition
+ to pick reasonable sampling heuristics.
+ So the one that I use in the notebook
+ there is going to be-- I'm going to take an arbitrary point,
+ take its normal, align the hand.
+ I'm going to sample a grasp.
+ It could be a grasp at any orientation, which
+ puts the finger's normal in alignment
+ with the normal coming off the bottle,
+ and just backed off by some amount.
+ Then I'm going to shoot through.
+ This is the question about collinear.
+ I'm actually going to do a raycast operation, effectively.
+ Find the normal that's directly on the other side of it,
+ and ask, can I basically-- actually, that's not true.
+ What I ended up doing in the notes,
+ because Open3D didn't have raycast,
+ was I just put the hand here.
+ I just picked this number arbitrarily, put the hand here,
+ and then did that evaluation of cropping the point cloud
+ and asking how good my score is.
+ And am I in collision?
+ So I'm going to just pick a point at random in my point
+ cloud, pick a grasp where my thumb is a little bit away
+ from that, but aligned with that particular normal,
+ and just pick a bunch of grasps like that, rotating just
+ around in that one axis around that normal.
+ And I'll just go through and pick a bunch of them.
+ And I'll take the best five, or something like this.
+ How many did I keep?
+ I drew a handful of them.
+ That was a bad--
+, OK.
+ Each time, I don't know why it was disconnecting,
+ but I threw a bunch of random bins in the--
+ lots of objects in the bin.
+ I ran my little sampling strategy like this,
+ kept the best handful, and you get typically
+ a pretty diverse set of interesting grasps.
+ Yeah, see?
+ And then you just pick the best one, for instance.
+ I drew the best end, but typically, you
+ pick the best one.
+ Yes?
+ So when you're doing the sampling procedures,
+ is there any utility on maybe doing
+ a handful of gradient descent steps on your best candidate?
+ Or is it just trying to like, [INAUDIBLE]??
+ It's a good question.
+ The question is, is there any utility?
+ I said the optimization problem is hard.
+ Why not do at least a local optimization
+ after you've sampled?
+ I think the question is just how to shove that data, what data
+ to shove into the optimizer.
+ I think it'd be great to try.
+ People, I think, typically don't.
+ But I would like it.
+ OK, so this gets you pretty far.
+ So roughly, reach down, find the antipodal grasps,
+ avoid collisions, reject anything that has a collision,
+ keep the best one, grab, pick it up,
+ and drop it off at the other side.
+ That gets pretty far in clutter clearing.
+ What can't it do?
+ I hope you'll play around with those notebooks.
+ There are limits, I think, really,
+ sort of fundamental limits to the geometric-only version
+ of it.
+ It really doesn't have any sense of what an object is.
+ And we'll rewind that here.
+ So one of the things it does, for instance,
+ is it will do these double picks.
+ Sorry that the angle's not good there.
+ But there were two boxes with the sides
+ like happened to be lined up.
+ There's absolutely no way that it
+ can understand that those are two objects.
+ Just geometrically, it just doesn't have that concept.
+ So you could train a system that would understand
+ that those things should be separate objects
+ and should not be picked together.
+ But the geometry doesn't tell you it.
+ There's something more you have, some more information
+ you have.
+ Another common case would be like you pick up a hammer.
+ I think this is Rachel's research.
+ You pick up a hammer, right, or an eraser here.
+ And by my grasp candidate, this is just as good of a place
+ to pick up as this.
+ There's no concept of object anywhere in the scene.
+ So the notion that the center of mass
+ would be a good place to pick it up
+ doesn't exist anywhere in this metric.
+ I have just as good of a chance of picking it up here.
+ And then I've got a big torque that's
+ trying to wrench it out of my hand.
+ And that's just missing from this formulation.
+ Partial views.
+ So I do think that there's some opportunity for a deep learning
+ sort of approach to learn, having picked things up,
+ basically what the backside of an object looks like.
+ If I had a point cloud that was only coming from this side,
+ the geometry alone, the instantaneous geometry alone,
+ doesn't tell me anything about the backside.
+ And it would limit my ability to try to take a grasp
+ on something I can't see.
+ There's nothing I said here about hallucinating normals
+ in places where you don't have them.
+ But if I trained and picked things up and dropped it,
+ you could potentially learn something
+ that sort of hallucinated the backside of objects.
+ People do-- explicitly, there's a whole field
+ of sort of shape completion that you
+ could do with a neural network.
+ But this is doing it sort of implicitly.
+ If you just say, find good places
+ to grasp on these point clouds, you
+ might be able to find something that sort of does
+ a little bit of shape completion for you.
+ Another reason-- another limitation of this
+ would be the fact that we talked about our limitations of just
+ the point cloud sensors.
+ If you're fully dependent on point clouds
+ and you want to pick up a transparent bottle,
+ you're going to be sad.
+ So RGB-based methods are going to work better for that.
+ But overall, this is a pretty effective strategy.
+ It really can move a lot of different things out of the way
+ and feed your data--
+ feed your data pipeline.
+ I will say that when we started implementing this
+ and tried to make it useful, there
+ are a bunch of corner cases that you have to start dealing with.
+ So big shunk hand getting into the corners of the bins
+ is bad news.
+ It just doesn't-- or there's kinematic limitations
+ of the arm that come into play.
+ I separated now good positions from the hand.
+ I didn't actually think of the kinematic limitations
+ of the arms.
+ So in practice, things would have a way of--
+ the remote control would always get in the bottom back corner.
+ So if you watch that clutter clearing video,
+ again, you'll see that there's extra little things that
+ will try to brush things out of the corner into the center.
+ And then it'll flip back to the antipodal grasp.
+ But if you layer a few of those pretty simple, very general
+ point cloud-based operations together,
+ then you get a pretty darn good system.
+ Any other questions about that?
+ Yeah?
+ Just to clarify, the collision detection
+ does not just take the collision onto objects.
+ It's going to grasp it for other objects.
+ Awesome.
+ So the question is about the collision detection.
+ So we have collision geometry, simple collision geometries
+ of the gripper, maybe of the bins,
+ maybe of the cameras.
+ So we want those to not collide.
+ But we also want the points in the point cloud
+ to not collide with the geometry.
+ Now, if you had noisy point clouds,
+ you'd have to probably threshold that and allow
+ a little bit of collision.
+ But in general, I'm actually collision-checking
+ the point cloud with the closed-form geometry of the hand.
+ So if there's any points inside my simple geometry collision.
+ [INAUDIBLE]
+ Yes, there's no notion of--
+ so that's exactly right.
+ So I think if you were to think about grasp selection one
+ object at a time, you would get a very different answer
+ than what's a good grasp given you're sticking
+ this thing in clutter.
+ Because the places where you can actually grab
+ are very highly constrained by the objects that are around it.
+ And those collisions are essential to take into account.
+ So there is no objectness here.
+ It's just the big pile of points that
+ may be one or more objects that I should not collide with.
+ [AUDIO OUT]
+ Good.

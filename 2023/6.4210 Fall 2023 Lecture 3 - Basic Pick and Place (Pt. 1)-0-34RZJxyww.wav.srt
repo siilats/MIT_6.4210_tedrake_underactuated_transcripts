@@ -1,0 +1,4684 @@
+1
+00:00:00,000 --> 00:00:02,000
+ Okay, welcome back everybody.
+
+2
+00:00:02,000 --> 00:00:08,580
+ The one thing you'll learn if you don't, if you haven't taken a class from me before,
+
+3
+00:00:08,580 --> 00:00:13,760
+ but I really enjoy reading the feedback you do on the little last question, the survey on the problems.
+
+4
+00:00:13,760 --> 00:00:19,760
+ I read that carefully. I listen. I try to make things better. I can't fix the room. I've been trying to fix the room.
+
+5
+00:00:19,760 --> 00:00:23,240
+ It doesn't seem like we're gonna get a bigger room without a major disruption like
+
+6
+00:00:23,240 --> 00:00:25,880
+ class is suddenly Monday at 9 a.m.
+
+7
+00:00:26,360 --> 00:00:32,640
+ That didn't seem very good. So we're probably gonna stay in here. That was one thing people brought up that I don't have a great fix for.
+
+8
+00:00:32,640 --> 00:00:35,960
+ But some of the other things you said I will try to
+
+9
+00:00:35,960 --> 00:00:38,400
+ adjust and accommodate.
+
+10
+00:00:38,400 --> 00:00:40,400
+ One thing a lot of people ask like
+
+11
+00:00:40,400 --> 00:00:43,440
+ what the heck is a context? Like where is that even coming from?
+
+12
+00:00:43,440 --> 00:00:48,800
+ So now that you've thought about it for a little bit, let me just, if I had said this on day one you wouldn't have listened
+
+13
+00:00:48,800 --> 00:00:51,400
+ or you wouldn't have, it wouldn't have made sense. I think if I say it today
+
+14
+00:00:51,400 --> 00:00:56,000
+ it'll just make sense and then it's just, it's a very natural idea actually I think.
+
+15
+00:00:56,760 --> 00:00:59,000
+ So just a quick, before we get into the main
+
+16
+00:00:59,000 --> 00:01:04,720
+ idea, what is this context business?
+
+17
+00:01:04,720 --> 00:01:07,680
+ Okay, I
+
+18
+00:01:07,680 --> 00:01:15,840
+ said that we're gonna use the language of differential equations, difference equations in class, right? So you're gonna see a lot of
+
+19
+00:01:15,840 --> 00:01:19,600
+ models of systems or you're gonna use
+
+20
+00:01:19,600 --> 00:01:22,480
+ previously authored models of systems
+
+21
+00:01:22,480 --> 00:01:24,440
+ that
+
+22
+00:01:24,440 --> 00:01:29,120
+ start off looking a lot like your standard nonlinear difference equation, okay?
+
+23
+00:01:29,120 --> 00:01:33,640
+ But I'll just, let me just write it out here.
+
+24
+00:01:33,640 --> 00:01:39,120
+ Okay, so
+
+25
+00:01:39,120 --> 00:01:44,760
+ when I write a, you know, math equation like this, I'll use this as my state vector.
+
+26
+00:01:44,760 --> 00:01:48,320
+ This is the input vector.
+
+27
+00:01:48,320 --> 00:01:53,760
+ This is a pretty standard notation for random
+
+28
+00:01:54,760 --> 00:01:57,240
+ disturbances that could be entering the system.
+
+29
+00:01:57,240 --> 00:02:07,520
+ If you want to model stochastic systems with a, with a, just a deterministic F, then you bring them in through an input port.
+
+30
+00:02:07,520 --> 00:02:09,600
+ This is just the time.
+
+31
+00:02:09,600 --> 00:02:18,320
+ This could be any parameters, masses, lengths, stuff like this, fixed parameters that are not varying in time.
+
+32
+00:02:19,760 --> 00:02:26,080
+ Okay, so that might be like the richer, slightly richer form of a difference equation that you might write
+
+33
+00:02:26,080 --> 00:02:29,520
+ to author a system, whether it's a perception system or a
+
+34
+00:02:29,520 --> 00:02:32,760
+ physics system or a controller, okay?
+
+35
+00:02:32,760 --> 00:02:40,200
+ And actually the state and the input, they can be pretty rich, right? You can actually have discrete states,
+
+36
+00:02:40,200 --> 00:02:43,760
+ continuous states,
+
+37
+00:02:43,760 --> 00:02:47,120
+ you can have multiple inputs,
+
+38
+00:02:48,640 --> 00:02:50,640
+ multiple ports.
+
+39
+00:02:50,640 --> 00:02:55,360
+ Okay, and
+
+40
+00:02:55,360 --> 00:03:01,160
+ for any given system, there's a lot of different questions you might want to ask about that system. When it's a multi-body
+
+41
+00:03:01,160 --> 00:03:04,680
+ system, you might want to ask, "What's the center of mass of my robot right now?"
+
+42
+00:03:04,680 --> 00:03:10,840
+ And that would potentially be a function of x and u and w and n and p, and all those things are different,
+
+43
+00:03:10,840 --> 00:03:14,920
+ you know, for every system. The size of x, the type of x could be slightly different.
+
+44
+00:03:14,920 --> 00:03:17,560
+ Okay, so
+
+45
+00:03:17,560 --> 00:03:23,600
+ instead of asking an API where you pass in, you know, n strange arguments every time,
+
+46
+00:03:23,600 --> 00:03:30,960
+ we just did the natural thing, okay? And we said there's this struct out in the world, okay?
+
+47
+00:03:30,960 --> 00:03:34,560
+ Sorry for the pseudocode here.
+
+48
+00:03:34,560 --> 00:03:44,000
+ Context, which has in it x, u, w, n, and p.
+
+49
+00:03:45,880 --> 00:03:47,880
+ Okay, and
+
+50
+00:03:47,880 --> 00:03:53,000
+ so you just fill in that struct, and then you pass it in as a way to pass in all the arguments.
+
+51
+00:03:53,000 --> 00:03:59,600
+ That's all the context in it. Just one place to write down all the things. You know, some systems might have,
+
+52
+00:03:59,600 --> 00:04:04,080
+ you know, complicated x or u, if there's multiple input ports or whatever.
+
+53
+00:04:04,080 --> 00:04:07,040
+ Just think of it as the struct that you're going to pass into all the functions,
+
+54
+00:04:07,040 --> 00:04:13,480
+ so that it's kind of like your quarks or something in your, you know, your dictionary quarks in Python or something like that,
+
+55
+00:04:13,480 --> 00:04:16,960
+ but it's just trying to summarize all of that. Yeah?
+
+56
+00:04:16,960 --> 00:04:35,680
+ Great question. Yeah, so the context is the actual values. The system defines, like,
+
+57
+00:04:35,680 --> 00:04:41,880
+ knows the metadata about how big is x and stuff like this, and can check whether you've passed in a valid context.
+
+58
+00:04:42,360 --> 00:04:44,200
+ Yes?
+
+59
+00:04:44,200 --> 00:04:45,960
+ The context is always muted.
+
+60
+00:04:45,960 --> 00:04:51,280
+ That's the other point, important point, is that the system tries to be immutable over the duration of a simulation.
+
+61
+00:04:51,280 --> 00:04:57,680
+ So you load that in, and it means it's going to be fixed. All the parameters of the system stay fixed.
+
+62
+00:04:57,680 --> 00:05:01,440
+ There's no values that are going to be changing in the class structure of the system.
+
+63
+00:05:01,440 --> 00:05:07,720
+ Okay, this stuff changes on a per time step basis. Okay, so it's a nice separation. That way, if you
+
+64
+00:05:08,400 --> 00:05:14,000
+ if you know the context, then you can always rewind to a different context and get deterministic playback.
+
+65
+00:05:14,000 --> 00:05:18,800
+ You can save the context to disk, load it again. You know, that's the thing you need to know.
+
+66
+00:05:18,800 --> 00:05:21,400
+ And in the case of a diagram,
+
+67
+00:05:21,400 --> 00:05:30,400
+ the particular instantiation of, you know, what the context looks like
+
+68
+00:05:30,400 --> 00:05:36,400
+ is that you just have a list of subsystem contexts.
+
+69
+00:05:37,400 --> 00:05:41,400
+ [typing]
+
+70
+00:05:41,400 --> 00:05:46,400
+ An array of it, if you think of it in array language, okay?
+
+71
+00:05:46,400 --> 00:05:51,400
+ So that's the natural thing. Every little system knows how big its vector should be,
+
+72
+00:05:51,400 --> 00:05:57,400
+ how many input ports should it have, and then if you have a diagram, you just need a way to
+
+73
+00:05:57,400 --> 00:06:00,400
+ store the values of that at a higher level.
+
+74
+00:06:00,400 --> 00:06:02,400
+ Is that kind of clear?
+
+75
+00:06:02,400 --> 00:06:08,400
+ [audience member speaking]
+
+76
+00:06:08,400 --> 00:06:14,400
+ That is true. Procedurally, if you want to save it, every time you pass the context in, it's actually
+
+77
+00:06:14,400 --> 00:06:19,400
+ so Python throws away const-ness, right?
+
+78
+00:06:19,400 --> 00:06:24,400
+ The C++ is actually very strict about whether things are, whether methods are const or not.
+
+79
+00:06:24,400 --> 00:06:28,400
+ Some methods, most, many methods will not change your context, actually, intentionally.
+
+80
+00:06:28,400 --> 00:06:34,400
+ But some of them could, so making a copy of your context is a safe way to store it away.
+
+81
+00:06:34,400 --> 00:06:35,400
+ Yes?
+
+82
+00:06:35,400 --> 00:06:39,400
+ [audience member speaking]
+
+83
+00:06:39,400 --> 00:06:44,400
+ Yeah, so, I mean, you can do things like, if you want to take the gradient of the dynamics
+
+84
+00:06:44,400 --> 00:06:48,400
+ with respect to some elements, you can make this an autodiff variable, for instance,
+
+85
+00:06:48,400 --> 00:06:52,400
+ and pass that through. So a lot of the templating, for instance, on,
+
+86
+00:06:52,400 --> 00:06:56,400
+ in C++ it's templating, but if you want to pass different types through,
+
+87
+00:06:56,400 --> 00:07:03,400
+ that all happens at the level of the context. It supports, you know, more advanced operations like that.
+
+88
+00:07:03,400 --> 00:07:08,400
+ Replay, and even just sort of, I don't know, separation of church and state.
+
+89
+00:07:08,400 --> 00:07:14,400
+ I guess the system is sort of the, is the mathematical model, and the context is the data.
+
+90
+00:07:14,400 --> 00:07:19,400
+ Right, so it's, even just conceptually, I like them being separate.
+
+91
+00:07:19,400 --> 00:07:20,400
+ Yeah?
+
+92
+00:07:20,400 --> 00:07:26,400
+ [audience member speaking]
+
+93
+00:07:26,400 --> 00:07:29,400
+ The physics engine is a very general system.
+
+94
+00:07:29,400 --> 00:07:33,400
+ It exercises a lot of the pieces of the systems framework, but not all of them.
+
+95
+00:07:33,400 --> 00:07:38,400
+ Systems, they can be hybrid, they can be both discrete and continuous simultaneously.
+
+96
+00:07:38,400 --> 00:07:44,400
+ They can have events defined, like, so a physics engine might define an event of when you come into contact,
+
+97
+00:07:44,400 --> 00:07:51,400
+ but a, you know, a message arriving from, on a network protocol is a different type of event that some systems have.
+
+98
+00:07:51,400 --> 00:07:56,400
+ It can be multi-rate, they can, all these complicated things they can define.
+
+99
+00:07:56,400 --> 00:08:01,400
+ Many of the ones we'll define in the class are simple, discrete, or continuous time systems.
+
+100
+00:08:01,400 --> 00:08:06,400
+ [audience member speaking]
+
+101
+00:08:06,400 --> 00:08:12,400
+ Most of the, the definition, the metadata of, like, what is, what you expect in the context comes at the system level.
+
+102
+00:08:12,400 --> 00:08:16,400
+ So when you author the system, you're defining what are the parameters I expect.
+
+103
+00:08:16,400 --> 00:08:20,400
+ And then this is really just the data on the context.
+
+104
+00:08:20,400 --> 00:08:22,400
+ Cool, I love, yeah, great.
+
+105
+00:08:22,400 --> 00:08:27,400
+ So, but, I mean, that was a specific, narrow question, but if it's like, you know,
+
+106
+00:08:27,400 --> 00:08:32,400
+ what's the meaning of life, or, you know, could you write bigger, or, you know,
+
+107
+00:08:32,400 --> 00:08:37,400
+ I like that you're stopping for questions, or I hate that you're stopping for questions, just give me the feedback.
+
+108
+00:08:37,400 --> 00:08:44,400
+ I really like the feedback, and I really do try to dial it in.
+
+109
+00:08:44,400 --> 00:08:51,400
+ A few other people said, said that the last lecture was kind of a, you know,
+
+110
+00:08:51,400 --> 00:08:56,400
+ I mentioned PID control very quickly, and if you hadn't seen that before, that was too quick, right?
+
+111
+00:08:56,400 --> 00:09:01,400
+ But please understand that the last lecture was kind of, you know, we're not talking that much about hardware.
+
+112
+00:09:01,400 --> 00:09:05,400
+ That was meant to be one lecture to kind of expose you to the things, you know,
+
+113
+00:09:05,400 --> 00:09:09,400
+ you should know that there's a lot of stuff going on underneath the hood, right?
+
+114
+00:09:09,400 --> 00:09:13,400
+ So it was more of an exposure if you want, there's links if you want to read more.
+
+115
+00:09:13,400 --> 00:09:17,400
+ Today we're transitioning into the first, I would say, core content of the class,
+
+116
+00:09:17,400 --> 00:09:21,400
+ where we're going through kinematics and the basic structure of the pick and place.
+
+117
+00:09:21,400 --> 00:09:25,400
+ I'm going to be going more slowly, I'm going to be making, you know, stopping and asking you for examples,
+
+118
+00:09:25,400 --> 00:09:28,400
+ and hoping that you understand all the bits, okay?
+
+119
+00:09:28,400 --> 00:09:34,400
+ So, I tried to say that at the beginning of last time, but I hope it's clear that this is,
+
+120
+00:09:34,400 --> 00:09:42,400
+ you know, now we're getting into the equations that you really should make sure you try to understand completely.
+
+121
+00:09:42,400 --> 00:09:52,400
+ So, let me tell you the sort of sketch. Yeah, please.
+
+122
+00:09:52,400 --> 00:09:58,400
+ So, the levels of, the question was what the heck is this diagram and why is that useful, right?
+
+123
+00:09:58,400 --> 00:10:01,400
+ And I think we're going to see more and more examples, even today,
+
+124
+00:10:01,400 --> 00:10:05,400
+ but the dynamical systems that we will build are going to be very complicated.
+
+125
+00:10:05,400 --> 00:10:13,400
+ They're going to contain perception systems, planning systems, control systems, physics systems, rendering engines.
+
+126
+00:10:13,400 --> 00:10:19,400
+ The diagram abstraction is the way that you build hierarchies of more and more complicated systems
+
+127
+00:10:19,400 --> 00:10:22,400
+ by combining simple systems together.
+
+128
+00:10:22,400 --> 00:10:27,400
+ So it allows you to author, you could, you know, have your rendering engine friend
+
+129
+00:10:27,400 --> 00:10:34,400
+ an exquisite rendering engine without knowing anything about, you know, mechanics or control.
+
+130
+00:10:34,400 --> 00:10:39,400
+ You encapsulate that in a system and then you can compose them together and build really complicated systems.
+
+131
+00:10:39,400 --> 00:10:46,400
+ It's the way to build to the complexity that we're trying to address.
+
+132
+00:10:46,400 --> 00:10:52,400
+ Okay, so let me tell you kind of what we're going to do today at a view from a thousand feet here,
+
+133
+00:10:52,400 --> 00:10:56,400
+ at 10,000 feet, and then we're going to go through it carefully.
+
+134
+00:10:56,400 --> 00:11:05,400
+ So, wait for my slide to load here.
+
+135
+00:11:05,400 --> 00:11:06,400
+ Here we go.
+
+136
+00:11:06,400 --> 00:11:09,400
+ Okay, super simple.
+
+137
+00:11:09,400 --> 00:11:13,400
+ We've got, we've picked up our KUKA, our Shunk WSG.
+
+138
+00:11:13,400 --> 00:11:16,400
+ I used a little red brick last time.
+
+139
+00:11:16,400 --> 00:11:24,400
+ The goal today is to program sort of the complete stack to do the simplest manipulation possible, okay?
+
+140
+00:11:24,400 --> 00:11:26,400
+ You've got a red brick over here.
+
+141
+00:11:26,400 --> 00:11:29,400
+ You want to put it down over here.
+
+142
+00:11:29,400 --> 00:11:34,400
+ And I want you to understand the equations required and even a little bit of the code required to make that happen,
+
+143
+00:11:34,400 --> 00:11:37,400
+ all the steps to make that happen.
+
+144
+00:11:37,400 --> 00:11:43,400
+ With one major assumption, I'm going to assume that the perception is kind of oracular.
+
+145
+00:11:43,400 --> 00:11:48,400
+ That's what sometimes people will say, like it was given from an oracle, like the Oracle of Delphi or something, right?
+
+146
+00:11:48,400 --> 00:11:54,400
+ Oracular perception means someone told me the true position of the brick in the world.
+
+147
+00:11:54,400 --> 00:11:59,400
+ We'll make, we'll do the perception from cameras in a follow-on lecture.
+
+148
+00:11:59,400 --> 00:12:06,400
+ Okay, so someone told me where the red brick was, but now I need to program the robot to go pick it up, set it down.
+
+149
+00:12:06,400 --> 00:12:07,400
+ Simple, okay?
+
+150
+00:12:07,400 --> 00:12:15,400
+ But we want to work through, I think working through that example will get you, will bring us through a lot of core topics.
+
+151
+00:12:15,400 --> 00:12:18,400
+ So a lot of that is going to be about kinematics.
+
+152
+00:12:18,400 --> 00:12:20,400
+ That's a focus for today.
+
+153
+00:12:20,400 --> 00:12:28,400
+ And kinematics is really, it's the study of geometry, which is going to be relevant for simple tasks like this,
+
+154
+00:12:28,400 --> 00:12:31,400
+ but also for, you know, perception tasks.
+
+155
+00:12:31,400 --> 00:12:34,400
+ You're building nerfs in perception.
+
+156
+00:12:34,400 --> 00:12:37,400
+ That's a geometry problem.
+
+157
+00:12:37,400 --> 00:12:40,400
+ Okay, so it's going to be a lot of thinking about kinematics.
+
+158
+00:12:40,400 --> 00:12:42,400
+ And this is roughly how it's going to go.
+
+159
+00:12:42,400 --> 00:12:44,400
+ This is the recipe for picking up the brick, okay?
+
+160
+00:12:44,400 --> 00:12:48,400
+ We're going to talk about kinematic frames.
+
+161
+00:12:48,400 --> 00:12:54,400
+ A lot of classes that talk about kinematics will write sine and cosine and things on the board.
+
+162
+00:12:54,400 --> 00:12:56,400
+ I'm going to try to not do that.
+
+163
+00:12:56,400 --> 00:12:58,400
+ The software can do that for you.
+
+164
+00:12:58,400 --> 00:13:06,400
+ I'm going to lift it up a level and talk about spatial algebra, basic algebra of how you compose frames and do operations on that.
+
+165
+00:13:06,400 --> 00:13:13,400
+ I think that's the right level where you can do a lot, understand a lot, and work with, you know, the lower level equations.
+
+166
+00:13:13,400 --> 00:13:17,400
+ We'll ask you to do once on the P-set, but not mostly in the class.
+
+167
+00:13:17,400 --> 00:13:22,400
+ Okay, so we're going to talk about kinematic frames and spatial algebra.
+
+168
+00:13:22,400 --> 00:13:29,400
+ And then from that, we're going to just make a very simple sort of pretend the robot wasn't even there.
+
+169
+00:13:29,400 --> 00:13:40,400
+ Just think about the kinematics of the end effector, okay, of the gripper, and just imagine what I want my gripper to do in space and time.
+
+170
+00:13:40,400 --> 00:13:45,400
+ That'll be the second step is to just come up with my dream gripper motion.
+
+171
+00:13:45,400 --> 00:13:53,400
+ And then the third step is going to be to connect the joint angles, the commands I actually have to send to the robot,
+
+172
+00:13:53,400 --> 00:14:01,400
+ in order to try to execute as closely as possible my dream gripper trajectory.
+
+173
+00:14:01,400 --> 00:14:08,400
+ And we'll talk about how that is really just the spatial transforms that we will have already learned,
+
+174
+00:14:08,400 --> 00:14:13,400
+ applied recursively through the kinematic chain.
+
+175
+00:14:13,400 --> 00:14:22,400
+ And then the way we're going to convert our kinematic of the arm understanding into motions is we're going to write our first controller.
+
+176
+00:14:22,400 --> 00:14:25,400
+ We'll get halfway through this.
+
+177
+00:14:25,400 --> 00:14:32,400
+ I'll call it the pseudo-inverse controller, and today I'm going to just write inverse and tell you that you should be suspicious of that.
+
+178
+00:14:32,400 --> 00:14:40,400
+ But I'm going to write inverse for simplicity today, and then we'll study more what happens, whether that is invertible in general, and cases like that.
+
+179
+00:14:40,400 --> 00:14:45,400
+ But that's going to use Jacobians and different velocities.
+
+180
+00:14:45,400 --> 00:14:47,400
+ That's just the high-level recipe.
+
+181
+00:14:47,400 --> 00:14:55,400
+ When you're done, I hope you'll understand the basics of those pieces, and I hope the notes will complement if you have more questions.
+
+182
+00:14:55,400 --> 00:14:56,400
+ Yes?
+
+183
+00:14:56,400 --> 00:15:00,400
+ [INAUDIBLE]
+
+184
+00:15:00,400 --> 00:15:06,400
+ It'll be very explicit. You'll see exactly what we assume. I promise.
+
+185
+00:15:06,400 --> 00:15:14,400
+ Okay. So just to say it again, a lot of times when people are --
+
+186
+00:15:14,400 --> 00:15:24,400
+ the first lecture you might take in a robotics class about kinematics would start using a lot of trigonometry, and I'm mostly not going to do that.
+
+187
+00:15:24,400 --> 00:15:37,400
+ I'm going to try to talk at a slightly higher level, the sort of algebra level of kinematics, and you'll see exactly what I mean by that.
+
+188
+00:15:37,400 --> 00:15:42,400
+ I do have to start with just the definition, some basic definitions, of course.
+
+189
+00:15:42,400 --> 00:15:48,400
+ So let's just start with a point in 3D space.
+
+190
+00:15:48,400 --> 00:15:53,400
+ Everything I write today will be embedded in 3D, okay?
+
+191
+00:15:53,400 --> 00:15:58,400
+ Three axes, just like the real world, okay?
+
+192
+00:15:58,400 --> 00:16:06,400
+ And I'll call it the point A.
+
+193
+00:16:06,400 --> 00:16:13,400
+ I'm going to use P of A to denote -- this is P for position, not for point.
+
+194
+00:16:13,400 --> 00:16:20,400
+ This is the position of A, okay?
+
+195
+00:16:20,400 --> 00:16:28,400
+ At some point, we're going to have to think of this as three numbers, like an XYZ position, okay?
+
+196
+00:16:28,400 --> 00:16:35,400
+ But even without that, it's just -- abstractly, there is something that is a position, and I don't even have to write it down on the computer.
+
+197
+00:16:35,400 --> 00:16:39,400
+ I can operate on it as just a concept of the position.
+
+198
+00:16:39,400 --> 00:16:41,400
+ But you have to be a little careful.
+
+199
+00:16:41,400 --> 00:16:50,400
+ Position is -- position only makes sense if it's in a coordinate frame or if it's relative to something, okay?
+
+200
+00:16:50,400 --> 00:17:06,400
+ So what I'm actually going to use is a slightly richer notation here, which is I'm going to put a B as a superscript on the left, which feels a little icky.
+
+201
+00:17:06,400 --> 00:17:16,400
+ But I promise when you start putting them together and the rules of composition, you know, are going to work because the terms match, it'll be okay.
+
+202
+00:17:16,400 --> 00:17:18,400
+ It'll be justified then, okay?
+
+203
+00:17:18,400 --> 00:17:27,400
+ So this is the position of A relative to B, right?
+
+204
+00:17:27,400 --> 00:17:40,400
+ So if I have B here, A here, okay, this is a vector, you know, telling me where A is relative to B.
+
+205
+00:17:40,400 --> 00:17:50,400
+ But if I need to now write that down in three numbers, I have to somehow choose the coordinate frame that I'm expressing that in, okay?
+
+206
+00:17:50,400 --> 00:18:19,400
+ So I'm going to use a subscript over here for the frame that I'm expressed in, which just tells me what does X mean, what does Y mean, what does Z mean?
+
+207
+00:18:19,400 --> 00:18:24,400
+ Okay.
+
+208
+00:18:24,400 --> 00:18:30,400
+ So somewhere here I've got C.
+
+209
+00:18:30,400 --> 00:18:36,400
+ Many colors, but it's important.
+
+210
+00:18:36,400 --> 00:18:48,400
+ This is my frame C where I'm going to use X, Y, Z, okay?
+
+211
+00:18:48,400 --> 00:18:54,400
+ And you'll see that I'm going to always try to write those colors, X, Y, and Z.
+
+212
+00:18:54,400 --> 00:19:06,400
+ And you'll see not only in Drake and in most simulators, whenever you see a coordinate frame displayed, the X axis is red, the Y axis is green, the Z axis is blue.
+
+213
+00:19:06,400 --> 00:19:08,400
+ And that's just like your signature.
+
+214
+00:19:08,400 --> 00:19:13,400
+ You can always, in anybody's renderer, you can sort of tell which direction things are going in.
+
+215
+00:19:13,400 --> 00:19:18,400
+ The way to remember that is sort of simple.
+
+216
+00:19:18,400 --> 00:19:24,400
+ X, Y, Z goes to R, E, V.
+
+217
+00:19:24,400 --> 00:19:26,400
+ Okay?
+
+218
+00:19:26,400 --> 00:19:30,400
+ Some people are like, "I never realized. I've been looking at those colors the whole time, and I never realized it was that."
+
+219
+00:19:30,400 --> 00:19:33,400
+ It's useful to know, okay?
+
+220
+00:19:33,400 --> 00:19:40,400
+ So we might be doing a lot of this today, so we're always going to use the right-hand rule.
+
+221
+00:19:40,400 --> 00:19:46,400
+ And our frames are going to be, you know, so always right-hand rule, X, Y, Z.
+
+222
+00:19:46,400 --> 00:19:58,400
+ And in general, our world frames, there's a few special frames.
+
+223
+00:19:58,400 --> 00:20:02,400
+ We'll use W to denote the world frame.
+
+224
+00:20:02,400 --> 00:20:05,400
+ So we'll pick some canonical 0, 0, 0.
+
+225
+00:20:05,400 --> 00:20:08,400
+ We use it to write everything in the world, okay?
+
+226
+00:20:08,400 --> 00:20:13,400
+ And because we're using this right-hand rule, we're going to put positive X.
+
+227
+00:20:13,400 --> 00:20:18,400
+ If I were to put my robot down in this coordinate frame, we'd call that vehicle coordinates.
+
+228
+00:20:18,400 --> 00:20:19,400
+ Right?
+
+229
+00:20:19,400 --> 00:20:23,400
+ So forward would be sort of positive X.
+
+230
+00:20:23,400 --> 00:20:26,400
+ To the left is positive Y.
+
+231
+00:20:26,400 --> 00:20:28,400
+ And up is Z.
+
+232
+00:20:28,400 --> 00:20:39,400
+ That's sometimes called vehicle coordinates.
+
+233
+00:20:39,400 --> 00:20:42,400
+ As opposed to, for instance, airplanes.
+
+234
+00:20:42,400 --> 00:20:45,400
+ Sometimes if you do aero-astro, they'll go upside down.
+
+235
+00:20:45,400 --> 00:20:51,400
+ Everybody wants to still have right-hand rule, but some people like Y positive to be right,
+
+236
+00:20:51,400 --> 00:20:54,400
+ which is sort of reasonable until Z is suddenly pointing down.
+
+237
+00:20:54,400 --> 00:20:55,400
+ I don't like that at all.
+
+238
+00:20:55,400 --> 00:21:02,400
+ So we're going to go with vehicle coordinates, okay?
+
+239
+00:21:02,400 --> 00:21:11,400
+ All right, so this is our slightly heavy but super useful notation with superscripts and subscripts.
+
+240
+00:21:11,400 --> 00:21:16,400
+ So this is the point of interest.
+
+241
+00:21:16,400 --> 00:21:20,400
+ This is what it's relative to or measured in sometimes we say.
+
+242
+00:21:20,400 --> 00:21:24,400
+ And this is the expressed in, tells me what the coordinate system is.
+
+243
+00:21:24,400 --> 00:21:29,400
+ This one is only needed once I have to write it down in three numbers on the computer, for instance.
+
+244
+00:21:29,400 --> 00:21:32,400
+ But conceptually, that is the quantity.
+
+245
+00:21:32,400 --> 00:21:36,400
+ This is just representation of that quantity.
+
+246
+00:21:36,400 --> 00:21:40,400
+ And in general, all these rules are written up carefully in the notes.
+
+247
+00:21:40,400 --> 00:21:46,400
+ But if I were to write a frame up here, so I call this a point.
+
+248
+00:21:46,400 --> 00:21:48,400
+ I could write a frame up here.
+
+249
+00:21:48,400 --> 00:21:55,400
+ If I were to put a frame up here, then I would say it's the origin of the frame is what I'm taking the position of.
+
+250
+00:21:55,400 --> 00:21:58,400
+ You can sort of, if someone says like, what's the position of a frame?
+
+251
+00:21:58,400 --> 00:22:01,400
+ They're talking about the origin of that frame.
+
+252
+00:22:01,400 --> 00:22:07,400
+ So, good.
+
+253
+00:22:07,400 --> 00:22:15,400
+ In this case, this is just asking about what's the position of A relative to B expressed in C.
+
+254
+00:22:15,400 --> 00:22:24,400
+ I'm just saying if I said frame A, then that would be the position of the origin of frame A.
+
+255
+00:22:24,400 --> 00:22:27,400
+ Okay, so just a couple more things about that notation.
+
+256
+00:22:27,400 --> 00:22:29,400
+ It really matters.
+
+257
+00:22:29,400 --> 00:22:33,400
+ Okay, so I, for years, I mean, I was like, I made a lot of robots work.
+
+258
+00:22:33,400 --> 00:22:38,400
+ I was in robotics for a while and I wasn't super careful about my notation.
+
+259
+00:22:38,400 --> 00:22:43,400
+ And then I started collaborating with some people that were like religious about notation.
+
+260
+00:22:43,400 --> 00:22:45,400
+ And I thought, oh yeah, that's cute.
+
+261
+00:22:45,400 --> 00:22:47,400
+ You know, I don't really need that stuff.
+
+262
+00:22:47,400 --> 00:22:53,400
+ And then I kind of, over the collaboration, I realized they get things right faster than me.
+
+263
+00:22:53,400 --> 00:22:59,400
+ And like, they just make less bugs and they less often have their fingers in the air kind of going like this.
+
+264
+00:22:59,400 --> 00:23:05,400
+ Okay, the difference, especially if you're writing complicated, you know, multibody simulators,
+
+265
+00:23:05,400 --> 00:23:09,400
+ the difference of getting this right versus not is big.
+
+266
+00:23:09,400 --> 00:23:11,400
+ It really, I'm completely converted.
+
+267
+00:23:11,400 --> 00:23:15,400
+ It's worth a little bit of upfront cost being consistent in our notation.
+
+268
+00:23:15,400 --> 00:23:17,400
+ It will save you time later.
+
+269
+00:23:17,400 --> 00:23:20,400
+ Because inevitably, and maybe some of you have done this, you'll like,
+
+270
+00:23:20,400 --> 00:23:22,400
+ you'll write your basic, you know, transform code or whatever,
+
+271
+00:23:22,400 --> 00:23:24,400
+ and then something was kind of upside down.
+
+272
+00:23:24,400 --> 00:23:26,400
+ So you're like, oh, maybe I'll flip the order of that.
+
+273
+00:23:26,400 --> 00:23:29,400
+ You know, maybe I was supposed to rotate this one first.
+
+274
+00:23:29,400 --> 00:23:33,400
+ And then that thing, if you haven't done it, you will do it sometime in your life.
+
+275
+00:23:33,400 --> 00:23:39,400
+ Okay, unless you just adopt this notation straight up or a similar notation straight up.
+
+276
+00:23:39,400 --> 00:23:41,400
+ It really does make a difference.
+
+277
+00:23:41,400 --> 00:23:44,400
+ Okay, it is a little heavy to write all the time.
+
+278
+00:23:44,400 --> 00:23:46,400
+ So we have a couple of shorthands.
+
+279
+00:23:46,400 --> 00:23:54,400
+ So if I were to write PABB, then I would be okay summarizing that.
+
+280
+00:23:54,400 --> 00:24:02,400
+ Okay, so if we leave off the subscript, then that's just saying that the measured in frame is the same as the expressed in frame.
+
+281
+00:24:02,400 --> 00:24:04,400
+ Because that's pretty common to do.
+
+282
+00:24:04,400 --> 00:24:13,400
+ And the other one, if I were to just write PA, then that would be assuming that it was in the world frame.
+
+283
+00:24:13,400 --> 00:24:15,400
+ Okay.
+
+284
+00:24:15,400 --> 00:24:19,400
+ And then because we do a lot of this in code, we actually have a transcription of this too.
+
+285
+00:24:19,400 --> 00:24:26,400
+ So if you see it in code, you can't easily in your C++ or Python code write, you know, all the superscripts and subscripts.
+
+286
+00:24:26,400 --> 00:24:31,400
+ But you'll see us writing, you know, for this one, I'll do it over here.
+
+287
+00:24:31,400 --> 00:24:40,400
+ For this one in code, you'll see P_BA_C maps to this.
+
+288
+00:24:40,400 --> 00:24:42,400
+ Right.
+
+289
+00:24:42,400 --> 00:24:44,400
+ It works. It works.
+
+290
+00:24:44,400 --> 00:24:52,400
+ You'll hate it for a couple days, and then one day it'll save you, and then you'll be converted.
+
+291
+00:24:52,400 --> 00:24:56,400
+ Okay, so that's positions, which is most of, you know, a lot of what we need.
+
+292
+00:24:56,400 --> 00:24:59,400
+ The other obvious thing we need is rotation.
+
+293
+00:24:59,400 --> 00:25:03,400
+ Rotations are a little bit more involved.
+
+294
+00:25:03,400 --> 00:25:06,400
+ At the algebra level, though, they're not more involved.
+
+295
+00:25:06,400 --> 00:25:22,400
+ In the implementation details, they are significantly more involved.
+
+296
+00:25:22,400 --> 00:25:43,400
+ So we'll do -- this is the rotation of frame A relative to frame B here.
+
+297
+00:25:43,400 --> 00:26:04,400
+ More like I wrote up there, just to keep it consistent.
+
+298
+00:26:04,400 --> 00:26:05,400
+ Okay.
+
+299
+00:26:05,400 --> 00:26:09,400
+ And that mostly just works.
+
+300
+00:26:09,400 --> 00:26:18,400
+ Now, the choice of using a capital R, many of you will immediately associate that with a rotation matrix.
+
+301
+00:26:18,400 --> 00:26:20,400
+ And that is reasonable.
+
+302
+00:26:20,400 --> 00:26:24,400
+ You can actually go through the entire pipeline thinking about that like a rotation matrix.
+
+303
+00:26:24,400 --> 00:26:28,400
+ But I actually mean this one level abstracted from that.
+
+304
+00:26:28,400 --> 00:26:31,400
+ This is just a rotation, represented however you like.
+
+305
+00:26:31,400 --> 00:26:36,400
+ And we will at times use different representations for rotation.
+
+306
+00:26:36,400 --> 00:26:51,400
+ So some of the ones that you'll see, we'll see rotation matrix, which would be a 3 by 3 orthonormal matrix.
+
+307
+00:26:51,400 --> 00:26:55,400
+ You'll see axis angle.
+
+308
+00:26:55,400 --> 00:27:02,400
+ You'll see unit quaternions.
+
+309
+00:27:02,400 --> 00:27:21,400
+ You'll see Euler angles, which we will always spell out as roll pitch yaw, because there are many Euler angles.
+
+310
+00:27:21,400 --> 00:27:25,400
+ This one I'm not going through all the details of right now.
+
+311
+00:27:25,400 --> 00:27:30,400
+ I just want you to know that there are many ways to represent a rotation on disk.
+
+312
+00:27:30,400 --> 00:27:32,400
+ And we have different names and different representations.
+
+313
+00:27:32,400 --> 00:27:35,400
+ We'll dig into those details when we need them later.
+
+314
+00:27:35,400 --> 00:27:39,400
+ But this could be used for any of those.
+
+315
+00:27:39,400 --> 00:27:49,400
+ This is the mathematical concept of a rotation.
+
+316
+00:27:49,400 --> 00:27:51,400
+ So let me ask a question then.
+
+317
+00:27:51,400 --> 00:27:57,400
+ So let's say I have two frames.
+
+318
+00:27:57,400 --> 00:28:00,400
+ I'm going to not do the colors this time.
+
+319
+00:28:00,400 --> 00:28:03,400
+ I'll only do it when I need to do it, to be clear here, I guess.
+
+320
+00:28:03,400 --> 00:28:06,400
+ But x, y, z.
+
+321
+00:28:06,400 --> 00:28:11,400
+ I've got another frame.
+
+322
+00:28:11,400 --> 00:28:15,400
+ x, y, z.
+
+323
+00:28:15,400 --> 00:28:40,400
+ So question, when does PBA in D equal PBA in C?
+
+324
+00:28:40,400 --> 00:28:43,400
+ Say that louder.
+
+325
+00:28:43,400 --> 00:28:47,400
+ Or what?
+
+326
+00:28:47,400 --> 00:28:51,400
+ So the proposal was aligned and on top of each other.
+
+327
+00:28:51,400 --> 00:28:53,400
+ Just aligned, right?
+
+328
+00:28:53,400 --> 00:29:06,400
+ So as long as the rotation between C and D is the identity,
+
+329
+00:29:06,400 --> 00:29:13,400
+ then the relative position of A and B is the same.
+
+330
+00:29:13,400 --> 00:29:14,400
+ OK?
+
+331
+00:29:14,400 --> 00:29:20,400
+ That's just a quick exercise in the notation and thinking about what it means to have the frames.
+
+332
+00:29:20,400 --> 00:29:22,400
+ I've got a couple others that may be useful here.
+
+333
+00:29:22,400 --> 00:29:27,400
+ So we're going to see them on the robot station.
+
+334
+00:29:27,400 --> 00:29:29,400
+ OK?
+
+335
+00:29:29,400 --> 00:29:35,400
+ The gripper frame, you know, it just depends on what the manufacturer chose as their canonical frame for the gripper.
+
+336
+00:29:35,400 --> 00:29:38,400
+ Because that's what's in the robot description format.
+
+337
+00:29:38,400 --> 00:29:39,400
+ OK?
+
+338
+00:29:39,400 --> 00:29:45,400
+ And then we have an object frame, which is our red brick.
+
+339
+00:29:45,400 --> 00:29:51,400
+ So given there's an object frame from some CAD model here and there's a gripper frame here,
+
+340
+00:29:51,400 --> 00:29:54,400
+ now you have to think about your color coding.
+
+341
+00:29:54,400 --> 00:30:02,400
+ What are the possible values for P of O relative to G?
+
+342
+00:30:02,400 --> 00:30:08,400
+ And again, the G down here would then be implied, right?
+
+343
+00:30:08,400 --> 00:30:10,400
+ Yeah.
+
+344
+00:30:10,400 --> 00:30:18,400
+ Why do you say it must be B?
+
+345
+00:30:18,400 --> 00:30:24,400
+ Yes, the dominant term here, the way I think of it, is the dominant term here is in positive Y.
+
+346
+00:30:24,400 --> 00:30:26,400
+ Which looks like B to me.
+
+347
+00:30:26,400 --> 00:30:27,400
+ Right?
+
+348
+00:30:27,400 --> 00:30:28,400
+ All right.
+
+349
+00:30:28,400 --> 00:30:33,400
+ So this is here, this is, you know, this is great.
+
+350
+00:30:33,400 --> 00:30:44,400
+ If I were to put a W there now, then the answer changes.
+
+351
+00:30:44,400 --> 00:30:48,400
+ What would it be then?
+
+352
+00:30:48,400 --> 00:30:54,400
+ Now the object relative to the gripper, which is this factor, right?
+
+353
+00:30:54,400 --> 00:31:00,400
+ But written in the world frame.
+
+354
+00:31:00,400 --> 00:31:02,400
+ Any other votes?
+
+355
+00:31:02,400 --> 00:31:04,400
+ You agree?
+
+356
+00:31:04,400 --> 00:31:06,400
+ Yeah.
+
+357
+00:31:06,400 --> 00:31:07,400
+ All right.
+
+358
+00:31:07,400 --> 00:31:13,400
+ So this is the level, OK, of roughly of that we're going to want to be able to think about things.
+
+359
+00:31:13,400 --> 00:31:14,400
+ What these frames are.
+
+360
+00:31:14,400 --> 00:31:19,400
+ Now the math that gets you between those frames has a lot of sines and cosines.
+
+361
+00:31:19,400 --> 00:31:27,400
+ But the rules of composition are actually pretty simple and they form an algebra.
+
+362
+00:31:27,400 --> 00:31:29,400
+ There's simple rules of composition.
+
+363
+00:31:29,400 --> 00:31:35,400
+ When can you add positions together and get another position that's in the same frame?
+
+364
+00:31:35,400 --> 00:31:37,400
+ When can you multiply?
+
+365
+00:31:37,400 --> 00:31:39,400
+ When can you take inverses?
+
+366
+00:31:39,400 --> 00:31:48,400
+ OK, so that's what we'll do here is we just need to define the same kind of ideas, same kind of quantities,
+
+367
+00:31:48,400 --> 00:31:54,400
+ but in, I want to define the rules of the composition.
+
+368
+00:31:54,400 --> 00:32:01,400
+ Any questions about that before I go?
+
+369
+00:32:01,400 --> 00:32:03,400
+ Yes.
+
+370
+00:32:03,400 --> 00:32:06,400
+ And the answer was?
+
+371
+00:32:06,400 --> 00:32:09,400
+ It was expressed in G.
+
+372
+00:32:09,400 --> 00:32:14,400
+ So the shorthand is if there's nothing here, it means the same, you're expressed in the relative.
+
+373
+00:32:14,400 --> 00:32:17,400
+ Yeah, good.
+
+374
+00:32:17,400 --> 00:32:20,400
+ Do people like me going over there or staying in the middle?
+
+375
+00:32:20,400 --> 00:32:23,400
+ I know you probably want me to stay in the middle.
+
+376
+00:32:23,400 --> 00:32:24,400
+ Does it matter?
+
+377
+00:32:24,400 --> 00:32:27,400
+ Yeah.
+
+378
+00:32:27,400 --> 00:32:31,400
+ I'll try to stay in the middle, but if it gets really like, I want four boards, then I'll move over.
+
+379
+00:32:31,400 --> 00:32:33,400
+ Someone had a question back there?
+
+380
+00:32:33,400 --> 00:32:41,400
+ Yeah.
+
+381
+00:32:41,400 --> 00:32:42,400
+ I see.
+
+382
+00:32:42,400 --> 00:32:48,400
+ So I kind of painted the, yeah, you're right.
+
+383
+00:32:48,400 --> 00:32:53,400
+ I should have probably drawn explicitly W to make that more clear.
+
+384
+00:32:53,400 --> 00:32:54,400
+ Yeah.
+
+385
+00:32:54,400 --> 00:32:57,400
+ I guess I've just looked at this visualization so much.
+
+386
+00:32:57,400 --> 00:32:58,400
+ You're right.
+
+387
+00:32:58,400 --> 00:33:00,400
+ I should have put an explicit W there to make that clear.
+
+388
+00:33:00,400 --> 00:33:01,400
+ Good call.
+
+389
+00:33:01,400 --> 00:33:06,400
+ That's my bad.
+
+390
+00:33:06,400 --> 00:33:10,400
+ OK.
+
+391
+00:33:10,400 --> 00:33:13,400
+ Here's the beginnings of our spatial algebra.
+
+392
+00:33:13,400 --> 00:33:17,400
+ And it really doesn't take much to develop.
+
+393
+00:33:17,400 --> 00:33:22,400
+ But having the rules in your back pocket is going to work well for you.
+
+394
+00:33:22,400 --> 00:33:36,400
+ So first we have the basic rule of addition, which is that positions can add.
+
+395
+00:33:36,400 --> 00:33:47,400
+ If I have this position and this position, then that is equivalent to this position,
+
+396
+00:33:47,400 --> 00:34:07,400
+ as long as they're in the same-- they're expressed in the same frame.
+
+397
+00:34:07,400 --> 00:34:08,400
+ OK.
+
+398
+00:34:08,400 --> 00:34:13,400
+ So now you can start seeing maybe why the superscript weirdness starts to pay off.
+
+399
+00:34:13,400 --> 00:34:20,400
+ Visually, as long as this matches this, then I'm allowed to move things along.
+
+400
+00:34:20,400 --> 00:34:23,400
+ OK.
+
+401
+00:34:23,400 --> 00:34:33,400
+ Because this is true, there's also an additive inverse.
+
+402
+00:34:33,400 --> 00:34:52,400
+ So PAB in F is negative BA in F. Subtract frames-- or subtract positions, too.
+
+403
+00:34:52,400 --> 00:34:58,400
+ But what if you get positions that are in different frames?
+
+404
+00:34:58,400 --> 00:35:04,400
+ The way that you change the expressed in frame is using a rotation,
+
+405
+00:35:04,400 --> 00:35:07,400
+ the rotation between the two frames.
+
+406
+00:35:07,400 --> 00:35:20,400
+ So multiplication by the rotation matrix.
+
+407
+00:35:20,400 --> 00:35:35,400
+ So PABG-- OK.
+
+408
+00:35:35,400 --> 00:35:42,400
+ So if I'm expressed in-- I'll write that even a little lower to make sure that it's clear that that's a superscript, rather.
+
+409
+00:35:42,400 --> 00:35:46,400
+ If I started in F and I want to express this in a different frame,
+
+410
+00:35:46,400 --> 00:35:52,400
+ then I multiply it by the rotation matrix that defines the transform from F to G.
+
+411
+00:35:52,400 --> 00:35:56,400
+ That's addressing the lower element.
+
+412
+00:35:56,400 --> 00:35:59,400
+ Now, that's actually initially a little bit surprising.
+
+413
+00:35:59,400 --> 00:36:05,400
+ You would think if the frames can change not only in rotation but also in position,
+
+414
+00:36:05,400 --> 00:36:09,400
+ you'd think that it would need to understand the position difference,
+
+415
+00:36:09,400 --> 00:36:13,400
+ the difference of the origins between F and G also.
+
+416
+00:36:13,400 --> 00:36:17,400
+ But because of this thing that I've now erased, right,
+
+417
+00:36:17,400 --> 00:36:23,400
+ the fact that the only thing that matters of the relative position is the orientation,
+
+418
+00:36:23,400 --> 00:36:29,400
+ it's true that actually only the rotation matrix is needed to change the expressed in frame.
+
+419
+00:36:29,400 --> 00:36:30,400
+ Yes?
+
+420
+00:36:30,400 --> 00:36:36,400
+ [INAUDIBLE]
+
+421
+00:36:36,400 --> 00:36:39,400
+ You can take and put it here.
+
+422
+00:36:39,400 --> 00:36:49,400
+ So you can-- so there are--
+
+423
+00:36:49,400 --> 00:36:50,400
+ That wouldn't compute.
+
+424
+00:36:50,400 --> 00:36:52,400
+ You'd need to do a transpose or something, right?
+
+425
+00:36:52,400 --> 00:36:56,400
+ This is a 3 by 1 vector.
+
+426
+00:36:56,400 --> 00:36:57,400
+ Yeah, yeah.
+
+427
+00:36:57,400 --> 00:36:59,400
+ So-- well, sorry.
+
+428
+00:36:59,400 --> 00:37:00,400
+ OK.
+
+429
+00:37:00,400 --> 00:37:05,400
+ It is abstract, but still I think even if you embed it, you can see why that would be a slightly strange quantity.
+
+430
+00:37:05,400 --> 00:37:06,400
+ Yeah.
+
+431
+00:37:06,400 --> 00:37:10,400
+ You want to keep it in the abstract level, but you can, of course,
+
+432
+00:37:10,400 --> 00:37:27,400
+ take inverses of this rotation matrix, which we'll-- in fact, I'll do that next.
+
+433
+00:37:27,400 --> 00:37:52,400
+ So I should say first that you can do multiplication of A, R, B times this times--
+
+434
+00:37:52,400 --> 00:37:56,400
+ gives me the composition there.
+
+435
+00:37:56,400 --> 00:38:02,400
+ And the additive inverse-- or the multiplicative inverse gives me--
+
+436
+00:38:02,400 --> 00:38:15,400
+ if I take the inverse of this, then I flipped B to A.
+
+437
+00:38:15,400 --> 00:38:19,400
+ And in practice, if it is a rotation matrix, the inverse is simple.
+
+438
+00:38:19,400 --> 00:38:20,400
+ It's just a transpose.
+
+439
+00:38:20,400 --> 00:38:24,400
+ And there's other things we'll get when we get into the numerical recipes.
+
+440
+00:38:24,400 --> 00:38:32,400
+ But this is kind of your basic beginnings of the spatial algebra.
+
+441
+00:38:32,400 --> 00:38:33,400
+ Yes.
+
+442
+00:38:33,400 --> 00:38:38,400
+ [INAUDIBLE]
+
+443
+00:38:38,400 --> 00:38:41,400
+ Yeah.
+
+444
+00:38:41,400 --> 00:38:43,400
+ Yeah.
+
+445
+00:38:43,400 --> 00:38:47,400
+ So the relative-- this is just like the beginning and end of the vector.
+
+446
+00:38:47,400 --> 00:38:53,400
+ So I'm going to-- I can only measure things from A to B.
+
+447
+00:38:53,400 --> 00:38:54,400
+ Yeah.
+
+448
+00:38:54,400 --> 00:38:59,400
+ But I haven't said what numbers should be used to represent that in any way.
+
+449
+00:38:59,400 --> 00:39:03,400
+ This is just a vector quantity that has a start and an end.
+
+450
+00:39:03,400 --> 00:39:07,400
+ Once I choose the numbers to represent it, then I need to say,
+
+451
+00:39:07,400 --> 00:39:11,400
+ where's my x-axis, where's my y-axis, where's my z-axis?
+
+452
+00:39:11,400 --> 00:39:12,400
+ Right?
+
+453
+00:39:12,400 --> 00:39:15,400
+ And that's what the expressed-in frame is here.
+
+454
+00:39:15,400 --> 00:39:19,400
+ But I can-- that's why, for instance, if I shift the expressed-in frame,
+
+455
+00:39:19,400 --> 00:39:24,400
+ then this quantity could stay the same as long-- until this rotates.
+
+456
+00:39:24,400 --> 00:39:29,400
+ They are meaningfully different ideas.
+
+457
+00:39:29,400 --> 00:39:34,400
+ We use the shorthand because it is often the case that you might want to just take it
+
+458
+00:39:34,400 --> 00:39:38,400
+ and put the origin here and think about that vector in that frame.
+
+459
+00:39:38,400 --> 00:39:53,400
+ But there's many cases where you want to have them separate.
+
+460
+00:39:53,400 --> 00:39:55,400
+ Let me be more explicit about that.
+
+461
+00:39:55,400 --> 00:39:58,400
+ That's actually what I'm going to next.
+
+462
+00:39:58,400 --> 00:40:14,400
+ So what defines a frame has both a position, which is the origin,
+
+463
+00:40:14,400 --> 00:40:26,400
+ and a rotation, or an orientation, I guess I should say.
+
+464
+00:40:26,400 --> 00:40:33,400
+ So we're going to compose those two together into something that's called a pose.
+
+465
+00:40:33,400 --> 00:40:36,400
+ We'll call it x.
+
+466
+00:40:36,400 --> 00:40:49,400
+ B is the pose of B relative to A.
+
+467
+00:40:49,400 --> 00:40:58,400
+ So that pose includes both the position and the rotation that goes between them.
+
+468
+00:40:58,400 --> 00:41:05,400
+ Sometimes people will call them-- we will sometimes call them spatial pose.
+
+469
+00:41:05,400 --> 00:41:08,400
+ That's just because we're using it in the spatial algebra here.
+
+470
+00:41:08,400 --> 00:41:10,400
+ But this is the pose.
+
+471
+00:41:10,400 --> 00:41:22,400
+ The other word you'll hear is pose and transform are almost synonymous.
+
+472
+00:41:22,400 --> 00:41:24,400
+ In all practice, they're synonymous.
+
+473
+00:41:24,400 --> 00:41:30,400
+ You might hear rigid transform or spatial transform.
+
+474
+00:41:30,400 --> 00:41:32,400
+ I finally sort of realized-- someone told me--
+
+475
+00:41:32,400 --> 00:41:39,400
+ that the way to think about this is a pose is a noun and transform is a verb.
+
+476
+00:41:39,400 --> 00:41:41,400
+ It's not like we're undecided.
+
+477
+00:41:41,400 --> 00:41:44,400
+ There's actually probably a right time to use the word pose
+
+478
+00:41:44,400 --> 00:41:46,400
+ and a right time to use the word transform.
+
+479
+00:41:46,400 --> 00:41:48,400
+ But they represent the same kind of idea, which
+
+480
+00:41:48,400 --> 00:41:52,400
+ is a combination of a position and an orientation.
+
+481
+00:41:52,400 --> 00:41:53,400
+ Yeah?
+
+482
+00:41:53,400 --> 00:41:57,400
+ [INAUDIBLE]
+
+483
+00:41:57,400 --> 00:42:04,400
+ So conceptually, this has to have inside it the position of A relative to B
+
+484
+00:42:04,400 --> 00:42:10,400
+ expressed in some thing and the rotation.
+
+485
+00:42:10,400 --> 00:42:14,400
+ This quantity has both.
+
+486
+00:42:14,400 --> 00:42:15,400
+ Yeah.
+
+487
+00:42:15,400 --> 00:42:17,400
+ It's just the combination of those two.
+
+488
+00:42:17,400 --> 00:42:23,400
+ And this is actually the workhorse for us.
+
+489
+00:42:23,400 --> 00:42:29,400
+ So if you get into the representations, this would typically be--
+
+490
+00:42:29,400 --> 00:42:31,400
+ you might think 4 by 4 matrices.
+
+491
+00:42:31,400 --> 00:42:32,400
+ That's pretty true.
+
+492
+00:42:32,400 --> 00:42:36,400
+ But it's actually 3 by 4 matrices are sufficient for rigid transform.
+
+493
+00:42:36,400 --> 00:42:42,400
+ And we pass these around, and it's really good on GPUs and all that good stuff.
+
+494
+00:42:42,400 --> 00:42:44,400
+ So there's an algebra on top of the transforms, too.
+
+495
+00:42:44,400 --> 00:42:45,400
+ Yes?
+
+496
+00:42:45,400 --> 00:42:49,400
+ [INAUDIBLE]
+
+497
+00:42:49,400 --> 00:42:56,400
+ A frame has a current pose, just like a point has a position.
+
+498
+00:42:56,400 --> 00:42:59,400
+ I think that's an answer by analogy.
+
+499
+00:42:59,400 --> 00:43:12,400
+ [INAUDIBLE]
+
+500
+00:43:12,400 --> 00:43:13,400
+ Yes.
+
+501
+00:43:13,400 --> 00:43:18,400
+ So that's actually exactly why it's not arbitrary that we've chosen
+
+502
+00:43:18,400 --> 00:43:22,400
+ multiplication for rotation matrices and addition for here.
+
+503
+00:43:22,400 --> 00:43:27,400
+ We want to imply the standard rules of addition of the algebra.
+
+504
+00:43:27,400 --> 00:43:28,400
+ Yes?
+
+505
+00:43:28,400 --> 00:43:51,400
+ [INAUDIBLE]
+
+506
+00:43:51,400 --> 00:43:53,400
+ It is the second thing you said.
+
+507
+00:43:53,400 --> 00:43:56,400
+ So let me say-- so because it's multiplication,
+
+508
+00:43:56,400 --> 00:44:01,400
+ if I have a point that's in C, then I'm going to right
+
+509
+00:44:01,400 --> 00:44:05,400
+ multiply this thing by some point to take me from C to A.
+
+510
+00:44:05,400 --> 00:44:08,400
+ Then I could also do that--
+
+511
+00:44:08,400 --> 00:44:10,400
+ I think you should think about it going this way.
+
+512
+00:44:10,400 --> 00:44:13,400
+ Because multiplications are going to be on the right--
+
+513
+00:44:13,400 --> 00:44:17,400
+ if I take a point on the right, then I'm first going to apply this multiplication
+
+514
+00:44:17,400 --> 00:44:19,400
+ and then this multiplication.
+
+515
+00:44:19,400 --> 00:44:22,400
+ This is one of the places where people be like, oh, crap,
+
+516
+00:44:22,400 --> 00:44:24,400
+ and they start switching it.
+
+517
+00:44:24,400 --> 00:44:27,400
+ Because it is tempting to rotate in the other direction.
+
+518
+00:44:27,400 --> 00:44:30,400
+ But matrix multiplication operates in that way.
+
+519
+00:44:30,400 --> 00:44:43,400
+ So this is-- I mean, we actually do have the rules of the spatial algebra
+
+520
+00:44:43,400 --> 00:44:44,400
+ for the transforms, too.
+
+521
+00:44:44,400 --> 00:44:46,400
+ They basically are exactly what you expect.
+
+522
+00:44:46,400 --> 00:44:49,400
+ And rather than just write it, I'll just say that right in the notes,
+
+523
+00:44:49,400 --> 00:44:54,400
+ you see I tried to make kind of a concise summary of the additive,
+
+524
+00:44:54,400 --> 00:44:59,400
+ the additive inverse, the multiplication, multiplicative inverse.
+
+525
+00:44:59,400 --> 00:45:02,400
+ The transform can be applied directly.
+
+526
+00:45:02,400 --> 00:45:10,400
+ It's OK for me to write xAB times some position,
+
+527
+00:45:10,400 --> 00:45:13,400
+ as long as my position's in the proper frame.
+
+528
+00:45:13,400 --> 00:45:19,400
+ So if I BC like this, then it can do these operations.
+
+529
+00:45:19,400 --> 00:45:23,400
+ And they're all defined carefully here.
+
+530
+00:45:23,400 --> 00:45:25,400
+ There's an inverse of the transform.
+
+531
+00:45:25,400 --> 00:45:31,400
+ So that's our algebra.
+
+532
+00:45:31,400 --> 00:45:36,400
+ And then conceptually, if we want to do more complicated things with our robot,
+
+533
+00:45:36,400 --> 00:45:40,400
+ then what we're doing is just applying addition and multiplication
+
+534
+00:45:40,400 --> 00:45:43,400
+ of these basic quantities in order to program the robot.
+
+535
+00:45:43,400 --> 00:45:49,400
+ Yeah?
+
+536
+00:45:49,400 --> 00:45:50,400
+ Yes?
+
+537
+00:45:50,400 --> 00:45:51,400
+ [INAUDIBLE]
+
+538
+00:45:51,400 --> 00:45:55,400
+ You would think that.
+
+539
+00:45:55,400 --> 00:45:58,400
+ But actually, it's never needed.
+
+540
+00:45:58,400 --> 00:46:02,400
+ So yeah, you would think that.
+
+541
+00:46:02,400 --> 00:46:06,400
+ But it turns out that it's cleaner and never needed to have this.
+
+542
+00:46:06,400 --> 00:46:09,400
+ You can always have the implied frame there for everything
+
+543
+00:46:09,400 --> 00:46:12,400
+ you want to do with transforms.
+
+544
+00:46:12,400 --> 00:46:15,400
+ Let me think if there's a satisfying way to--
+
+545
+00:46:15,400 --> 00:46:17,400
+ I also, when I first started doing this, I said,
+
+546
+00:46:17,400 --> 00:46:20,400
+ oh, we're going to put an expressed in frame down here or whatever.
+
+547
+00:46:20,400 --> 00:46:23,400
+ But actually, yeah, it's just explicitly never needed.
+
+548
+00:46:23,400 --> 00:46:34,400
+ I should be-- I guess the measured in frame, yeah.
+
+549
+00:46:35,400 --> 00:46:36,400
+ Mm-hmm.
+
+550
+00:46:36,400 --> 00:46:40,900
+ Good.
+
+551
+00:46:40,900 --> 00:46:41,400
+ Good question.
+
+552
+00:46:41,400 --> 00:46:44,400
+ That's really-- that's a very good question.
+
+553
+00:46:44,400 --> 00:46:51,200
+ OK, so now that we're lifted up from points and positions
+
+554
+00:46:51,200 --> 00:46:55,400
+ and orientations to the level of these transforms and poses,
+
+555
+00:46:55,400 --> 00:46:57,060
+ now we're going to program our gripper.
+
+556
+00:46:57,060 --> 00:47:01,400
+ We're going to come up with our ideal set of transforms
+
+557
+00:47:01,400 --> 00:47:03,060
+ that are going to move our gripper around.
+
+558
+00:47:03,060 --> 00:47:03,560
+ OK?
+
+559
+00:47:03,560 --> 00:47:08,400
+ So I'm going to define some canonical frames.
+
+560
+00:47:08,400 --> 00:47:12,900
+ I've got my gripper here.
+
+561
+00:47:12,900 --> 00:47:14,100
+ Basically, I want a snapshot.
+
+562
+00:47:14,100 --> 00:47:16,280
+ I say, here's the object in space.
+
+563
+00:47:16,280 --> 00:47:20,240
+ I want to find some initial grasping frame that
+
+564
+00:47:20,240 --> 00:47:25,200
+ is a pose of the gripper in, let's say, the world coordinates.
+
+565
+00:47:25,200 --> 00:47:27,920
+ And then I want to maybe pick one that's a little bit above there
+
+566
+00:47:27,920 --> 00:47:29,800
+ so I can cut it back away nicely.
+
+567
+00:47:29,800 --> 00:47:32,800
+ Then I'll pick my next one that's sort of halfway to my goal,
+
+568
+00:47:32,800 --> 00:47:34,040
+ not running into the bins.
+
+569
+00:47:34,040 --> 00:47:35,800
+ And then I'll set it back down.
+
+570
+00:47:35,800 --> 00:47:37,040
+ And I just want to--
+
+571
+00:47:37,040 --> 00:47:41,280
+ the next step is to come up with a list of these transforms
+
+572
+00:47:41,280 --> 00:47:44,520
+ that are going to define the motion, the desired motion of the--
+
+573
+00:47:44,520 --> 00:47:48,120
+ or key frames and the desired motion of the object.
+
+574
+00:47:48,120 --> 00:47:56,640
+ So let's say that what we're given from the perception system
+
+575
+00:47:56,640 --> 00:48:02,880
+ is, as our initial sort of input to the algorithm,
+
+576
+00:48:02,880 --> 00:48:04,680
+ I'll call this the object frame.
+
+577
+00:48:04,680 --> 00:48:14,360
+ And I'll even say the frame is the object's initial position.
+
+578
+00:48:14,360 --> 00:48:16,560
+ And I might be given that in terms of--
+
+579
+00:48:16,560 --> 00:48:21,960
+ from a perception system, I might be given that, let's say,
+
+580
+00:48:21,960 --> 00:48:25,400
+ in the world frame, the position of the object in the world frame.
+
+581
+00:48:26,400 --> 00:48:28,920
+ OK?
+
+582
+00:48:28,920 --> 00:48:34,320
+ And maybe I'm also given an initial gripper frame, say.
+
+583
+00:48:34,320 --> 00:48:53,840
+ And maybe I have a goal frame that's also
+
+584
+00:48:53,840 --> 00:48:57,000
+ given in some sort of a world coordinates.
+
+585
+00:48:57,000 --> 00:49:05,680
+ And that would be a pretty coarse thing that would just say,
+
+586
+00:49:05,680 --> 00:49:07,840
+ like, the object's there, then it's there,
+
+587
+00:49:07,840 --> 00:49:09,180
+ and my gripper's currently here.
+
+588
+00:49:09,180 --> 00:49:11,600
+ So I need to fill in the details and say, OK, now I
+
+589
+00:49:11,600 --> 00:49:14,180
+ need an intermediate representation, which is the gripper, where
+
+590
+00:49:14,180 --> 00:49:17,920
+ the gripper should be in order to grasp the object, where the gripper should
+
+591
+00:49:17,920 --> 00:49:19,600
+ be where to place the object.
+
+592
+00:49:19,600 --> 00:49:21,760
+ So I need to define a few more frames.
+
+593
+00:49:21,760 --> 00:49:24,680
+ But I'll use my spatial algebra to do that.
+
+594
+00:49:24,680 --> 00:49:32,200
+ So we'll go in and we'll define--
+
+595
+00:49:32,200 --> 00:49:42,760
+ I called them the gripper location during pick.
+
+596
+00:49:42,760 --> 00:49:46,120
+ And then because, like I said, it's kind of nice to not go directly
+
+597
+00:49:46,120 --> 00:49:48,600
+ to the position, the standard sort of approach
+
+598
+00:49:48,600 --> 00:49:52,800
+ would be to take a pre-grasp, so pre-pick.
+
+599
+00:49:52,800 --> 00:49:55,320
+ So I'll pick a place just above the object,
+
+600
+00:49:55,320 --> 00:49:57,240
+ and then I'll go straight down into the object.
+
+601
+00:49:57,240 --> 00:49:58,820
+ That way it just simplifies the motion planning.
+
+602
+00:49:58,820 --> 00:50:00,820
+ I don't have to worry about my fingers colliding
+
+603
+00:50:00,820 --> 00:50:02,240
+ when they're coming in.
+
+604
+00:50:02,240 --> 00:50:08,440
+ So I'll make a g pre-pick.
+
+605
+00:50:08,440 --> 00:50:11,800
+ And then I'll back off to the same thing, too,
+
+606
+00:50:11,800 --> 00:50:13,280
+ something I'll call it post-pick.
+
+607
+00:50:17,280 --> 00:50:25,040
+ g place-- I also want pre-place, post-place.
+
+608
+00:50:25,040 --> 00:50:33,920
+ And if I could just enumerate those,
+
+609
+00:50:33,920 --> 00:50:36,720
+ let me actually show you how that kind of works.
+
+610
+00:50:36,720 --> 00:50:39,680
+ [AUDIO OUT]
+
+611
+00:50:39,680 --> 00:50:56,800
+ I've got some code here where we'll
+
+612
+00:50:56,800 --> 00:50:59,880
+ step through a little bit that just assembles
+
+613
+00:50:59,880 --> 00:51:01,200
+ a list of these different frames.
+
+614
+00:51:05,000 --> 00:51:10,400
+ And then I can draw the gripper in a bunch
+
+615
+00:51:10,400 --> 00:51:11,640
+ of those different frames.
+
+616
+00:51:11,640 --> 00:51:16,320
+ So this is just my starting frame, my gripping,
+
+617
+00:51:16,320 --> 00:51:21,640
+ my pick frame, my pre-pick and post-pick frame.
+
+618
+00:51:21,640 --> 00:51:24,680
+ And then this is my desired object position,
+
+619
+00:51:24,680 --> 00:51:28,120
+ pre-place, post-place--
+
+620
+00:51:28,120 --> 00:51:30,400
+ or place, pre-place, and post-place.
+
+621
+00:51:30,400 --> 00:51:31,240
+ Yeah?
+
+622
+00:51:31,240 --> 00:51:32,600
+ OK.
+
+623
+00:51:32,600 --> 00:51:34,120
+ Good.
+
+624
+00:51:34,120 --> 00:51:37,200
+ So just to show you what that kind of looks like--
+
+625
+00:51:37,200 --> 00:51:40,040
+ so of course, we're going to make this into a trajectory
+
+626
+00:51:40,040 --> 00:51:43,920
+ with timing in it soon.
+
+627
+00:51:43,920 --> 00:51:48,080
+ That'll just sort of define my desired motion.
+
+628
+00:51:48,080 --> 00:51:49,960
+ Let's think about how we actually build up
+
+629
+00:51:49,960 --> 00:51:55,120
+ those different frames and their pose over time
+
+630
+00:51:55,120 --> 00:51:58,040
+ using our spatial algebra.
+
+631
+00:51:58,040 --> 00:52:06,800
+ So if we're given x0 initial, xg in the world frame initial,
+
+632
+00:52:06,800 --> 00:52:10,360
+ then we need a few more things to start connecting the dots
+
+633
+00:52:10,360 --> 00:52:14,360
+ and defining our intermediate frames.
+
+634
+00:52:14,360 --> 00:52:23,800
+ We have to decide where we want the object
+
+635
+00:52:23,800 --> 00:52:26,360
+ to be relative to the hand.
+
+636
+00:52:26,360 --> 00:52:28,600
+ That's kind of our intermediate quantity.
+
+637
+00:52:28,600 --> 00:52:31,560
+ So I know my object frame is here.
+
+638
+00:52:31,560 --> 00:52:34,040
+ But I want to come up with what should I
+
+639
+00:52:34,040 --> 00:52:39,000
+ be my sort of happy place for where the object is
+
+640
+00:52:39,000 --> 00:52:44,560
+ relative to the hand when I'm doing the manipulation.
+
+641
+00:52:44,560 --> 00:52:48,100
+ Now, you can imagine if I can decide this, which I will
+
+642
+00:52:48,100 --> 00:52:49,800
+ decide--
+
+643
+00:52:49,800 --> 00:52:55,480
+ it turns out that because the y-axis is kind of along
+
+644
+00:52:55,480 --> 00:52:59,360
+ the fingers, it turns out that representing this as something
+
+645
+00:52:59,360 --> 00:53:05,240
+ like 12 centimeters into the fingers in the coordinate
+
+646
+00:53:05,240 --> 00:53:08,080
+ system, that's kind of a happy place for the center of mass
+
+647
+00:53:08,080 --> 00:53:15,440
+ of the brick in the gripper frame, like we have up there.
+
+648
+00:53:15,440 --> 00:53:20,480
+ And then the rotation matrix, that's pretty good.
+
+649
+00:53:20,480 --> 00:53:21,840
+ Now, I'm assuming--
+
+650
+00:53:21,840 --> 00:53:23,720
+ I mean, I'm not taking into account the fact
+
+651
+00:53:23,720 --> 00:53:24,880
+ that the break is symmetric.
+
+652
+00:53:24,880 --> 00:53:28,640
+ I'm just picking a canonical frame just to keep it simpler.
+
+653
+00:53:28,640 --> 00:53:34,000
+ But I can make this with a few choices of a few rotations.
+
+654
+00:53:34,000 --> 00:53:36,520
+ If you think about this same picture I've got on the screen
+
+655
+00:53:36,520 --> 00:53:39,300
+ here, but if I want the gripper to be coming down
+
+656
+00:53:39,300 --> 00:53:42,440
+ on top of that red object, then I've
+
+657
+00:53:42,440 --> 00:53:45,960
+ got a gripper frame with the green pointing straight down.
+
+658
+00:53:45,960 --> 00:53:49,480
+ The object frame by default has got y like this.
+
+659
+00:53:49,480 --> 00:53:52,520
+ So I have to apply two rotations, it turns out,
+
+660
+00:53:52,520 --> 00:53:55,520
+ to rotate the object into the gripper frame,
+
+661
+00:53:55,520 --> 00:53:58,200
+ into a comfortable position in the gripper frame.
+
+662
+00:53:58,200 --> 00:53:59,600
+ But I'm just going to decide that.
+
+663
+00:53:59,600 --> 00:54:04,480
+ I'm going to say, when I'm--
+
+664
+00:54:04,480 --> 00:54:07,160
+ a successful grasp has the orientation--
+
+665
+00:54:07,160 --> 00:54:10,760
+ the position and rotation of the object relative to the gripper
+
+666
+00:54:10,760 --> 00:54:14,320
+ being this given quantity.
+
+667
+00:54:14,320 --> 00:54:15,860
+ And then I can use my spatial algebra
+
+668
+00:54:15,860 --> 00:54:17,980
+ to compose these things together and say, well,
+
+669
+00:54:17,980 --> 00:54:19,640
+ I knew the initial object.
+
+670
+00:54:19,640 --> 00:54:21,240
+ I know what the gripper is.
+
+671
+00:54:21,240 --> 00:54:24,440
+ I can make the gripper at the different positions.
+
+672
+00:54:24,440 --> 00:54:25,600
+ So it looks like this.
+
+673
+00:54:25,600 --> 00:54:28,320
+ So I made it 11 centimeters.
+
+674
+00:54:28,320 --> 00:54:29,880
+ I guess that was better.
+
+675
+00:54:29,880 --> 00:54:34,400
+ I knocked my fingers shorter on running into an object.
+
+676
+00:54:34,400 --> 00:54:37,840
+ I chose two rotations to make the grasp, the object
+
+677
+00:54:37,840 --> 00:54:39,800
+ frame relative to the grasp.
+
+678
+00:54:39,800 --> 00:54:44,000
+ And then that gives me this rigid transform x grasp--
+
+679
+00:54:44,000 --> 00:54:46,080
+ x of the object relative to the grasp.
+
+680
+00:54:49,480 --> 00:54:51,960
+ And you can do multiplication and all the things
+
+681
+00:54:51,960 --> 00:54:54,400
+ you'd want in code the same way we've
+
+682
+00:54:54,400 --> 00:54:57,400
+ written for the algebra.
+
+683
+00:54:57,400 --> 00:55:01,240
+ And then I can use the multiplicative inverse
+
+684
+00:55:01,240 --> 00:55:02,960
+ to figure out what the grasp should
+
+685
+00:55:02,960 --> 00:55:04,080
+ be relative to the object.
+
+686
+00:55:04,080 --> 00:55:10,400
+ And then I'm also defining the pre-grasp
+
+687
+00:55:10,400 --> 00:55:14,800
+ as being directly up from the grasp.
+
+688
+00:55:14,800 --> 00:55:17,240
+ Unfortunately, in the grasp frame up
+
+689
+00:55:17,240 --> 00:55:19,160
+ is going to be negative y.
+
+690
+00:55:19,160 --> 00:55:20,820
+ You have to remember your frames always.
+
+691
+00:55:20,820 --> 00:55:26,320
+ And then you can just start going through and defining
+
+692
+00:55:26,320 --> 00:55:28,040
+ these different quantities.
+
+693
+00:55:28,040 --> 00:55:30,720
+ So I want the gripper at the pick position
+
+694
+00:55:30,720 --> 00:55:37,440
+ to be based on the object at the initial position,
+
+695
+00:55:37,440 --> 00:55:40,960
+ chained with the object relative to the grasp.
+
+696
+00:55:40,960 --> 00:55:42,120
+ And I made the right--
+
+697
+00:55:42,120 --> 00:55:44,560
+ I took an inverse up here because this
+
+698
+00:55:44,560 --> 00:55:46,720
+ is the quantity I needed down here in order
+
+699
+00:55:46,720 --> 00:55:48,280
+ to make those chains work.
+
+700
+00:55:48,280 --> 00:55:51,280
+ And this, again, the notation saves you.
+
+701
+00:55:51,280 --> 00:55:52,800
+ You will get those backwards or wrong
+
+702
+00:55:52,800 --> 00:55:56,040
+ if you don't use the notation somewhat carefully.
+
+703
+00:55:56,040 --> 00:56:03,880
+ And then a slightly-- this is kind of a little window
+
+704
+00:56:03,880 --> 00:56:08,800
+ into why different representations of orientation
+
+705
+00:56:08,800 --> 00:56:11,800
+ are useful in different places.
+
+706
+00:56:11,800 --> 00:56:15,280
+ If I know I have an orientation here
+
+707
+00:56:15,280 --> 00:56:17,880
+ that's picking up the object and another one
+
+708
+00:56:17,880 --> 00:56:19,920
+ here that's picking up the object,
+
+709
+00:56:19,920 --> 00:56:23,480
+ and I want to pick something that's kind of halfway
+
+710
+00:56:23,480 --> 00:56:24,920
+ through, maybe halfway in position,
+
+711
+00:56:24,920 --> 00:56:27,560
+ but also halfway in orientation, that'd
+
+712
+00:56:27,560 --> 00:56:30,080
+ be kind of an awkward thing to write in rotation matrices.
+
+713
+00:56:30,080 --> 00:56:32,120
+ It'd be kind of an awkward thing to write in quaternions
+
+714
+00:56:32,120 --> 00:56:32,620
+ or something.
+
+715
+00:56:32,620 --> 00:56:35,600
+ But it's very natural to write that in axis angle.
+
+716
+00:56:35,600 --> 00:56:39,480
+ And you'll see what's natural to write as you start to use them.
+
+717
+00:56:39,480 --> 00:56:41,160
+ I'm not going to teach that now just
+
+718
+00:56:41,160 --> 00:56:42,920
+ to say that those rotation-- there really
+
+719
+00:56:42,920 --> 00:56:45,600
+ are different times when the different rotation
+
+720
+00:56:45,600 --> 00:56:47,960
+ representations are useful.
+
+721
+00:56:47,960 --> 00:56:50,720
+ And so we just try to make it very easy to go back and forth.
+
+722
+00:56:50,720 --> 00:56:53,160
+ You can always go back and forth between axis angle
+
+723
+00:56:53,160 --> 00:56:54,520
+ and rotation and stuff.
+
+724
+00:56:54,520 --> 00:56:58,200
+ So I'll just pick an intermediate point that's
+
+725
+00:56:58,200 --> 00:57:02,080
+ kind of halfway in position and halfway in rotation
+
+726
+00:57:02,080 --> 00:57:04,160
+ between the two.
+
+727
+00:57:04,160 --> 00:57:04,660
+ Yes?
+
+728
+00:57:04,660 --> 00:57:07,640
+ [INAUDIBLE]
+
+729
+00:57:14,640 --> 00:57:15,140
+ Yeah.
+
+730
+00:57:15,140 --> 00:57:17,840
+ [INAUDIBLE]
+
+731
+00:57:17,840 --> 00:57:18,340
+ Yeah.
+
+732
+00:57:18,340 --> 00:57:21,920
+ [INAUDIBLE]
+
+733
+00:57:21,920 --> 00:57:22,880
+ Yeah.
+
+734
+00:57:22,880 --> 00:57:24,480
+ There's a lot of good answers to that.
+
+735
+00:57:24,480 --> 00:57:25,760
+ So the question would be, like--
+
+736
+00:57:25,760 --> 00:57:27,900
+ yeah, so I assumed a lot about the object,
+
+737
+00:57:27,900 --> 00:57:29,680
+ not only that someone told me where it was,
+
+738
+00:57:29,680 --> 00:57:31,280
+ but that I had its canonical frame,
+
+739
+00:57:31,280 --> 00:57:34,400
+ and I knew where that frame was relative to the object.
+
+740
+00:57:34,400 --> 00:57:36,640
+ Yeah, we're going to build versions of this that don't
+
+741
+00:57:36,640 --> 00:57:38,360
+ make that strong assumption.
+
+742
+00:57:38,360 --> 00:57:42,440
+ You can do things like look for nice, flat faces on the object
+
+743
+00:57:42,440 --> 00:57:45,160
+ and put your finger nicely aligned
+
+744
+00:57:45,160 --> 00:57:46,360
+ with the flats of the object.
+
+745
+00:57:46,360 --> 00:57:48,240
+ That's actually a pretty good heuristic.
+
+746
+00:57:48,240 --> 00:57:51,720
+ And if you find some that have the flats of the objects
+
+747
+00:57:51,720 --> 00:57:55,600
+ are opposite normals, antipodal, then that turns out
+
+748
+00:57:55,600 --> 00:57:57,560
+ to be a super useful heuristic.
+
+749
+00:57:57,560 --> 00:58:00,300
+ So we can do things that are more still about the geometry,
+
+750
+00:58:00,300 --> 00:58:03,840
+ but less baked in the object knowledge.
+
+751
+00:58:03,840 --> 00:58:04,840
+ Yes?
+
+752
+00:58:04,840 --> 00:58:07,800
+ [INAUDIBLE]
+
+753
+00:58:07,800 --> 00:58:09,780
+ Yes.
+
+754
+00:58:09,780 --> 00:58:14,000
+ [INAUDIBLE]
+
+755
+00:58:14,000 --> 00:58:16,520
+ That is actually a rotation matrix call.
+
+756
+00:58:16,520 --> 00:58:22,360
+ I could have written that as roll, pitch, yaw, too.
+
+757
+00:58:22,360 --> 00:58:25,600
+ But I just think because people often confuse which order they
+
+758
+00:58:25,600 --> 00:58:28,260
+ go in, I thought it was a little bit more clear in the example
+
+759
+00:58:28,260 --> 00:58:31,000
+ to use spell out, make x rotation, make z rotation.
+
+760
+00:58:31,000 --> 00:58:32,600
+ But I think going forward, I would just
+
+761
+00:58:32,600 --> 00:58:34,120
+ say you get used to roll, pitch, yaw,
+
+762
+00:58:34,120 --> 00:58:37,200
+ and you just call that a roll and a yaw.
+
+763
+00:58:37,200 --> 00:58:37,840
+ Yeah, good.
+
+764
+00:58:37,840 --> 00:58:42,260
+ [INAUDIBLE]
+
+765
+00:58:42,260 --> 00:58:42,760
+ OK.
+
+766
+00:58:42,760 --> 00:58:44,140
+ So the first time I typed this in,
+
+767
+00:58:44,140 --> 00:58:48,100
+ I forgot about the clearance stuff.
+
+768
+00:58:48,100 --> 00:58:52,220
+ And I thought it was funny, so I put it in my slide.
+
+769
+00:58:52,220 --> 00:58:56,740
+ I typed this in, and I had my beautiful trajectory,
+
+770
+00:58:56,740 --> 00:58:58,300
+ initial and final.
+
+771
+00:58:58,300 --> 00:59:00,180
+ And then we simulate it.
+
+772
+00:59:00,180 --> 00:59:02,500
+ So we're not just imagining this.
+
+773
+00:59:02,500 --> 00:59:04,740
+ At some point, we're going to simulate it.
+
+774
+00:59:04,740 --> 00:59:06,760
+ And I just ran smack into the bin,
+
+775
+00:59:06,760 --> 00:59:08,780
+ and the fingers broke, and the robot
+
+776
+00:59:08,780 --> 00:59:13,380
+ got increasingly unhappy, and then eventually snapped itself
+
+777
+00:59:13,380 --> 00:59:13,880
+ loose.
+
+778
+00:59:13,880 --> 00:59:16,700
+ So that intermediate, you actually
+
+779
+00:59:16,700 --> 00:59:19,300
+ have to add some clearance for the intermediate
+
+780
+00:59:19,300 --> 00:59:21,220
+ in order to get that right.
+
+781
+00:59:21,220 --> 00:59:23,460
+ Sorry, that was just amusing myself, mostly.
+
+782
+00:59:23,460 --> 00:59:29,320
+ Working on robots is great for making yourself
+
+783
+00:59:29,320 --> 00:59:31,500
+ laugh in the middle of the night.
+
+784
+00:59:31,500 --> 00:59:33,620
+ You write a walking controller, and suddenly your robot's
+
+785
+00:59:33,620 --> 00:59:34,300
+ walking backwards.
+
+786
+00:59:34,300 --> 00:59:35,300
+ You're like, what the--
+
+787
+00:59:35,300 --> 00:59:37,960
+ and it's typically because you didn't use multibody notation.
+
+788
+00:59:37,960 --> 00:59:42,240
+ OK, so we have a sketch now.
+
+789
+00:59:42,240 --> 00:59:46,600
+ We have these key frames of different orientations
+
+790
+00:59:46,600 --> 00:59:48,880
+ and positions of the gripper.
+
+791
+00:59:48,880 --> 00:59:51,960
+ Now we have to specify the timing.
+
+792
+00:59:51,960 --> 00:59:55,000
+ So we have to somehow roll those out over time
+
+793
+00:59:55,000 --> 00:59:56,400
+ and embed them in time.
+
+794
+00:59:56,400 --> 00:59:58,400
+ Tell me how long it should take to go from one to the other.
+
+795
+00:59:58,400 --> 00:59:58,900
+ Yeah.
+
+796
+00:59:58,900 --> 01:00:04,280
+ So we're going to have to address that.
+
+797
+01:00:04,280 --> 01:00:07,360
+ So that's the last piece of today's lecture,
+
+798
+01:00:07,360 --> 01:00:11,520
+ is going from this end effector control into joint positions.
+
+799
+01:00:11,520 --> 01:00:18,020
+ Yeah?
+
+800
+01:00:18,020 --> 01:00:21,000
+ [INAUDIBLE]
+
+801
+01:00:21,000 --> 01:00:33,480
+ Oh, OK.
+
+802
+01:00:33,480 --> 01:00:35,800
+ Yes, so we're going to be careful about windup
+
+803
+01:00:35,800 --> 01:00:36,960
+ and other things like that.
+
+804
+01:00:36,960 --> 01:00:38,800
+ But that is a bit like what you saw when I started running
+
+805
+01:00:38,800 --> 01:00:40,840
+ into the bin, and it just started pulling harder
+
+806
+01:00:40,840 --> 01:00:43,920
+ and harder and harder, and then it just finally went like this.
+
+807
+01:00:43,920 --> 01:00:46,000
+ But this was because this was the simplest controller,
+
+808
+01:00:46,000 --> 01:00:48,200
+ and we're going to build much better controllers that
+
+809
+01:00:48,200 --> 01:00:49,440
+ don't have that problem.
+
+810
+01:00:49,440 --> 01:00:51,520
+ Yeah, but good call.
+
+811
+01:00:51,520 --> 01:00:55,680
+ You have to be thoughtful about that when we get to it.
+
+812
+01:00:55,680 --> 01:00:59,320
+ OK, so the simplest idea of just--
+
+813
+01:00:59,320 --> 01:01:00,820
+ we could just specify at what time.
+
+814
+01:01:00,820 --> 01:01:04,160
+ In fact, in the code even, I do specify at the bottom.
+
+815
+01:01:04,160 --> 01:01:07,680
+ I specify all of the frames for the gripper,
+
+816
+01:01:07,680 --> 01:01:08,960
+ but then I also set the timing.
+
+817
+01:01:08,960 --> 01:01:11,040
+ I say the initial time is 0.
+
+818
+01:01:11,040 --> 01:01:14,360
+ The pre-pick time is something--
+
+819
+01:01:14,360 --> 01:01:18,880
+ I try to scale it based on the distance it has to travel.
+
+820
+01:01:18,880 --> 01:01:20,240
+ But it's pretty simple.
+
+821
+01:01:20,240 --> 01:01:22,120
+ It's basically 10.
+
+822
+01:01:22,120 --> 01:01:24,600
+ 10 seconds, I want to be there.
+
+823
+01:01:24,600 --> 01:01:28,800
+ I'm going to add 2 seconds to go from the pre-pick to the pick
+
+824
+01:01:28,800 --> 01:01:32,480
+ start, just spell out the timings like that.
+
+825
+01:01:32,480 --> 01:01:34,520
+ And this is, by the way, extremely conservative
+
+826
+01:01:34,520 --> 01:01:36,380
+ timings.
+
+827
+01:01:36,380 --> 01:01:38,800
+ I'm not going to make any money in the restaurant industry
+
+828
+01:01:38,800 --> 01:01:39,880
+ if I'm moving that slow.
+
+829
+01:01:39,880 --> 01:01:41,960
+ But just to get things-- it's probably
+
+830
+01:01:41,960 --> 01:01:47,480
+ because my controller is simple in this particular example.
+
+831
+01:01:47,480 --> 01:01:49,160
+ So you spell out the timings.
+
+832
+01:01:49,160 --> 01:01:51,680
+ Now the question is, how do you take those from those key
+
+833
+01:01:51,680 --> 01:01:55,000
+ frames that are in position, orientation, and time
+
+834
+01:01:55,000 --> 01:01:56,680
+ and connect them together?
+
+835
+01:01:56,680 --> 01:01:59,560
+ And there's lots of different ways to do it.
+
+836
+01:01:59,560 --> 01:02:02,520
+ Positions, with their additive properties,
+
+837
+01:02:02,520 --> 01:02:04,640
+ can be interpolated very naturally.
+
+838
+01:02:04,640 --> 01:02:06,680
+ You just take a linear interpolation in position,
+
+839
+01:02:06,680 --> 01:02:09,360
+ and that's pretty darn good.
+
+840
+01:02:09,360 --> 01:02:13,040
+ Rotations have to require a little bit more thought.
+
+841
+01:02:13,040 --> 01:02:16,440
+ You can't just take two rotation matrices, for instance,
+
+842
+01:02:16,440 --> 01:02:18,160
+ and just draw a straight line through them
+
+843
+01:02:18,160 --> 01:02:19,640
+ and get a rotation matrix.
+
+844
+01:02:19,640 --> 01:02:21,960
+ Let me even say that somewhat carefully.
+
+845
+01:02:21,960 --> 01:02:48,960
+ So let's say I have rotation of the gripper
+
+846
+01:02:49,080 --> 01:02:52,120
+ pre-pick in the world.
+
+847
+01:02:52,120 --> 01:03:02,360
+ And I want to go to rotation of the gripper pick in the world.
+
+848
+01:03:02,360 --> 01:03:05,000
+ Let's pretend that this is in 2 by 2.
+
+849
+01:03:05,000 --> 01:03:09,760
+ I'll do an example of 2 by 2 rotation matrix.
+
+850
+01:03:09,760 --> 01:03:15,080
+ But we could ask this question of,
+
+851
+01:03:15,080 --> 01:03:17,200
+ how do you do the interpolation in any of the rotation
+
+852
+01:03:17,200 --> 01:03:18,480
+ representations?
+
+853
+01:03:18,480 --> 01:03:20,240
+ But I think it's simple like this.
+
+854
+01:03:20,240 --> 01:03:26,400
+ So a rotation matrix in 2 by 2, you
+
+855
+01:03:26,400 --> 01:03:29,840
+ might remember what those things look like if I wanted to just
+
+856
+01:03:29,840 --> 01:03:37,600
+ rotate around by theta in 2D.
+
+857
+01:03:37,600 --> 01:03:38,920
+ It's just the single rotations.
+
+858
+01:03:38,920 --> 01:03:44,440
+ So if I wanted to rotate, let's say,
+
+859
+01:03:44,440 --> 01:03:52,640
+ from theta equals 0, which would be the theta equals,
+
+860
+01:03:52,640 --> 01:03:55,160
+ I don't know, pi over 2.
+
+861
+01:03:55,160 --> 01:04:01,440
+ That would be 0, negative 1, 1, 0.
+
+862
+01:04:01,440 --> 01:04:10,120
+ But theta equals pi over 4 absolutely
+
+863
+01:04:10,120 --> 01:04:12,600
+ does not equal the average of those two.
+
+864
+01:04:12,600 --> 01:04:27,480
+ That make sense?
+
+865
+01:04:27,480 --> 01:04:31,000
+ Because it lives on, in this case, the unit circle.
+
+866
+01:04:31,000 --> 01:04:33,720
+ And in the three-dimensional rotations case,
+
+867
+01:04:33,720 --> 01:04:39,480
+ it lives on SO(3), the special orthogonal group.
+
+868
+01:04:40,480 --> 01:04:41,920
+ Three dimensions.
+
+869
+01:04:41,920 --> 01:04:45,080
+ So you have to live on this sort of manifold
+
+870
+01:04:45,080 --> 01:04:47,080
+ of reasonable rotation matrices.
+
+871
+01:04:47,080 --> 01:04:49,320
+ Many ways to think about that, but rotation matrices
+
+872
+01:04:49,320 --> 01:04:51,400
+ have to be orthonormal, for instance.
+
+873
+01:04:51,400 --> 01:04:53,560
+ And if you just average two orthonormal matrices,
+
+874
+01:04:53,560 --> 01:04:56,440
+ you don't get a new orthonormal matrix.
+
+875
+01:04:56,440 --> 01:04:58,560
+ So there's a simple recipe.
+
+876
+01:04:58,560 --> 01:05:02,280
+ There's an equivalent of linear interpolation
+
+877
+01:05:02,280 --> 01:05:06,200
+ between positions that you can do for rotations.
+
+878
+01:05:06,200 --> 01:05:09,360
+ It's called SLRP.
+
+879
+01:05:09,360 --> 01:05:12,800
+ Spherical linear interpolation.
+
+880
+01:05:12,800 --> 01:05:14,480
+ SLRP.
+
+881
+01:05:14,480 --> 01:05:31,800
+ So something like spherical linear interpolation.
+
+882
+01:05:31,800 --> 01:05:32,800
+ Interpolation.
+
+883
+01:05:32,800 --> 01:05:44,960
+ OK, so there's a way to sort of smoothly go through,
+
+884
+01:05:44,960 --> 01:05:49,440
+ let's say, the rotation matrices with a linear interpolation.
+
+885
+01:05:49,440 --> 01:05:51,520
+ So we can put that all together.
+
+886
+01:05:51,520 --> 01:05:56,080
+ In software, the time specification
+
+887
+01:05:56,080 --> 01:06:00,200
+ is embedded in a trajectory.
+
+888
+01:06:00,200 --> 01:06:04,400
+ So we have many different trajectory classes.
+
+889
+01:06:04,400 --> 01:06:07,040
+ In Drake, you might have heard of Bezier curves,
+
+890
+01:06:07,040 --> 01:06:10,280
+ or B-spline trajectories, or piecewise polynomial
+
+891
+01:06:10,280 --> 01:06:11,960
+ trajectories.
+
+892
+01:06:11,960 --> 01:06:16,680
+ But one of them we've got hiding in here is quaternion SLRP,
+
+893
+01:06:16,680 --> 01:06:21,280
+ which allows you to define snapshots of rotations using
+
+894
+01:06:21,280 --> 01:06:24,960
+ a unit quaternion representation and beautifully interpolate
+
+895
+01:06:24,960 --> 01:06:26,480
+ between them.
+
+896
+01:06:26,480 --> 01:06:29,080
+ And it's piecewise because it'll interpolate
+
+897
+01:06:29,080 --> 01:06:32,760
+ between each snapshot.
+
+898
+01:06:32,760 --> 01:06:35,280
+ And you can combine that with piecewise polynomial, which
+
+899
+01:06:35,280 --> 01:06:36,960
+ would be like the linear interpolation
+
+900
+01:06:36,960 --> 01:06:40,000
+ of the translation.
+
+901
+01:06:40,000 --> 01:06:44,680
+ And the composition of those two is piecewise pose,
+
+902
+01:06:44,680 --> 01:06:48,400
+ which would do the linear interpolation of the positions
+
+903
+01:06:48,400 --> 01:06:51,560
+ and the SLRP for the rotation.
+
+904
+01:06:51,560 --> 01:06:52,480
+ Is that clear?
+
+905
+01:06:52,480 --> 01:06:58,920
+ And that's what I've been rendering this whole time,
+
+906
+01:06:58,920 --> 01:07:00,120
+ is a nice interpolation of that.
+
+907
+01:07:00,120 --> 01:07:00,620
+ Yes?
+
+908
+01:07:00,620 --> 01:07:10,640
+ So in the code, you can see I make the gripper frames
+
+909
+01:07:10,640 --> 01:07:11,280
+ like this.
+
+910
+01:07:11,280 --> 01:07:13,400
+ I visualize the gripper frames.
+
+911
+01:07:13,400 --> 01:07:18,840
+ You then just call for the pose trajectory here.
+
+912
+01:07:18,840 --> 01:07:21,000
+ You can just say make the linear pose.
+
+913
+01:07:21,000 --> 01:07:22,380
+ I give it all the different poses,
+
+914
+01:07:22,380 --> 01:07:23,520
+ and it will combine them.
+
+915
+01:07:23,520 --> 01:07:24,880
+ But I made the choice.
+
+916
+01:07:24,880 --> 01:07:26,440
+ It's not a default in the sense that I
+
+917
+01:07:26,440 --> 01:07:28,920
+ made the choice of calling piecewise pose constructor
+
+918
+01:07:28,920 --> 01:07:30,680
+ in order to get a piecewise pose output.
+
+919
+01:07:30,680 --> 01:07:32,240
+ If I had called piecewise polynomial,
+
+920
+01:07:32,240 --> 01:07:33,940
+ I would have gotten something different.
+
+921
+01:07:33,940 --> 01:07:34,440
+ Yeah?
+
+922
+01:07:34,440 --> 01:07:39,520
+ You also have to just decide when
+
+923
+01:07:39,520 --> 01:07:42,320
+ you're going to open and close the gripper.
+
+924
+01:07:42,320 --> 01:07:43,720
+ That's the last piece.
+
+925
+01:07:43,720 --> 01:07:45,420
+ But that's similarly a simple trajectory
+
+926
+01:07:45,420 --> 01:07:49,240
+ that says I'm going to be closed with the object and then open.
+
+927
+01:07:49,240 --> 01:07:51,660
+ In this case, it turns out that that particular gripper,
+
+928
+01:07:51,660 --> 01:07:53,400
+ you can just tell it to close all the way,
+
+929
+01:07:53,400 --> 01:07:55,000
+ and it's got a force limit.
+
+930
+01:07:55,000 --> 01:07:57,120
+ And so you don't have to worry about the width of the object,
+
+931
+01:07:57,120 --> 01:07:57,680
+ for instance.
+
+932
+01:07:57,680 --> 01:08:00,360
+ You can just say close, and it'll stop nicely, maybe
+
+933
+01:08:00,360 --> 01:08:02,360
+ squeeze a little hard.
+
+934
+01:08:02,360 --> 01:08:06,320
+ Don't do it to an egg, but it mostly just works.
+
+935
+01:08:06,320 --> 01:08:15,440
+ That much of the recipe?
+
+936
+01:08:15,440 --> 01:08:19,160
+ Let's just take a second to appreciate what we did
+
+937
+01:08:19,160 --> 01:08:21,200
+ and didn't do in that.
+
+938
+01:08:21,200 --> 01:08:24,300
+ So the mechanics of moving frames around
+
+939
+01:08:24,300 --> 01:08:27,320
+ is, I think, pretty natural and pretty good.
+
+940
+01:08:27,320 --> 01:08:30,160
+ It's natural, I think, to think about the position
+
+941
+01:08:30,160 --> 01:08:32,160
+ of the gripper as you do things.
+
+942
+01:08:32,160 --> 01:08:33,800
+ But making a plan only in the gripper
+
+943
+01:08:33,800 --> 01:08:36,480
+ does ignore some things.
+
+944
+01:08:36,480 --> 01:08:38,040
+ It doesn't think about, for instance,
+
+945
+01:08:38,040 --> 01:08:40,640
+ if your elbow might have to bump into the table in order
+
+946
+01:08:40,640 --> 01:08:41,160
+ to get there.
+
+947
+01:08:41,160 --> 01:08:43,980
+ Or even you could accidentally ask for a gripper position
+
+948
+01:08:43,980 --> 01:08:46,320
+ that the robot can't even reach.
+
+949
+01:08:46,320 --> 01:08:49,200
+ Or you could ask it to move at a speed
+
+950
+01:08:49,200 --> 01:08:51,720
+ that the joints aren't capable of producing.
+
+951
+01:08:51,720 --> 01:08:53,220
+ There's all these constraints that
+
+952
+01:08:53,220 --> 01:08:55,680
+ come from the joint representation that
+
+953
+01:08:55,680 --> 01:08:58,580
+ are not expressed in this end effector gripper
+
+954
+01:08:58,580 --> 01:09:00,220
+ view of the world.
+
+955
+01:09:00,220 --> 01:09:04,020
+ But if you take your sweet time picking up objects,
+
+956
+01:09:04,020 --> 01:09:05,260
+ then it's completely good.
+
+957
+01:09:05,260 --> 01:09:13,200
+ So what I thought you were asking before
+
+958
+01:09:13,200 --> 01:09:15,580
+ was the next piece of the puzzle, which
+
+959
+01:09:15,580 --> 01:09:18,060
+ is that if we go from--
+
+960
+01:09:18,060 --> 01:09:21,540
+ we have now an end effector position,
+
+961
+01:09:21,540 --> 01:09:23,940
+ but at some point, we have to come up
+
+962
+01:09:23,940 --> 01:09:27,820
+ with a position trajectory for the robot, right?
+
+963
+01:09:27,820 --> 01:09:37,460
+ The hardware station, its input is not end effector position.
+
+964
+01:09:37,460 --> 01:09:39,700
+ Its input is EWA position.
+
+965
+01:09:39,700 --> 01:09:44,900
+ These are the joint angles.
+
+966
+01:09:44,900 --> 01:09:48,260
+ [TYPING]
+
+967
+01:09:48,260 --> 01:09:55,420
+ So somehow, we have to map from our target end effector
+
+968
+01:09:55,420 --> 01:10:00,900
+ position back to commands in the joint space.
+
+969
+01:10:00,900 --> 01:10:04,340
+ And that's the job of forward kinematics
+
+970
+01:10:04,340 --> 01:10:07,780
+ or inverse kinematics of the manipulator.
+
+971
+01:10:07,780 --> 01:10:09,780
+ So Q is my joint positions.
+
+972
+01:10:14,140 --> 01:10:14,980
+ This is even maybe--
+
+973
+01:10:14,980 --> 01:10:18,420
+ I'd call it Q desired in the previous lecture.
+
+974
+01:10:18,420 --> 01:10:21,260
+ And I'm going to understand the mapping from Q
+
+975
+01:10:21,260 --> 01:10:23,140
+ to the end effectors.
+
+976
+01:10:23,140 --> 01:10:26,420
+ And similarly, I want to be able to invert that,
+
+977
+01:10:26,420 --> 01:10:29,180
+ go from a desired end effector to Q.
+
+978
+01:10:29,180 --> 01:10:30,380
+ So how do we bridge that gap?
+
+979
+01:10:30,380 --> 01:10:36,860
+ OK, so the first thing to realize
+
+980
+01:10:36,860 --> 01:10:43,020
+ is that when you load from these robot description files,
+
+981
+01:10:43,020 --> 01:10:45,180
+ I told you before, there's link.
+
+982
+01:10:45,180 --> 01:10:47,260
+ Link tells you what the object are.
+
+983
+01:10:47,260 --> 01:10:48,900
+ If you scroll down enough, you'll also
+
+984
+01:10:48,900 --> 01:10:50,940
+ see there's joints defined.
+
+985
+01:10:50,940 --> 01:10:59,700
+ EWA has just seven revolute joints.
+
+986
+01:10:59,700 --> 01:11:03,660
+ So revolute joints are just transforms
+
+987
+01:11:03,660 --> 01:11:06,380
+ that are dependent on the joint angle that tells you
+
+988
+01:11:06,380 --> 01:11:08,360
+ how do you go from one link to the next link's
+
+989
+01:11:08,360 --> 01:11:10,100
+ coordinate frame.
+
+990
+01:11:10,100 --> 01:11:12,180
+ So that picture I've been showing you here
+
+991
+01:11:12,180 --> 01:11:16,620
+ has coordinate frames drawn, RGB,
+
+992
+01:11:16,620 --> 01:11:19,940
+ through all of the different links.
+
+993
+01:11:19,940 --> 01:11:22,380
+ Each one of them, between them, is a transform
+
+994
+01:11:22,380 --> 01:11:24,380
+ that depends on the joint in a simple way.
+
+995
+01:11:24,380 --> 01:11:26,820
+ I will show you in a second.
+
+996
+01:11:26,820 --> 01:11:30,880
+ And the work of going from this frame back to this frame
+
+997
+01:11:30,880 --> 01:11:33,060
+ or vice versa is just a composition
+
+998
+01:11:33,060 --> 01:11:38,980
+ of the spatial algebras through the joint dependent transform.
+
+999
+01:11:38,980 --> 01:11:41,060
+ So if we understand how to go across one joint,
+
+1000
+01:11:41,060 --> 01:11:43,420
+ then we understand how to go all the way across the tree
+
+1001
+01:11:43,420 --> 01:11:46,700
+ by just the composition rule.
+
+1002
+01:11:46,700 --> 01:11:49,300
+ And the standard way that you go through the joints
+
+1003
+01:11:49,300 --> 01:12:09,900
+ or define one joint here is--
+
+1004
+01:12:09,900 --> 01:12:14,260
+ you'll see these sort of standard pictures
+
+1005
+01:12:14,260 --> 01:12:17,300
+ of robot joint definitions.
+
+1006
+01:12:17,300 --> 01:12:19,660
+ So I'll have, let's say, link one.
+
+1007
+01:12:19,660 --> 01:12:24,780
+ I'll have link two.
+
+1008
+01:12:24,780 --> 01:12:30,460
+ And I'll have a joint here.
+
+1009
+01:12:30,460 --> 01:12:39,180
+ So-- well, I should actually be careful with my colors here.
+
+1010
+01:12:39,180 --> 01:12:42,380
+ So I'll have a body frame in this.
+
+1011
+01:12:42,380 --> 01:12:48,220
+ Maybe I'll call this body one.
+
+1012
+01:12:48,220 --> 01:12:55,320
+ I'll have a body frame over here, body two.
+
+1013
+01:12:55,320 --> 01:13:02,380
+ We can make the joint frame here expressed in body one.
+
+1014
+01:13:02,380 --> 01:13:08,060
+ And we can make the joint frame here expressed in body two.
+
+1015
+01:13:08,620 --> 01:13:12,660
+ And then we can say a revolute joint, a pin joint,
+
+1016
+01:13:12,660 --> 01:13:17,020
+ is just a pure rotation around these frames that tells me
+
+1017
+01:13:17,020 --> 01:13:22,500
+ the relative rotation of this frame relative to this frame.
+
+1018
+01:13:22,500 --> 01:13:25,260
+ And that's the only thing that depends on u,
+
+1019
+01:13:25,260 --> 01:13:26,620
+ on the joint angle.
+
+1020
+01:13:26,620 --> 01:13:27,740
+ Did I say that well enough?
+
+1021
+01:13:27,740 --> 01:13:32,220
+ So it might be if I called this--
+
+1022
+01:13:32,220 --> 01:13:33,540
+ oh, let me see.
+
+1023
+01:13:33,540 --> 01:13:39,540
+ The composition from body one, sometimes this is called m.
+
+1024
+01:13:39,540 --> 01:13:42,180
+ And this one is called f.
+
+1025
+01:13:42,180 --> 01:13:44,580
+ Depends which notes you're looking at, OK?
+
+1026
+01:13:44,580 --> 01:13:47,380
+ But let's just say m and f.
+
+1027
+01:13:47,380 --> 01:13:51,540
+ And then I have the transform from m to f.
+
+1028
+01:13:51,540 --> 01:13:55,340
+ Depends on the joint angle, q.
+
+1029
+01:13:55,340 --> 01:13:56,820
+ But then I have another fixed one
+
+1030
+01:13:56,820 --> 01:14:00,340
+ that goes from f to body two.
+
+1031
+01:14:00,340 --> 01:14:01,940
+ That's a fixed one.
+
+1032
+01:14:01,940 --> 01:14:03,500
+ Body two.
+
+1033
+01:14:03,500 --> 01:14:06,340
+ And so I can understand as a function of q
+
+1034
+01:14:06,340 --> 01:14:08,020
+ what body two is relative to body one
+
+1035
+01:14:08,020 --> 01:14:09,720
+ just by the rules of composition.
+
+1036
+01:14:09,720 --> 01:14:14,620
+ OK, so it's kind of actually interesting.
+
+1037
+01:14:14,620 --> 01:14:17,780
+ So a lot of people think that every time you
+
+1038
+01:14:17,780 --> 01:14:24,020
+ add a joint to the URDF or the robot description file,
+
+1039
+01:14:24,020 --> 01:14:27,500
+ that you're adding a degree of freedom to the system.
+
+1040
+01:14:29,980 --> 01:14:33,100
+ But it's actually different than that, right?
+
+1041
+01:14:33,100 --> 01:14:36,620
+ So by default, if you just add bodies to the system,
+
+1042
+01:14:36,620 --> 01:14:40,700
+ they all have six degrees of freedom each.
+
+1043
+01:14:40,700 --> 01:14:43,060
+ They're all possibly free to rotate
+
+1044
+01:14:43,060 --> 01:14:45,340
+ in any position or orientation.
+
+1045
+01:14:45,340 --> 01:14:46,740
+ But when I add a link--
+
+1046
+01:14:46,740 --> 01:14:48,860
+ when I add a revolute joint, you should actually
+
+1047
+01:14:48,860 --> 01:14:50,740
+ think about that as I'm actually taking away
+
+1048
+01:14:50,740 --> 01:14:52,660
+ five degrees of freedom and turning it out
+
+1049
+01:14:52,660 --> 01:14:54,620
+ into a one degree of freedom joint.
+
+1050
+01:14:54,620 --> 01:14:56,980
+ And I'm specifying that those frames must
+
+1051
+01:14:56,980 --> 01:14:59,780
+ be related by this equation, which depends only
+
+1052
+01:14:59,780 --> 01:15:02,540
+ on that one thing.
+
+1053
+01:15:02,540 --> 01:15:04,180
+ OK, so then the rules of composition
+
+1054
+01:15:04,180 --> 01:15:05,140
+ just go right through.
+
+1055
+01:15:05,140 --> 01:15:08,560
+ Yes?
+
+1056
+01:15:08,560 --> 01:15:09,060
+ [INAUDIBLE]
+
+1057
+01:15:09,060 --> 01:15:21,700
+ Yes, so the robot description format
+
+1058
+01:15:21,700 --> 01:15:24,420
+ has specifications for how you would say a revolute joint,
+
+1059
+01:15:24,420 --> 01:15:25,960
+ how you would say a prismatic joint,
+
+1060
+01:15:25,960 --> 01:15:27,560
+ how you'd say a planar joint.
+
+1061
+01:15:27,560 --> 01:15:31,580
+ And then those equations are all coded once as a dependent--
+
+1062
+01:15:31,580 --> 01:15:33,460
+ the exact formula that implements
+
+1063
+01:15:33,460 --> 01:15:35,540
+ this as a function of q is different depending
+
+1064
+01:15:35,540 --> 01:15:37,540
+ on what the joint type is.
+
+1065
+01:15:37,540 --> 01:15:38,040
+ Yes?
+
+1066
+01:15:38,040 --> 01:15:38,540
+ [INAUDIBLE]
+
+1067
+01:15:38,540 --> 01:15:47,580
+ This is Tommy's favorite question.
+
+1068
+01:15:47,580 --> 01:15:48,860
+ I almost want him to answer it.
+
+1069
+01:15:48,860 --> 01:15:52,260
+ But the simple answer is yes.
+
+1070
+01:15:52,260 --> 01:15:53,940
+ If you have six degrees of freedom,
+
+1071
+01:15:53,940 --> 01:15:57,700
+ then you can actually find a solution for the joint angles
+
+1072
+01:15:57,700 --> 01:15:58,700
+ that match.
+
+1073
+01:15:58,700 --> 01:16:00,540
+ Seven gives you one extra degrees of freedom.
+
+1074
+01:16:00,540 --> 01:16:02,460
+ And it's the standard seven degree of freedom arm.
+
+1075
+01:16:02,460 --> 01:16:03,740
+ Of course, there are limitations.
+
+1076
+01:16:03,740 --> 01:16:05,900
+ And there are actually multiple solutions in cases.
+
+1077
+01:16:05,900 --> 01:16:08,220
+ And so you have to make choices.
+
+1078
+01:16:08,220 --> 01:16:09,300
+ And you should ask Tommy.
+
+1079
+01:16:09,300 --> 01:16:09,800
+ [INAUDIBLE]
+
+1080
+01:16:09,800 --> 01:16:14,740
+ Oh, you want seven.
+
+1081
+01:16:14,740 --> 01:16:17,140
+ So six is a bad place to be.
+
+1082
+01:16:17,140 --> 01:16:20,860
+ Because then you-- yeah, as soon as you reach into a kitchen
+
+1083
+01:16:20,860 --> 01:16:24,700
+ sink, you will wish you had eight.
+
+1084
+01:16:24,700 --> 01:16:27,260
+ Because you're trying to stick your robot's elbow down
+
+1085
+01:16:27,260 --> 01:16:29,540
+ into the sink because you've got a big arm sticking off
+
+1086
+01:16:29,540 --> 01:16:30,380
+ the back.
+
+1087
+01:16:30,380 --> 01:16:32,700
+ So the value of having those extra links
+
+1088
+01:16:32,700 --> 01:16:35,040
+ is in what you can do in the workspace
+
+1089
+01:16:35,040 --> 01:16:39,060
+ is very apparent once you start working around.
+
+1090
+01:16:39,060 --> 01:16:41,620
+ So as soon as you have-- so maybe the math way
+
+1091
+01:16:41,620 --> 01:16:44,260
+ to answer that would be, as soon as you have other constraints,
+
+1092
+01:16:44,260 --> 01:16:45,900
+ like obstacles or something like this,
+
+1093
+01:16:45,900 --> 01:16:48,740
+ then the limitations of having the six
+
+1094
+01:16:48,740 --> 01:16:51,060
+ subject to those constraints will become apparent.
+
+1095
+01:16:51,060 --> 01:16:52,780
+ So you want the extra degrees of freedom.
+
+1096
+01:16:52,780 --> 01:16:53,260
+ [INAUDIBLE]
+
+1097
+01:16:53,260 --> 01:16:59,380
+ Yep.
+
+1098
+01:16:59,380 --> 01:17:02,180
+ Yep, just because I think-- so the complexity increases.
+
+1099
+01:17:02,180 --> 01:17:02,980
+ The cost increases.
+
+1100
+01:17:02,980 --> 01:17:04,220
+ The weight increases.
+
+1101
+01:17:04,220 --> 01:17:08,780
+ But I think some robots do have more.
+
+1102
+01:17:08,780 --> 01:17:09,620
+ Go ahead, Tommy.
+
+1103
+01:17:09,620 --> 01:17:10,120
+ [INAUDIBLE]
+
+1104
+01:17:11,120 --> 01:17:11,620
+ [INAUDIBLE]
+
+1105
+01:17:11,620 --> 01:17:26,920
+ Yeah, I mean, we can do pretty complicated-- like my-- sorry,
+
+1106
+01:17:26,920 --> 01:17:28,600
+ I'm rotating at my elbow.
+
+1107
+01:17:28,600 --> 01:17:32,600
+ I mean, people say that.
+
+1108
+01:17:32,600 --> 01:17:34,640
+ Actually, yeah, I think he's right.
+
+1109
+01:17:34,640 --> 01:17:36,000
+ That is the inspiration.
+
+1110
+01:17:36,000 --> 01:17:37,560
+ I think he's right about that.
+
+1111
+01:17:37,560 --> 01:17:39,560
+ But we're squishy.
+
+1112
+01:17:39,560 --> 01:17:41,320
+ That can be useful at times.
+
+1113
+01:17:41,320 --> 01:17:42,080
+ I'm squishy.
+
+1114
+01:17:42,080 --> 01:17:43,720
+ I shouldn't say anything about you guys.
+
+1115
+01:17:43,720 --> 01:17:46,680
+ [LAUGHTER]
+
+1116
+01:17:46,680 --> 01:17:50,560
+ OK, good.
+
+1117
+01:17:50,560 --> 01:17:54,160
+ Yeah, so for instance, the hand is--
+
+1118
+01:17:54,160 --> 01:17:58,320
+ the kinematic tree of the hand uses the same exact math,
+
+1119
+01:17:58,320 --> 01:18:01,200
+ but it's a slightly more interesting kinematic tree.
+
+1120
+01:18:01,200 --> 01:18:06,440
+ So I can plot the world body, and it's in a world frame.
+
+1121
+01:18:06,440 --> 01:18:08,640
+ But then I have the hand root, which
+
+1122
+01:18:08,640 --> 01:18:11,720
+ is a floating hand, that's why it's not attached so far.
+
+1123
+01:18:11,720 --> 01:18:15,560
+ But then I've defined my kinematic tree,
+
+1124
+01:18:15,560 --> 01:18:18,360
+ where each one of those is revolute joints going up.
+
+1125
+01:18:18,360 --> 01:18:21,280
+ And if I want to compute the kinematics, the locations
+
+1126
+01:18:21,280 --> 01:18:23,080
+ of all my fingertips, it's just a matter
+
+1127
+01:18:23,080 --> 01:18:27,160
+ of recursively solving those transforms up and down
+
+1128
+01:18:27,160 --> 01:18:28,600
+ the tree.
+
+1129
+01:18:28,600 --> 01:18:32,400
+ And if I have an object, my foam brick in the scene, too,
+
+1130
+01:18:32,400 --> 01:18:34,560
+ then that's got its own six degrees of freedom.
+
+1131
+01:18:34,560 --> 01:18:37,040
+ It's got its own three pose by default.
+
+1132
+01:18:37,040 --> 01:18:40,480
+ [LAUGHTER]
+
+1133
+01:18:40,480 --> 01:18:44,920
+ All right, so actually, quick quiz then.
+
+1134
+01:18:44,920 --> 01:18:51,480
+ So how big is the configuration vector q for this example?
+
+1135
+01:18:51,480 --> 01:19:04,560
+ If I were to say plant.getPositions context--
+
+1136
+01:19:04,560 --> 01:19:05,060
+ yes?
+
+1137
+01:19:05,060 --> 01:19:09,940
+ [INAUDIBLE]
+
+1138
+01:19:09,940 --> 01:19:10,440
+ Yep.
+
+1139
+01:19:10,440 --> 01:19:13,900
+ [INAUDIBLE]
+
+1140
+01:19:13,900 --> 01:19:15,580
+ Yep.
+
+1141
+01:19:15,580 --> 01:19:16,080
+ Good.
+
+1142
+01:19:16,080 --> 01:19:20,660
+ [INAUDIBLE]
+
+1143
+01:19:20,660 --> 01:19:22,500
+ Yep.
+
+1144
+01:19:22,500 --> 01:19:27,820
+ But we also have the degrees of freedom of a foam brick.
+
+1145
+01:19:27,820 --> 01:19:30,820
+ And this hand is actually not bolted to the ground.
+
+1146
+01:19:30,820 --> 01:19:33,260
+ It's free to float right there.
+
+1147
+01:19:33,260 --> 01:19:35,380
+ So that actually gets to be--
+
+1148
+01:19:35,380 --> 01:19:36,620
+ OK, then this question.
+
+1149
+01:19:36,620 --> 01:19:40,940
+ So if I want to represent my floating brick,
+
+1150
+01:19:40,940 --> 01:19:44,380
+ how many q elements do I need to represent that?
+
+1151
+01:19:44,380 --> 01:19:50,280
+ What everybody would say, but that's not actually right.
+
+1152
+01:19:50,280 --> 01:19:52,020
+ Because, well, you could represent it that,
+
+1153
+01:19:52,020 --> 01:19:54,860
+ but you'd have a singularity in the transform.
+
+1154
+01:19:54,860 --> 01:19:57,980
+ So it turns out you actually need seven numbers
+
+1155
+01:19:57,980 --> 01:20:00,420
+ to represent position--
+
+1156
+01:20:00,420 --> 01:20:03,900
+ you need four numbers to represent 3D orientation
+
+1157
+01:20:03,900 --> 01:20:05,620
+ without singularity.
+
+1158
+01:20:05,620 --> 01:20:07,500
+ So this actually has a unit quaternion
+
+1159
+01:20:07,500 --> 01:20:09,420
+ plus the three positions.
+
+1160
+01:20:09,420 --> 01:20:11,380
+ And this one, similarly, has a unit quaternion
+
+1161
+01:20:11,380 --> 01:20:13,060
+ plus the three positions.
+
+1162
+01:20:13,060 --> 01:20:17,300
+ So the whole thing comes out to 30 degrees of freedom.
+
+1163
+01:20:17,300 --> 01:20:17,800
+ Yes?
+
+1164
+01:20:17,800 --> 01:20:21,700
+ [INAUDIBLE]
+
+1165
+01:20:21,700 --> 01:20:22,460
+ Yep.
+
+1166
+01:20:22,460 --> 01:20:25,140
+ I can start there next time.
+
+1167
+01:20:25,140 --> 01:20:26,380
+ Yeah?
+
+1168
+01:20:26,380 --> 01:20:26,860
+ Good.
+
+1169
+01:20:26,860 --> 01:20:29,220
+ OK, we'll finish it up next time.
+
+1170
+01:20:29,220 --> 01:20:29,780
+ See you then.
+
+1171
+01:20:29,780 --> 01:20:39,780
+ [BLANK_AUDIO]
+

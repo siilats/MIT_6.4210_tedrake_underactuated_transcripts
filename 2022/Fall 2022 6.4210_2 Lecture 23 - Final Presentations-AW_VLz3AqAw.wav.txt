@@ -1,0 +1,2887 @@
+ - Hey, thank you guys for coming early.
+ I'm gonna start pretty much right off
+ because we have a lot of you
+ and a lot of good projects to get through.
+ If you, just one logistical note.
+ I hoped it was clear.
+ We said if your video was public,
+ that's in the queue right now.
+ If it's unlisted, that means you don't want me
+ to show it today.
+ I think a bunch of people,
+ based on emails you've sent in the last 20 minutes,
+ might have marked your video unlisted
+ and expected it to be shown today.
+ By default, that's not happening.
+ You can talk to Bojan and we can see if we can figure it out.
+ I have queued up all of the videos marked public
+ and we're gonna play them.
+ Because we have so many of them,
+ and it's kind of nice actually,
+ I can just tell YouTube to play it exactly the allotted time
+ and it stops.
+ And every once in a while,
+ there's gonna be one that's about to show the results
+ and then it stops.
+ But I'm not a bad guy.
+ I just automatically, I programmed the embedded URLs
+ to do this, okay?
+ Okay, so thank you guys for all the hard work.
+ And without further ado, let's start.
+ Oh, we have to figure out, yeah.
+ You know what?
+ How am I gonna get you to hear the audio well up there?
+ That's something we haven't worried about too much before.
+ I don't think this is actually making it louder
+ up in the room, is it?
+ Oh.
+ This is not exactly the high tech I was hoping for,
+ but I'm gonna put the mic kind of close to the computer.
+ We'll see how that goes.
+ You think there's one here?
+ That doesn't look promising, it's on the PC.
+ Audio.
+ - If you go into the system settings,
+ you'll notice that you get the option to output
+ the (mumbles)
+ (audience member speaking faintly)
+ - As well as the limitations of the robot
+ to achieve the perpetual juggling motion.
+ With some additional work, we could even load this program
+ onto a real Evo robot and have it juggle in real life.
+ - Nice.
+ - To start, we need to choose the point
+ at which we're going to throw and catch.
+ To start, we need to choose the point
+ at which we're going to throw and catch.
+ The person that juggles.
+ We modeled everything in the simulator with physics,
+ like gravity and friction, as well as the limitations
+ of the robot to achieve the perpetual juggling motion.
+ With some additional work, we could even load this program
+ onto a real Evo robot and have it juggle in real life.
+ To start, we need to choose a point
+ at which we're going to throw and catch.
+ The approach we use to find such two positions
+ is forward kinematics.
+ We first decide on a set of comfortable joint angles of Evo
+ and then calculate the corresponding spatial position
+ of the gripper.
+ So now that we have our throw and catch positions
+ and their comfortable joint configurations,
+ we'll use a formula of projectile motions
+ to calculate the start and end velocity,
+ given the max height of the trajectory.
+ We also want to get corresponding joint velocities.
+ We first calculate Jacobian matrix
+ for translation of velocities at the joint configuration.
+ By multiplying the pseudo-inverse of Jacobian
+ with the spatial velocities, we're able to obtain
+ the joint velocity for both catch and throw.
+ And now it's time for the cool part.
+ How do we get our robot to go from being here
+ with this velocity to here with this velocity
+ at exactly 0.639 seconds later?
+ We can frame this as an optimization problem.
+ We want to minimize the length of the path,
+ subject to the following constraints.
+ First, we constrain the positions and velocities
+ at the throw and catch points.
+ Second, the entire duration of the arm trajectory
+ needs to be exactly the duration the ball is in the air for.
+ And third, we ensure that the joints on the Evo robot
+ don't exceed their position, velocity,
+ or acceleration limits.
+ At this point, we've done a lot of the groundwork.
+ We're super excited.
+ We put it on our robot, and this is what we see.
+ Everything is going great.
+ Then it lets go of the ball at completely the wrong position
+ with the wrong velocity.
+ Graphing the desired positions and velocities,
+ as well as the measured positions and velocities,
+ we see that the measured values lag behind the desired values
+ by 0.0538 seconds.
+ Originally, we were sending our desired positions
+ to a system that interpolates the desired state
+ with discrete derivatives.
+ The desired state is then fed into the inverse dynamics
+ controller, which spits out the force
+ commands to center the arm.
+ Note that this system doesn't feed desired acceleration
+ to the inverse dynamics controller at all.
+ To improve tracking, we remove the state interpolator
+ and took analytical derivatives on our position trajectory
+ to get our desired velocities and accelerations
+ and fed those into the inverse dynamics controller directly.
+ We can see that with these changes,
+ the measured values now converge to the desired values.
+ We put our new controller on a robot,
+ but somehow it is still not able to catch the ball.
+ Gripper is trying to catch the ball
+ where we thought it was going to be instead
+ of where it actually is.
+ To account for this, we need to change our planner
+ so that it updates the trajectory based
+ on the actual position and velocity of throwing right
+ after releasing the ball.
+ We put this on a robot, and after some debugging,
+ finally it works.
+ [CHEERING]
+ We tried a bunch of different heights
+ and found that it can juggle up to two meters high.
+ To make the jump to juggling multiple balls,
+ we had to modify our planner.
+ When trying to juggle two balls, after throwing the first ball,
+ you have to catch and throw the second ball all in the time
+ that the first ball is in the air.
+ So we have much less time to move between the throw and catch
+ positions.
+ We can keep most of our planner exactly the same,
+ but after a ball is thrown, instead
+ of replanning the trajectory based on the ball you just
+ threw, we update it with the position and velocity
+ of the ball that we want to catch.
+ And this is what it looks like.
+ One thing we had to do was to warm start the arm
+ with the desired joint velocities at time 0,
+ because unlike in the one ball case,
+ it didn't have enough time for the actual velocities
+ to converge on the desired velocities
+ before it had to throw the ball.
+ Next, we tried juggling three balls,
+ but kept running into the problem of the balls colliding
+ in the air with each other, because now there
+ are two balls in the air at the same time
+ and because of the slight inaccuracies in the throw.
+ We were about to give up when we decided
+ to try making the balls smaller, and it worked.
+ On one hand, this feels a bit like cheating,
+ but on the other hand, it's also cool
+ because our controller is precise enough
+ to juggle something so small.
+ This was the limit, though.
+ The kinematic trajectory optimization
+ kept failing when we tried to juggle four balls.
+ [MUSIC PLAYING]
+ And finally, to put it on the real robot,
+ we need a perception system.
+ In the simulator, we can always know the exact position
+ and velocity of everything, but in the real world,
+ we'll need to find a way to measure that.
+ We simulated three Intel RealSense depth cameras,
+ where we plan to combine the point cloud from each camera,
+ then subtract the gripper from the point cloud.
+ By best fitting a sphere to the leftover point cloud,
+ we will be able to estimate the center position of the ball
+ from the fitted sphere, where we would then
+ be able to feed the position to the kinematic--
+ [AUDIO OUT]
+ That's pretty good.
+ I think we talked about it a little bit
+ in the manipulator control lecture,
+ but that's a beautiful way to get nice tracking.
+ Very nicely done.
+ OK, let's keep going.
+ I do have a schedule, an optimistic schedule
+ on the spreadsheet of about when we think
+ videos are going to come up.
+ We'll see how it goes.
+ Stage of extracting the point clouds from the cameras,
+ but haven't yet been able to subtract the arm or fit
+ the sphere.
+ Hey, everyone.
+ Our project is titled Implicit Neural Representations
+ for Deformable Objects.
+ Our fundamental aim has been trying to find a smarter way
+ to model deformable objects.
+ Ultimately, we could use these models
+ to do downstream tasks like keypoint estimation.
+ Keypoint estimation is difficult on deformable objects
+ due to the many different deformation configurations.
+ As we will show, generalized implicit neural representations
+ are naturally invariant to object deformations,
+ since they rely on topological features of the object.
+ What are implicit neural representations?
+ INRs are functions that parametrize conventionally
+ discrete signals, like the pixels of an image
+ are points in a point cloud, and learn a continuous function
+ that maps the domain of the signal.
+ These functions are not dependent
+ on the spatial resolution of the original signal,
+ unlike standard ML models, which provide an estimate
+ of each pixel within an image.
+ The caveat is that most INRs are trained on data residing
+ strictly in Euclidean space.
+ So even though INRs learn functions
+ that aren't dependent on spatial resolution,
+ they're still tied to some Euclidean space.
+ Modeling deformable objects means
+ we can't be tied to this kind of space.
+ Generalized INRs can be thought of as applying INRs
+ in non-Euclidean domains.
+ Given the assumption that a continuous signal exists
+ on some unknown topological space,
+ we can sample a discrete graph from the space.
+ We then compute a spectral embedding
+ for each node in the graph.
+ This embedding allows us to approximate each node's
+ location, since there's no coordinate system.
+ We can then use a neural net to learn
+ the mappings between the spectral embedding of each node
+ to some predicted signal.
+ In our case, this part is a classification problem
+ where we wish to output one of n labels per node.
+ Here are the first three components of the computed GINR
+ embeddings for the Stanford bunny.
+ We see that the components vary smoothly
+ over the bunny's surface.
+ Because GINR embeddings only depend
+ on the topology of an object, they
+ are independent of a coordinate frame.
+ Thus, we can use them for learning representations
+ of deformable objects.
+ Here, we investigate GINRs for key point prediction.
+ Here is a Stanford bunny with a few key points
+ labeled corresponding to the right ear, the right eye,
+ and the tail.
+ Our project seeks to answer the following key questions.
+ Are GINR embeddings informative enough for key point prediction
+ on objects?
+ Can they generalize to unseen deformations of an object?
+ And finally, can they generalize to undersampled/oversampled
+ mesh representations?
+ Our experimental setup consists of manually labeling key points
+ on an undeformed or canonical object of interest.
+ Here, we choose the Stanford bunny
+ with five classes of key points.
+ Note that the number of labeled key points
+ is much lesser than the number of total points in the mesh.
+ We create deformations of the canonical bunny
+ by simulating impact with the ground and manual deformation.
+ Here is an animation showing the impact simulation
+ of the bunny with the ground.
+ To perform the simulation, we first
+ deteralized 2D surface mesh to get a 3D volume mesh.
+ And we then simulated it in PyDrake
+ by dropping the bunny from a height
+ and recording the positions after impact.
+ Once we have these deformations, we
+ consider additional modifications,
+ such as random addition of new points and edges,
+ oversampling, or undersampling the resultant mesh.
+ All of these modifications affect the underlying topology
+ of the object.
+ Next, we will present the results from our experiments.
+ Here, we show an example of the training data
+ for the canonical bunny mesh with labeled points
+ colored by their class.
+ On the bottom, we show an example deformation
+ of the bunny with predicted classes.
+ Notably, we found our model struggled with false positives
+ but was able to correctly classify
+ all the labeled points.
+ We also observed that once our model performed well
+ on the training example, it achieved identical results
+ on the deformed example, since their mesh structure
+ was the same, which demonstrates the utility of GINR's
+ inherent invariance to coordinate changes.
+ Additionally, we evaluated how our model
+ was able to classify key points when the meshes were modified.
+ We perturbed the meshes by randomly adding 10% new
+ vertices to the mesh.
+ We trained our GINR using 15 sample meshes
+ and evaluated it on five.
+ We saw that the GINRs did not require many examples
+ to generalize well to perturb meshes,
+ but having a smaller embedding size
+ acted like a regularizer for our model.
+ We also tested the ability of our model
+ to generalize to oversampled and undersampled meshes.
+ We trained our model on a single canonical example
+ and observed that it was relatively robust to uniform
+ oversampling, but significantly underperformed
+ on undersampled meshes.
+ We hypothesized that the undersampling
+ has a greater influence on the spectral embeddings,
+ leading to this erroneous behavior.
+ Summary, we show that GINRs are useful for learning
+ implicit representations of deformed objects
+ due to their natural invariance properties.
+ We see that they are able to generalize to some variations,
+ but have improved robustness when trained
+ on various mesh perturbations.
+ In the future, we would like to extend this study
+ by investigating how our model performs
+ on meshes which are inferred from unstructured point cloud
+ data.
+ We foresee that these meshes will contain a greater
+ degree of variability and would like
+ to see how GINRs are able to perform under more
+ naturalistic conditions.
+ Lastly, we are interested in how we
+ were able to use the topological structure of the mesh
+ to register known object shapes onto partially observed data.
+ Maybe I'll just ask a basic one.
+ Instead of volumetric, the spectral decomposition
+ is parametrizing the surface of the mesh.
+ Is that right?
+ So how would it behave under a large deformation mode?
+ Is that decomposition robust to really large changes
+ if you really squish the bunny?
+ Yeah, but in our problem, we have
+ a view that we have a mesh structure of things.
+ Yeah.
+ Otherwise, we have a model that's
+ like the surface is a structure of objects.
+ I see.
+ So the vertices are going to get you--
+ the fact that you know where the vertices have deformed to
+ already tells you the topology.
+ It doesn't depend on the connection.
+ It doesn't depend on the number of points
+ or the actual coordinates.
+ You can actually find it by 10 times.
+ Awesome.
+ Thank you.
+ I'm leaving a little space for questions
+ if anybody has any.
+ OK, we have to keep going.
+ That's great.
+ Thank you.
+ An essential aspect of human life is social interaction.
+ In many cultures, it is common to interact with people
+ physically via interactions such as high fives and fist bumps.
+ As robots are becoming more integrated with human lives,
+ there's an increased need for robots
+ to become more human-like.
+ That is, for humans to feel safer around robots
+ and see robots more as human-like counterparts
+ rather than these mechanistic machines that have no capacity
+ for social interaction.
+ However, there are many associated challenges
+ with essentially humanizing a robotical system.
+ In the first place, it's hard to describe what constitutes
+ a human-like motion.
+ But then it's also challenging to then translate
+ those descriptions into raw code.
+ Thus, we present HandBot.
+ We are Miranda Kai, Jordan Ren, and Aaron Zhu.
+ And today, we will be presenting our final project
+ called HandBot.
+ HandBot is a simulation system that
+ serves as a proof of concept to construct
+ a basic human-like system without the use of learning,
+ which is a contrast as many other systems use
+ learning in trying to design human-like systems.
+ Specifically, HandBot is a simulation
+ that is able to recognize and respond to certain hand
+ gestures, specifically high fives and fist bumps,
+ using only the basics of perception and motion
+ planning in as human-like way as possible.
+ HandBot has three main systems that allow
+ it to respond to human gestures.
+ First, the perception system of the robot
+ will use a camera to get scene points of a hand or a fist
+ that is floating in front of it, then
+ use ICP to determine if it is a fist or not
+ and its location in the world.
+ Second, the robot will perform motion planning
+ to set key frames of where the robot hand should be.
+ Finally, we use various controllers
+ to control the robot and bring it to the target hand.
+ When setting up our environment, we
+ need to construct a robot that can effectively
+ high five or fist bump a floating hand.
+ We opted to use the Lego hand that is provided by Drake,
+ as well as the KUKA IWA 7-Link arm.
+ We then welded the hand onto the last joint of the IWA arm.
+ In addition, because the hand's configuration
+ would not change after it matches the target hands,
+ we fixed the hand joints on the robot arm
+ such that it has no degrees of freedom.
+ To further simplify our environment,
+ we decided to keep it clutter-free,
+ as receiving objects in the scene
+ and constraining motion planning would
+ increase the time it takes for the robot to respond.
+ And in many cases, there are no obstructions
+ in the way of the high five or fist bump.
+ In order to identify which configuration the hand is in,
+ as well as its location, we make use of ICP.
+ In our initial iteration, we generated the model points
+ by concatenating point clouds from multiple camera angles
+ around the hand, getting the full model
+ view of the hand or fist.
+ However, since ICP tends to get stuck in local minima
+ if the model points are not in a configuration similar to the scene
+ points, we instead opted to generate model points
+ from angles close to the front of the hand,
+ as seen on the figure in the left.
+ This makes it so that the scene points almost always
+ match the correct portion of the model points.
+ We then obtain scene points from a camera next to the IWA arm
+ and perform ICP for both the fist and hand points.
+ Whichever ICP error is the smallest
+ gives us the hand configuration to use
+ and the transform of the hand to approach.
+ After learning the orientation and position of the target
+ hand, we can construct the robot arm's planned trajectory
+ by interpolating 10 frames between the robot's
+ initial state and the desired final state.
+ We decided to use a linear trajectory for simplification
+ reasons, which worked well over the short distances being
+ traveled to reach the target hand.
+ Once we have this trajectory, the system
+ will use a differential inverse kinematics controller
+ to translate these poses into joint positions
+ to execute the simulation.
+ As you can see, we have designed a robotic system
+ that is able to respond to human gestures
+ like high fives and fist bumps.
+ However, while we attempted to create our system
+ in an as human-like way as possible,
+ we acknowledge that our system is far
+ from being perfectly natural.
+ While our system may not be perfect,
+ the results do serve as a stepping stone for future work
+ on related tasks.
+ Since people have come in, now let me just--
+ quick logistics.
+ So I went through the spreadsheet.
+ You guys are awesome.
+ You're like saying, I could be there between 3:30 and 3:33
+ or whatever.
+ I did my best to sort of--
+ I basically kept the order, but I
+ shuffled people who said I can be here only until 3:30
+ a little bit.
+ And it's all in the spreadsheet now.
+ We're going to go through it.
+ And if you didn't--
+ if you thought-- if you marked yourself unlisted,
+ but we're hoping to be shown here,
+ tell Bo Yen quick, because the plan was to just show
+ the public videos.
+ That was the way you tell us you want it to be shown.
+ [INAUDIBLE]
+ Oh, pfft.
+ I will do that from my phone while the next video is playing.
+ And just one other comment.
+ I think there's people in the class that
+ are in their final year of the PhD working on robotics.
+ And there's people in the class that this is the first time
+ they've ever touched robotics.
+ So I think it's--
+ just appreciate the diversity of what people have done.
+ And it's really awesome to see the whole spectrum of--
+ and I have just been watching how much people--
+ how much effort people are putting in,
+ how much learning they've done on that part.
+ So appreciate the whole spectrum with me.
+ Bo Yen, access.
+ Hi.
+ Today we're presenting to you the Hanoi EWO robot,
+ which is a robot that can solve the Tower of Hanoi.
+ My name is Ning Shan Ma.
+ I'm Zi Tong Cheng.
+ And we're two juniors studying computer science at the MIT.
+ EECS department.
+ Today we'll be going through four parts of our project.
+ The first is introduction and problem definition.
+ Basically, why should we care about this problem?
+ Yeah.
+ Well, so simply to start, to help people in their daily lives,
+ robots today must be able to make intelligent decisions
+ while performing manipulation tasks.
+ And Tower of Hanoi is a perfect example,
+ challenging the robot both to reason cognitively
+ and also to perform strategic motion planning,
+ and finally, of course, to manipulate the object.
+ Yeah, previously we've seen robots assisting in household
+ tasks, as well as robots playing other intelligent puzzles,
+ such as Rubik's Cube or Jenga.
+ So we thought of it, applied it to the Tower of Hanoi,
+ which is another intellectual puzzle.
+ And basically, the Tower of Hanoi
+ is a classic mathematical puzzle,
+ where the goal is to transport a stack of disks
+ from one peg to the other, usually from the leftmost peg
+ to the rightmost peg.
+ And the constraints or the rules of this game
+ are that you can only move one disk at a time,
+ and that no larger disk can be placed on top of a smaller disk.
+ And we want to minimize the time or the steps required
+ for this task.
+ And we'll be going through the approach
+ or how we made the robot play the game.
+ First, we had the whole system set up
+ in Drake, which is a simulation environment from our class,
+ where we represented the disk as box instances.
+ And we represented the pegs as flat cylindrical bases.
+ And the robot arm we used is the KUKA LBR EWAR arm.
+ The second step, of course, is to design our algorithm,
+ break it down, and finally develop it.
+ So here is a basic flowchart of our program.
+ We break it down mainly into three separate steps.
+ The first is to use a recursive generation algorithm for us
+ to actually figure out what step to do
+ to solve the Tower of Hanoi.
+ The second is to import those steps into the robot gripper,
+ and for the gripper to iterate through each step
+ to move each disk from target to the desired location.
+ And the third step, of course, is
+ to once each step is completed, as well as
+ once all steps are completed, we need
+ to check for those conditions and tell the robot to stop,
+ because that's where we end the program.
+ And during this process, we definitely
+ run into some difficulties and challenges,
+ which we'll talk about here.
+ Well, first thing is that we figure out we cannot actually
+ grab the disk from top.
+ So what happens is that they might be just simply too large.
+ So a simple solution, we decrease
+ the size of the different disks.
+ A second difficulty we ran into was
+ with the geometry of the disk.
+ So as you can see here in the demonstration,
+ when they're all cylinders, the robot arm
+ slips when it was grabbing the disk.
+ And this is due to the antipodal grasp, which
+ with a curved surface, it's harder.
+ So we change it to using boxes, that it
+ doesn't need to be specifically at the two diameter points.
+ Right.
+ And the third thing is that we figure out that,
+ because we are using time to keep track of our simulation,
+ sometimes the same step, which should be only executed once,
+ is executed repeatedly.
+ So here, that's why we incorporate a checking
+ condition to determine, has the gripper got to the beginning
+ position?
+ Has it got to the end position?
+ If both, yes, then we said the step is complete,
+ and we execute the step.
+ And this is the moment that you've been waiting for.
+ How well can our robot play the game?
+ So as you can see here, this is a 15 times speeded up
+ version of our robot playing the game.
+ It actually manipulates pretty effectively.
+ There's no waste of time.
+ And also, you can see the stacking is pretty accurate.
+ And you can see at the end, all disks
+ have been transported from the leftmost peg
+ to the rightmost peg.
+ And since this is also a three layer model,
+ we can easily generalize it to higher layers.
+ And some future work.
+ So what areas can be improved about our robot?
+ The first is perception.
+ Right now, our robot is basically
+ getting the information about location.
+ Good.
+ Very nice.
+ [APPLAUSE]
+ Now, I remember I talked to you guys not too long ago,
+ and the robot was barely moving.
+ And then all of a sudden, it's doing the whole Tower of Hanoi.
+ I thought that was incredible how fast.
+ That was good.
+ I love it.
+ I love it.
+ Any questions?
+ No?
+ [SIDE CONVERSATION]
+ In this project, we seek to enable a robotic arm
+ to catch a free-flying spherical projectile using only
+ an RGBD sensor and a bin welded to the robot's end effector.
+ We study this problem because it is
+ an example of time-constrained robotic manipulation.
+ All perception, planning, and control
+ must take place within the time of flight of the object.
+ This is in stark contrast to many other manipulation tasks,
+ such as pick and place.
+ This presents challenges in both perception and control,
+ as we must localize the object in real time
+ and plan an efficient catch motion in order
+ to be successful.
+ Our system is split into three phases--
+ first, perception, where we localize the object;
+ then planning, where we select an interception point based
+ on our estimated trajectory; finally, control,
+ where we execute the catch.
+ To localize the object, we note that any two points
+ in the RGBD point cloud must be equidistant from the object
+ center.
+ This constraint can be formulated
+ as a quadratic optimization cost.
+ And then, after summing this optimization cost
+ over all pairs of points, we can use quadratic programming
+ to find an optimal center.
+ We find that the center is robust to noise typically
+ present in modern-day RGBD sensors.
+ Given multiple of these object poses,
+ we can estimate trajectory by correcting
+ for the quadratic term in the projectile motion equations
+ and fitting a line to the corrected data points
+ in order to predict the initial object position and velocity.
+ To select an interception point, we simply
+ take the closest point on the trajectory
+ to the current bin position.
+ By using inverse kinematics to command the bin
+ to the interception point, we can already
+ achieve limited success in the catching task,
+ specifically when the object's arc is very high and slow
+ moving.
+ However, for fast-moving projectiles,
+ the object tends to either bounce out or roll out
+ of the bin after impact.
+ To correct for this, we introduce a compensation
+ trajectory consisting of two parts--
+ first, a linear path minimizing the relative motion
+ between the projectile and the bin, and second, a tilt
+ meant to prevent the object from rolling out of the bin.
+ With the compensation trajectory,
+ our system is able to adapt to varying object poses,
+ velocities, and angles.
+ However, our system is not perfect.
+ The two primary failure modes are significant error
+ in the estimated pose of the object,
+ resulting in a complete miss.
+ The next is IK failure during the compensation trajectory,
+ which prevents us from compensating the object motion
+ properly.
+ To conclude, our system achieves reasonable success
+ on the catching task and simulation.
+ Future work could be done to improve both the robustness--
+ So did you solve IK?
+ You said you said IK from here to here, and then
+ did you linearly interpolate between them?
+ Yeah, yeah.
+ Cool.
+ No, it's good.
+ You got one.
+ I really love it.
+ Yeah.
+ [INAUDIBLE]
+ Very good.
+ OK.
+ This is a summary of my final project
+ on planning prehensile pushing of a horizontal plane
+ using rapidly expanding random trees and motion cones.
+ Pushing is a deceptively complex task,
+ and I chose to focus on a simplified case,
+ pushing a predefined object in a horizontal plane
+ with a point contact, i.e.
+ pushing an object while it rests on the ground.
+ We can split this task into two main steps,
+ developing a friction-aware planner that
+ can find a series of feasible pushes
+ that move a square block from its initial position
+ to some desired goal, and implementing
+ this trajectory on a simulated robot
+ in order to evaluate performance.
+ We limit the positions around the edge of a block
+ at which a push can be applied to it.
+ As we learned in class, a pusher at each of these locations
+ can exert a force on the block that
+ lies within a friction cone determined
+ by the coefficient of friction between the pusher
+ and the block.
+ If the pusher attempts to apply a force
+ on the boundary of this cone, then it will slip.
+ Motion cones can be viewed as an extension of friction cones.
+ We use them to represent the set of possible twists
+ that can be induced on an object by an external wrench.
+ This diagram shows the general process
+ for determining the motion cones for our particular task.
+ In the case of pushing in the horizontal plane,
+ the motion cone is composed of two wrenches,
+ one from the pusher and one from the supporting surface,
+ i.e. the ground.
+ The pusher-wrench can be found by transforming
+ the set of feasible pushes to the block zone coordinate
+ frame.
+ The set of possible support wrenches
+ can then be represented by an ellipsoidal approximation
+ of a limit surface.
+ The limit surface can be visualized
+ as the capability of the ground to resist
+ loads applied to the object.
+ This is itself a product of friction
+ between the ground and the object.
+ In this video, we can see that the roll of tape
+ doesn't move until the load being applied
+ exceeds some threshold.
+ This is indication of a support wrench resisting
+ our efforts to move it.
+ Once we have a set of possible pusher and support wrenches,
+ we can combine them to find the direction of possible motions.
+ In order for our block to move, we
+ must apply a pusher-wrench with respect
+ to friction constraints, and this pusher-wrench
+ must be sufficient to overcome the corresponding support
+ wrench.
+ We can find the motions that result from this process
+ through the vectors perpendicular to the limit
+ surface at the locations where the pusher-wrench intersects.
+ The set of all of these possible vectors
+ forms a motion cone, which we can finally
+ represent in the world frame.
+ Using motion cones to validate potential pushes,
+ I successfully implemented a simple RRT planner.
+ Note that due to the stochastic nature of this approach,
+ there are occasions when the planner fails to find
+ a valid path towards the goal.
+ I introduced an acceptable tolerance of misalignment
+ with the goal in order to improve the chances of finding
+ a feasible trajectory.
+ Trying to follow the planned trajectories in the simulator
+ led to promising results.
+ Due to the feedforward nature of our controller,
+ we observe an accumulation of error for longer trajectories.
+ These errors result from inaccurate pusher positions.
+ Is there like some time we really
+ must watch the last little bit?
+ It's fine.
+ If it's double-edged, it doesn't work.
+ Oh.
+ Nice, OK.
+ So that is a really nice-- that paper that you built off of
+ is a really nice example of planning with that contact
+ that we didn't have that lecture.
+ But for planning with dynamic constraints of friction
+ and everything like that, that's a really nice paper
+ to build off of.
+ Yeah, thanks.
+ Go on back.
+ OK, since we do have a few people
+ that we have to add to my already full schedule,
+ what I'm going to do is I'm going to prioritize people
+ that are in the room, right?
+ So if we go and the presenter is not here,
+ then we can come back if someone shows up.
+ But I think we should prioritize the people that
+ are in the room, yeah?
+ OK, so--
+ [AUDIO OUT]
+ - You go to the grocery store just to see a huge line.
+ The alternative is self-checkout.
+ But that comes with its own set of issues,
+ like Cody faces over here.
+ - Please place the item on the screen and wait.
+ Please wait for a minute.
+ - Why?
+ What did I do?
+ - Please place the item on the screen and wait.
+ Please wait for a minute.
+ - Oh, goodness.
+ - We wanted to make this a far better experience.
+ I'm Sonia.
+ - And I'm Vishnu.
+ And we created Checkoutbot, a robot
+ to automate the checkout process at grocery stores.
+ - Here's the scenario we envision.
+ A shopper will fill their cart with items
+ and push it right next to the robot.
+ The robot will then pick up the items one by one,
+ put them on the counter for scanning,
+ and then finally pick up the scanned item
+ and put them in the final cart for the shopper
+ to push out of the store.
+ Now, creating the simulation required
+ us to create the models for several different items.
+ And here we have the individual grocery items
+ that we modeled ourselves.
+ It's a box with packaging on most sides,
+ and then a QR code on the final side.
+ And we repeated this process for several different grocery
+ items.
+ Lastly, we imported a model for a shopping cart,
+ like you can see on the right, to better
+ create a feel of a shopping environment in our simulation.
+ Now, here's a video demo of our robot in action.
+ It comes to this first shopping cart,
+ and it picks up each item one by one.
+ So here we have Raisin Bran.
+ And it'll position it right in between these three cameras
+ that you see at the top.
+ It has a QR code on this side.
+ And here's a view that the camera sees,
+ where it says, scan Raisin Bran, at which point
+ it'll proceed to pick up the box again
+ and deposit it in the final cart.
+ Now, this is our robot working at real speed.
+ But now we'll speed it up so you can see it scan
+ the other objects as well.
+ Here we have Eggo Waffles, where it repeats the process.
+ And then here in the camera view,
+ you'll be able to see Scan Eggo Waffles when
+ it recognized the QR code.
+ And I'll just fast forward the video
+ so that you can also see how it picks up the Cheerios over
+ here, drops it on the counter, picks it up after scanning,
+ and then lastly says, scan Cheerios.
+ Now, finally, at the end, it'll also
+ output an itemized receipt of everything that it scanned,
+ as well as its final price.
+ Now I'll pass it over to Vishnu to talk more
+ about the technical details.
+ So in the control flow for a simulation,
+ we had several points of emphasis.
+ One was retrying based on mode of failure,
+ whether it was dropped while picking up from the counter
+ or dropped from picking up from the shopper's cart.
+ We have code to retry several times.
+ And one of the main parts of our project
+ was the scanning of the QR code.
+ So as Sonia explained, we applied a QR code texture
+ to each of the objects we created,
+ and these are Aruko QR codes.
+ And we used OpenCV's library to be
+ able to do both the detection and the identification
+ of these codes.
+ And we kept a mapping from codes to their object items.
+ And we store these items.
+ We also had code to reset the robot angles when it got stuck,
+ such as when it got stuck by hitting the camera.
+ And we had end of simulation behavior,
+ such as generation of the receipt.
+ And what we did is we took the information
+ we stored from before, scanning the QR codes,
+ and we generated an itemized receipt
+ with a final total for the users.
+ So in summary, we created a control flow for a checkout
+ bot, and we had some effective methods
+ for scanning the shopping items using OpenCV and Aruko QR
+ codes.
+ Future work would include speeding up
+ the robot in transition, adding collision geometry
+ to items such as the shopping cart,
+ and using a more appropriate robot arming gripper
+ to deal with the more diverse set of items
+ we would deal with in a grocery store.
+ Thank you.
+ [APPLAUSE]
+ How frustrating was the-- look, it was DiffIK, you said, right?
+ And I saw it go through itself a couple of times.
+ It even went around itself.
+ Was that a major bottleneck for you, or did you power through
+ it?
+ Yeah, of course.
+ It was just dealing with when you generate the source code,
+ you have to use the monotype.
+ It was a saving flow, so that it would not
+ say, oh, I'm using the product, and it's not valid.
+ So it was kind of a--
+ And the kinematic reachability of the EWO
+ was pretty limited to get into that.
+ So you had to kind of drop the cart.
+ I love it.
+ And I love the textureless shopper.
+ I couldn't read what it said in the banner.
+ What did it say in the banner?
+ [INAUDIBLE]
+ That's awesome.
+ So good.
+ I have a quick question.
+ Of course, yeah.
+ How do you know what the key offset is?
+ If we are using the box?
+ So in DiffIK, we rarely end up using the box,
+ where the impact of the simulation and what it tells
+ us didn't actually line up with what [INAUDIBLE]
+ So even though that simulation is showing the faces of the box
+ and the source code on one, the RPCensor
+ actually saw the source code on all faces,
+ because the [INAUDIBLE]
+ [LAUGHTER]
+ Oh, man.
+ That's like the texture coordinates
+ were different or something.
+ OK.
+ Send that to me after.
+ We'll fix that.
+ [LAUGHTER]
+ Hi.
+ For our 14.12 final project, we developed
+ TetrisBot, which is an end-to-end robotic system that
+ plays Tetris.
+ The motivation behind developing TetrisBot
+ is that we've seen that the combination of unrealistic game
+ elements that require a complicated simulation
+ and fine-grained pick and place is pretty rarely explored.
+ And we choose Tetris in order to explore this,
+ because it satisfies both of these criteria.
+ Things like row clearing and piece teleportation
+ require complex simulation.
+ And at the same time, we need highly precise manipulation
+ in order for pieces to be placed pretty--
+ right next to each other.
+ And Tetris has the potential to impact a lot of robotic games
+ and interactive simulators, such as things like Connect4, Chess,
+ or Jenga.
+ And as far as we're aware, this is the first Tetris-playing
+ robotic system that we've seen.
+ And so as you've seen in this class,
+ there is a wide range of projects
+ being explored in this space of robotic manipulation.
+ So we just wanted to highlight some that we felt also touched
+ on some similar aspects, as TetrisBot did.
+ So as we mentioned, as we learned in class,
+ we learned about the dishwasher loader robot, which
+ we saw those aspects of object identification,
+ graph determination, and trajectory optimization.
+ In the shopping cart example, along with the localization,
+ there was also this aspect of optimal piece placement, which
+ is very important in Tetris.
+ And finally, looking at more of the gameplay side,
+ you have Jenga with that adversarial answer
+ in gameplay, which is a very important part of Tetris
+ as well.
+ So here's a brief overview of the methodology of TetrisBot.
+ We first construct and teleport a random piece.
+ And then we detect said piece using
+ a convolutional neural network.
+ We pass in whatever our detection algorithm returns
+ to the gameplay algorithm, which returns
+ a rotation in a position.
+ We transform that into board coordinates
+ and then place that piece at a desired location.
+ And then we update our board state if necessary.
+ Going into a little bit more detail,
+ in order to construct and teleport a new piece,
+ we require a simulation loop, which
+ is pretty crucial for this entire project.
+ And that's because certain aspects of Tetris
+ can't be simulated using things like the physics engine, which
+ is what we've traditionally used in class so far.
+ Things like being able to spawn a piece at a given location
+ or replace every piece once we put it
+ on the board with a series of unit cubes in the same location
+ to make things like line clearing easier
+ are things that we can't do without breaking out
+ of the simulation.
+ Once we have that randomly generated piece,
+ we use a convolutional neural network
+ to detect which piece we've teleported in.
+ And we use a mobile net CNN in order as our base network.
+ And we train a couple of layers on top of that
+ to determine which of the seven pieces
+ we've randomly generated.
+ Once we've figured out what piece we have,
+ we can then use our gameplay algorithm, which
+ will basically determine what the optimal position is
+ to place that piece on the board.
+ And that's using heuristics like the height of the board
+ after any line clears after that placement
+ or the actual placement on the board of that piece,
+ like how low that piece can go.
+ And these are heuristics that are used by players that
+ are playing Tetris.
+ And we felt that they would be effective at teaching
+ the robot how to play Tetris effectively.
+ For the final two steps, we go a bit more into detail
+ in the next two slides.
+ So for picking and placing, we plan
+ a trajectory for each piece.
+ So what that does is it composes four key poses
+ to construct this trajectory, which
+ are the initial pose here, a grasp pose, an intermediate
+ pose, and finally a drop pose.
+ The grasp pose is fixed for all the pieces
+ and is able to pick all of them up.
+ And the drop pose incorporates information
+ from the gameplay algorithm, which
+ is the rotation of the piece, the desired row and column
+ to drop it in.
+ After dropping the piece, we update the board state.
+ So what that involves is populating cubes
+ in the location of that piece.
+ And also, if any rows are full, we clear that row.
+ And in these images, we see that before and after a row clear.
+ Here's a demo of our Tetris bot in action.
+ We can see that we have a successful end-to-end--
+ [AUDIO OUT]
+ Oh, there's three of you.
+ I get the wrong time.
+ You guys get in the middle.
+ I'm sorry.
+ --that row.
+ And here's a demo of our Tetris bot in action.
+ We can see that we have a successful end-to-end--
+ [AUDIO OUT]
+ --grasping and placing of each block.
+ And each one lands where desired on the board.
+ We can see that all the pieces are being identified correctly
+ and placed correctly.
+ And the gameplay is pretty reasonable.
+ Yeah.
+ And so as we were working on this project,
+ there were a couple of extensions
+ that we were thinking about.
+ So obviously, we want to make a more robust, more optimal
+ gameplay algorithm using elements such as reinforcement
+ learning.
+ Hopefully, we thought it would be interesting to make
+ a multiplayer version of Tetris that
+ has multiple EWAs playing against each other
+ on the same board.
+ And also, we'd like to make a more true-to-life board that
+ has either a vertical or slanted board so that we can utilize
+ that aspect of gravity and simulate actual gameplay
+ with increasing gravity, perhaps.
+ Thank you.
+ [APPLAUSE]
+ Questions for the Tetris folks?
+ We need to now simulate exploding blocks,
+ some fracture mechanics or something like this.
+ Yeah?
+ That's awesome.
+ So what was the hardest-- what was the most surprising part
+ of that whole pipeline?
+ What was the part that you thought
+ was going to work better that didn't actually work?
+ [INAUDIBLE]
+ Super nice.
+ [INAUDIBLE]
+ Interesting.
+ We could speed that part up.
+ But that's good.
+ That's good.
+ No, that's super insightful.
+ I like that.
+ Hi, this is Michael.
+ And this is Nico.
+ For our final project, we tried to get the IWA to skip a rock.
+ Rock skipping is a relatively simple dynamic task
+ that can be done by many people, even the kid in this picture.
+ We thought it would be pretty cool
+ to see if we could get a robot to do the same thing.
+ The first challenge of our project
+ was to model the dynamics of skipping.
+ Skipping occurs when a rock collides with water
+ and a surface force propels the rock upwards.
+ We modeled this collision using a drag force outlined
+ in a previous paper.
+ This force is directly proportional to the contact
+ area of the rock and favors a flat geometry and velocity.
+ This is intuitive for how we understand skipping.
+ For our simulation setup, we have the IWA arm positioned
+ next to the water surface and table.
+ Based on the dynamics, we chose a flat hockey puck shape
+ for our rock and centered it on top of the table.
+ Behind the scenes, we implemented a force system
+ to apply the spatial force from the water.
+ Here is the general flow of our system
+ where we specify parameters, such as the known rock
+ location, desired throw velocity, and release height.
+ We then manipulate the arm to pick up the rock
+ and throw it with the desired parameters.
+ Lastly, we simulate the skipping dynamics.
+ Our setup consists of a state machine
+ to switch how we command the arm.
+ For each of these states, we have
+ a different underlying control method, as shown.
+ For the pickup state, we utilize simple kinematic planning
+ and differential inverse kinematics
+ to drag the rock to the edge of the table.
+ This enables us to get an antipodal grasp on the rock,
+ as shown in the video.
+ Once you pick up the rock, we load the rock
+ to an ideal initial throwing position.
+ We initially thought to try a similar approach
+ with kinematic throwing by creating radial poses,
+ as seen in the picture.
+ But we were unable to throw the rock any faster
+ than 6 meters per second.
+ This occurred since differential inverse kinematics only
+ utilizes the very next pose, which
+ would lead to unadvantageous joint positions.
+ To overcome this, we switched to kinematic trajectory
+ optimization.
+ We knew we wanted a similar radial throwing trajectory.
+ Specifically, we wanted the trajectory
+ to pass through a release pose and a final pose,
+ as shown in the image.
+ Since the release of the rock matters the most when throwing,
+ we added orientation and velocity constraints
+ at this point.
+ In the image, you can see these poses, as well as
+ the yellow trajectory line created from the optimization.
+ Here is a video of the arm throwing the rock.
+ And here is a video of the rock skipping after being thrown.
+ We ran our implementation over a desired set
+ of throwing velocities.
+ The throws were not perfect.
+ The actual release velocity of the rock
+ was much less than expected.
+ This is likely due to the rock colliding with the gripper
+ on an imperfect release.
+ We just used the two-finger gripper,
+ which is not necessarily optimal for skipping a rock.
+ However, we still did get the rock to skip,
+ and saw that higher velocities led to more skips.
+ We can also see the contact force decreases
+ with each impact.
+ After many long days, we actually did get it to skip.
+ However, we ran into a lot of problems along the way.
+ We saw from our results earlier that rock velocities
+ below 10 meters per second would not skip.
+ But we kept running into problems
+ where the rock would fly out of the gripper
+ at desired velocities over 25 meters per second.
+ We tried a few things to prevent this,
+ but none of them helped.
+ We tried different grasps, increasing grip force,
+ decreasing the simulation DT, and even increasing friction.
+ Still, none of this helped.
+ And we saw the rock slip out as shown.
+ Outside of problems with the gripper,
+ we had some problems planning.
+ Originally, we hoped to test how release height
+ may affect skipping.
+ The dynamics would tell us that a lower release height
+ is best, because this leads to a faster release
+ height, because this leads to a flatter velocity.
+ But our trajectory optimizer had a hard time solving
+ for various release heights.
+ These are the guys that we're asking on Piazza constantly,
+ like, how do I remove every possible limit from the IWA
+ model, right?
+ I don't want force limits.
+ I don't want acceleration limits.
+ I don't want torque limits.
+ So what was your biggest surprise in the end?
+ Honestly, I think we got really, really deep.
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ That's robotics.
+ Yeah.
+ Hey.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ I think IWA is not meant for throwing at high speeds.
+ But awesome.
+ Design choices for dual-arm robotic manipulator control.
+ I'm Alex, and I'm working with Marcel and Idan.
+ So why dual-arm robots?
+ You have access to a bunch of more diverse tasks
+ that require cooperation between both arms,
+ as well as increased throughput.
+ The challenge is you have more complexity
+ having twice as many degrees of freedom,
+ plus you have to plan around the other arm.
+ So there are three possible approaches
+ to tackling this problem.
+ You have two independent controllers, one for each arm,
+ two independent controllers with a communication
+ channel between the two arms, and a single unified controller.
+ So here's a demo of two independent controllers.
+ Both controllers don't have any notion
+ of what the other arm is doing.
+ They're working completely independently and asynchronously.
+ So one arm picks up objects from one side of the bin,
+ and the other picks up objects in the other side of the bin
+ and places them into the target bin.
+ So here is a more detailed diagram of how we did this.
+ We geofenced the robots.
+ So the robot on the left picks up an object
+ from the bottom half of the bin, goes to clearance frame one,
+ and then from clearance frame one
+ follows a fixed path to the drop-off location.
+ Now the robot on the right picks up objects from the top
+ and goes to clearance frame two, and then
+ follows a fixed path down to the drop-off location.
+ The advantages of this method is that it's
+ very simple to implement, and it works completely
+ asynchronously, so you don't have
+ to wait for the other robot.
+ But the disadvantages are that you
+ have to manually define a fixed path for each new scenario,
+ as well as the path is not ideal because you
+ have to move out of the way to make the clearance requirements
+ to not hit the other robot.
+ And one failure modality is that there
+ is a grasp boundary where no robot can get to,
+ because the grippers have some finite width,
+ making it so that some objects may not
+ be grasped if they're right on the grasp boundary.
+ The next approach, we kept the controllers
+ separate from each other, but added a communication channel
+ between them.
+ To study this approach, we took the task
+ of passing an object from one robotic task to another
+ without putting it on the ground.
+ The communication channel carries
+ relatively simple information.
+ After the first arm grasps the object
+ and carries it to the location, it
+ sends a message to the other arm that it's ready
+ and its location.
+ The other arm grasps the object and then sends a message
+ that the first arm should release it.
+ The main technical challenge here
+ is finding a good grasping pose in the air.
+ Unlike the algorithm that was taught in the class,
+ here the point cloud includes both the object and the gripper,
+ and we needed to separate them before coming up
+ with a good antipodal grasp proposal.
+ Overall, this approach allows us to have simple controllers,
+ but that still have some cooperation between them.
+ On the other hand, it's good only
+ when the chance of collision is low
+ and is not suitable for every task.
+ The previous methods could solve a limited number of tasks
+ and were not generalizable.
+ Next, we'll tackle this problem by designing a single controller
+ and proposing a new algorithm for path planning optimization
+ for both arms at the same time.
+ In this case, the benchmark consists in picking and placing
+ multiple objects from one bin to the other.
+ This task becomes hard because the trajectories
+ between both arms are constantly crossing each other.
+ In the video, you can see we successfully achieved this task,
+ but let's look at how we solved it.
+ The first idea was to design a state machine
+ that forces synchronization on both arms,
+ meaning that each arm will have to wait for the other
+ to finish its subtask before starting the next sequence.
+ The second idea consisted in designing two collision-free paths
+ from one bin to the other.
+ We propose a novel algorithm that consists in recursively
+ finding two frames, one for each arm,
+ so that they are not colliding,
+ as we can see in the visualization.
+ The main advantage of using a single controller
+ is that now we can achieve any feasible task,
+ and it is space efficient.
+ However, there are some disadvantages too.
+ The controller becomes harder to design,
+ the optimization becomes harder too,
+ and synchronous movements might slow down the time to success.
+ Nevertheless, we have to say that this method is still not perfect,
+ and we find two main issues.
+ First is that we only constrain the end effector
+ positioned to not collide,
+ so we can still have collisions on the rest of the arm.
+ Second, the arm gets sometimes tangled with itself
+ due to the differential IK solver.
+ The solution for both of these problems
+ would be to add constraints and optimize in joint space
+ instead of end effector space.
+ Our algorithm could perfectly incorporate this improvement
+ and we leave it as future work.
+ To conclude, in our project,
+ we presented three different design choices of controllers of dual-arm robots.
+ Independent controllers are similar to program,
+ they can work asynchronously, but are space and time inefficient.
+ Adding a communication channel allows to have more correlation
+ between the arms and solve more tasks,
+ but the number of tasks is still limited.
+ Finally, with a single controller, we should be able to solve any task,
+ but the optimization problem becomes harder
+ due to the curse of dimensionality.
+ Thank you for listening.
+ Okay, so what surprised you?
+ I was surprised that the two-by-two space didn't work as well as we thought.
+ Yeah.
+ [inaudible]
+ Did you use the diff IK or did you use the pseudo-inverse Jacobian?
+ [inaudible]
+ Yeah, yeah.
+ Good, okay.
+ Any other questions?
+ I do think dual-arm planning is still hard.
+ People, most, if you see a dual-arm demo in the world,
+ there's typically some hacks that make it work.
+ It's still hard to solve the real problem,
+ collision-free motion planning.
+ All right.
+ Hi, I'm Pixi, and alongside me is Hanshi and Arif.
+ Today, we're going to discuss our project,
+ which is a physics-based throwing using inverse dynamics control.
+ So the motivation for our work stems from the fact
+ that throwing objects is a very important skill for robots,
+ as it is a prerequisite for many more complex
+ and dynamic robotic manipulation tasks.
+ Throwing can increase the efficiency of manipulation
+ as well as expand the robot's workspace.
+ So our goal is to construct a method for robots
+ to successfully throw objects between one another.
+ This problem involves solving the problems of perception,
+ grasping, trajectory planning, inverse kinematics,
+ as well as inverse dynamics control.
+ And here's an example of our system and work.
+ So first, the robots select the grasp, execute the grasp,
+ and then it proceeds to plan a trajectory to execute the throw.
+ As you can see, this is the trajectory that they're following,
+ that it has planned in real time.
+ And then this throw is executed, and this time it was successful.
+ And then this process keeps repeating itself over and over again.
+ As you can see, it is not always successful,
+ but we'll go more into detail later why.
+ So first, let's talk about the system design.
+ At a high level, there is a task planner or a state machine.
+ And in this, it's broken up into different states.
+ The first state is perception and grasp selection,
+ where it determines grasp, executes those grasp,
+ and then it plans a throwing trajectory.
+ These trajectories are then fed into an inverse kinematics solver
+ to convert 3D poses into joint angles,
+ in which the joint angles are then fed into an inverse dynamics controller
+ to achieve precise trajectory control.
+ So first off, starting with the perception and grasp planning,
+ point clouds are sampled from cameras and then combined and downsampled.
+ From this downsampled combined point cloud,
+ normals are obtained and oriented towards the camera.
+ With this, grasp can be selected and scored,
+ and then the best quality grasp is then taken
+ as the final grasp pose position for the robot to execute towards.
+ For trajectory planning, the complete throwing trajectory consists of three parts.
+ The rotation part, the linear movement part, and the circular motion part.
+ The robot arm will rotate to the oriented patient direction first,
+ and then it will linearly move to the starting position of the throwing trajectory.
+ And then we will generate the last segment of the throwing trajectory
+ using our self-designed circular throwing trajectory method.
+ And for the projected problem analysis,
+ since our robots are throwing the objects in the 3D world,
+ we can reduce this throwing behavior into two-dimensional problems.
+ As you can see in the right figure,
+ when the robot is heading towards the target point,
+ we can set the throwing trajectory into the direction of the target point.
+ And for the trajectory planning,
+ we use the minimized energy consumption trajectory,
+ which is a circular arc trajectory design idea.
+ Consider the left picture.
+ Since we know the starting position of the throwing trajectory,
+ and the core of our solution is to find the throwing position and velocity correctly,
+ instead, we focus on the radius of the arc and the ledge angle.
+ And the right side is the cost function and the related constraints.
+ To achieve our precise control, we use the inverse time controller,
+ because throwing involves large accelerations and velocities,
+ and also the robot needs to achieve a certain velocity to achieve a good throw.
+ So, naive controllers that are not aware of velocities and feedforward accelerations can lag behind.
+ These controllers are differential inverse kinematics and position controllers.
+ So, we need to incorporate velocity and acceleration,
+ which motivates us to use the inverse dynamics controller,
+ because we can use the known dynamics of the system.
+ We use inverse kinematics to generate joint angles in joint space from trajectories in 3D,
+ and then we use shape-preserving interpolation between these to generate a continuous trajectory.
+ Then we can differentiate the trajectory to generate velocities and accelerations to feed into the inverse dynamics controller.
+ One metric we can use to evaluate our controller is trajectory tracking performance.
+ We use this because this is closely related to the throwing performance.
+ On the left, we plot the tracking error over time,
+ and we can see that the tracking error is highest near 21 seconds, which is when the throwing happens.
+ We also plot the desired accelerations, which are commanded to the inverse dynamics controller over time.
+ On the right, we see that high accelerations are the most common.
+ Did you see the same sliding effect that rock skippers saw?
+ Do you think when you were getting to high velocities?
+ Yeah, especially when we did these high-speed dynamics to bring the unit to size,
+ we can use our control system to make the acceleration scale.
+ And we can vary it a lot of times to make it more efficient,
+ but we can't do it all the time.
+ So, we have to use a lot of time to make it more efficient.
+ We can't do it all the time, but we can vary it a lot of times.
+ That's the way we can get the maximum performance.
+ [INAUDIBLE]
+ Makes sense. Very nice.
+ I feel like I need to find a high-ly end effector for everybody,
+ or get some demos of an allegro hand throwing or something like that.
+ Yeah?
+ [INAUDIBLE]
+ Did you guys look at the collision geometry?
+ I guess maybe for the rock skipping and even the original, the first video throwing?
+ [INAUDIBLE]
+ I think on the collision geometry, I'm pretty sure that the model that everybody would have found
+ is the one that has multiple collision points.
+ I think when David took the class, I might have given out a collision model
+ that had only one contact point per finger,
+ and I had some regret about that, but I fixed it for this year.
+ So, I think you guys must have had a few contact points,
+ but maybe it could have been better.
+ You guys need lots of friction and force.
+ Hi, everyone. My name is McCoy Becker.
+ I'll be--
+ [AUDIO OUT]
+ Hello. We are Kami, Raul, and Michael,
+ and today we will be presenting our robotic manipulation final project,
+ the teleoperation of the allegro hand via kinematic hand synergies in Drake.
+ The motivation of our study came from the learning dexterity project conducted by OpenAI.
+ They used reinforcement learning to learn how to reorient the cube using the dexterous shadow robot hand.
+ However, we were curious if the problem could be simplified.
+ Specifically, we hypothesized that knowledge of human hand motor control
+ could lead to easier learning of dexterous manipulation via behavior cloning.
+ But before we could test this hypothesis,
+ we needed to develop a teleoperation system that can be used to study human hand manipulation.
+ This ultimately became the goal of our project.
+ Specifically, this goal was broken into three subgoals.
+ The first subgoal was to teleoperate the allegro hand in a simulated environment.
+ The second subgoal comes from the idea that while the hand has many degrees of freedom,
+ humans rarely control each joint individually.
+ Rather, they control many of the joints simultaneously in a coordinated fashion.
+ This idea is known as a synergy.
+ In fact, reducing the control degree of freedom can greatly simplify the control input required to learn a manipulation task.
+ Thus, our second goal was to teleoperate the allegro hand using known kinematic hand synergies.
+ And with those first two subgoals, our third subgoal was to grasp various objects using teleoperation of the hand
+ with and without synergistic control.
+ This work is important to the design of prosthetics, robotic rehabilitation devices, and dexterous manipulation.
+ The environment we are controlling contains the allegro hand, the IWA arm, and various objects.
+ Our system was designed such that the allegro hand and IWA were controlled based on separate pipelines.
+ Starting from the hand, first the hand video was captured with a single, uncalibrated RGB camera.
+ Using MediaPipe Hands, a software that can track hand kinematics, we obtained joint positions of the operator's hand.
+ This is passed into the desired states of the IWA.
+ Then we pass those states in the inverse dynamics controller to output torque for each of the controllable joints of the hand.
+ Once this is passed into the plant, the simulator shows the allegro hand moving like this.
+ On the IWA side, we came up with a set of poses that we wanted its end effector to follow.
+ Using inverse kinematics, we find the joint positions of the arm.
+ The same workflow as the hand is repeated to obtain the simulation of the arm's motion.
+ With our teleoperation pipeline, we were able to accurately track the positions of our hand joints and command the allegro hand to follow our motions,
+ composing itself into a peace sign, a fist, or other desired configurations.
+ We controlled the system in real time, but our controller occasionally overshot its intended target before stabilizing.
+ Each digit can be commanded individually, and inputs from the pinky are ignored because the allegro hand only has four fingers.
+ We were also able to control the position and orientation of the hand by using sliders to command the IWA positions using an inverse kinematics solver,
+ which we used during our grasping tests.
+ Here we show that we were able to successfully implement teleoperation using kinematic hand synergies.
+ We see the human teleoperating the hand to make a peace sign.
+ However, in the case where there is one synergy, all the joints are moving in a coupled manner simultaneously.
+ As we increase the number of synergies in the controller, we see that the allegro hand begins to look more like the peace sign that the human hand is prescribing.
+ That is because as we add synergies, we are effectively adding more individual control degrees of freedom.
+ Through teleoperation, we were able to maintain a firm grip on a cube resting in the palm of the allegro hand.
+ However, without accurate force feedback from the simulation, we often relied on exaggerated movements to achieve our desired grip,
+ fully forming a fist instead of a gentle grip on the cube, for example.
+ Unfortunately, when we attempted to grasp objects placed on a table, we had serious difficulties forming a stable grip,
+ and often inadvertently applied very large forces to our test objects when trying to grab them.
+ This would cause the simulation to become unstable, sometimes to the point of crashing the system.
+ We showed our implementation of teleoperating a multi-finger robotic hand in Drake.
+ We used human demonstration captured by an RGB camera.
+ We used synergies to simplify the degrees of freedom to control the robotic hand.
+ Although some aspects of our implementation were unsuccessful,
+ we think that this project paves the promising way forward to understand robotic control for dexterous manipulation.
+ We want to improve our contact simulation to achieve stable graphs,
+ and ultimately we want to apply this work to conduct behavior cloning of manipulation tasks based on human demonstration.
+ I watched most of these this morning.
+ But what was the thing, when the Allegro went unstable, and the simulation shot off,
+ something flew into the real image.
+ What was that?
+ [LAUGHTER]
+ There was like, someone threw a t-shirt through the camera or something.
+ [LAUGHTER]
+ So what do you think would be the thing that would give you more,
+ you said, it sounded like you suggested feedback, force feedback would be necessary.
+ Do you think you could do less?
+ Do you think you could just VR or?
+ [INAUDIBLE]
+ Ah.
+ All right.
+ [INAUDIBLE]
+ Do you think the shadow hand would be better?
+ The more dexterous hand?
+ All right.
+ Future work.
+ Oh, good.
+ [INAUDIBLE]
+ And you guys have a happy glove to play with later, yeah?
+ [INAUDIBLE]
+ All right.
+ Systems problems.
+ OK, is Nikita here?
+ Oh, yeah, OK, good.
+ Hi, everyone.
+ My name is Nikita.
+ And in this talk, I would like to introduce my work on spades,
+ reclaring robotic system.
+ The problem is the following.
+ Given a floor plan that is specified as a set of dashed lines,
+ the system should be able to construct the building of certain height
+ by layering bricks on top of each other according to the floor plan.
+ There might be single or multiple robotic arms working together,
+ and the number of bricks can be as high as hundreds.
+ After parsing the floor plan and constructing poses for each brick,
+ the first step is computing trajectories under a set of constraints
+ that will guarantee gentle placement of the bricks, collision avoidance,
+ and also avoidance of high velocities and unrealistic accelerations
+ in the robot joints.
+ As the first attempt, I tried using global kinematic trajectory optimization
+ on joint positions to optimize end-to-end trajectories from the source
+ to the destination with a large set of constraints shown below.
+ Unfortunately, the resulting optimization problem turned out being very complex,
+ and it was not able to cover most of the bricks.
+ Then I decided to simplify the optimization problem
+ by decoupling trajectory construction from solving inverse kinematics.
+ I also split end-to-end trajectories into three regions,
+ each with different constraints.
+ For example, the grip and the move-return regions have relaxed constraints
+ on the grip rotation, while the approach region strictly constrains
+ both the poses and velocities to allow gentle placement of the bricks.
+ The most challenging part here is planning the move-return trajectory,
+ as this part of the trajectory should avoid collisions
+ with the previously built walls and the robot itself.
+ For this project, I simplified the problem by constraining the move-return zone
+ to be always higher than the height of the destination brick,
+ and I'm also using simple tangential trajectories in order to bypass the robot body.
+ The constructed trajectories here are expressed in the grip poses,
+ and they don't correspond to actual joint positions.
+ So the next step is to solve inverse kinematics
+ to define actual trajectories for the robot.
+ The problem is formulated as joint centering optimization
+ with a set of constraints based on the part of the trajectory from the previous slide.
+ The algorithm for solving inverse kinematics for all bricks is shown on the left.
+ In short, we construct several possible collision-free trajectories for each brick
+ and interpolate them.
+ Then we try to solve constraint inverse kinematics for each point of the trajectory,
+ and if there is a trajectory for which inverse kinematics is solvable for every point,
+ commit it.
+ If there are multiple such trajectories, commit the shortest.
+ This slide shows visualization of the coverage made with point clouds.
+ Green clouds correspond to the reachable bricks, red to unreachable.
+ The whole trajectory planning and inverse kinematic optimization can be solved offline,
+ and the output can easily be the matrix,
+ such as the number of covered bricks,
+ and also the number of uncovered clusters, and so on.
+ This matrix can be used to build higher-level optimizations on top of it,
+ for example, to search for the best position of the robot or multiple robots
+ that result in the best coverage.
+ And in this work, I tried this.
+ So in general, there might be many, many different possible approaches
+ to optimize coverage with multiple robots,
+ and in this work, I tried a simple greedy search.
+ So the idea is to--
+ --that was going to happen, but I was prepared to show a couple of these last little bits--
+ --by optimization.
+ However, the placement of the bricks is highly constrained,
+ and here the manipulator always puts bricks--
+ So here the second robot starts working--
+ --to work at the same time.
+ So this comes with better coverage, but--
+ [applause]
+ You said global trajectory optimization at the beginning.
+ What did you mean by global trajectory optimization?
+ So like end-to-end, it's in time.
+ You're doing the whole-- like maybe the multimodal or something like that.
+ But it's still with the SNOP or whatever.
+ It's still the local method.
+ The optimization is local and subject to local minima.
+ Yeah, yeah.
+ Because of the optimizer being too weak or because the kinematics are too limited?
+ Yeah.
+ There's so many constraints in the error service.
+ Nice.
+ Okay, any other questions?
+ I was very impressed by the number of things you got in there.
+ The peg and hole problem is a classic problem in robotics--
+ --where an object is inserted into a hole that fits the object tightly.
+ For this project, I chose to work on a variation of the problem--
+ --with a square peg and a square hole.
+ The goal was to first be able to perform the task--
+ --knowing the precise locations of the block and the hole--
+ --and then find out how much harder the problem becomes--
+ --when some inaccuracy is introduced.
+ Here we have the setup used for the project--
+ --with the IWA arm, the gripper, a red block that will be our peg--
+ --and a hole formed from blue blocks that are welded in place.
+ Also, there's a camera floating high above the block--
+ --that we can use for determining the x and y coordinates of the block.
+ Here, a pseudo-inverse controller is used to control--
+ --the spatial orientation of the gripper.
+ The exact positions of the block and hole are known--
+ --so a valid trajectory can be commanded to the robot--
+ --to put the block in the hole.
+ The gripper rotates to avoid hitting the hole--
+ --grips the block above its center of mass--
+ --avoids obstacles, lowers the block into the hole, and lets go.
+ Now, we introduce vision to the problem.
+ These are the points seen from the camera that passed through an RGB filter--
+ --and they represent the top of the block pretty well.
+ However, notice a row of points to the left hanging off of the block.
+ Due to that rebellious row, the average of the points--
+ --will not be the exact center of the block.
+ The insertion fails, but two corners of the block go in--
+ --showing that at least the y coordinate of the block was correct.
+ To solve this predicament, I devised a spiral search method.
+ If an upper bound for the error in the position of the block can be determined--
+ --that gives a square area spanning out from the attempted insertion point--
+ --where the hole must be located.
+ So the idea is to move to one of the corners of this square area--
+ --and then move along the square spiral trajectory--
+ --spiraling to the center of the area.
+ All the while, the block is being pressed down into the surface of the hole.
+ The termination condition would be when there's a drop in normal force on the arm.
+ Unfortunately, since not all rotations of the block are constrained--
+ --when the block is held by the gripper, the block rotates when pressed down into the hole--
+ --and since it is partially inserted, the gripper cannot move to perform the spiral search.
+ Also, the block has rotated away from the correct orientation, so all hope is lost.
+ For future work, I would love to try this with gripper arms that have a stronger grip--
+ --or have a higher friction coefficient.
+ If that doesn't work, I would like to try it with a gripper with forearms.
+ I have faith that this can be made to work.
+ [applause]
+ Awesome. You just need to squeeze the heck out of it. That's what we learned from the other--
+ Why is it sinking in so much? Is that the collision geometry being recessed?
+ [inaudible]
+ No?
+ [inaudible]
+ So what surprised you the most in that?
+ [inaudible]
+ That's fair. How difficult everything is was the answer.
+ Cool. All right. So I think-- Is Radha here? All right, nice. Yes.
+ I can't see that.
+ Hi, my name is Radhika Ghoshal, and today I will talk about my project on RRT planning for push manipulation.
+ This project focuses on generating trajectories to push a box from a start configuration to a goal using sampling-based planning.
+ We re-implemented prior work by Zito et al. titled "Two-Level RRT Planning for Robotics Push Manipulation" and learned a lot along the way.
+ Here's a quick summary of the two-level planner.
+ The outer loop of the two-level planner samples box configurations in its C space to get Cs of configurations like this.
+ The start config is marked in red and the goal is marked in green.
+ And the inner local push planner operates in the C space of the robot to find feasible push sequences between the sampled box configurations.
+ The local planner checks for feasibility by running forward simulations inside it.
+ Note that the original paper uses purely kinematic methods to generate these push sequences, and the quality of pushes here isn't that great.
+ Let me show a few more.
+ For the implementation, the EVA push planner outputs a trajectory of desired end-effector poses, which is then fed to the differential inverse kinematics controller to convert to joint position commands.
+ Turns out, the purely kinematic local push planner doesn't work well for us.
+ Due to its poor quality pushes, RRT ends up requiring a large number of samples to find push sequences to the goal.
+ This path usually ends up being circuitous and unusable.
+ In the RRT plot above, it wasn't possible to find a path with even a large number of samples.
+ So we decided to use a Cartesian force controller.
+ This consistently produces high-quality pushes against the box during testing, but we didn't have time to integrate it into the full RRT loop.
+ For future work, we'd like to complete the integration of the force control model into the full RRT loop.
+ Finally, I realized that force control is awesome and often makes things easier than position/velocity control.
+ Thanks for watching.
+ [APPLAUSE]
+ Here, here, force control.
+ So how are you going to put the force controller into the-- is this going to be an RRT extend that's going to be using the controller?
+ Yeah.
+ So like, we run the forward simulation inside the RRT extend operation.
+ So like, I don't need to put in the force controller inside that.
+ Yeah, yeah.
+ I have a--
+ Yeah, nice.
+ [INAUDIBLE]
+ [LAUGHTER]
+ It happens.
+ Yes?
+ What kind of push is necessary to be performing an RRT extension of that?
+ [INAUDIBLE]
+ So it's just differences in the pose of the brick.
+ Yes.
+ Yes.
+ Cool.
+ OK, I think Jared said he was going to come later.
+ I'm trying to--
+ [INAUDIBLE]
+ Yeah, OK.
+ I'll come back to anybody who shows up later.
+ I think Annie Rude and Ken's here.
+ Kenneth, there you go.
+ Good.
+ All right.
+ Our project is automated robust stacking of prisms, also known as PrismBot.
+ I'm Ethan.
+ I'm Kenneth.
+ I'm Annie.
+ We care about stacking because stacking is a cognitively challenging task.
+ There's applications of stacking in construction and fabrication.
+ We focus our problem on stacking prisms.
+ Prisms are easier to grasp and stack compared to arbitrary objects due to their simple geometry and flat surfaces.
+ All right, so our initial method was mostly adapted from the bin picking notebook.
+ As you can see, it was not very robust.
+ It could not robustly grasp objects or even place them down precisely enough to build a tall stack.
+ So in order to mitigate this, we use a state machine.
+ The state machine robustly clears the space where the stack is going to be built by detecting when the stack falls over so that we don't end up stacking over fallen debris, which would render an unstable stack.
+ We also use self correction when motion tracking error detected so that the trajectories that we execute are the trajectories that we expect.
+ We also do center of mass calculation so that we can precisely place the blocks such that their center of masses line up vertically.
+ Recall from class that we can estimate center of mass by lump parameter estimation.
+ If the object is held still in fact, it's possible to calculate the term separately and separately calculate the mass and the center of mass of a held object, just by looking at the external torques of the EWA.
+ The only problem is, is that the only the x and y coordinates of the center of mass of the object are identifiable in the world frame, since the z coordinate is in the direction of gravity.
+ The solution is to just measure from two poses and use a mathematical program to find the optimal center of mass that matches up with the measured external torques.
+ So another problem we ran into in our initial methods was problems related to grasping. Our main problem was that we would often try to grasp points that were near edges.
+ So our grasp would either fail or if they succeeded, they would often be wobbly and would result in poor placing.
+ So the way we fix this is to develop an edge heuristic so we can avoid grasping your edges.
+ So the way it worked is that after we picked a target grasp point, we would sample the 25 closest points spatially from our point cloud and collect their normals.
+ And then across these 25 normals, we would find the minimum dot product between any pair, and we would have a cutoff because for a face, this heuristic would give us a large value since all the normals would point in the same direction.
+ And we would get a lower value in your edges, because we'd have normals from two different faces, which would result in a lower dot product.
+ We also improved our perception by adding segmentation. We use the dbScan algorithm to segment objects spatially, and we also segmented them via hue to account for the case where two objects were touching each other.
+ And this let us detect which objects were in the stacking zone and move them away. And it also helped us pick the order of blocks to stack.
+ For our final results, we evaluated our system by testing it on 10 trials with varying number of objects and object type.
+ So you can see here that we tested 2, 3, 4, and 5 rectangular prisms, and the same for pentagonal prisms.
+ We have a high success rate for less than or equal to 3 objects, which is a greater than 90% success rate.
+ However, as we increase the number of objects, we can see that the success rate drops, and for pentagonal prisms, the success rate also drops.
+ One common error that we saw, especially for a large number of objects, was a simulator crashing due to the high number of collisions that are involved when the stack gets taller.
+ Here you can see our system working in full. First, our robot clears the object from the stacking cylinder so that it could replace it with more precision.
+ Now you can see for each object, our robot rotates the object a bit in order to do the center of mass calculation to again place it precisely on top of the preceding one.
+ In this simulation, our robot is able to successfully stack 7 objects on top of each other, and we think that this is actually the maximum that is possible for our current simulation,
+ as for the 6th block, the top of the block is not visible to the cameras.
+ Thanks for listening. Our code is publicly available on GitHub for others to build on top of.
+ [applause]
+ So did you hide the center of mass in random places inside the block? Is that what you did?
+ We were thinking to do that, but we figured it would work, but we didn't have enough time to do it.
+ So what was the variability that gave you different-- I mean, was it only the bricks, same initial conditions, or where did you--
+ It was, I guess, random collisions, [inaudible]
+ Yeah? Very nice. I'm glad you got the center of mass estimation working. That's perfect. Yeah. Any other questions?
+ All right. Jared, I knew you were coming at 3.30. We just passed you, but I'm going back.
+ We're talking to you about my final project, which is called GreenBot.
+ It's a manipulation system capable of identifying, picking, and placing recyclable waste.
+ So how exactly does it work? It uses a custom-trained mask-RCNN model for object segmentation.
+ Given a labeled and segmented point cloud, it can find a near-optimal antipodal grasp for this object.
+ It uses a slightly modified version of a pseudo-inverse controller to move around, and of course, it uses some fun 3D models that I found on the Internet.
+ Here's the mask-RCNN model. It's trained the same way that we approached it in class, which is that we start from a pre-trained model using the COCO dataset,
+ and then we strip the last layer of nodes and retrain it such that the output is the labeled and masked images corresponding to the set of objects that I'd given the simulation.
+ From here, any time the robot actually wants to pick something up and make a decision, it can query two different RGB images from cameras on either side of the picnic table,
+ and then it can pass off these RGB images to mask-RCNN. And from here, what it gets is labeled and segmented depth images from mask-RCNN,
+ which it can project to XYZ space and get a comprehensive point cloud for a given object.
+ Once it has this point cloud, we generate around 25 grasp candidates.
+ These candidates are found by choosing a random point on the point cloud, calculating its normal,
+ projecting this normal such that it's planar with the XY plane, and then aligning the gripper X-axis with this projected normal.
+ From here, it wants to select the most antipodal grasp, which is it tries to maximize the alignment with the normals of the point cloud with the gripper X-axis.
+ From here, the trajectory planning is a pretty simple scheme.
+ We just simply interpolate between a few different key poses, such that we have a home pose for the EWOB,
+ we have a pre-picked pose, which is just slightly above the object of interest,
+ we have a grasp pose, which is generated from the grasping scheme, and we have a pose just above the desired drop-off fit.
+ From here, we can differentiate this linearly interpolated trajectory and use a pseudo-inverse controller to move around.
+ In order to actually test GreenBot, we asked, "How many objects can GreenBot sort in 60 seconds?"
+ That is, we gave GreenBot four potential objects on the picnic table and gave it 60 seconds to sort as many as possible.
+ Of the 56 valid tests that we ran, 67% of them performed perfectly, sorting all four objects in the allotted time,
+ and around 88% of them performed near-perfectly, sorting at least three of the four objects correctly.
+ In terms of future work, I think mobile manipulators are really cool.
+ One potential application of this is, instead of using a stationary EWO arm,
+ use some sort of cheap mobile manipulator in simulation and try to get it to actually move around the environment,
+ traverse, pick up items, and navigate over to the waste bin to drop it off.
+ Thanks so much for listening to my presentation, and I'm happy to answer some questions.
+ [applause]
+ I have a totally nerdy question.
+ What was the OBJ file that made the transparent bottle work in the RGBD renderer?
+ I didn't know it could do that.
+ [inaudible]
+ I see, it shows that. Yeah.
+ [inaudible]
+ That's right. That's what I, okay.
+ My world is consistent at least. Yeah.
+ Nice. I mean, I would love for it to render in transparent objects.
+ Yeah. All right. Questions?
+ What was the hardest part of that whole pipeline?
+ [inaudible]
+ This guy is crazy. Nice. Okay. Thank you.
+ [inaudible]
+ Speedcubing is the task of solving a Rubik's Cube as fast as possible.
+ Cubing is of great interest to robotics, as it requires precise manipulation.
+ For example, if the face is not properly aligned after a turn, it can prevent the next face turn.
+ Making turns on a Rubik's Cube quickly is an even greater challenge.
+ Currently, there are two notable cube-solving robots.
+ The first robot was made here at MIT.
+ Wow, that's really fast.
+ But isn't that kind of unfair to humans?
+ We don't have six hands, let alone six limbs, and our wrists can't rotate like motors.
+ The second is OpenAI's robot hand.
+ Its hardware is more fair to humans, but it is really slow.
+ Introducing Speedcuberbot.
+ It aims to be a balance between the two robots.
+ With only an arm and a gripper, it has a hardware limitation like the OpenAI robot,
+ but it aims to make fast turns like the MIT robot.
+ Before we get started, we need to understand move notation.
+ U means to turn the upper face 90 degrees clockwise.
+ U' means to turn the upper face 90 degrees counterclockwise.
+ And U2 means to turn the upper face 180 degrees.
+ Before we can make a turn, we need to constrain the layers that will not turn.
+ Initially, I was planning to have a second eagle arm hold the cube in place.
+ However, after receiving the model of the Rubik's Cube
+ and finding out the grippers cannot really grip onto the cube,
+ I decided to make and use a box that held the bottom layer in place.
+ Because of this, Speedcuberbot will only be able to turn the top face.
+ To make a U move, we move the gripper to the grabbed position for a U move,
+ grabs the cube, make a clockwise turn, and un-grabs the cube.
+ To make a U' move, it is the same except we move the gripper to the grabbed position
+ for a U' move and make a counterclockwise turn.
+ To make a U2 move, we can do two U moves or two U' moves.
+ Our goal is to make turns quickly, so we should turn in the opposite direction of the previous move.
+ This is because after completing a turn for a U move,
+ the grabbed position for the U' move is closer than the grabbed position for the U move and vice versa.
+ With this plan, we can model the motion of Speedcuberbot as a state machine.
+ Additionally, to actually get the gripper to those positions,
+ we solve inverse kinematics as an optimization problem to get the joint position for the desired pose.
+ Putting it all together, we can give Speedcuberbot a sequence of up-face moves and it will execute them.
+ The worst case turn time is 0.9 seconds, but thanks to the optimizations we made for U2 moves
+ and the fact that going from U to U' and vice versa is faster, the average turn time is 0.77 seconds.
+ While a 0.13 second time save on each turn seems very little,
+ it adds up when doing a sequence of turns, and Speedcubers are looking to save every little second.
+ [END]
+ [APPLAUSE]
+ We actually heard a story just the other day.
+ Sava, who just left, was telling us that the Ben Katz robot, which is awesome,
+ apparently it could go so fast that the Rubik's Cubes would explode.
+ Did you know that? Okay.
+ The cheap Rubik's Cubes would just go explode.
+ All right. That was an awesome video. Thank you for doing it.
+ Yeah, he's got a question.
+ [INAUDIBLE]
+ Yeah, so I think a method for turning it like this, you look on the cube.
+ So when you do it, just like for Ben, just use the cube, just straight, not at an angle.
+ And then try to turn it a little bit before getting to the point, and at that point,
+ then it will start doing the spin. So it's better if you start at the point.
+ Nice. Oh, yeah, another question.
+ [INAUDIBLE]
+ I think I didn't get it originally. I just see what it's doing.
+ I also saw you when you were programming it in Office Hours one time or something.
+ It looked like you had made a cool teleop, like some way to transition between teleop.
+ You teleop for a minute, and then you would turn on the autonomy for a minute,
+ and then you'd switch back to teleop. How did you do that?
+ Did I see that right?
+ It was all teleop. You fooled me.
+ [LAUGHTER]
+ OK. Nice. OK.
+ I think Jenny, you guys are next. Jenny and Daniel.
+ Ping pong is a fast-paced sport that requires fast processing and precise paddle control.
+ In this project, we created Ping Pong Bot, a pair of KUKA IWA arms that can perform a controlled rally for multiple hits.
+ This project is an iteration upon a previous project by Dylan Zhao and Chaitanya Ravuri for robotic manipulation in 2021.
+ We used their framework and simulation as a starting point, but chose to re-implement the control logic state machine
+ and adjusted several simulation parameters to improve performance and simulation realism.
+ As you can see, in the previous iteration of this project, the simulated ball is not nearly as bouncy as a real-life ping pong ball.
+ To fix this, Professor Tedrick helped us learn to use some of the Drake-specific contact parameters in our SDF
+ to control the bounciness and make it look a lot more realistic.
+ Here, we have a simple diagram showing the high-level state machine flow.
+ Each IWA arm is running a separate instance of this controller, and both begin in the away state.
+ Using the velocity vector of the ball, we know if it's traveling toward or away from a particular side of the table
+ and set the away or toward state as appropriate.
+ After the ball bounces on the same side of the table as the arm, we transition to the prep state.
+ And finally, when the ball is close to the projected contact position, we go to the hit state.
+ If at any point, the ball velocity is pointing away from the paddle, the system resets to the away state.
+ In the away state, the desired linear and angular velocity of the end effector is calculated by targeting the home pose of the paddle,
+ centered and slightly behind the edge of the table, with the paddle tilted up.
+ To check whether the ball is actually traveling toward the arm and trigger a state transition to the toward state,
+ it calculates the dot product of the velocity vector of the ball and the vector from the end effector to the ball position.
+ If the dot product is negative, the ball is traveling towards the paddle, and the controller will transition to the toward state.
+ When the controller transitions to the toward state, it uses the x and y velocity components of the ball
+ and projects the y-coordinate of when it reaches a specific x value in the world frame.
+ This calculation is only performed once, and the target pose is set to the same as the home pose,
+ except with the updated y-coordinate for the projection.
+ Using the time before the ball bounces to move to this intermediate pose is essential for getting the robot roughly close enough to the actual pose needed to hit the ball correctly.
+ Without this step, there's generally not enough time after the bounce for the arm to move to the prep pose before the ball has already reached the contact point.
+ When the ball has a positive z-component velocity and is slightly above the height of the table, we know that the ball has just bounced.
+ After the ball bounces on the table, the arm enters the prep state.
+ In the prep state, our controller uses the ball's current position and velocity to predict the ball's trajectory.
+ It then chooses a contact point along the ball's trajectory where the paddle will hit the ball.
+ It chooses a contact point a little past the edge of the table to minimize the chances that the paddle hits the table,
+ which we found causes the arm to start flailing wildly.
+ The controller then attempts to find a paddle pose that will hit the ball at a target point on the other side of the table.
+ We use the equations of projectile motion to calculate the ideal velocity of the ball after the collision so that it lands on the target point.
+ We use the mirror law along with the incoming and outgoing ball velocities at the contact point to calculate a paddle pose that will correctly reflect the ball towards the opponent.
+ Finally, the paddle uses this calculated pose to move to a pre-hit pose slightly behind the contact point, giving it space to accelerate before the hit.
+ When the ball is close enough to the contact point, we transition to the hit state to start accelerating the paddle towards the ball.
+ Intuitively, the faster the ball is traveling, the slower we want the paddle to move, otherwise we're adding too much energy to the system.
+ If the ball is bouncing too low, we also want to tilt the paddle upwards to add more vertical impulse.
+ After successfully hitting the ball, the velocity vector should now be pointing away from the paddle.
+ I thought that was really good.
+ Yeah, that's quite good.
+ Questions for these guys?
+ [inaudible]
+ Yeah.
+ [inaudible]
+ Nice. Which part was the biggest surprise for you of that pipeline?
+ Was the state machine logic pretty good or was it?
+ [inaudible]
+ For sure. Great. Okay.
+ [inaudible]
+ [inaudible]
+ [inaudible]
+ To make everything work, we need to plan backward carefully.
+ First, we need to constrain the landing angle theta because a large landing angle will make the ball bounce out of the hole.
+ When flying in the air, the ball follows the aerodynamics, forced by gravity and the air resistance and nothing else.
+ This makes it possible for us to do direct shooting to calculate the initial velocity of the golf ball.
+ We aim at minimizing the flying time of the ball, subject to a set of constraints including landing constraint, landing angle constraint, and dynamics constraints.
+ We solve the problem using a SADI solver and the solution velocity can 100% make the ball land in the hole.
+ After solving the initial velocity, we can calculate the desired heating configuration of the robot.
+ We manually assign the heating point on the club and build the heating frame such that the y-axis is parallel to the ground and the z-axis aligns with the initial velocity of the ball and the contact normal.
+ Apply a series of frame transformation, we can get the desired pose of the club.
+ Then we do optimization to solve the desired joint angles and use kinematic trajectory optimization to control the robot to reach the desired configuration.
+ Next step, we want to control the robot to hit the ball.
+ Theoretically, when the contact normal is aligned with target velocity, we just need one degree of freedom to reach the target velocity.
+ To make the system more robust, we allow two joints to be movable during the heating process.
+ In this way, we just need a mapping from the ball's target velocity back to the joint velocity.
+ However, the heating process isn't differentiable or continuous, so it's hard to do the mapping.
+ We propose to use data-driven methods to tackle the problem.
+ We collect data by randomly sampling joint velocities and record the corresponding ball velocity.
+ We observe that the data has strong linear correlation with some outliers.
+ We apply RANSAC to filter out the outliers and try both linear regression and neural networks to fit the mapping model.
+ Then at test time, we input the calculated ball initial velocity to get the desired joint velocity and do velocity control to hit the ball.
+ Our framework can achieve a success rate of 19 out of 100 rollouts.
+ The failure cases can be categorized into two sets.
+ The strike is not successful or the landing point of the ball is not accurate enough.
+ This inspires us with two future directions.
+ The first is to improve our formulation for the preheating and heating process,
+ controlling the robots in a continuous way to avoid sudden accelerations.
+ The second is to simulate the heating process more reliably and learn from the previous work.
+ That was impressive cinematography, right?
+ Pretty good.
+ So, sorry, you used shooting, you used Casati for shooting for the ball.
+ Tell me how those two-- you said you used kinematic trajectory optimization for the arm and then direct shooting for the ball.
+ Is that right?
+ How did those two go together?
+ [Unintelligible]
+ Yes.
+ [Unintelligible]
+ Yes.
+ Perfect.
+ But why did you need shooting for the ball?
+ Is it because of the aerodynamics?
+ You said there was drag.
+ What's that?
+ [Unintelligible]
+ That's why it was hard.
+ [Unintelligible]
+ I see.
+ [Unintelligible]
+ Okay.
+ Very nice.
+ [Unintelligible]
+ You did that yourself, you said?
+ The aerodynamics?
+ Or that's just in bullet--
+ [Unintelligible]
+ Yeah, yeah.
+ [Unintelligible]
+ Yeah, yeah.
+ [Unintelligible]
+ Cool. Okay.
+ Pascal and Ravi are here.
+ [Unintelligible]
+ Hello.
+ We are Pascal Spino and Ravi Tejwani, and this is our final project for robot manipulation.
+ We built a pipeline for an EWO arm to execute a trajectory over a curved surface
+ while maintaining contact with that surface and maintaining force normal to the surface.
+ There is much prior work on robots drawing on two-dimensional surfaces,
+ but for our project, we wanted to explore drawing on a three-dimensional curved surface.
+ For two-dimensional surfaces, there's many simple robots that are well-suited for the task,
+ but drawing on a three-dimensional surface requires many more degrees of freedom
+ for which the EWO arm is well-suited.
+ The pipeline to our system is as follows.
+ We take as inputs a two-dimensional trajectory plan
+ and a three-dimensional instance of curved geometry with accurate collisions.
+ We first estimate the point cloud corresponding to the surface of this geometry
+ through an array of four cameras.
+ Then we estimate normals over this point cloud.
+ We then take our inputted trajectory and plan a three-dimensional trajectory
+ over the surface while respecting the normals,
+ and then we extract from this a series of poses, which we turn into a piecewise pose,
+ and then pass to a differential inverse kinematics controller to execute on our EWO.
+ Now for collision geometry, we wanted to simulate a variety of shapes,
+ which included non-convex shapes.
+ In order to simulate these shapes in Drake,
+ the method we chose was to perform convex decomposition,
+ which essentially takes a non-convex shape
+ and turns it into a series of convex shapes that approximate that surface.
+ Here is a video of our EWO arm executing the pipeline that we described in the earlier slides.
+ We are taking a predefined trajectory shown in the top right of the screen
+ and executing it over this non-convex curved geometry.
+ As you can see, portions of this predefined motion are in contact with the surface,
+ while portions are intentionally not in contact with the surface.
+ In the bottom right of the screen,
+ you can see a visualization of the trajectory that we are executing.
+ On this slide, we show three experiments,
+ each performing the same trajectory from the previous slide and shown on the top of this slide,
+ but over an array of different surfaces with different curved geometry,
+ some convex, some non-convex.
+ As you can see, the trajectory is not in contact with the surface,
+ but is in contact with the surface.
+ As you can see in this slide, there exists a couple failure modes with our approach.
+ These include when aspects of the EWO arm collide with the geometry,
+ when the curvature of the geometry is too severe,
+ or when the planned trajectory extends beyond the bounds of the curved geometry.
+ We envision multiple applications to this control pipeline beyond the aspects of drawing tasks.
+ For example, window washing on curved windows,
+ or washing curved dishes, or even applying massages to humans.
+ Essentially, any task where you must apply force normal to a surface,
+ and that surface is not necessarily flat.
+ One more thing we would like to consider in the future is the application of the EWO arm.
+ [Applause]
+ So you were gripping the chalk, yeah?
+ Oh, so that I see you rolled it to one finger, because I saw one point where it came open,
+ but that was it was welded to the finger that it moved with.
+ Ah, you tricked me. Good. Nice.
+ Any other questions? Yeah?
+ [Inaudible]
+ Okay, we're actually not far off time, but public service announcement.
+ I don't technically have the room after four.
+ They haven't, oftentimes people, I couldn't, I asked for it, they said no, it's booked,
+ but a lot of, it's been booked all semester, and like three times people have come in at 4.15.
+ So let's see. I do have a room across the hall.
+ As a worst case, if someone comes in and looks really mad,
+ we'll just politely go to the room across and keep going, yeah?
+ Because there's a lot of good presentations coming up.
+ The people who said they were arriving at 3, uh-oh.
+ [Laughter]
+ Oh, no, that's good.
+ Okay, quick stretch session. That sounds good.
+ I think there's a couple people that are already queued up here, but I can open Slack.
+ [Inaudible]
+ I think the students here are those who are not, who doesn't have a Slack.
+ I actually checked the Slack.
+ I don't think they have their project in there.
+ Okay.
+ [Inaudible]
+ Okay.
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ Is there someone here?
+ He's peeing.
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ [Silence]
+ From ancient history to modern scandals,
+ robotic chess has captured the awe and curiosity of humanity.
+ In order to play, all systems must understand the current piece locations,
+ generate a feasible move, and execute the move in the physical world.
+ In addition, any simulated chess playing system must have a complete simulated environment.
+ Chess solvers and planar pick-and-place machines have a variety of well-documented solutions.
+ However, the issue of board perception remains open.
+ Current perception methods include using top-mounted cameras, as shown left,
+ or using custom-built chess boards, as shown right.
+ Unfortunately, these methods are physically complex, awkward to install,
+ and gather limited information about the game state.
+ Ideally, a chess system would be physically simple,
+ while understanding both the integer coordinates of all pieces, as well as their spatial location.
+ We now present ChessBot.
+ ChessBot is a deep perception and manipulation system for all your robotic chess playing needs.
+ Using a single, side-mounted RGBD sensor,
+ ChessBot can read the state of an arbitrary simulated chess board,
+ producing both exact piece locations and reconstructed point clouds of all pieces,
+ including occluded geometry.
+ Using this, ChessBot determines the optimal next move and executes it using its robotic arm.
+ ChessBot is designed as a continuous loop.
+ First, the user enters their move.
+ Then, this move is sent to the simulator, which teleports the user's piece to the appropriate location.
+ Then, ChessBot utilizes its deep perception system to segment and reconstruct the modified chess board.
+ This allows ChessBot to determine what move the user made.
+ Finally, ChessBot queries its chess solver to generate a feasible move which it promptly executes.
+ Let's take a closer look at ChessBot's perception system.
+ We first separate an RGBD image into a depth mask and color image.
+ Using a fine-tuned mask-rcnn, we segment and label the RGBD image.
+ This allows us to create a set of partial point clouds.
+ Next, we use the labels from mask-rcnn to determine what piece type each point cloud belongs to.
+ We use ICP to fit a reference point cloud corresponding to this type of piece to the original partial point clouds.
+ Then, we use the point clouds for board inference and manipulation.
+ However, no system is perfect, including ChessBot.
+ In testing, we found two primary failure modes, kinematic failures and perception failures.
+ On the left, we see that a kinematic failure resulted in a piece being knocked over.
+ On the right, we see that a piece was perceived in the incorrect location.
+ While these are annoying for gameplay, we think that more sophisticated move detection algorithms may circumvent these issues.
+ We hope you enjoyed learning about ChessBot. Thank you for watching.
+ [Applause]
+ That was a tour de force. Very impressive.
+ Which was the hardest part?
+ [Inaudible]
+ And why did you use WSG instead of the Panda Gripper?
+ [Inaudible]
+ Anybody else?
+ [Inaudible]
+ Awesome. Okay. Reuben's back. Let's do Reuben.
+ Hi. My name is Reuben Castro, and I'm here to present my final project for robotic manipulation, which is a volleyball-setting robot.
+ Now, this is interesting because so far, we've been focusing mostly on quasi-static tasks.
+ But I suspect that as we get into more complex tool usage, we will need to be agile and more powerful.
+ And the question asked when it comes to this is, what happens if the pipette slips?
+ If that's the case, in 0.1 seconds, it could fall around 5 centimeters.
+ So if we can't re-grasp it in time, gravity is in control, and we could reach failure.
+ Now, volleyball itself is pretty interesting because it's fast, it's forceful, and it's fun.
+ We only have around 80 milliseconds to control the ball, and we're reaching the upper bound of our torque limits.
+ There's three main components to this. We need to sense where the ball is coming from, we need to absorb it, and then we need to relaunch it to the desired position.
+ My research focuses on making actuators for robotic hands, so I took the parameters from my fingers and input them as parameters for the simulation itself.
+ There are three main legos to our project. That's the manipulator, the robot arm, and the ball tracker.
+ The manipulator itself consists of two fingers with two degrees of freedom each.
+ There's a Y-shape at the end for stability and centering while catching the ball, and running operation space impedance control on them.
+ This allows the ball to act as a mass spring damper system where we can dynamically change the stiffness depending on how much energy we want to input into the ball.
+ Originally, we were hoping to just use the fingers to launch the ball.
+ However, we quickly ran into torque limits, which means that we needed to use the arm itself to also launch the ball.
+ The robot arm is an e-worm, which is capable of reaching a desired pose by using a Cartesian space PID controller.
+ Now, the fingers by themselves cannot input enough energy into the ball to get it to the desired height,
+ so we have to figure out what speed we need to launch the arm at, and we can do that using the simple energy equations.
+ From there, we simply follow a linear trajectory using constant acceleration in the desired direction of the ball until we reach the velocity launch.
+ Now, the ball tracker is pretty simple. It fits a parabolic trajectory to a few simple points in the air.
+ We assume perfect state estimation, and we have a tolerance for around 3 cm.
+ Now, we have all the pieces together, and we have a robot that can set the value of all.
+ Out of 10 trials that we did with different initial parameters, we averaged around 7 sets with a high of 12 sets and a low of 2 sets.
+ The output height was not as accurate as we were hoping it to be. We failed to reach the desired height by around 0.5 m.
+ In conclusion, we were able to show a robotic system that uses constraints based on real-world manipulators,
+ and it's capable of playing the agile task of volleyball.
+ Second of all, we have seen that impedance control plus compliant hardware has allowed the high level to be simpler.
+ We are simply using constant acceleration, linear trajectory.
+ Good.
+ Any questions for Ruben?
+ The collision geometry of the end effector.
+ Do you have it with you?
+ We have like 30 seconds, but if you could hold it up and show.
+ I see.
+ Nice.
+ And do you think the impedance control was essential? You couldn't have done the same thing with position control, you think?
+ I mean, sorry, at the arm.
+ I think that the impedance control gets a lot of confidence, mainly because we know the fact that we've got the end effector.
+ We can't say that the control got throughout the whole time the model.
+ So we do that, and we do the projection simulation, but it's too easy to say.
+ We can't do it in real time.
+ Awesome. Thank you.
+ Okay, so Jacob next.
+ Start.
+ Hi, everyone. This is me and Thomason. I'm Biwei Yan.
+ Today we're talking about large language models for abstract pick and place task planning in Drake.
+ So the introduction and motivation is that abstract task planning in robotics is really hard, and that humans take a lot of our abstract and semantic understanding of tasks and the way we communicate tasks for granted.
+ These are in no way obvious to the robot receiving the texts.
+ And so the idea is to use a large language model, such as GPT-3, which is trained on vast amounts of text data that encode human reasoning into the text data.
+ And these large language models demonstrate impressive high-level abstract reasoning capability because of their training set to act as a robot's brain.
+ Our approach is use abstract human-defined task planning in Drake.
+ We prompt the large language model with environment context and the goal, and we don't do any other prompt engineering, which is kind of surprising.
+ The large language model generates a series of pick and place actions.
+ Note that thanks to large language models, output is virus and is kind of neural language.
+ So we need some functions to standardize the output and extract pick and place specific actions.
+ So here's an example of a prompt that we provide the manipulator.
+ I think it's important to note that our Drake environment is just a modification of the Chapter 5 bin picking example.
+ And so we just have a simple tabletop environment with our manipulator in the center and a few objects that are generated around it.
+ So the context we provide the LLM are the objects in the scene.
+ So in this case, we have the four blocks and the four plates or disks.
+ And then the goal that we provide to the LLM is that we want to sort the blocks onto the disks.
+ And while not explicitly stated, the idea here is that the LLM will notice the relation between the blocks and the disks and place the blocks on the corresponding color.
+ And not surprisingly, they did what we guessed.
+ They generate step-by-step instructions about where to put each block exactly by their color, which is great for translating into instructions.
+ So let's look at the example of our videos.
+ There is actually three tasks.
+ And the first task is to place the blocks into a square formation and see it.
+ Understand the square has four corners.
+ The second task is to sort the blocks onto the disks, which we have already illustrated before.
+ It is sorted by color.
+ The final task is to stack all the blocks on the red disk, which demonstrates and understands what does it mean by stack and what does it mean by the geometric relationships.
+ So the most important takeaways from this project are that with a simple helper function, LLMs are capable of kind of directly producing this series of pick and place locations for your planner.
+ And so this is surprisingly without prompt engineering, so you can kind of just use a large language model out of the box for this.
+ And so you can kind of treat this as a trajectory providing black box because you can compute the trajectories on each of the provided pick and place locations.
+ And so each time your planner then completes one of those trajectories, we can then re-prompt the LLM for a new task.
+ And because we're only operating with trajectories here, N-Drake and the rest is handled by the LLM, this enables more complex tasks because they're often parameterized just in the trajectory.
+ And so what's really cool about this is this enables real-time --
+ That's crazy.
+ So maybe I missed the simple helper function part, but how do you not have to do SACAN kind of things?
+ How did it come up with the actions you know how to take?
+ [ Inaudible ]
+ So the helper function is you translating a slightly more diverse text into your pick and place for primitives.
+ Yeah.
+ [ Inaudible ]
+ Awesome.
+ Any other questions?
+ [ Inaudible ]
+ Cool.
+ All right.
+ I'm feeling good about nobody -- Shen, is there like a line of people about to come into the room?
+ [ Inaudible ]
+ Yeah, yeah, yeah.
+ You're good.
+ You're good.
+ Okay.
+ I think Catherine is --
+ Hi, everyone, and welcome to Caribot, which is our final project in making an EWA draw caricatures in simulation using Drake and MeshCat.
+ So we decided to choose caricature drawing as our task because it presents a really interesting manipulation problem.
+ So as you can see in this video demonstrated here, caricatures inherently have a technical and creative component in that you really want to emphasize certain features of the image or caricature you're trying to present.
+ At the same time, you can't lose recognizability without sacrificing, you know, the comical nature of the caricature itself.
+ So for our project, we really focused on the technical precision required to generate and then draw a caricature of a given input image.
+ And so in the future, this could have use cases including facial imaging drawing where drawing features are important, like police suspect drawings or courtroom sketches or even drawing AI-generated faces.
+ And the precision itself could be useful in non-facial drawings like architecture or manufacturing.
+ Now to move on to our approach.
+ So Caribot consists of two subsystems.
+ So given an input image, we feed it into our image processing system.
+ And then that generates a set of trajectory points that the manipulation system then uses to draw the actual output image.
+ Now, the first step in our image processing subsystem is to create a caricature from a given input image.
+ And to do this, we refer to the CariB paper by Gu et al and recreated their machine learning model in Google Colab.
+ Using this model, we generated caricatures of different input images.
+ And as you can see, there's a variety of different warping techniques that are applied pretty randomly to generate a diverse set of possible caricatures.
+ Here are some other results that we have.
+ And basically, our model -- our pipeline displays five randomly generated caricatures and allows the user to select one that they want to draw, such as this one.
+ The second step was to process the caricaturized image using the Canny edge detection algorithm,
+ which through testing we determined was the best way to pick out a set of definitive contours that our robot should draw from an image.
+ So the steps of this algorithm, just very quickly, were first to convert a picture to grayscale.
+ Secondly, to apply Gaussian blurring to reduce noise in the image.
+ Third, using intensity gradient, definitive high contrast edges were identified.
+ And then finally, using some kind of thresholding process, more edges were more clearly defined.
+ And basically, here are some results of the Canny edge detection algorithm.
+ As you can see, the new image has a bunch of lines that are somewhat unnecessary to fully recreating the image.
+ So to deal with this, we also filtered some of these contours by arc length to remove small ones that were not necessary and end up with a better picture of the subject.
+ And this was the original input photo that we ran the algorithm on.
+ Now, moving on to the manipulation system, we'll also add in a video of Caribot drawing a caricature on the side here, since the process takes quite a bit of time.
+ For Caribot's manipulation system, we took Russ's drawing example, combined it with the RobotPainter class from a previous pset, and changed the controller to Diff IK.
+ We welded the chalk to the robot's right finger, and when the chalk comes into contact with the chalkboard, a line is drawn following the robot's trajectory.
+ We chose to base it off of the RobotPainter code, since the pset featured the EWAP following given points, which encapsulates one of the main features of Caribot.
+ To generate the actual trajectory, we take the points from edge detection and then apply scaling, offsets, and rotations in order to translate the image into the world frame.
+ We also had to insert additional lift points at the start and end of the line in order for the EWAP to transition between distinct lines without drawing on the chalkboard.
+ Here, we can see the output image of the EWAP drawing a caricature of the rock.
+ We also faced many challenges in both subsystems during the project.
+ For the image processing subsystem, we had trouble filtering out the lines that we did not want, since it varied quite a bit between images and often produced very questionable results.
+ Then, during the manipulation, we had a lot of trouble controlling how the robot arm lifted up from the chalkboard, which caused a lot of extraneous lines.
+ And now that Caribot is done drawing, let's take a look at the results.
+ Here we have Russ in his many stages, and here's the final result.
+ In the future, there are many areas of improvement for Caribot to work on.
+ Here are some of them, such as noise reduction and more cartoon-like caricatures, as well as different applications for Caribot, such as using different art utensils and doing non-facial drawing tasks.
+ Thank you for your time.
+ [Applause]
+ I'm sorry, I don't look like the rock.
+ [Laughter]
+ So how did you go from – so the edge detector gives you an image, right?
+ So how do you get the strokes from the image?
+ I missed that part.
+ [Unintelligible]
+ Oh, it does?
+ Oh, okay.
+ Right from canning?
+ [Unintelligible]
+ Super nice.
+ Any other questions?
+ [Unintelligible]
+ Okay, let's keep moving.
+ That's awesome.
+ Thank you.
+ My name is Lucian Kouroubias, and –
+ To find when the projectile first gets near enough to the robot, I use a linear optimization where I minimize the decision variable t while constraining the projectile to stay within reach of the robot.
+ This effectively finds the earliest time where we could possibly grab the object.
+ By instead maximizing t with the same constraints, we can instead find the exit time of the projectile, which is the last possible moment where we could catch it.
+ Now that we have the time of entry for the projectile, and since we know that the projectile has a constant orientation and geometry, we can calculate a comfortable pre-grasp pose for the object.
+ A comfortable pre-grasp pose is one where the gripper is always facing away from the robot, so as to maximize range and movement capabilities while catching.
+ The gripper trajectory module calculates a full end-effector trajectory from initial pose to final grasp pose.
+ Phase 1 is the transition from initial configuration to pre-grasp pose, which was calculated by the previous module.
+ For the position component, I linearly –
+ As there is no obstacles to avoid.
+ For the orientation, I used a quaternion slurp to avoid gimbal lock and find a smooth trajectory.
+ Phase 2 is the transition from pre-grasp to grasp pose, where we must track the projectile's motion while moving closer in order to grab the object.
+ The position component can be determined by the physics equation from the first module, with an additional offset as the gripper moves closer to the projectile.
+ The orientation at this point is constant, because there is no rotation in the object.
+ The final module is responsible for translating the end-effector trajectory into an executable joint trajectory to send to the robot.
+ The approach used in this system is to solve an inverse kinematic optimization problem,
+ which attempts to minimize the distance between the current joint configuration and a pre-set nominal configuration,
+ while constraining motion to follow the end-effector trajectory.
+ When forming the bounds for this optimization, I was more lenient with the upper bound of the z-component, as projectiles normally came from above.
+ Now we can observe the full system at work.
+ [Music]
+ [Music]
+ [Music]
+ [Music]
+ [Music]
+ [Music]
+ [Music]
+ [Music]
+ Thanks for watching, and I hope you found it interesting.
+ [Applause]
+ Awesome. I think your beginning was the one with the chopsticks, wasn't it?
+ That was hilarious, I'm sorry.
+ Any questions?
+ You didn't deal with the, I mean, it looked like you were just barely staying in the fingers.
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ I see.
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ Awesome. Very nice.
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ Awesome.
+ I'm sorry to keep moving, but I don't see Tom.
+ You Tom, I know. The other Tom, I don't see here.
+ Is Kevra here?
+ Okay, I'm going to go to
+ Shruti's here.
+ All right.
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ [Inaudible]
+ Not that easy. Even the Rubik's Cube, if you think about the mechanism for the Rubik's Cube, it's actually a pretty slick mechanism.
+ Any other questions?
+ Okay, I think
+ [Inaudible]
+ [Inaudible]
+ Hi, I'm Karolina. My partner was Marissa.
+ We're doing a project on egg breaking, cracking eggs with inverse kinematics.
+ So, there have been other projects that dealt with eggs, such as cooking and baking.
+ One of the most noteworthy is Yoshida et al. that used one arm to crack the egg against the side of a pan and dragging the half of the shell that it was holding backwards and using the pan as a leverage point to separate the shells.
+ In most cases, though, they disregard the process of cracking eggs by using a separate machine to either break the eggs entirely or using premade mixes, which include powdered eggs.
+ The egg breaker seeks to emulate the more intuitive way in which humans may crack eggs.
+ A trajectory of poses through the entire motion is created with varying speeds throughout to move controllably yet create enough force to crack the egg when hit but not to crush it.
+ The trajectory is followed by generating IWA arm joint positions with inverse kinematics.
+ On the left, we have our simple trajectory, which goes directly to the egg, but it enters at a non-ideal angle and doesn't allow for a nice grabbing position.
+ On the right, we have another trajectory, but instead of following the trajectory nicely, our arms, as you can see, bounce back and forth.
+ The egg breaker calculates the trajectory from intermediate poses and timestamps and then uses inverse kinematics to follow this trajectory.
+ We control the velocity of motion as well by timing out our timestamps, which allows us to pick up the egg without going too fast and pushing it away and hit the egg quickly enough that it breaks the egg, but not too fast that it crushes it entirely.
+ Additionally, we are changing the angles of the grippers to pick up and empty the egg at different points of the trajectory.
+ This trajectory is shown as follows here.
+ We start out by initializing it.
+ We move directly above the egg, but not going directly to it, so that way we don't crash into the egg or in the bowl at a weird angle.
+ Then we are lowering it to the egg level.
+ Here we wait for the grippers to close around the egg by putting two subsequent positions at the same time step, or different time steps, same position, right in a row.
+ Then we are raising the egg up above our initial, where the egg is located.
+ Then bring it back down and hit the egg against the table, raise the egg up again, and then over top of the bowl so we don't crash into the bowl, and then rotate the grippers to free the yolk and the egg whites.
+ We have successfully commanded the trajectories and picked up the egg with both grippers simultaneously.
+ In order to hit the egg with sufficient force against the table, we approximated the required velocity by both intuition and video analysis at 0.07 m/s.
+ Our model hits at 0.1 m/s, which we calculated using the base of the EWO at roughly 200 mm and giving the gripper 2 seconds to get from the top of the trajectory to the bottom.
+ Here is our final successful attempt. We followed the same trajectory as mentioned before, rotating the grippers to simulate separating the egg shell from each other.
+ Our design successfully emulates a human cracking an egg with inverse kinematics.
+ This may come in handy when creating robots for human-robot interaction, as well as learning from other human processing or manipulating objects.
+ Some areas for improvement include finding the contact forces between the egg and the table directly rather than approximating the velocities,
+ as well as finding the force between the grippers and the egg to make sure we were not crushing the eggs between the gripper,
+ as well as a better egg model. Rather than our solid egg we have right now, we're representing it as two halves and also modeling the inside, the egg white and yolk.
+ So in the future...
+ [Applause]
+ You got a lot working, that's awesome. Any questions?
+ I want to be a little shorter with the questions just because we're dialing in to 5 o'clock pretty fast.
+ Okay, great work.
+ Hello, I'm Isabella and I'm going to be talking about my project on simultaneous localization and motion planning using belief-based approaches.
+ Robots get information about the world using sensors, but real-world sensors are almost often noisy as shown with the Intel RealSense depth images here.
+ Thus, an important problem in robotics is motion planning under this uncertainty.
+ One way of addressing this is to perform actions that maximize the information content you get from your sensors.
+ For example, if you're trying to get somewhere in a dark room, you might talk to the walls to get information about your environment.
+ So the question is, how can we make robots do something similar?
+ One approach is to make trajectories accounting for the uncertainty of a robot's state, or belief space planning.
+ To make the concept of belief spaces concrete, here's an example.
+ This is the distribution of a robot's position in a 2D world updated by a particle filter that takes in haptic information and a robot's velocity.
+ Notice that the distribution is quite non-Gaussian, which is important later.
+ In terms of prior work, a common method for robot localization is the extended Kalman filter, but it's not optimal in systems with non-linear dynamics.
+ Past work in belief space planning also assumes a Gaussian belief state and maximum likelihood observations.
+ Thus, some questions are, how do we generalize to high-dimensional non-Gaussian states, and how can we make the algorithm filter-agnostic?
+ An idea suggested by Platt et al. in their paper "Efficient Planning in Non-Gaussian Belief Spaces" is to sample from the belief space to approximate it.
+ Here, while the robot is not at the goal, it gets a state with maximum probability, x', and samples some other states from the belief space.
+ It then creates a plan maximizing the information difference from x' and other states, which is an optimization problem solved by quadratic programming.
+ It then executes the plan while tracking the belief state using a histogram filter.
+ If the belief state deviates too far from the trajectory, then we replan.
+ To evaluate this algorithm, I set up an EWA arm facing two boxes of known positions, and we have a laser pointer sensing the distances to the boxes.
+ The only unknown of this system is the position along the y-axis of the robot.
+ The overall goal is for the robot to localize and reach the goal position, which in this case is the middle of the gap.
+ Applying Platt's algorithm, this is a possible trajectory we get.
+ The robot starts off with its laser pointer at the lower box, so it generates a trajectory that detects a key feature in the environment, which is the gap, and then it goes to the gap.
+ Overall, the algorithm is quite successful with a 93% average task completion rate, and I observe that if it starts closer to the goal, it has a higher chance of success.
+ However, there are still some oddities in the results.
+ If you look at the plot of the trajectory-
+ So when I was talking about belief space planning, someone, I think Leroy asked,
+ do we think that trajectory optimization without all the stochastic belief space everything is easier or harder than the belief space version?
+ Do you feel like you had any- was the numerical optimization fairly successful or was it pretty brittle?
+ [inaudible]
+ All right.
+ That seems like something we should figure out.
+ Awesome. Okay. I think we have an insertion here.
+ Gameplay.
+ Hi, everyone. My name is Frank Gonzalez. And I'm Robbie Cato. And our project is on manipulating and grasping industrial tools.
+ Nowadays, manufacturing is turning more and more towards automation, using robotic systems to efficiently create high quality products.
+ In order to support this effort, we investigated creating a system that could autonomously grasp a tool in such a way that it was ready to use.
+ For this project, we simulated a Kukui IWA7 arm with a general WSG gripper and two tools, a hammer and a screwdriver, to demonstrate the capabilities of our project.
+ This plot diagram shows the overall robotic system we implemented with the two red boxes indicating modules that were not fully integrated.
+ For this project, we developed a stack using MASQ, RCNN, and ICP, proposed estimation, and an inverse kinematics solver for state determination.
+ Ideally, we would use a decision maker module to choose which tool to pick up.
+ However, with there only being two tools in this situation, the decision maker was deprioritized and thus not implemented.
+ Regardless, the key poses were passed to SLURP for generating those trajectories.
+ We end by passing the computed state trajectories into the simulator.
+ And Frank will show the results from just this block with everything else being precomputed.
+ In these two videos, we can see the end result of the full stack implementation, with the robotic arm navigating, grasping, and lifting the hammer on the left, and doing the same for the screwdriver on the right.
+ Here, we can see a slightly different perspective on the grasps after the IWA arm has come to rest.
+ From these images, we can know that these are indeed usable grasps and not a random grasp on the tool, putting the system in a prime position to continue forward with whatever task it might be provided.
+ One key pitfall we had was the MASQ RCNN model.
+ The image on the left shows the top five bounding box results from our model, all of which are labeled as scissors, many of which don't capture the full extent of the tools.
+ This is likely due to the images we used to train the model.
+ An example screwdriver from one of the datasets is shown on the right.
+ The images in that dataset were close-cropped and rarely showed the full tools, just like the hammer handle here.
+ It's also important to note that scissors were the most represented object in that dataset as well.
+ This highlights the importance of finding training data representative of the expected environment.
+ In our case, a cluttered table with most of each tool pictured.
+ A critical next step for this project would be to generate our own training dataset in the simulation.
+ A new dataset would likely give better labeling and segmentation results that could be fully used to integrate MASQ RCNN.
+ Briefly touching on some of the lessons we learned throughout this project, for starters, over time, we both definitely became more comfortable working with the DRAC environment.
+ At the beginning, there were definitely some bumps along the road that made getting started pretty challenging.
+ But once these were overcome, progress became much smoother.
+ As for me, I learned quickly that sometimes simpler is better.
+ I ran into several issues trying to create proper definitions for the tools, resulting in awkward physics simulations due to incorrectly defined inertials.
+ This difficulty came from using awkwardly defined links and trying to determine the inertials myself, which didn't go well at all.
+ The moment I switched to simpler geometries, everything worked much, much better.
+ And that summarizes our project. Thank you for listening to our presentation.
+ [APPLAUSE]
+ Apologies. All right. Any questions for these guys? Yeah.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ [INAUDIBLE]
+ Awesome.
+ OK.
+ Hello.
+ My name is Oswin, and I'm working with Ray Xiao.
+ Today, I'll be working to present our project on collaborative planning for multi-armed depilation of particle systems.
+ Imagine you're a teppanyaki chef pushing round fried eggs on the iron griddle to prevent it from burning.
+ Or maybe you've chopped up carrots and you're collecting it into a pile on a cutting board.
+ For particle systems like these, it is often difficult to find a good state representation to describe the dynamics.
+ Instead of working with the state of each particle, one can choose to represent the state using a density image and perform planning directly on this density image space.
+ This is an approach that has been done by a paper by Terry and Ress before for the case of single-armed pushing.
+ In this project, we choose to extend the single-armed case to the multi-armed case.
+ Why is this interesting?
+ First, you get squeezing behaviors. You also get sharp corners. And finally, you get inter-arm collisions, leading to both arms moving in a different direction.
+ Moreover, it's difficult to generalize single-armed algorithms to the multi-armed case.
+ Higher dimensionally action space means that there's bad scaling for action space discretization and algorithms that use sampling-based optimization.
+ And inter-arm collisions are something that only happen in the multi-armed case and not in the single-armed case.
+ So how do we solve this problem?
+ First, we use density image state representation.
+ Next, we design and learn dynamics directly on this density image.
+ And finally, we use a model-based RL approach, where we use sampling-based optimization to minimize some control-the-alpha function to guarantee the controller's stability.
+ We have tried three different methods for learning the dynamics of our particle systems.
+ Currently, nonlinear methods, including heuristic model and the least square method, works, but neural network does not work well.
+ The design for heuristic model contains four parts.
+ First, we are given the initial state and the action commands.
+ Then, based on these states and commands, we generate a figure mask representing the pushed area by our heuristic function.
+ Later, we generate a mask for weight spread allocation on the area mask.
+ And finally, we clear the pixels according to the area mask and reallocate these cleared weights according to the weight mask.
+ You can see that our prediction is quite close to the ground truth.
+ However, predicting the collision is still very difficult.
+ All our three methods suffer here.
+ Compared with single-arm steady, collision will only happen in multi-armed case.
+ It adds nonlinearity to the dynamic and more dependency to the initial distribution.
+ Take heuristic model as an example.
+ If there is no particles, the pushers should not collide with each other.
+ With particles, as the horizontal pusher pushes too much particles and those particles collide with the other pusher,
+ it gives a large force back to the initial pusher and stops it.
+ And this also makes the dynamic more sensitive.
+ A slight change in distribution might result in a huge change from collision-free to collision.
+ The deep dynamic model does not work well.
+ It does learn something that it should decrease the weight in the pushed area,
+ but it does not quite understand how much it should decrease and where these decreased weights should be added back.
+ On the other hand, both the non-deep methods can predict the image dynamic as well.
+ The heuristic method has a more accurate structural bias, meaning that the error is more sparse.
+ While the least squares method here is more accurate overall with smaller errors of magnitude.
+ Finally, we combine both working dynamics models with soundly based optimization from the Terry and Ress's paper
+ and successfully synthesize a controller that can push particles into the target surface.
+ Surprisingly, despite the much larger action space compared to the single-arm case,
+ we still obtain a stabilizing controller using both non-deep dynamics models.
+ In conclusion, the basic problem of learning general dynamics is too hard to solve
+ and it is not necessary to fully solve it for planning.
+ To the OSA.
+ Was that? Oh, I see. That was not your end.
+ Okay. Nice.
+ So what's the conclusion?
+ Would you stay away from deep going forward or do you think the deep--
+ [inaudible]
+ Yeah.
+ [inaudible]
+ Nicely said.
+ Okay. We have four left.
+ If you guys are willing to stick with us, we're going to get everybody in.
+ Yeah. Four left, assuming everybody's here.
+ Thank you guys for your patience.
+ I'm loving it.
+ If I can avoid blasting you through.
+ All right.
+ In class, we learned about some powerful techniques in motion planning,
+ including kinematic trajectory optimization.
+ As we discussed, however, they often tend to avoid collisions too conservatively.
+ In addition, real-world tasks frequently have multiple potential solutions.
+ In this project, we take inspiration from cognitive science models of how humans
+ plan and make decisions and explore how we can obtain robot trajectories that are
+ good or more precisely near optimal and that also take varying approaches to
+ traversing the environment.
+ My name is Jovana and my friend Stewie and I are going to present our project on
+ Marco Chain Monte Carlo, in short MCMC, motion planning for Boltzmann rational
+ trajectory optimization.
+ In this project, we implement five MCMC algorithms of zeroth, first, and second
+ order and combine random sampling and optimization to generate good and diverse
+ trajectories.
+ We evaluate the trajectories and perform ablation studies on 2D navigation and
+ 3D manipulation problems.
+ We show that zeroth and first order methods prove is sufficient for 2D problems
+ and that solving 3D manipulation tasks benefits from second order derivatives.
+ Finally, we suggest that our MCMC motion planners may be a helpful way for robots
+ to model humans.
+ Next, we discuss what we learned and our process of getting there.
+ We learned that Marco Chain Monte Carlo is quite a powerful method for generating
+ samples from desired distributions.
+ Indeed, even for the simplest of the algorithms that uses no derivative
+ information, we were able to obtain a surprising amount of viable trajectories.
+ We experienced how defining the cost function for the problem can be difficult.
+ And for just a small change in how we penalize obstacle collision compared to the
+ length of trajectory, we observed trajectories going straight through the obstacles
+ and away from the goal.
+ We compared the algorithms with respect to their time complexity and the kind of
+ trajectories they generate.
+ And we found that for 2D environments, unadjusted Landgerman algorithm requires
+ least tuning to generate diverse obstacle avoiding trajectories.
+ We learned that sampling from a Boltzmann distribution, which is commonly used to
+ model human decision making, allows the trajectories to explore multiple potential
+ solutions.
+ And as would make sense intuitively, we found that the variance of the path scales
+ nicely with the number of obstacles.
+ The beta parameter of the Boltzmann distribution, commonly referred to as the
+ rationality coefficient, intuitively corresponds to how strong is the preference
+ for low-cost trajectories.
+ Next, we performed experiments on a 3D manipulation environment involving motion
+ planning to a desired pose of a seven degree of freedom robotic arm.
+ Here we compare two trajectories sampled from Newtonian Monte Carlo, a second
+ order method, with beta equals 0.1 and beta equals 10.
+ We can see that for beta equals 0.1, there's quite a bit of shaking and
+ suboptimality, while for beta equals 10, we see a smooth interpolation to the
+ desired final pose.
+ We also compare it to Hamiltonian Monte Carlo, a first order algorithm that's
+ widely considered as the gold standard for MCMC, with beta equals 10.
+ And we observed that there's quite a bit of wild oscillation.
+ This is consistent with our quantitative results, which show that for this 3D
+ motion planning problem, only the second order algorithms are able to optimize
+ well enough to discover low-cost trajectories.
+ At the same time, Newtonian Monte Carlo also produces the most diverse
+ trajectories, and therefore does the best at generating diverse and near-optimal
+ trajectories.
+ In this project, we successfully used MCMC algorithms to produce diverse and
+ approximately optimal trajectories for motion planning problems.
+ We also consider several directions for future work.
+ Most importantly is a more complete evaluation with more diverse and complex
+ experimental environments.
+ Second, in handling constraints, we perform a projection step, which causes us
+ to lose the technical condition of reversibility and theoretical convergence.
+ It would be interesting to see how we could restore these with more advanced
+ methods.
+ Lastly, the direction that we are most excited about is in using our motion
+ planning algorithms for Bayesian trajectory prediction and human-robot
+ collaboration problems.
+ Thank you for listening to our presentation, and we hope you enjoy it.
+ [APPLAUSE]
+ I chopped one second.
+ That was super clear.
+ Thank you.
+ It was joint space in the 3D examples that you're planning in, right?
+ So the jump from the 2D examples to the 3D examples was actually a jump from
+ two degrees of freedom to like seven degrees of freedom.
+ Yeah.
+ Nice.
+ No, that was really, really well articulated.
+ Thank you.
+ OK, Tom's been waiting here.
+ Here we go.
+ Hi, my name's Tom, and today I'm excited to present my final project for robotic
+ manipulation on augmenting ICP using dense object nets with applications in
+ surgical robot perception.
+ State-of-the-art robots for vascular surgery offer minimal autonomy.
+ Surgeons maintain direct control over wire-based surgical manipulators, and
+ many surgeons are deterred by the associated learning curve.
+ A major obstacle to higher autonomy surgical manipulators is developing highly
+ robust simultaneous localization and mapping.
+ Ultrasound is the primary imaging modality utilized, and we are interested in
+ developing a SLAM algorithm capable of mapping an unknown vessel geometry in
+ vivo.
+ ICP is a common front-end algorithm used in acoustically based SLAM.
+ However, as we learned in class, ICP is susceptible to convergence to local
+ minima in the case of poor initialization or minimal point cloud saliency.
+ Interoperative ultrasound suffers from both these issues.
+ Though exploitation of 3D priors from preoperative imaging has the potential to
+ improve ICP performance.
+ Therefore, I propose the use of contrastive correspondence learning between
+ adjacent depth images simulated from a prior CT mesh.
+ These correspondences will be used to inform registration tasks on real
+ ultrasound point clouds representing successive poses of the robot.
+ Prior to intervention, the surgeon would run the following data generation
+ pipeline.
+ First, we select a random pose inside the preoperative CT scan to represent the
+ surgical end effector and generate an offset pose to simulate motion of the
+ optical frame.
+ We utilize a combination of ray casting and an inverse pinhole model to generate
+ simulated depth images and ground truth pixel-wise correspondences.
+ This data set is then fed to a dense object network, which is a similar framework
+ to what we learned about in class.
+ Finally, we calculate pixel-wise loss in the descriptor space, given knowledge of
+ ground truth correspondences.
+ To illustrate quantitative results, first I show the pixel-wise correspondence
+ precision.
+ The network did not perform as well as the original architecture proposed by
+ Florence, likely because we were working with sparser depth images in comparison
+ to rich RGB information.
+ It was noticed that when the probe views surfaces from far away, interesting
+ structures like vessel sub-branches and significant variations in curvature are
+ evident from depth images.
+ Therefore, in future work, it may be possible to apply a larger weighting to
+ high-intensity depth values in the pixel-wise loss function.
+ Here I demonstrate the registration performance for vanilla ICP and network
+ augmented ICP across 40 point cloud pairs.
+ Don ICP had a lower inlier error average.
+ So variations were not found to be statistically significant.
+ To explore underlying factors for this, I'll now discuss some qualitative
+ registration results.
+ [PAUSE]
+ [APPLAUSE]
+ All right, so the big money question is, does it work for the -- does it help
+ solve the global correspondence problem?
+ [INAUDIBLE]
+ Awesome.
+ I'm glad it worked.
+ Okay, last two taken at home.
+ Here we go.
+ Hi, we're Martin, Fiona, and Hannah, and we're presenting our final
+ presentation on scooping for 6.4.2.10, fall 2022 robotic manipulation.
+ With DexAI Robotics, Alfred, which we talked about in class, they use a
+ trajectory optimization scooping technique.
+ However, besides some niche applications of scooping in industry, there's little
+ academic work in scooping.
+ Best we could find was scooping with a flat spatula off of a flat surface,
+ whereas we're going to be exploring scooping with a convex tool.
+ And based off of all of the previous research, as well as some previous
+ conversations with Russ, we decided to try and pursue a precompute-then-choose
+ approach, where we precompute appropriate trajectories for different bin
+ states, such as empty, half-full, and full, then use perception to try and
+ determine which trajectory to select.
+ And so this is the direction that we eventually hope to take this project,
+ although we did not quite finish pursuing the perception selection process.
+ The first part of our project was setting up the scooping environment.
+ It's pretty similar to the bin picking setup.
+ The main difference with our EWAP setup is that there's a measuring cup that
+ we have welded onto the end of the EWAP.
+ In addition, we are using spheres instead of bricks for collision geometry.
+ And this is because they're way easier to simulate, and we were running into
+ significant issues with our simulation speed, even after we updated to use the
+ SAP contact solver, which is faster than the default MeshCat contact solver.
+ And actually, the simulation speed constraint becomes a pretty strong
+ constraint for how we thought about the granularity of our poses in the future.
+ We pursued two approaches in parallel, and the first one was our geometric
+ scooping. This is adapted from the robot painter notebook that we saw in class.
+ And the key idea here is we're using simple geometries to plan the motion of
+ scooping from one bin and pouring into the other.
+ So for the scoop trajectory, we started with a circle, but it was really hard to
+ balance getting deep into the bin and also being able to turn the scoop upright
+ at the end. So we ended up using an ellipse to have
+ more control over both the width and depth of the scoop.
+ For the pouring, this motion was less constrained, since we're starting out of
+ the bin and then moving the objects in, so we could still use a circular path.
+ For our other approach, we went for a teleop record.
+ And so the idea was, if we could scoop successfully using teleop, we can save
+ those trajectories and use them back later.
+ So this is just two steps, one recording and a two playback.
+ For recording, it was pretty straightforward because we tried to set up a
+ good interface for us to record with.
+ So it was pretty much teleop the robot as you would usually.
+ And then when you're done, you would press the save poses button, and it would
+ save it all to file. From a user standpoint, pretty easy.
+ But behind the scenes, we had to put in quite a lot to make it happen.
+ And the way that we had the poses saved was we used a file representation of
+ a file with basically one pose for each line, where each pose is represented
+ by a six tuple. You have rotation for three of the numbers, and then x, y, z
+ for the other. They're not perfect descriptors, but they work when you're
+ trying to just get from one pose to the other for the longest of poses.
+ So teleop record playback.
+ The main components to using the teleop record for a future automatic playback
+ are in cleaning up the teleop path, reading the files that they're stored in,
+ and actually moving the EWARM based on the information that we've read.
+ So a single trajectory file will usually hold an ordered list of desired poses.
+ And there's often more than a few unnecessary positions within this file,
+ just because of the nature of teleop. And so some manual cleaning is sometimes
+ desired. In addition, deleting and adjusting poses can sometimes help with
+ resolving issues from the EWARM getting stuck or having joints that are fully
+ extended. And we parse these cleaned files to create paths based on the
+ movements between poses rather than the positions themselves. And then the EWARM
+ can then be directed to execute these movements.
+ Now we'll talk a little bit more about our results. So here we have a video of
+ a full scooping and pouring path with our 50 simulated spheres. So we sped this
+ video up by five times, because as you can see, there's a big slowdown when the
+ scoop starts interacting with the spheres. And with this trajectory, we also tend
+ to have to push some spheres out of the bin, but we can reliably pick up three
+ spheres every time. After the scoop, we have an intermediate frame to make sure
+ the scoop stays upright so we don't drop the spheres we just picked up. And then
+ finally, we move on to pouring into the other bin. Both approaches yielded
+ successful scooping and pouring results. While the geometric approach created
+ relatively smooth trajectories, it proved difficult to navigate the bin
+ environment and plan what geometric shapes would work best. The teleop
+ approach creates much more flexibility and can quickly plan trajectories to new
+ situations, but may be a little bit less smooth.
+ So some of the challenges along the way and lessons we learned. We found that
+ even though this is a robotics class, a lot of the stuff we did to help us out
+ were actually just good software development sort of deals. And some future
+ work is that we settled on our scooper early on, but it's actually not the best
+ scooper for scooping. The walls are actually pretty high on the scooper, so
+ it's tough to get it to go into a bin full of spheres. And also, we didn't get
+ to automatically choose the trajectories through perception. There's also a
+ room for trajectory optimization. The trajectories you get are ultimately as
+ good as the trajectories that you can teleop yourself. Part of that is
+ probably like making a cost function for scoops. I'm not sure if this is
+ something for Drake or something for users of Drake, but speaking of that,
+ simulation should make things better.
+ But yeah, that's our scooping projects. It was tough. We learned a lot.
+ Thanks for watching.
+ [Applause]
+ >> Awesome. I can definitely help you speed it up. If you want. If you care,
+ we can speed it up.
+ Okay. Ryan is ready. All right.
+ >> Thanks for joining us today. So GardenBuddy is a robot arm that controls
+ some unfamiliar hoes in an unfamiliar garden. The information here is unknown
+ beforehand to the robot arm, and so the speed of the water is unknown and
+ location of the plants is unknown. Here's a little demonstration that we'll
+ dive deeper into later in this presentation.
+ So the two main components of the project. There's a perception side, which
+ is exploring this unknown environment, and there's a motion planning side,
+ which is commanding the robot, planning the trajectory, and tuning the
+ controllers. So here's the overall approach. So we start by getting the
+ perception, and then the perception component, the module, passes on the
+ information to pose optimization, which passes on the information to the
+ interpolation module, which goes to the IK module, and then the controller
+ module, and this is a closed loop.
+ >> So we begin with the perception component, which takes in the scene and
+ needs to find the target plant locations as well as the droplet speed. To find
+ the plant positions, we use our RGBD sensor to get a depth image, and then
+ filter for pixels with lower depth as those represent the plants, excluding
+ the EWA controller. And once we get this filtered depth image, we perform a
+ graph search to find the clusters, which represent the plants, as well as the
+ center plants, which represents our target locations, shown here.
+ To find the droplet launch speed, we begin by executing a sequence where the
+ robot launches droplets horizontally, and then using kinematics, knowing the
+ height of the robot, we just need to find the average location of where the
+ droplets land. To do so, we take a sequence of five color images taken 0.1
+ seconds apart, and compute the difference between them to find the motion of the
+ droplets. And then we perform a convolution of filter to remove any other
+ noise or motion, leaving just the droplets, and thus we can find the average
+ location, and using inverse kinematics, find the speed, and feeding this into the
+ motion plane as long as, as well as the plant locations.
+ The positions of the potted plants, and the speed at which droplets leave the
+ hose, we want to find the optimal poses for the dripper to be in, such that water
+ coming out of the hose reaches the potted plants. We do this by solving a
+ constrained optimization problem using mathematical program. We want to find a
+ pose that's very close to the one the robot is currently in, but such that
+ water droplets coming out of it intersect with the z-height of the potted plant, in
+ the same x and y position as where the plant actually is. So we do this by using
+ the equations of projectile motion that we've seen in 801. We find the time, t*,
+ at which the droplet reaches the correct z-height, and then we find the positions
+ x* and y* where that happens. So we constrain our optimization problem for the
+ error cost to be the difference between the candidate pose and the current pose,
+ and we set the constraint that the x and y position of the landing is the same as
+ the position of the potted plant.
+ Sequence of poses to a smooth sequence of keyframe poses for a robot to follow.
+ Currently we move from pose to pose directly. This leads to jerky movement,
+ and also means that our robot does not stay on one plant long enough for the
+ plant to be watered fully. We propose a solution where we interpolate with two
+ more segments in between. We first move to a comfortable z-height where the
+ robot does not have to move through itself to get from one pose to another,
+ and after the second segment we aim to be at the goal pose. We spend the third
+ segment at the goal pose so that the plant is watered fully.
+ This three-part solution leads to a smoother trajectory which leads to good
+ results. We pass this as a piecewise pose trajectory into inverse kinematics so
+ that we can convert these into joint angles.
+ Here's an example of the pose optimization actually working, and you can see the
+ frames and the robot snapping to the frames.
+ So for the inverse kinematics we use the IK solver manually, and this allows us to
+ go from desired poses to the joint angles, and we update these every 0.1 seconds.
+ Here without any optimization on anything, you can see that the robot just jerks
+ around and the trajectory is not optimized at all.
+ For the controller we decided to use the inverse dynamics controller.
+ This allows us to go from joint angles to the forces that we need.
+ The inverse dynamics controller specifically allows us for bigger time
+ steps, and it allows us to tune the PID gains manually.
+ Here's the whole simulation being run, and this is the whole closed loop.
+ So you see that the water shoots horizontally, which allows us to get the
+ speed, and then we can shoot the plants knowing the speed.
+ And this entire simulation is a closed loop, so the robot doesn't know anything.
+ The camera gives it information, and then the robot can know where to go from there.
+ Thanks for watching our presentation, and here's a link to the DeepNote.
+ [Applause]
+ Apart from Pi virtual display, what was the hardest part?
+ [Silence]
+ That was weird? Okay.
+ [Silence]
+ Right?
+ [Silence]
+ Very nice. Thank you everybody for an awesome semester.
+ That was really, really, really fun.
+ And for those of you that stuck in here the whole time, it's awesome.
+ I'm happy to stick around for a little bit, but yeah.

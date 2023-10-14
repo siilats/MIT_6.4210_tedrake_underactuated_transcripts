@@ -1,0 +1,1197 @@
+ Okay, so thank you guys for filling out the survey.
+ I had a couple of different ways we could go with the next couple of lectures.
+ One of them was to continue on the more details about RL, but it seems like there was more
+ interest in other areas than RL.
+ So I'm going to jump ahead a little bit, talk about the intuitive physics portion, which
+ I think is - we didn't even ask you about that one because I think it's important enough
+ that I wanted to include it.
+ And it does connect to RL.
+ You could call this - you could think of this as maybe part of the model-based reinforcement
+ learning pipeline.
+ And let me just kind of transition from the RL and behavior cloning kind of conversation
+ into what we're going to talk about today.
+ So we talked about - I've been saying over and over again that I like visual motor policies,
+ right?
+ And so far, where we - the goal of the visual motor policies is to control the state of
+ the world and the robot.
+ And so far, we've given you two major pipelines to possibly try to find those visual motor
+ policies.
+ The first one was behavior cloning.
+ And the second one was a very brief look at a big topic of reinforcement learning.
+ And both of those can work.
+ Both of them - I mean, all of the approaches we'll talk about have strengths and weaknesses.
+ Actually, there was a really interesting question that came up at the end last time.
+ I guess the person who asked this isn't here yet today.
+ But someone asked if I had just run RL for longer on the box flip up, would it have done
+ something less ridiculous, right?
+ And I answered quickly, you know, and I think I answered about how RL can get stuck in local
+ minima and maybe because it's stochastic enough, it could jump out and eventually find its
+ way down.
+ But I think there might have been a - I don't know if there was a deeper point to that question.
+ But it occurred to me that, you know, when people like David Silver talks about RL for
+ Go, for instance, it gives the impression that I think there's a belief there that the
+ more you learn, the better you'll get at Go.
+ That you'll just - you've got enough parameters in your network, you've got enough experience
+ coming in that you can just, you know, it's just the amount of compute you're willing
+ to spend, it'll just get better and better and better the more you play.
+ And so I don't think that's the regime we're in with the RL examples I've been showing
+ you here.
+ I can't say that, you know, this is my intuition and my, you know, experience, but maybe not
+ a proof here.
+ But I don't think we're in that regime with the robotics RL experiments that we've been
+ seeing in the market.
+ I think we're more in the regime where you can bounce around, but you can really get
+ stuck in local minima.
+ And one of the reasons might be that we're not really in the dramatically over-parameterized
+ regime in the policies, where we can just keep going down and down and down and down.
+ OK, so - but RL is doing a pretty good job of even without a model, you know, finding
+ its way into at least a local minima in the cost landscape.
+ And if you run it long enough, it might bounce around to a better local minima, but it's
+ not guaranteed to solve the global problem in any way.
+ OK, so how are we going to go from - why are we going to move on from this to something
+ about learning models instead, right?
+ So the drawbacks of both of these approaches, I think, are largely about generalization.
+ So the experience we talked about in supervised learning was this amazing capability of transfer
+ learning that you can learn on ImageNet and apply that to some different domain.
+ I think a strong criticism of reinforcement learning and behavior cloning is that these
+ tend to be very task-specific.
+ OK, so if you have a particular task, you want to flip up the box in a particular way,
+ you write your cross-function, you find your policy - and this is a strength and a weakness,
+ actually, of this - is that it learns exactly the policy it needs to learn to accomplish
+ that task, and it doesn't learn other stuff.
+ And that gives it power by ignoring all the things it doesn't need to learn, but it's
+ also a limitation if you want to then change the task a little bit.
+ The naive recipe is you just start over, right?
+ There are ways to try to make RL generalize more.
+ You can talk about goal-conditioned policies, for instance, where maybe you make - if you
+ can find an efficient way to parameterize the objective function, the goal, let's say,
+ then you could basically throw that in your state space.
+ It's not quite that, but imagine putting it into your state space.
+ And then learn a policy that is a function of the goal parameters as well as the state.
+ And there's also nice work on sort of multitask RL, which is, I think, a very powerful framework.
+ And I think there's - that field's still growing up.
+ But this is going to be a constant struggle, because, like I say, it's a good thing about
+ RL that it ignores all the things that are not relevant to the current task at hand.
+ That's one of its strengths.
+ But if you want to compare that to, for instance, our kinematic trajectory optimization or something,
+ where you give it a new task and you just change the cost function on the fly, you're
+ doing the new task, right?
+ RL is not doing that.
+ It's not immediately well-suited to that.
+ It's a very - you do a lot of computation to get a good controller for one cost function.
+ And you have to start over.
+ So the most sound way, I guess, to address that is to learn something more than just
+ the parameters of the policy.
+ You want to learn something that generalizes from different task to different task.
+ And the opposite extreme of that is that maybe what you should do is actually learn the dynamics,
+ right?
+ I talked about these things are hard because we don't know how to - what the dynamics of
+ spreading peanut butter on toast is or what the dynamics of buttoning my shirt are.
+ But neural networks are pretty good at learning things.
+ So why don't we try to learn the dynamics of the world and then apply our best control
+ tools to those learned dynamics?
+ So the idea for today is learn - try to learn the dynamics of the world.
+ Some versions of this will actually just try to learn the state representation in addition.
+ Some of them will require you to give a state representation.
+ Now, some people call this model-based reinforcement learning.
+ I'm not a huge fan of that particular word just because it's - I mean, yeah.
+ People do model-free reinforcement learning even though they have a simulator, which is
+ a model in my book, and they have - this one could just be called control, but it's called
+ model-based RL.
+ Don't get hung up on the naming.
+ But I guess if you want to call it model-based RL, yeah, you're welcome to.
+ Okay.
+ So let's talk today about learning the dynamics of the world and what tools do we have to
+ offer about that.
+ It's a super rich subject, and actually, even once you learn the dynamics, model-based control,
+ of course, is a huge subject.
+ And that's one that I spend basically all of the underactuated lectures talking about
+ how to do model-based control.
+ But let's think about today about learning the dynamics and what kind of tools we can
+ bring to bear on that.
+ And there's sort of a zoo of model parameterizations that we might try to learn.
+ We talked a little bit about it, but broadly speaking, learning dynamics is the topic of
+ system identification, say, aka system identification.
+ Or at least that's the old word for it.
+ And even though I think there's a lot of things from system identification that we want to
+ remember, I think there's also a lot of new tools for machine learning that have come
+ and recently contributed new life to some of the old system ID questions.
+ And that's not just deep learning.
+ It's also finite sample results and online optimization kind of results that are very,
+ very powerful new approaches to system identification.
+ But in the world of system identification or learning the dynamics, the first thing
+ we have to do is we have to pick a family of models that we're going to optimize over
+ to try to explain the data.
+ So the standard thing is I have some system coming in or some data coming in, let's say,
+ some signal coming in, I'll call it.
+ I have some system that I'm trying to fit, and I have some signal coming out.
+ These are my actions and my observations in this case.
+ And we've already talked about some of the different forms that this could take because
+ we use this sort of setup for even learning policies.
+ So we said already that you could talk about static parameterizations, which would be yn
+ is just a function of un.
+ We've talked about feedforward or Rmax kind of models, where we could say that my output
+ is some function of my previous outputs, un, un minus 1.
+ So we've talked about states-based models.
+ So I might learn something where this is the x of my controller.
+ So we've talked a little bit about that before, and I won't talk about it again.
+ But now the question is, given that we're going to choose one of these forms, whether
+ it's a static or a feedforward or a state-based kind of model, I want to start digging into
+ what are our choices for f and what are our choices for g if we have one.
+ And what parameterizations can we say strong things about?
+ And what gives us-- there's going to be pros and cons to each different choice of f and
+ g.
+ Again, there's lots of choices.
+ And I think I can kind of paint the picture, and then we'll dig deep into one or two of
+ them.
+ So you could choose f and g to be linear.
+ That's a natural, powerful choice, really, because it affords so much analysis that we
+ can understand a lot of things through the lens of linear dynamics.
+ Even theoretical machine learning folks had a few years where they returned in force to
+ linear dynamical systems to understand finite sample bounds and everything like that.
+ The other case that we can really throw the math hammer at would be if you did finite
+ models or tabular models.
+ If you're thinking about stochastic versions of this would be like learning the traditional
+ MDP Markov decision process.
+ Those two, I think, have limits to what they can represent, but they have huge value in
+ what we can understand through those lens.
+ So a lot of times, some of the lessons that you learn in linear control are pretty specific
+ to linear systems.
+ But some of them generalize beautifully, and we should take those lessons and carry them
+ with us, because it's much harder to see the same lessons in the more nonlinear setting.
+ Of course, we have neural nets.
+ But in the world of neural nets, there's all kinds of choices.
+ In any one of them, there's a lot.
+ But there's the standard sort of feedforward neural networks, conv nets, and all the others.
+ We talked about recurrent networks like LSTMs.
+ But what you'll see more and more in some of these model learning cases, you'll see
+ graph neural networks come up.
+ Transformers are coming.
+ They haven't been a huge focus, but they're coming, I think.
+ And so on.
+ All of these are going to be relevant.
+ And we'll give a few examples maybe in the next lecture on this.
+ But then there's also, I think, different levels at which these try to represent the
+ world.
+ Some of them operate directly on pixels.
+ Some of them try to operate on particles.
+ They try to say that I'm going to assume the world is based on particles or almost point
+ clouds.
+ Some of them try to do more object-centric kind of modeling.
+ This is the broad strokes.
+ And I'll go into a few examples of these.
+ Now it's interesting to put these right next to each other, because linear and tabular
+ have limits on what they can represent, but they have huge, powerful back ends mathematically.
+ Neural nets can represent anything, but we have less that we can understand when they're
+ not working well.
+ Or less guarantees about if you care about proving your robot's not going to do something
+ bad, let's say.
+ And they're going to also be harder to control, harder to do control design for.
+ There are many other nonlinear models, model parameterizations.
+ I don't know if you've heard Volterra series, or you can learn polynomials.
+ You can learn all these different things.
+ And I put a few of them in the notes, but I won't dwell on them now.
+ Neural nets have consumed people's attention on the nonlinear model front.
+ But the one that I think I don't want to forget about, and I want to spend some time on today,
+ is the multibody equations, which is a particular type of nonlinear models that has important
+ structure of Lagrangian mechanics.
+ It's far richer than these models and what it can represent.
+ And there's another important consideration too.
+ So if you're just doing system identification for the sake of system identification, then
+ maybe the only metric is to try to predict as well as possible why given U. That's the
+ standard system identification metric.
+ But if your goal is to do system identification in the service of building a controller and
+ getting closed-loop performance, then that can change your requirements a little bit.
+ It might be that actually you don't have to predict all of your observations perfectly.
+ Some of them are task relevant.
+ Some of them are not task relevant.
+ But there's also, it could be that I've learned a perfect predictive model of my system, but
+ with equations that are very hard to do control design with, then that's a problem too.
+ So I think one of the interesting things-- I'm sorry to pan on you here-- but one of
+ the interesting things here is that if I were to learn a model that could describe the data
+ that was linear or tabular, that control design is easy.
+ If I learn a model that's a neural network, depending on how big or complicated the neural
+ network is, then it might be that control is still hard.
+ The multibody equations are somewhere in the middle.
+ There's a lot of structure in those equations.
+ If you can find the multibody equations that describe the data well, then we have more
+ structured tools, more powerful tools for control.
+ And there's some things we know about this that just are so strong and so powerful, and
+ I want to make sure people remember about them.
+ So let me start by digging in a bit to learning multibody equations.
+ And I'll do it by motivated-- I'll motivate it with throwing stuff.
+ So a bunch of people watched the tossing bot video.
+ Everybody in the CIM class in the first lectures talked about the tossing bot paper.
+ This is the video that went along with that paper.
+ Great paper by Andy Zeng and company of picking up relatively-- basically unknown objects
+ and tossing them into a target location.
+ They used a neural network to do that.
+ Well, they used a combination of a simple model, and then they learned a residual neural
+ network to capture the differences.
+ So I think a lot of people have seen that, and I won't play the whole video here.
+ It's a nice long video, beautifully put together.
+ But there was an original tossing bot that I don't think as many people have seen.
+ This is actually work from MIT, but in '91.
+ So this is a WAM robot, a Barrett Whole Arm Manipulator.
+ Let me just show you what it does first.
+ But again, what it's doing is actually-- so now that the bin is right here, which is about
+ the size of the ball-- it's a pretty small bin, by the way.
+ You saw it did a little regrasp there just to know where it is.
+ Right in the bin across the room.
+ The mass of the ball was unknown.
+ The size of the ball was unknown.
+ It was approximately what fits in the hand or whatever, but there was something even
+ more remarkable about that.
+ There wasn't learning in that.
+ This was online system identification and adaptive control.
+ So let's just watch it one more time here.
+ That was too fast.
+ He's throwing to a person, by the way.
+ Human-robot interaction.
+ OK, so watch what happens here.
+ Quick regrasp.
+ OK, now right here, there's one back motion and one forward motion.
+ And what you don't realize is that in that backwards swing, it's estimating the mass
+ of the ball.
+ And then it computes exactly what it needs to do to throw it into the target wherever
+ it is.
+ Really good.
+ OK.
+ You know, they went on and did other versions of this too.
+ They actually didn't publish the ball throwing one.
+ This is Jean-Jacques Loutin's work.
+ And actually, when I first came to the AI lab, it was I only got here much later, but
+ the arm was still up in the ninth floor of the NE 43.
+ The way they tracked this, they had cameras up here.
+ See if I can turn the volume off again.
+ They have cameras up here and they're doing foveating vision.
+ OK, so there's a bright red ball or a bright white ball in the last one.
+ And they just get the cameras to lock on the initial location of the ball.
+ And then they track the white blob.
+ This is before computer vision really worked, right?
+ They track the white blob with the servoed cameras and they could back out the 3D position
+ of the ball based on that, the center of the ball.
+ That's a good question.
+ Probably yeah.
+ This is catching paper airplanes with a simple model of a paper airplane.
+ So the catching one doesn't involve the same parameter estimation.
+ It did some online tracking and they have incredibly good control, which I'll mention
+ at the end of trying to align.
+ They're using feedforward inverse dynamics model cancellation, but it's also an adaptive
+ control and they take into account the mass of the ball when they're executing their trajectory.
+ And this is pretty good.
+ 91, like catching airplanes out of the air, throwing balls across the room into targets
+ exactly the size of the ball.
+ Pretty good.
+ OK, so let's think about how they learned the model of that and how the sort of rich
+ initial literature on learning the dynamics of the objects in the world.
+ And it goes through multibody equations.
+ So let's just even think for a second about what you need to know about the ball in order
+ to be able to do a good throw.
+ The dynamics of throwing are nice because they're simple if we ignore aerodynamics.
+ So you can throw anything.
+ You could throw a banana, which that's an example from Andy.
+ It sounded arbitrary, but that was the last thing I saw them throw in the tossing by video
+ when I just played it.
+ You could throw a banana, you could throw a ball, you could throw whatever.
+ Any one of them, no matter how complicated, they might flip around or whatever.
+ If you write the dynamics of the center of mass, then it's trivial.
+ The dynamics of the center of mass are always, if I just do it in the plane, if I do center
+ of mass without drag, the dynamics of the center of mass are simple, depending if I
+ put the g as positive or negative.
+ And even the rotations around the center of mass, there's a conservation of angular momentum.
+ This is the moment of inertia about the center of mass.
+ It may spin.
+ It may be spinning around the center of mass, but it won't spin more or less as it flies
+ through the air because of conservation of angular momentum.
+ So there's a couple things that immediately we can notice here is that this implies that
+ since mass is not 0, that x double dot center of mass is 0, z double dot center of mass
+ is negative g, and theta double dot center of mass equals 0.
+ And in the air, you don't have to do any work to estimate the parameters of the mass.
+ The mass of the ball is irrelevant once you throw it.
+ Similarly, if you were to throw a ball at me, there's no way that I can just by watching
+ the motion of the ball-- this is classic physics-- that I could estimate its mass.
+ Every ball will take the same arc.
+ Just remember that.
+ So now, why then do we have to estimate-- why is it useful to estimate the mass of the
+ ball if we're going to throw it?
+ Well, what matters very much is the location of the center of mass and the spatial velocity
+ of the center of mass at the point of release.
+ So everything follows from that.
+ There's no accelerations after you launch.
+ But if you don't know where the center of mass is when you launch, then you've got no
+ hope of controlling where it goes.
+ So what matters is the moment of release.
+ This was all in the air.
+ It has nothing to do with the moment of inertia.
+ That's just a bad choice of words, maybe.
+ So I care about the spatial velocity in general, the position and spatial velocity at release.
+ So at very least, when I start moving around, I need to know the center of mass of the ball
+ or of whatever banana I'm going to throw relative to my hand.
+ So that's the key parameter to estimate.
+ And then depending on how heavy the banana is relative to your arm, you might also need
+ to know the mass and other things just to be able to execute the trajectory well enough.
+ If the object is insignificant mass relative to your arm, then your robot controller can
+ just ignore the mass and execute its trajectory and expect to do well.
+ But if you start to throw heavy bananas-- I've got to pick a different object-- then
+ suddenly the ability to track a trajectory with very high fidelity-- I mean, that's high
+ fidelity to throw it in the bin all the way across, right?
+ With very high fidelity requires you to consider the mass in the hand.
+ And that's where the extra terms from mass and inertia start coming in more, is in the
+ tracking.
+ And it's a good problem for lots of our applications, right?
+ Amazon wants to move boxes fast, or you want to play tiddlywinks, or whatever your robot
+ wants to do.
+ There's a lot of applications where you'd want to be able to pick up an object and learn
+ something about its inertial properties by interaction.
+ So let's just think about how would we learn those parameters by picking up an object and
+ moving it around.
+ Turns out that estimating the mass of an object in the hand, especially once it's in a reasonable
+ grasp inside the hand-- remember, they opened and closed to make sure they had a really
+ good grasp, and it was solidly at the base of the gripper.
+ It turns out that's just a special case of the more general problem of estimating mass
+ and inertia of your robot as you move around.
+ OK, so how do we do multibody parameter estimation?
+ What does that even look like?
+ How do we set it up?
+ What special structure can we exploit?
+ What guarantees do we think we can get?
+ So the multibody equations-- you've seen me write them many times.
+ They might have other terms like friction, damping, contact, you name it.
+ Other terms like that.
+ These are nonlinear equations.
+ You'll see sines and cosines inside this.
+ So that sounds like we're going to have a tough nonlinear estimation problem.
+ But it turns out the parameters that we care to estimate enter these equations in very
+ particular ways.
+ There's parameters inside here, in all of these, possibly in those two.
+ And they tend to be of two basic varieties.
+ There's the kinematic parameters.
+ Length, for instance.
+ And then there's the dynamic parameters, like the masses and the moment of inertias.
+ You can actually estimate them jointly.
+ That's OK.
+ But just get a ruler for this one.
+ This one you should probably just measure fairly well.
+ And then there's actually kinematic-- there's more subtle problems in kinematic calibration,
+ which are more about joint offsets, if you have an encoder offset error or something
+ like this.
+ But a lot of times, people will separate out the kinematic parameter estimation and maybe
+ have a way to-- so a lot of our robots actually wake up and go against the joint limits and
+ then come back just to calibrate their joint encoders.
+ And the lengths are normally pretty faithful to the CAD models.
+ So I'll talk about estimating them jointly because we can.
+ But know that I wouldn't actually recommend that.
+ You should probably just pull those out and estimate them separately.
+ You could, for instance, just try to draw a straight line.
+ And if it's not a straight line, you haven't got your kinematic parameters working very
+ well.
+ OK.
+ So what's the special structure?
+ They enter here into these different terms.
+ Hidden inside there are the masses, the inertias that make the equations of motion.
+ And they're nonlinear.
+ Yeah?
+ [INAUDIBLE]
+ So you can estimate some of the parameters of friction.
+ There are identifiability requirements.
+ So for instance, if I never see it slide, I'm not going to be able to get its friction
+ coefficient.
+ But yes, the rules of the game apply to friction as well.
+ More subtle.
+ More subtle.
+ OK.
+ So if you take away exactly one thing from this part, you should know that there is a
+ very important particular way that those parameters enter the equations.
+ And it's true of basically the same way we said almost every kinematic chain is representable
+ as a polynomial.
+ Basically almost every multibody set of equations that you'll come across, the parameters enter
+ in a particular way.
+ And it turns out that the worst nonlinearities, your sines and cosines or whatever, are separable
+ from your parameters.
+ That your parameters group together and your sines and cosines and other nonlinearities
+ group together.
+ And you can separate those two apart and estimate just the parameters.
+ And it's a nicer problem than you would expect out of the box.
+ And I'll show you that in a simple example.
+ The simplest possible example is just the one link robot, which I think is the right
+ place to write it on the board.
+ And then I'll show a couple more complicated examples.
+ So I just make my pendulum dynamics.
+ And I have my mass and my length and my gravity coming down and my theta.
+ And the equations of motion, ml squared theta double dot.
+ Maybe I have some damping.
+ So in this particular set of equations, which I know by heart, you can see that what I said
+ is true, that these things are separable.
+ If you know the lengths already, because you did separate kinematic trajectory-- sorry,
+ kinematic parameter estimation, then that gets even simpler.
+ But even if you don't, it's useful to write the equations in a slightly different form.
+ Let me separate out what I would consider to be the data.
+ That's the things we're getting from our measurements and our sensors.
+ And I'll throw the sign on that.
+ From our parameters-- I'll just write it in a vector form here.
+ That thing equals tau.
+ In general, it's a scalar as I've written it here.
+ But in general, it can be a vector.
+ Yeah?
+ Oh, yeah.
+ Thank you.
+ ml squared.
+ Tau is also measured.
+ Yeah.
+ So here we have data coming in, which will have, in general, the trajectory of the velocity
+ of theta and tau.
+ Yeah.
+ And we can take its derivatives.
+ So we're going to have all those come in.
+ And we can just compute this a priori.
+ There's no parameters involved.
+ And this is our parameter vector.
+ In fact, this is famously known as the lumped parameters.
+ Now, you might say, well, that's not cool.
+ I've got a mass here.
+ I've got a mass here.
+ It entered twice.
+ I want to make sure I estimate the mass.
+ There's some coupling I haven't acknowledged.
+ And that's true.
+ But it turns out that these are exactly the parameters you need to know to do prediction.
+ You can't know more than that.
+ We'll say that more carefully in a minute.
+ You can't know more than that without some other priors on those things.
+ And this is actually, I think, maybe the right way to think about the parameters.
+ The way we happen to write it in the URDF doesn't line up perfectly with what you can
+ estimate in the real world.
+ So that's just a different way to write those equations.
+ If I write them over the course of an entire experiment where I have lots of samples of
+ this and this over time, the entire trajectory, then in general, I can write the equations.
+ I can write my parameter estimation problem in terms of a data matrix, which would be--
+ let's call this thing w, where I'll write all of my w's.
+ These are at time equals 0, let's say.
+ I'll do the same thing at time equals 1.
+ So data at time equals 1, data dot.
+ This is just all of my data.
+ And I'll stack them up into this.
+ I've got the same parameter vector.
+ And now I have the torques at t0, t1.
+ So if you're willing to give me that this is the right-- this is an OK vector to try
+ to estimate.
+ And certainly, if I do estimate this, then if you give me a new state of the robot, I
+ can predict the torques.
+ And if you can do all the operations I want, if you give me the value of that vector correctly,
+ you can evaluate the dynamics.
+ Then you can see from this that solving for the best lumped parameters is actually just
+ a least squares problem.
+ So that's a very specific-- even though they're nonlinear equations, we can actually solve
+ for the lumped parameters with least squares.
+ So that's a super important idea.
+ It turns out it's more general than pendulums.
+ It works for the general multibody equations.
+ You can take any equations of this form that come out of our multibodies.
+ When these things are derived from multibody equations, then you can basically-- I think
+ screw joints might screw this one up too.
+ Like I said, just don't use screw joints in your robot.
+ That screws up all of our math.
+ In general, I can have this big data matrix times my parameter vector is my other side
+ of my data matrix.
+ So this is just my right-hand side here, whatever the leftover stuff is.
+ I can convert this set of equations into this.
+ And even when they're more complicated, when I've got the double pendulum equations here,
+ right here, that's the double pendulum equations.
+ It still turns out that even though m, c, and tau are more complicated, the little c2
+ is my shorthand for cosine of theta 2.
+ Sines are s's.
+ But the point is that they still separate out.
+ I get a sine of 1 plus 2 is sine of theta 1 plus theta 2.
+ So you get lots of instances that look like parameters times sine of, let's say, theta
+ 1 plus theta 2, whatever.
+ But what we're saying is what you don't get, and what's beautiful, is you never see, for
+ instance, a sine of m theta 1 or anything like this.
+ None of my parameters sneak inside my ugly nonlinearities.
+ So it's more structured than the general grab bag of similarly nonlinear equations.
+ I don't see a length that ever pops inside there.
+ It's only all those nonlinearities operate directly on the angles.
+ And so it's separable.
+ But wait, there's more.
+ So the fact that I can solve for the lumped parameters with least squares means I can
+ do even more.
+ So it turns out that not all parameters are identifiable.
+ And this goes to Tom's question about friction and the like.
+ So there are some parameters that you might have written in your URDF, which get turned
+ into your multibody equations that you won't be able to estimate.
+ Let me give you an example.
+ So if I'm an EWA bolted to a table, I wrote down in my URDF the inertia of that link 0.
+ No matter how much I move around the EWA, I've got no data that could possibly-- the
+ inertia of the bottom link has zero effect on my dynamics.
+ It's been welded to the world.
+ So I will not be able to estimate that.
+ And on the flip side, it has nothing to do-- I don't need to estimate it, because it has
+ nothing to do with my dynamics.
+ If you go off one link, now there's only a one revolute joint before the first link.
+ So you can move that thing around, but you're only going to ever estimate the moment of
+ inertia about the one axis that moves.
+ There's two other axes of moment of inertia that will not be relevant to your dynamics.
+ It's just-- it will affect your mass.
+ But the inertia around those other axes is unidentifiable.
+ So what's beautiful is because we're in the realm of linear algebra, we can see that.
+ How does that manifest itself in these kind of equations is that the data matrix will
+ drop rank.
+ There will be some parameters here.
+ If they are not identifiable, then the data matrix will have a zero singular value corresponding
+ with those parameters.
+ And in fact, before you even start, you can do basic analysis to extract the identifiable
+ lumped parameters.
+ OK?
+ All right.
+ I'll just say with linear algebra.
+ Right?
+ So the point is we're in the space of linear algebra here.
+ And all of the concepts of rank and kernel of that matrix and stuff apply.
+ OK?
+ And it's a direct operations on the data matrix, which we've separated out.
+ Again, that's not a bad-- having a low rank data matrix does not mean you're a bad person.
+ Right?
+ It just means that there are some parameters that are irrelevant to the dynamics.
+ So you will not be able to estimate them, but you also don't need to estimate them.
+ There are some deep implications of that.
+ Right?
+ So like I said, if you throw a ball at me, I'm not going to be able to know the mass
+ of the ball before it gets to me.
+ Right?
+ If I've watched a ball fall and then I go to pick it up, I can't, from just passive
+ observations, know the mass of the ball.
+ In fact, as a general rule, one of the things you see from the identifiability is you're
+ going to need force measurements to apply actions in order to estimate any mass kind
+ of parameters.
+ Right?
+ I could watch a video of a walking robot, and I have no concept from just watching a
+ video whether it's a 40-foot tall, car-crushing, fire-breathing, massive robot or like a little
+ walking toy.
+ Right?
+ Unless there's something else in the background that gives me context and I use common sense.
+ But from the motions of the robot, the joint angles, I won't be able to tell.
+ Okay?
+ So I guess, I mean, robots probably can't learn everything by watching YouTube.
+ Right?
+ Some of us want that to be true, but you're not going to learn inertia from watching YouTube.
+ It's not identifiable.
+ Okay?
+ So that's cool.
+ At some point, robots matter.
+ You have to have embodiment to learn everything about the world.
+ In going, riffing on that even just a little bit more, there's a, I mean, in all learning
+ kind of applications, there's a question of data generation, of exploration, of experiment
+ design.
+ Okay?
+ So, you know, if I'm, the robot we watched in the video just went like this, and that
+ was enough in that particular case to estimate the parameter it needed to throw the ball.
+ But in general, just going like that won't be enough to estimate the parameters that
+ matter for your EWA, if you wanted to estimate all those parameters.
+ And there's a nice problem of experiment design.
+ Okay?
+ So let's say your goal is to design a trajectory for the robot to follow that will excite the
+ parameters so that the system identification problem goes well.
+ Right?
+ Because we're in the land of linear algebra, there's a natural objective for that.
+ You can just look at the condition number of the data matrix, and you'd like to say,
+ you know, I want to get as much of the parameters to have data, you know, to be away from singularity
+ as possible.
+ You don't expect to get all of them.
+ Some of them are identifiable.
+ But the ones that are identifiable, you'd like to move their singular values away from
+ zero.
+ Okay?
+ So there's a natural trajectory optimization formulation.
+ It's a little bit ugly to implement, but people do it.
+ This is, you know, is that you design up to your torque limits and maybe don't drive your
+ motor crazy.
+ Right?
+ You put some heuristics on costs on action.
+ But then you put a cost on the condition number of the data matrix to design informative trajectories
+ for parameter estimation.
+ OK.
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ OK, so let's just pause for a second and just think.
+ I mean, I motivated this conversation by saying,
+ I think there's going to be cases where
+ you want to train a neural network
+ to do a lot of these tasks.
+ The things you're training the neural network
+ are multi-body systems in most cases, in this class.
+ Even if you want the representational power
+ of the neural net, a lot of these lessons
+ about what's identifiable, how do you excite the parameters,
+ what do you expect to estimate, what do you not expect
+ to estimate, still apply.
+ In particular, the thing that I said
+ is linear in the lumped parameters is this equation.
+ This is not the dynamics of the robot.
+ This is the inverse dynamics of the robot.
+ If I were to take mass matrix inverse
+ to solve for the forward dynamics,
+ then things get worse.
+ All my parameters become--
+ I become rational in my parameters.
+ I don't get these beautiful polynomials.
+ I get mixtures of the sines and cosines
+ in ways that are in the denominator and the like.
+ Things get worse.
+ But basically, every machine learning project
+ that's learning dynamics is learning the forward dynamics.
+ I mean, I think there's room to explore that more.
+ And there's a lot more lessons that I'll try to point about
+ as we hit them.
+ But this idea of doing nice experiment design
+ and having a metric that talks about how well you
+ can identify the parameters, that's a luxury.
+ We don't have that in the general case.
+ But it's a beautiful way to have it in this case.
+ OK, so let me tell you how you'd actually do this.
+ So in the particular case of the pendulum,
+ or maybe the double pendulum, the lumped parameters
+ come in in a way that it's kind of-- I can fit it on a paper.
+ If I do a little scratching on the paper,
+ I can extract the lumped parameters.
+ I could write a program to estimate them.
+ You don't want to do that for the EULA.
+ The equations don't fit on a page.
+ They're big and ugly.
+ They have a structured form.
+ So there are actually specific numerical recipes
+ that will extract the lumped parameters directly.
+ The same way you'd write a recursive algorithm
+ to generate the equations of motion,
+ you can write recursive algorithms
+ to extract lumped parameters.
+ They're a little bespoken, actually.
+ I think not many people have implemented them.
+ You can get them in Drake using the symbolic toolbox.
+ I'm actually very proud of this.
+ Because a lot of people think I'm
+ crazy for the emphasize symbolic as much as we did.
+ But here's the reason why it's very powerful.
+ Well, I'll just show you in code.
+ I'll make it a lot bigger than that.
+ OK.
+ So I'll just do a very simple example here,
+ which is I'll take the double pendulum.
+ I'll load it into my multi-body plant.
+ I'll make some symbolic variables for q, v, and dot v.
+ And then the parameters that I want to estimate
+ are going to be the mass and the length in that particular one.
+ I could have put the damp-- actually,
+ I put a to do to make the damping in.
+ And in order to put that into the manipulator equations,
+ I have to compute the spatial inertia in terms of the mass,
+ just to relate the mass and length to the operations.
+ I do a little work with spatial algebra.
+ And then I just basically ask the symbolic engine
+ to print the equations of motion.
+ And it'll give me nice little Latak equations of motion
+ through the dynamics engine.
+ So that's-- you guys probably understand
+ kind of how it's built behind the scenes.
+ But behind the scenes in Drake, we
+ build almost all of our systems.
+ They'll support doubles.
+ They support autodiff.
+ And they support symbolic.
+ And any system that opts into supporting symbolic,
+ you can just ask it for its symbolic equations.
+ And it'll generate them like this.
+ And I can get all of them like that.
+ So let's do a simple example then.
+ So the cart pole is a very--
+ it happens I did it on the cart pole instead
+ of the double pendulum.
+ But it's another two-link system.
+ It's a common one in control.
+ It's in the AI gym.
+ Let's just do the lump parameters for the cart pole
+ and do some basic estimation.
+ And I'll just show you how the mechanics of that works.
+ So this, I know the equations look like this.
+ But I'm not going to use them directly.
+ I'm going to use the multibody engine to get them.
+ The first thing I did is just generate a bunch of data.
+ So I loaded in the multibody plant.
+ I loaded the cart pole URDF.
+ I made a trajectory to input.
+ I didn't do the optimal experiment design on this.
+ I could have.
+ But I just did something much simpler, which is I
+ made a sine wave.
+ Because the cart pole, there's kind of only one thing
+ you can do.
+ You've got only one motor and one passive joint.
+ So all I did was I just shook the motor back and forth
+ for a little bit, made sure it was sufficiently exciting,
+ parametrically exciting.
+ If I chose that to be too large, things might have gone crazy.
+ And it wouldn't have [INAUDIBLE]
+ If it was too small, then it wouldn't excite the [INAUDIBLE]
+ Well, I have a low condition number.
+ So I just generate a bunch of data.
+ And what's important to me is if I plot,
+ I just rolled it out four times, reset it to zero,
+ rolled it out four times.
+ And I got what I considered to be--
+ so the period of the sine wave was
+ a function of the rollout.
+ I did slightly different sine waves on each sweep.
+ And I was happy to see that x moved more than a little,
+ but not too much.
+ Zero to four is like a pretty sweet--
+ four meters is like a good amount of data.
+ Data seemed in a reasonable regime.
+ And in fact, I will check the condition number
+ and show that it's reasonable.
+ Now I'll estimate the lumped parameters.
+ And I'll do the symbolic thing to get the lumped parameters.
+ And then I'll fit them with least squares.
+ So I'm going to pretend I didn't know
+ about that multi-body plant, come up
+ with a new multi-body plant, load it again,
+ make the symbolic version of that,
+ make my decision variables.
+ Those are my data variables.
+ And then my parameters that I'm going to fit
+ is the mass of the cart, the mass of the pole,
+ the length of the pole, just because I can,
+ even though I should have just gotten a ruler.
+ OK?
+ And then I'm going to fix the import to be the data
+ and evaluate the dynamics.
+ And I basically generate my big data matrix, which I'll
+ show you how it comes in here.
+ I just get a big matrix.
+ I call it W0 instead of y here.
+ And then I just call NP lineal least squares
+ to extract the lumped parameters.
+ And then I have my fit parameters, alpha.
+ I call the vector alpha.
+ I have my true known parameters, alpha, which came from the URDF.
+ And the question is, how well do I do?
+ And I actually don't know why it's random.
+ Why is it random?
+ I've noted that it's random.
+ I don't remember why.
+ OK.
+ But I get my symbolic acceleration residuals
+ are this, but my lumped parameters-- so the URDF
+ says the lumped parameters, the joint mass of the cart pole,
+ should be 11.
+ I got 10.91.
+ If I did a little more data, I'd get better.
+ My mass times length is 0.5.
+ I get 0.56.
+ And this is a case where more data does make it better.
+ Yeah, that's just me being a little lazy,
+ not letting it run for very long.
+ OK.
+ So that's really powerful.
+ I think people should know about that tool chain.
+ If you want to estimate the parameters of an object,
+ and you assume that the object is well--
+ you need some model of how it's connected to the hand,
+ and some measurement of how it's connected to the hand.
+ If you said it was connected to the hand in a pin joint,
+ then you would need the angle theta of that pin joint
+ to feed into this algorithm.
+ The standard thing is to make a grasp on the object
+ and assume it's welded to the hand.
+ Then you estimate the inertia of the hand as well as the object.
+ And you can do that with just the joint torque sensors.
+ You can do it better if you have a force sensor in the wrist.
+ OK.
+ You run-- the nice thing is that-- so symbolic computations
+ get expensive as you do lots of symbols
+ through lots of nonlinear equations.
+ But you only have to do the symbols that you're
+ trying to estimate.
+ And the rest it treats as doubles.
+ So you just make the parameters of the system
+ symbolic in the unknown parameters of the inertia.
+ You run your experiments.
+ You back it out.
+ And you have an estimate of the inertia.
+ You can actually do a more special case, more dialed in,
+ if it's exactly just one inertia you want at the end.
+ In fact, there's an even more specialized version of that.
+ But the recipe is this.
+ It's just a special case of that.
+ Thanks.
+ Any questions on that?
+ Yeah.
+ [INAUDIBLE]
+ So it's a great question.
+ And let me repeat it.
+ So the question is, what about-- so I
+ talked about cases where there are unidentifiable parameters.
+ What happens in the case where there are--
+ I think the case you're talking about
+ is really the case where there's not enough data to excite the--
+ the opposite version of having losing rank
+ would be if you don't have enough data in your matrix
+ to identify all those parameters.
+ You could similarly-- in that case,
+ you would expect to get more data and be able to bring
+ the rank up and identify.
+ You said, OK, the other extreme you're talking about
+ is if there's--
+ if you're over-constrained, you would
+ expect that if your lumped parameters came
+ from the equations of motion, then
+ there is a solution that satisfies all of those.
+ So having insufficient data, insufficient rank is one thing.
+ But you wouldn't expect to be in an over-constrained situation
+ if those lumped parameters came out
+ of the equations of motion.
+ I think that would be the natural other side
+ of the linear--
+ of the over-constrained equations
+ instead of under-constrained.
+ Was that your question?
+ I think so.
+ It's kind of like--
+ let's say I was swinging an object around,
+ but the object had a huge object.
+ Yes.
+ And so it was affecting--
+ I see.
+ And I didn't tell my equations about that.
+ What would it do?
+ So it would find--
+ so the question is, if I didn't declare in my equation
+ the fact that the object is sliding in my hand,
+ what would it do?
+ It's going to find the least squares approximation given
+ the data for the rigid--
+ I mean, for whatever model you fit.
+ So if you said it's rigid and you have accelerations that
+ are inconsistent with that, it will
+ try to find the best explanation given the model you fit.
+ That's one of the beautiful things about the least squares
+ is that you actually expect to get
+ the best model in the class.
+ But it can't guarantee if your model class is wrong,
+ it won't, of course, overcome that.
+ Yeah.
+ So I think it will do it relatively--
+ it doesn't die catastrophically in that sense.
+ It should try to find the best in class.
+ Other questions like that?
+ Yeah.
+ I guess on the other hand, I was going to ask about
+ if you didn't know whether multiple degrees of freedom
+ objects were [INAUDIBLE]
+ Yes.
+ Then, like, if you [INAUDIBLE]
+ Yes, good.
+ So right, if you--
+ there's a question of sort of estimating
+ the numbers of degrees of freedom in the object
+ that you're trying to manipulate.
+ And that is an extra interesting question, where you're actually
+ trying to do--
+ well, so there's ways that you could do that through this
+ lens.
+ You could try to fit the one-dimensional version,
+ the two-dimensional version, the three-dimensional version,
+ and expect to find some amount of--
+ any more degrees of freedom will only explain it better.
+ But you would expect--
+ same with, like, proper orthogonal decomposition,
+ or PCA, or anything like this.
+ You'd probably expect the fit to level off
+ when you found the appropriate degrees of freedom.
+ [INAUDIBLE]
+ That's right.
+ [INAUDIBLE]
+ Good.
+ Yeah, good point.
+ So in that case, we have assumed that you have the cues.
+ You could do it--
+ no, you're right.
+ You're right.
+ That would be the sticking point,
+ is we wouldn't have cues in that setting.
+ Mm-hmm.
+ Yeah, people do a lot of work on topology estimation
+ and the like first.
+ And it's typically a pre-processing step,
+ a separate optimization.
+ Nice.
+ OK, so there's a lot of other hidden lessons here.
+ I mean, so there is actually one thing that--
+ when I was talking about the over-parameterization,
+ it kind of came to mind.
+ It is possible that, in some sense,
+ we have over-parameterized our URDF.
+ When I said that, I kind of caught myself.
+ So there is one sense in which we
+ are over-parameterizing our URDF, which
+ is that if we specify the mass and the center of mass
+ and the six numbers of the inertia matrix all separately,
+ then you've actually over-specified
+ the number of free parameters.
+ And it is important, if you want to get a dynamically
+ consistent inertial matrix out, that you actually
+ have to put in a few additional--
+ they can be written as convex constraints.
+ A pretty tight approximation of what
+ it means to be a valid inertial matrix
+ can be written as a convex constraint.
+ But that was-- just as I said that, I was like,
+ I should be a little more careful.
+ So yeah, our URDFs are not a minimal representation
+ of the parameters.
+ And in fact, it's kind of the one case
+ where you might want to go back and back out mass
+ separate from length, separate from whatever.
+ Is if you want to write your results back into your URDF
+ to share with your friends, then you
+ would have to solve that last piece of the problem.
+ But it shouldn't matter which one you pick
+ in terms of the simulation.
+ If you had an initial guess, you could solve a nonlinear problem
+ saying, give me the closest to the initial guess
+ in some of these squares sense that satisfies exactly
+ the lumped parameter values.
+ That would be a standard thing to do.
+ I looked for a while at whether you could do that convexly,
+ and I don't think you can.
+ Only in very simple cases you can.
+ OK, so just to finish the story for the throwing,
+ it turns out that because this is least squares,
+ it's beautiful, it's good, you can actually
+ do it with recursive least squares online as you operate.
+ And that's what's happening in the slow team throwing example,
+ is that he's actually estimating the parameters of the ball
+ as the robot's operating.
+ And then there's a desired trajectory,
+ but the execution of that desired trajectory
+ is using a computed torque inverse dynamics
+ controller that has the adaptive parameters in.
+ So it's actually refining its execution of the trajectory
+ as it throws.
+ So it really does estimate the mass of the ball
+ and then throw it better because of that estimate.
+ Awesome.
+ Right?
+ And you remember in the inverse dynamic setting,
+ we talked about error could go to 0
+ if you put the feedforward term in.
+ There are the classic--
+ the famous result by Jean-Jacques,
+ his little team, is that you can still
+ get that in the parameter estimation regime.
+ You can still get your tracking error to go to 0,
+ even if you have to estimate online some of your parameters
+ because of this least squares result.
+ That's a very strong result.
+ It does require your system to be fully actuated.
+ It requires that you have a controller that
+ can accomplish the task stably without any parameter
+ knowledge.
+ And basically, it just gets better and better
+ as the parameters dial in.
+ But it's a famous classic result.
+ [INAUDIBLE]
+ The controller is a closed form function of the parameters.
+ The parameters evolve along with the state of the robot.
+ This is an adaptive controller architecture.
+ So you think of it of having my dynamics for q,
+ but you also have your dynamics for your parameters,
+ which are the recursive least squares estimator, typically.
+ There's a couple other more clever ways to do it,
+ where you can estimate a subset of the parameters in order.
+ But the simplest way to think about it
+ is a recursive least squares update
+ to the parameters and a controller
+ that's using those parameters to execute the trajectory.
+ In that line of work-- sorry, I'm just--
+ you guys got me talking, which is great.
+ But in that line of work, they also
+ did some residual models.
+ The residual models back in the day
+ were radial basis functions or--
+ radial basis functions, they did a couple other--
+ they did a lot of wavelets, actually, back in the day.
+ I'm sure there was a neural network version of it,
+ but not a deep neural network version of it.
+ And they worked incredibly well.
+ And that's how they fit the airplane,
+ I believe, was with the radial basis function network.
+ So I think residual models can be added on top of this.
+ And actually, a radial basis network with fixed means
+ would still be linear in the parameters.
+ So it fits beautifully in this kind of framework.
+ If you compare that to the tossing bot,
+ tossing bot is solving a harder version of the problem,
+ because it is worrying about unknown center masses
+ and rotations that are more complicated than what
+ John Jock did.
+ It's potentially talking about aerodynamics.
+ The paper talks about aerodynamics.
+ There was at least one ping pong ball
+ that might have been subject to aerodynamics, right?
+ So it is solving a harder version of the problem.
+ If I had one wish for that paper,
+ it would be that it would compare it
+ against the fully adaptive controller,
+ because there was an intermediate result that
+ would have been really nice to say, how much does
+ the neural network residual learn over the parameter
+ adaptive controller?
+ OK.
+ One last maybe nugget on that.
+ So let me just write it on the board
+ since I said it in that conversation.
+ But an interesting lesson is all the nice properties
+ are for the inverse dynamics.
+ The forward dynamics is less pretty.
+ And there's one other--
+ I think the algorithms that people tend to implement
+ are not quite what I said.
+ There's another nice insight, which
+ is that we talk about how q, v, v dot are the data that I
+ talked about.
+ We've said so far that these two are relatively clean data.
+ I've said it's OK to use those in your controller,
+ but be a little careful sending your raw acceleration
+ measurements back into the controller.
+ This is a little more noisy.
+ Maybe be more careful.
+ There's a version of the same sort of parameter estimation
+ story where you can reduce the sensitivity
+ on the accelerations by writing basically
+ the error in terms of power instead of in terms of torque.
+ And that allows you to average out over some time some
+ of the noise and the acceleration.
+ So there are power formulations or even energy formulations.
+ [WRITING ON BOARD]
+ Can decrease sensitivity to v dot.
+ [WRITING ON BOARD]
+ Pretty good.
+ I think that stuff's very, very powerful.
+ Maybe underappreciated.
+ I won't do all of linear control in five minutes, linear system
+ ID in five minutes, but maybe there's at least one thing
+ that--
+ one lesson, I would say, from linear system
+ ID that is immediately applicable to this.
+ And so I'll just say that one idea,
+ and we'll wrap up for today.
+ There's loads of insights, different insights,
+ from linear system identification.
+ But one of them is this.
+ Different people have different names for it,
+ but there's a distinction between equation error
+ versus simulation error.
+ So if I have my system identification problem,
+ there's maybe even-- let's just pretend
+ I have state observations, just to keep it simple.
+ There's sort of two ways to write
+ the objective of system identification, two common ways.
+ One of them is the equation error is the one-step version,
+ which is I'm going to minimize over my parameters alpha
+ the dynamics of alpha of the one-step dynamics.
+ Let me get my notation careful here.
+ So I'll use a lowercase like this.
+ So this would be--
+ I'm trying to use this-- this is my data.
+ When I use the subscript here, I'll
+ say that's data that's coming in a priori,
+ whereas this is a simulation of my model.
+ I'll write them both, and I think
+ it'll be clear what I'm trying to say.
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ OK.
+ Sorry, that was a lot of writing.
+ There's two ways you can write a system identification
+ objective.
+ One would be to say, all I want for my model
+ is that every data point, I just like--
+ I'm going to reset my simulator to the current data point.
+ I'm going to take one step, and I'm
+ going to compare it to the data at the next step.
+ That's a different objective than if I say,
+ I'm going to take my simulator, I'm
+ going to put them in the same initial condition.
+ I'm going to simulate forward using the parameters alpha,
+ and I'm going to have my data, and I'm
+ going to then evaluate, even in the long term in the future,
+ the long term rollouts.
+ The question is, am I going to reset on every time step,
+ or am I going to roll it out with the dynamics?
+ The multibody parameter estimation that we just did
+ was this version, where we reset the data on every step,
+ and we only implemented the dynamics for one step.
+ And that's for a fundamental reason,
+ which is this tends to be-- even in linear system
+ identification, this tends to be the easier objective.
+ It's convex in the multibody case,
+ and the multiple step one is non-convex.
+ This tends to be the better objective
+ for an important reason.
+ The simplest argument I can give you for that
+ is that you can find models that score--
+ that minimize the equation error, which actually
+ have unbounded simulation error.
+ And the particular case that comes on,
+ like a simple way to think about that,
+ is if you have a model you're trying to identify
+ that's on the boundary of being stable,
+ that the true model is actually stable.
+ You could find a set of parameters
+ that fits in the least square sense,
+ but actually gives you an unstable model.
+ So your true data is stable.
+ It maybe goes towards 0.
+ It happens even in the linear setting.
+ Your least squares fit because you
+ didn't have perfect measurements,
+ or you got something-- your best estimate came up
+ with an unstable model, and it did diverge.
+ That doesn't happen if you can minimize this error,
+ but this model is susceptible.
+ So even in the multibody setting,
+ we tend to use least squares and do our very best with that.
+ But oftentimes, we do a cleanup pass.
+ This looks like a trajectory optimization problem,
+ finding the parameters alpha that
+ satisfy over an entire rollout.
+ We will often fine tune alpha at the end
+ after the initial solution here, just
+ to make sure we minimize the long term error.
+ And this is-- in the linear system identification world,
+ there are strong approaches to avoiding--
+ to actually making this problem still good.
+ And there's lots of lessons there, too.
+ But I won't jam them into the end here.
+ But I do want you to understand that there's
+ a difference between a one step and a long term.
+ And the long term is the one we really want.
+ The one step is the one we often use,
+ because it's more convenient.
+ OK, to be continued.
+ Happy Thanksgiving.
+ by Zola Levitt Ministries.

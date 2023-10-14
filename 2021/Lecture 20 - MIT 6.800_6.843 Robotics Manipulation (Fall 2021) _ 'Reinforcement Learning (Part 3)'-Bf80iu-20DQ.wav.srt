@@ -1,0 +1,5632 @@
+1
+00:00:00,000 --> 00:00:02,360
+ A lot of people are already traveling,
+
+2
+00:00:02,360 --> 00:00:06,680
+ but I'm happy to be here.
+
+3
+00:00:06,680 --> 00:00:10,880
+ So we're going to do sort of the last of our three RL lectures,
+
+4
+00:00:10,880 --> 00:00:14,040
+ although maybe we'll do a little bit
+
+5
+00:00:14,040 --> 00:00:18,480
+ of the model-based version of RL in one of the boutique lectures.
+
+6
+00:00:18,480 --> 00:00:22,240
+ But I want to--
+
+7
+00:00:22,240 --> 00:00:24,600
+ first of all, especially since there's a few less of us,
+
+8
+00:00:24,600 --> 00:00:27,740
+ I think if you guys have any questions whatsoever about RL,
+
+9
+00:00:27,740 --> 00:00:29,880
+ you can ask me anything, any time.
+
+10
+00:00:29,880 --> 00:00:34,940
+ But Abhishek, in particular, promised
+
+11
+00:00:34,940 --> 00:00:36,360
+ that I would fill in a few details,
+
+12
+00:00:36,360 --> 00:00:39,220
+ and I fully intend to do that, connecting
+
+13
+00:00:39,220 --> 00:00:41,400
+ some of the ideas we talked about already,
+
+14
+00:00:41,400 --> 00:00:44,260
+ from policy search and BlackBock optimization
+
+15
+00:00:44,260 --> 00:00:46,620
+ to the actor-critic kind of ideas that he talked about
+
+16
+00:00:46,620 --> 00:00:49,660
+ and why that can help with sample efficiency.
+
+17
+00:00:49,660 --> 00:00:52,460
+ But I also want to talk through just a couple
+
+18
+00:00:52,460 --> 00:00:56,780
+ of specific examples and maybe even discuss
+
+19
+00:00:56,780 --> 00:00:59,740
+ some of the ongoing work to understand when RL works
+
+20
+00:00:59,740 --> 00:01:03,300
+ and why it works when it does work.
+
+21
+00:01:03,300 --> 00:01:05,420
+ OK, so let's start.
+
+22
+00:01:05,420 --> 00:01:07,260
+ Of course, having said that, I should
+
+23
+00:01:07,260 --> 00:01:08,840
+ wait to see if there's any questions.
+
+24
+00:01:08,840 --> 00:01:11,500
+ Anybody have general questions on what
+
+25
+00:01:11,500 --> 00:01:14,060
+ we've talked about so far or Abhi's lecture?
+
+26
+00:01:14,060 --> 00:01:18,980
+ Well, any time.
+
+27
+00:01:18,980 --> 00:01:22,100
+ Please say anything.
+
+28
+00:01:22,100 --> 00:01:25,220
+ OK, so let's just think about what we've said about RL so far.
+
+29
+00:01:25,220 --> 00:01:31,020
+ So I started off with a picture of RL as BlackBox optimization.
+
+30
+00:01:31,020 --> 00:01:42,940
+ And I tried to draw some pictures of how
+
+31
+00:01:42,940 --> 00:01:45,060
+ zero-order methods, methods that don't
+
+32
+00:01:45,060 --> 00:01:49,140
+ rely on any analytical gradient calculations of the plant,
+
+33
+00:01:49,140 --> 00:01:52,340
+ or they just rely on samples of the--
+
+34
+00:01:52,340 --> 00:01:56,900
+ or rollouts from your simulator, have different properties.
+
+35
+00:01:56,900 --> 00:01:58,780
+ Some of them can be desirable, right?
+
+36
+00:01:58,780 --> 00:02:04,020
+ So if we think about some general cost landscape,
+
+37
+00:02:04,020 --> 00:02:07,300
+ but maybe it's got lots of jagged stuff right here,
+
+38
+00:02:07,300 --> 00:02:08,920
+ and I want to do an optimization on it,
+
+39
+00:02:08,920 --> 00:02:12,300
+ then my gradients might be locally not very informative.
+
+40
+00:02:12,300 --> 00:02:19,340
+ But sample-based algorithms could potentially
+
+41
+00:02:19,340 --> 00:02:21,940
+ take samples and estimate the local curvature very nicely
+
+42
+00:02:21,940 --> 00:02:23,940
+ and very robustly.
+
+43
+00:02:23,940 --> 00:02:30,140
+ So that's one of the ideas we've put out there.
+
+44
+00:02:30,140 --> 00:02:32,380
+ We talked about, very quickly--
+
+45
+00:02:32,380 --> 00:02:36,820
+ I want to connect the dots again a little bit--
+
+46
+00:02:36,820 --> 00:02:40,900
+ the policy gradient idea.
+
+47
+00:02:40,900 --> 00:02:47,940
+ So I think of this as doing, let's say, direct policy
+
+48
+00:02:47,940 --> 00:02:49,820
+ search.
+
+49
+00:02:49,820 --> 00:02:52,380
+ So I'm going to search directly in the parameters
+
+50
+00:02:52,380 --> 00:02:53,180
+ of the policy.
+
+51
+00:02:53,180 --> 00:02:59,660
+ For instance, if I have some policy with parameters theta,
+
+52
+00:02:59,660 --> 00:03:09,180
+ and I want to search directly in theta,
+
+53
+00:03:09,180 --> 00:03:11,300
+ I could do it with these kind of tools, right?
+
+54
+00:03:11,300 --> 00:03:15,300
+ Even if theta is buried in a long-term optimization
+
+55
+00:03:15,300 --> 00:03:18,180
+ where I want to try to minimize the sum
+
+56
+00:03:18,180 --> 00:03:24,500
+ over some long-term rewards where
+
+57
+00:03:24,500 --> 00:03:27,420
+ these are the rollouts of some simulation, right?
+
+58
+00:03:27,420 --> 00:03:41,180
+ So if I write it more carefully here,
+
+59
+00:03:41,180 --> 00:03:46,340
+ these are the fundamental equations of optimal control
+
+60
+00:03:46,340 --> 00:03:47,460
+ and certainly of RL.
+
+61
+00:03:47,460 --> 00:04:00,340
+ Now, the way I've written it, that
+
+62
+00:04:00,340 --> 00:04:03,180
+ looks like a constrained optimization.
+
+63
+00:04:03,180 --> 00:04:06,580
+ If I want to minimize this over theta, for instance,
+
+64
+00:04:06,580 --> 00:04:09,260
+ that looks like some constrained optimization.
+
+65
+00:04:09,260 --> 00:04:13,700
+ But because these equations are easily
+
+66
+00:04:13,700 --> 00:04:16,540
+ solved away by just forward simulating
+
+67
+00:04:16,540 --> 00:04:18,900
+ from some initial conditions, you
+
+68
+00:04:18,900 --> 00:04:21,820
+ can do this with an unconstrained optimization
+
+69
+00:04:21,820 --> 00:04:22,940
+ and black box methods.
+
+70
+00:04:22,940 --> 00:04:33,940
+ The policy gradient family of algorithms, in particular,
+
+71
+00:04:33,940 --> 00:04:48,460
+ combines some sample-based optimization
+
+72
+00:04:48,460 --> 00:04:50,940
+ with analytical gradients of the policy.
+
+73
+00:04:51,940 --> 00:04:54,900
+ [TYPING]
+
+74
+00:04:54,900 --> 00:05:06,020
+ Which makes total sense, right?
+
+75
+00:05:06,020 --> 00:05:11,420
+ If you have a neural network in the middle as your policy,
+
+76
+00:05:11,420 --> 00:05:13,260
+ and we know very well how to-- we
+
+77
+00:05:13,260 --> 00:05:15,820
+ have very efficient implementations of backprop
+
+78
+00:05:15,820 --> 00:05:17,380
+ that run on GPUs.
+
+79
+00:05:17,380 --> 00:05:21,580
+ So we should be able to leverage those gradients.
+
+80
+00:05:21,580 --> 00:05:23,900
+ But if we don't know f, and we don't maybe
+
+81
+00:05:23,900 --> 00:05:26,660
+ know the loss function, then it might
+
+82
+00:05:26,660 --> 00:05:29,660
+ make sense to do some sort of black box optimization
+
+83
+00:05:29,660 --> 00:05:33,460
+ to take care of these things and some analytical gradients
+
+84
+00:05:33,460 --> 00:05:35,660
+ for the policy.
+
+85
+00:05:35,660 --> 00:05:37,380
+ And that's the type of algorithms that you
+
+86
+00:05:37,380 --> 00:05:39,380
+ explored on your homework and that Abhi
+
+87
+00:05:39,380 --> 00:05:42,300
+ was starting to talk about in his lectures
+
+88
+00:05:42,300 --> 00:05:44,820
+ in the policy gradient and actor-critic space.
+
+89
+00:05:44,820 --> 00:05:47,700
+ [TYPING]
+
+90
+00:05:47,700 --> 00:05:54,060
+ These are the reminders so far, right?
+
+91
+00:05:54,060 --> 00:06:04,540
+ Abhi talked about a couple big ideas.
+
+92
+00:06:04,540 --> 00:06:10,620
+ I mean, he talked about how to specify objectives
+
+93
+00:06:10,620 --> 00:06:11,700
+ in the real world, right?
+
+94
+00:06:12,700 --> 00:06:15,340
+ The imitation learning side of--
+
+95
+00:06:15,340 --> 00:06:17,260
+ or sorry, the inverse reinforcement learning
+
+96
+00:06:17,260 --> 00:06:19,420
+ side of imitation learning.
+
+97
+00:06:19,420 --> 00:06:21,380
+ He talked about multitask RL, how
+
+98
+00:06:21,380 --> 00:06:23,940
+ you can keep the data collection going if you learn--
+
+99
+00:06:23,940 --> 00:06:25,500
+ don't just train it to open a door.
+
+100
+00:06:25,500 --> 00:06:27,220
+ Train it to open a door and close a door,
+
+101
+00:06:27,220 --> 00:06:30,460
+ and then you can get this continuous cycle of learning.
+
+102
+00:06:30,460 --> 00:06:32,340
+ And even if you can't open a door yet,
+
+103
+00:06:32,340 --> 00:06:35,860
+ you can make systems that do that very well.
+
+104
+00:06:35,860 --> 00:06:38,380
+ But he talked about data efficiency, too,
+
+105
+00:06:38,380 --> 00:06:45,460
+ as a major challenge for getting RL to work in the real world.
+
+106
+00:06:45,460 --> 00:06:47,820
+ And there were a couple ideas that he brought up
+
+107
+00:06:47,820 --> 00:06:49,540
+ that we want to follow up on today, right?
+
+108
+00:06:49,540 --> 00:07:06,660
+ So he talked about actor-critic variance of policy gradient,
+
+109
+00:07:06,660 --> 00:07:11,020
+ which can optimize faster.
+
+110
+00:07:11,020 --> 00:07:13,060
+ They can be lower--
+
+111
+00:07:13,060 --> 00:07:16,420
+ can provide lower variance estimates of the gradient.
+
+112
+00:07:33,540 --> 00:07:40,460
+ And he also talked about Q-learning,
+
+113
+00:07:40,460 --> 00:07:46,660
+ and in particular, off-policy and experience replay
+
+114
+00:07:46,660 --> 00:07:47,340
+ kind of ideas.
+
+115
+00:07:47,340 --> 00:07:58,500
+ And I think he actually said on his slide--
+
+116
+00:07:58,500 --> 00:08:00,740
+ Russ will fill in the details on some of these things.
+
+117
+00:08:00,740 --> 00:08:01,620
+ So there we go.
+
+118
+00:08:01,980 --> 00:08:02,480
+ Thank you.
+
+119
+00:08:02,480 --> 00:08:10,780
+ So to talk through this, I want to use a running example.
+
+120
+00:08:10,780 --> 00:08:17,500
+ So you remember this example that I cooked up
+
+121
+00:08:17,500 --> 00:08:22,420
+ from the force control lecture, where we had first a force
+
+122
+00:08:22,420 --> 00:08:24,260
+ controller that did this very careful.
+
+123
+00:08:24,260 --> 00:08:27,420
+ And I could put it on a tele-op, and I could have it-- oh,
+
+124
+00:08:27,420 --> 00:08:29,620
+ stay inside the friction cone, rotate the Cheez-It box
+
+125
+00:08:29,620 --> 00:08:30,340
+ up on the corner.
+
+126
+00:08:30,340 --> 00:08:32,260
+ Right?
+
+127
+00:08:32,260 --> 00:08:34,540
+ And then we talked about stiffness control
+
+128
+00:08:34,540 --> 00:08:37,660
+ and how once we had the stiffness control,
+
+129
+00:08:37,660 --> 00:08:39,780
+ there was actually an open-loop trajectory.
+
+130
+00:08:39,780 --> 00:08:41,860
+ You could just close your eyes and move the finger
+
+131
+00:08:41,860 --> 00:08:45,900
+ through this cycle, and it would very robustly flip that box up
+
+132
+00:08:45,900 --> 00:08:50,060
+ with the thinking of the programming the virtual spring.
+
+133
+00:08:50,060 --> 00:08:51,820
+ Right?
+
+134
+00:08:51,820 --> 00:08:54,780
+ So what I was doing last night, I decided to code up
+
+135
+00:08:54,780 --> 00:08:59,960
+ with stiffness control, this as an RL problem,
+
+136
+00:08:59,960 --> 00:09:04,300
+ and throw some of the popular algorithms at it,
+
+137
+00:09:04,300 --> 00:09:07,220
+ PPO and SAC and the like.
+
+138
+00:09:07,220 --> 00:09:08,140
+ And you would think--
+
+139
+00:09:08,140 --> 00:09:12,140
+ I even said, the control parameterization
+
+140
+00:09:12,140 --> 00:09:15,660
+ of stiffness control should help RL, too.
+
+141
+00:09:15,660 --> 00:09:17,740
+ So I want to work through that as an example here.
+
+142
+00:09:17,740 --> 00:09:23,500
+ This is, I think, a good example for today.
+
+143
+00:09:23,500 --> 00:09:27,980
+ So the first question is, which RL algorithm should we use?
+
+144
+00:09:27,980 --> 00:09:29,640
+ And if you look down the list--
+
+145
+00:09:29,640 --> 00:09:31,800
+ so we are in the space of--
+
+146
+00:09:31,800 --> 00:09:35,840
+ this is what our algorithms are available in the main stable
+
+147
+00:09:35,840 --> 00:09:38,660
+ baselines 3 repo.
+
+148
+00:09:38,660 --> 00:09:43,160
+ So the categories here are your action space.
+
+149
+00:09:43,160 --> 00:09:47,200
+ So we're in the box place where we have continuous actions.
+
+150
+00:09:47,200 --> 00:09:49,320
+ All these other ones are discrete actions,
+
+151
+00:09:49,320 --> 00:09:53,800
+ but we have continuous actions if we want to have a--
+
+152
+00:09:53,800 --> 00:09:55,280
+ let me even write it down here.
+
+153
+00:09:55,280 --> 00:10:10,740
+ So my box flip up example, B0 in the standard RL case.
+
+154
+00:10:10,740 --> 00:10:19,020
+ So I'll set up my actions to be the xy position
+
+155
+00:10:19,020 --> 00:10:21,380
+ for stiffness control, the virtual finger.
+
+156
+00:10:21,380 --> 00:10:21,880
+ All right.
+
+157
+00:10:21,880 --> 00:10:42,720
+ Now, if you remember, the stiffness control
+
+158
+00:10:42,720 --> 00:10:47,080
+ in its full glory, when your robot is a point finger,
+
+159
+00:10:47,080 --> 00:10:48,760
+ it looks almost like PD control.
+
+160
+00:10:48,760 --> 00:10:50,440
+ It's PD control plus gravity comp.
+
+161
+00:10:50,440 --> 00:10:53,380
+ So that sounds fancy.
+
+162
+00:10:53,380 --> 00:10:55,620
+ It is fancy in its generality, but for a point finger,
+
+163
+00:10:55,620 --> 00:10:57,020
+ it's kind of just PD control.
+
+164
+00:10:57,020 --> 00:10:59,140
+ So we're not doing anything super special there.
+
+165
+00:10:59,140 --> 00:11:05,060
+ My observations-- we can have a couple
+
+166
+00:11:05,060 --> 00:11:07,340
+ of different variants of it, but let's start with just
+
+167
+00:11:07,340 --> 00:11:09,100
+ the full state feedback.
+
+168
+00:11:09,100 --> 00:11:14,900
+ So that's got the box state plus the finger state.
+
+169
+00:11:18,980 --> 00:11:27,420
+ So that's in the plane xy theta x dot y dot theta dot.
+
+170
+00:11:27,420 --> 00:11:30,140
+ The finger state is just-- since it's a sphere,
+
+171
+00:11:30,140 --> 00:11:32,060
+ I've only given it the two degrees of freedom.
+
+172
+00:11:32,060 --> 00:11:36,380
+ But it adds up.
+
+173
+00:11:36,380 --> 00:11:38,380
+ Even though it's a super simplified problem,
+
+174
+00:11:38,380 --> 00:11:40,040
+ it's still got a lot of state variables.
+
+175
+00:11:40,040 --> 00:11:43,940
+ And it's not approachable by our brute force
+
+176
+00:11:43,940 --> 00:11:47,920
+ gridding the state space kind of approaches.
+
+177
+00:11:47,920 --> 00:11:49,900
+ So we need some sort of neural network kind
+
+178
+00:11:49,900 --> 00:11:52,660
+ of function approximators in the middle.
+
+179
+00:11:52,660 --> 00:11:58,540
+ My reward now is going to be something about the box angle.
+
+180
+00:11:58,540 --> 00:12:00,140
+ I want the box to be flipped up.
+
+181
+00:12:00,140 --> 00:12:12,740
+ And then I'll have something about low effort
+
+182
+00:12:12,740 --> 00:12:16,580
+ to try to discourage the finger from going totally nuts.
+
+183
+00:12:16,580 --> 00:12:18,760
+ And there's actually a few other please
+
+184
+00:12:18,760 --> 00:12:21,200
+ don't go totally nuts terms that I put in.
+
+185
+00:12:21,200 --> 00:12:22,360
+ Nothing's scary.
+
+186
+00:12:22,360 --> 00:12:25,240
+ It's just like damping.
+
+187
+00:12:25,240 --> 00:12:28,840
+ In general, I'm allergic to trying to tune cost functions,
+
+188
+00:12:28,840 --> 00:12:34,240
+ possibly to a fault. But my videos look more janky.
+
+189
+00:12:34,240 --> 00:12:39,080
+ And then in the OpenAI Gym case, I'm
+
+190
+00:12:39,080 --> 00:12:45,940
+ just going to terminate if time is greater than 10
+
+191
+00:12:45,940 --> 00:12:52,760
+ or my multibody plant crashed, which
+
+192
+00:12:52,760 --> 00:12:57,380
+ I don't feel bad about that because this
+
+193
+00:12:57,380 --> 00:12:59,620
+ is a game about trying to-- I mean,
+
+194
+00:12:59,620 --> 00:13:02,580
+ I could set the time step of the simulator small enough
+
+195
+00:13:02,580 --> 00:13:04,220
+ that it would never crash.
+
+196
+00:13:04,220 --> 00:13:08,300
+ But I would be paying a price for simulations
+
+197
+00:13:08,300 --> 00:13:10,220
+ that are reasonable.
+
+198
+00:13:10,220 --> 00:13:12,100
+ And I actually want to discourage simulations
+
+199
+00:13:12,100 --> 00:13:13,180
+ that are unreasonable.
+
+200
+00:13:13,180 --> 00:13:16,660
+ So I think aggressively want to choose my step size
+
+201
+00:13:16,660 --> 00:13:19,180
+ to be large, put myself in a regime
+
+202
+00:13:19,180 --> 00:13:21,700
+ where some of the rollouts will crash,
+
+203
+00:13:21,700 --> 00:13:24,260
+ and tell it it's bad to crash.
+
+204
+00:13:24,260 --> 00:13:25,260
+ Yeah?
+
+205
+00:13:25,260 --> 00:13:28,260
+ So when you're trying to do a continuous simulation
+
+206
+00:13:28,260 --> 00:13:30,260
+ in a framework like RL where you want to have steps
+
+207
+00:13:30,260 --> 00:13:31,740
+ and you get a reward in each step,
+
+208
+00:13:31,740 --> 00:13:36,260
+ how do you set the RL step size versus your Euler condition
+
+209
+00:13:36,260 --> 00:13:37,300
+ step size?
+
+210
+00:13:37,300 --> 00:13:37,940
+ That's awesome.
+
+211
+00:13:37,940 --> 00:13:40,500
+ So the question is, there's a subtlety
+
+212
+00:13:40,500 --> 00:13:43,380
+ if you've got your RL step size.
+
+213
+00:13:43,380 --> 00:13:47,500
+ The gym step function takes some amount of step,
+
+214
+00:13:47,500 --> 00:13:48,420
+ has some step size.
+
+215
+00:13:48,420 --> 00:13:50,700
+ And then I have a continuous dynamical system underneath
+
+216
+00:13:50,700 --> 00:13:52,180
+ that I'm using integration for.
+
+217
+00:13:52,180 --> 00:13:54,220
+ I think those are often very different.
+
+218
+00:13:54,220 --> 00:13:58,220
+ In general, the step that you need in your gym
+
+219
+00:13:58,220 --> 00:14:01,660
+ is like your control frequency.
+
+220
+00:14:01,660 --> 00:14:03,380
+ I chose it to be large, like 0.1,
+
+221
+00:14:03,380 --> 00:14:05,380
+ even though I'm going to simulate under the hood
+
+222
+00:14:05,380 --> 00:14:07,100
+ at a millisecond or something like this.
+
+223
+00:14:07,100 --> 00:14:09,380
+ I started cheating it up to be a few milliseconds.
+
+224
+00:14:09,380 --> 00:14:13,060
+ But it's down in the physics dynamics regime
+
+225
+00:14:13,060 --> 00:14:16,020
+ in order to do proper time stepping.
+
+226
+00:14:16,020 --> 00:14:20,060
+ But I'm-- and in general, the Drake gym end
+
+227
+00:14:20,060 --> 00:14:21,740
+ will just call the integrator.
+
+228
+00:14:21,740 --> 00:14:23,820
+ So whatever systems you have, continuous or discrete
+
+229
+00:14:23,820 --> 00:14:26,140
+ or whatever, it will simulate them
+
+230
+00:14:26,140 --> 00:14:28,740
+ with whatever resolution you care about for whatever
+
+231
+00:14:28,740 --> 00:14:32,580
+ the gym time step is, which is typically high.
+
+232
+00:14:32,580 --> 00:14:33,620
+ Great question.
+
+233
+00:14:36,980 --> 00:14:39,940
+ OK, so given we have these continuous actions,
+
+234
+00:14:39,940 --> 00:14:41,980
+ I mean, that's an action space that's small enough
+
+235
+00:14:41,980 --> 00:14:42,980
+ that I could discretize.
+
+236
+00:14:42,980 --> 00:14:47,660
+ So I could use a few of the other algorithms
+
+237
+00:14:47,660 --> 00:14:50,420
+ if we chose to discretize the action space.
+
+238
+00:14:50,420 --> 00:14:53,460
+ But I think in the spirit of making
+
+239
+00:14:53,460 --> 00:14:56,900
+ it work for non-point fingers, let's
+
+240
+00:14:56,900 --> 00:14:58,400
+ stick to the continuous action space.
+
+241
+00:14:58,400 --> 00:15:01,100
+ That's where we normally are for robotics.
+
+242
+00:15:01,100 --> 00:15:03,620
+ So there aren't that many choices.
+
+243
+00:15:03,620 --> 00:15:06,780
+ It rules out a lot of the--
+
+244
+00:15:06,780 --> 00:15:07,580
+ well, let's see.
+
+245
+00:15:07,580 --> 00:15:11,060
+ The combination of wanting to do continuous actions
+
+246
+00:15:11,060 --> 00:15:16,620
+ and multiprocessing rules out a lot of the algorithms.
+
+247
+00:15:16,620 --> 00:15:17,940
+ And that's, I think, true.
+
+248
+00:15:17,940 --> 00:15:21,620
+ I think there are a few algorithms that
+
+249
+00:15:21,620 --> 00:15:25,220
+ tend to be very popular because they
+
+250
+00:15:25,220 --> 00:15:28,260
+ can handle continuous actions and handle multiprocessing.
+
+251
+00:15:28,260 --> 00:15:31,140
+ In particular, PPO is a very popular choice,
+
+252
+00:15:31,140 --> 00:15:34,100
+ I think, for those reasons.
+
+253
+00:15:34,100 --> 00:15:40,100
+ So if you look at, for instance, the OpenAI learning dexterity
+
+254
+00:15:40,100 --> 00:15:43,140
+ paper, PPO has become the default reinforcement learning
+
+255
+00:15:43,140 --> 00:15:45,780
+ algorithm at OpenAI because of its ease of use
+
+256
+00:15:45,780 --> 00:15:46,760
+ and good performance.
+
+257
+00:15:46,760 --> 00:15:50,060
+ I think in particular in the multiprocessing case.
+
+258
+00:15:50,060 --> 00:15:51,860
+ So when you don't care about data,
+
+259
+00:15:51,860 --> 00:15:54,620
+ you're going to do massive multithreaded stuff.
+
+260
+00:15:54,620 --> 00:15:57,220
+ Then PPO tends to be the tool of choice.
+
+261
+00:15:57,220 --> 00:15:59,500
+ I think if you care about data and you're
+
+262
+00:15:59,500 --> 00:16:01,420
+ doing it on a real robot, people will
+
+263
+00:16:01,420 --> 00:16:05,340
+ tend to prefer SAC or one of the other variants that
+
+264
+00:16:05,340 --> 00:16:07,820
+ is using replay and experience in order
+
+265
+00:16:07,820 --> 00:16:11,100
+ to be more data efficient.
+
+266
+00:16:11,100 --> 00:16:12,780
+ But we're in simulation world right now,
+
+267
+00:16:12,780 --> 00:16:16,620
+ so we're going to continue to see this trend.
+
+268
+00:16:16,620 --> 00:16:17,980
+ This is recent.
+
+269
+00:16:17,980 --> 00:16:19,380
+ I meant to show this last week.
+
+270
+00:16:19,380 --> 00:16:24,220
+ This is the recent result from Pulkit and his group,
+
+271
+00:16:24,220 --> 00:16:27,100
+ which won the best paper award at Coral.
+
+272
+00:16:27,100 --> 00:16:29,140
+ Congratulations to them.
+
+273
+00:16:29,140 --> 00:16:33,740
+ And it's a nice generalization of the original OpenAI work,
+
+274
+00:16:33,740 --> 00:16:37,500
+ where it's doing maybe more general, if you will,
+
+275
+00:16:37,500 --> 00:16:39,060
+ in-hand reorientation.
+
+276
+00:16:39,060 --> 00:16:45,580
+ But it also does it upside down in unstable configurations.
+
+277
+00:16:45,580 --> 00:16:47,420
+ So I would encourage you to read that paper,
+
+278
+00:16:47,420 --> 00:16:49,540
+ but that's not really what we're talking about yet.
+
+279
+00:16:49,540 --> 00:16:53,460
+ I just wanted to emphasize that it's also using PPO.
+
+280
+00:16:53,460 --> 00:16:58,820
+ And you see, in the context of the last lecture,
+
+281
+00:16:58,820 --> 00:17:01,900
+ I was going to point out the impressive evaluations
+
+282
+00:17:01,900 --> 00:17:04,380
+ that they did.
+
+283
+00:17:04,380 --> 00:17:08,460
+ OK, so I told you packages like stable baselines
+
+284
+00:17:08,460 --> 00:17:10,140
+ have gotten pretty good.
+
+285
+00:17:10,140 --> 00:17:12,660
+ Stable baselines 3, it's really pretty darn easy
+
+286
+00:17:12,660 --> 00:17:14,340
+ to implement these algorithms now,
+
+287
+00:17:14,340 --> 00:17:17,500
+ to try a suite of these algorithms on the simulator.
+
+288
+00:17:17,500 --> 00:17:22,500
+ So I made a little box flip up environment
+
+289
+00:17:22,500 --> 00:17:26,300
+ with the Drake Gym environment wrapper.
+
+290
+00:17:26,300 --> 00:17:28,660
+ And it's like three lines, really,
+
+291
+00:17:28,660 --> 00:17:32,540
+ to start running PPO on it.
+
+292
+00:17:32,540 --> 00:17:35,620
+ Admittedly, you can probably do better
+
+293
+00:17:35,620 --> 00:17:37,100
+ than picking the absolute default
+
+294
+00:17:37,100 --> 00:17:38,820
+ arguments of everything.
+
+295
+00:17:38,820 --> 00:17:41,740
+ But I'm making a point here, right?
+
+296
+00:17:41,740 --> 00:17:45,140
+ So I'm really just going to use the default MLP policy, which,
+
+297
+00:17:45,140 --> 00:17:46,660
+ by the way, is this--
+
+298
+00:17:46,660 --> 00:17:49,500
+ the fact that that is even a thing is interesting, right?
+
+299
+00:17:49,500 --> 00:17:55,580
+ That almost every paper that uses MLP policies
+
+300
+00:17:55,580 --> 00:17:58,180
+ has the same architecture always.
+
+301
+00:17:58,180 --> 00:17:59,700
+ And it's a small network.
+
+302
+00:17:59,700 --> 00:18:02,180
+ So when people talk about deep RL,
+
+303
+00:18:02,180 --> 00:18:04,780
+ and then they always use a three-layer network
+
+304
+00:18:04,780 --> 00:18:10,180
+ with 255 hidden units, it's like, that doesn't match.
+
+305
+00:18:10,180 --> 00:18:14,020
+ OK, and then it's only, again, a few steps
+
+306
+00:18:14,020 --> 00:18:16,580
+ to run the actual simulation once you get it out.
+
+307
+00:18:16,580 --> 00:18:19,060
+ You can just ask the model for the--
+
+308
+00:18:19,060 --> 00:18:20,820
+ this is the policy coming out.
+
+309
+00:18:20,820 --> 00:18:25,060
+ It's very simple and very clean.
+
+310
+00:18:25,060 --> 00:18:28,900
+ My cost function is, like I said, it's the box angle.
+
+311
+00:18:28,900 --> 00:18:32,500
+ I put a little disincentive to have a large box velocity,
+
+312
+00:18:32,500 --> 00:18:36,060
+ angular velocity, disincentive for effort,
+
+313
+00:18:36,060 --> 00:18:38,860
+ and finger velocity.
+
+314
+00:18:38,860 --> 00:18:43,260
+ And then I'll show you why there's a 10 there in a minute.
+
+315
+00:18:43,260 --> 00:18:45,180
+ OK, so I put this in there.
+
+316
+00:18:45,180 --> 00:18:49,340
+ My machine at home is bigger than my little laptop here.
+
+317
+00:18:49,340 --> 00:18:51,620
+ It's got, like, 56 effective cores.
+
+318
+00:18:51,620 --> 00:18:54,300
+ So I'm like, I'll run it on 48 of them.
+
+319
+00:18:54,300 --> 00:18:58,500
+ That way, I can still tell it to stop if it goes badly,
+
+320
+00:18:58,500 --> 00:19:02,340
+ or leave a few cores for the cursor.
+
+321
+00:19:02,340 --> 00:19:03,940
+ OK, so I ran it last night.
+
+322
+00:19:03,940 --> 00:19:06,100
+ And I woke up this morning to see what it did.
+
+323
+00:19:06,100 --> 00:19:07,140
+ And this is what it does.
+
+324
+00:19:07,140 --> 00:19:13,940
+ So it's going to reset every 10 seconds.
+
+325
+00:19:13,940 --> 00:19:14,440
+ Sorry.
+
+326
+00:19:21,180 --> 00:19:25,300
+ It kind of solves the problem.
+
+327
+00:19:25,300 --> 00:19:29,940
+ The box always ends up in a configuration
+
+328
+00:19:29,940 --> 00:19:33,300
+ that I guess I asked for.
+
+329
+00:19:33,300 --> 00:19:36,260
+ But this is also--
+
+330
+00:19:36,260 --> 00:19:37,540
+ it's sort of classic RL, right?
+
+331
+00:19:37,540 --> 00:19:41,180
+ I mean, this is what you expect and what you see.
+
+332
+00:19:41,180 --> 00:19:43,420
+ I immediately thought, I could make that better.
+
+333
+00:19:43,420 --> 00:19:44,900
+ And I definitely can.
+
+334
+00:19:44,900 --> 00:19:47,140
+ But like I said, I'm kind of allergic to cost function
+
+335
+00:19:47,140 --> 00:19:48,500
+ tuning.
+
+336
+00:19:48,500 --> 00:19:50,060
+ And it takes a lot of time, actually,
+
+337
+00:19:50,060 --> 00:19:53,660
+ I think, to go from this step to, like, it looks beautiful.
+
+338
+00:19:53,660 --> 00:19:58,300
+ I think there's a lot of cost for lower returns.
+
+339
+00:19:58,300 --> 00:19:59,980
+ But it's awesome.
+
+340
+00:19:59,980 --> 00:20:02,820
+ I mean, it solved this problem with very little handholding.
+
+341
+00:20:02,820 --> 00:20:05,580
+ I could tell you, I had three bugs
+
+342
+00:20:05,580 --> 00:20:08,500
+ that I had to work through, which are kind of funny.
+
+343
+00:20:08,500 --> 00:20:11,540
+ But I'll tell you about them in a second.
+
+344
+00:20:11,540 --> 00:20:15,540
+ OK, and it's got a very robust, if terrifying,
+
+345
+00:20:15,540 --> 00:20:19,220
+ to run on a real robot policy.
+
+346
+00:20:19,220 --> 00:20:20,180
+ OK?
+
+347
+00:20:20,180 --> 00:20:20,700
+ Question?
+
+348
+00:20:20,700 --> 00:20:21,220
+ Yeah.
+
+349
+00:20:21,220 --> 00:20:23,180
+ When you see RL policy jittering like that,
+
+350
+00:20:23,180 --> 00:20:24,860
+ do you worry that it's exploiting
+
+351
+00:20:24,860 --> 00:20:27,260
+ hard facts and simulations that show up
+
+352
+00:20:27,260 --> 00:20:30,220
+ in terms of high velocity impact?
+
+353
+00:20:30,220 --> 00:20:36,860
+ Yeah, so it ran to convergence.
+
+354
+00:20:36,860 --> 00:20:38,260
+ I mean, so this is what--
+
+355
+00:20:38,260 --> 00:20:39,820
+ the curves kind of go up.
+
+356
+00:20:39,820 --> 00:20:41,380
+ And then they flutter around a lot.
+
+357
+00:20:41,380 --> 00:20:43,780
+ It'll get confused for a little while to come back, right?
+
+358
+00:20:43,780 --> 00:20:46,860
+ So I don't claim that this is terminated exactly
+
+359
+00:20:46,860 --> 00:20:49,220
+ at the best policy that PPO ever saw.
+
+360
+00:20:49,220 --> 00:20:52,860
+ This is just whatever was at when I woke up this morning.
+
+361
+00:20:52,860 --> 00:20:54,620
+ OK.
+
+362
+00:20:54,620 --> 00:20:56,700
+ And so let me just--
+
+363
+00:20:56,700 --> 00:20:59,340
+ so why the heck is the finger kind of going around like this
+
+364
+00:20:59,340 --> 00:21:01,220
+ after the box is up, right?
+
+365
+00:21:01,220 --> 00:21:04,420
+ My cost function was clearly said,
+
+366
+00:21:04,420 --> 00:21:06,340
+ don't move if you don't need to, right?
+
+367
+00:21:06,340 --> 00:21:11,180
+ So in any sense of doing a good job of optimization,
+
+368
+00:21:11,180 --> 00:21:13,860
+ it's clearly not even at a local minimum.
+
+369
+00:21:13,860 --> 00:21:19,260
+ I mean, there shouldn't be any problem with it
+
+370
+00:21:19,260 --> 00:21:21,580
+ having to do the same policy, but then once the box is up,
+
+371
+00:21:21,580 --> 00:21:23,620
+ just set the velocity to zero.
+
+372
+00:21:23,620 --> 00:21:28,020
+ So there's something weird kind of going on there.
+
+373
+00:21:28,020 --> 00:21:30,420
+ Maybe it's just entering states that weren't trained enough
+
+374
+00:21:30,420 --> 00:21:31,220
+ or whatever, right?
+
+375
+00:21:31,220 --> 00:21:32,700
+ It just didn't visit enough.
+
+376
+00:21:32,700 --> 00:21:36,340
+ And your question-- sorry to get a roundabout answer here.
+
+377
+00:21:36,340 --> 00:21:37,740
+ So do I worry about it exploiting?
+
+378
+00:21:37,740 --> 00:21:41,780
+ I think there's a very explicit way it started exploiting,
+
+379
+00:21:41,780 --> 00:21:43,460
+ which I'm going to tell you in a second.
+
+380
+00:21:43,460 --> 00:21:46,460
+ But in general, I think--
+
+381
+00:21:46,460 --> 00:21:47,700
+ I mean, there's two features.
+
+382
+00:21:47,700 --> 00:21:50,740
+ There's one thing, which is that because we haven't put
+
+383
+00:21:50,740 --> 00:21:53,020
+ any biases on our policy, right?
+
+384
+00:21:53,020 --> 00:21:55,140
+ We haven't sort of put any priors, let me call it,
+
+385
+00:21:55,140 --> 00:21:56,740
+ on the policy.
+
+386
+00:21:56,740 --> 00:21:59,100
+ It's easy to be in a place where it's never visited before
+
+387
+00:21:59,100 --> 00:22:01,180
+ and take an insane action.
+
+388
+00:22:01,180 --> 00:22:02,740
+ I do worry about that a lot, right?
+
+389
+00:22:02,740 --> 00:22:08,100
+ We haven't said what you should do everywhere
+
+390
+00:22:08,100 --> 00:22:10,860
+ in any rigorous way.
+
+391
+00:22:10,860 --> 00:22:12,500
+ The other thing, which is people often
+
+392
+00:22:12,500 --> 00:22:15,940
+ talk about in terms of value alignment, for instance,
+
+393
+00:22:15,940 --> 00:22:19,340
+ is that I think it's very hard to write a cost
+
+394
+00:22:19,340 --> 00:22:21,300
+ function that fully captures--
+
+395
+00:22:21,300 --> 00:22:22,820
+ if it did optimize the cost function.
+
+396
+00:22:22,820 --> 00:22:25,940
+ But I think there's a lot of things
+
+397
+00:22:25,940 --> 00:22:31,180
+ that we encode in our robot solutions, which are subtle
+
+398
+00:22:31,180 --> 00:22:34,220
+ and they're implied, like don't move your finger
+
+399
+00:22:34,220 --> 00:22:35,500
+ at incredible velocities.
+
+400
+00:22:35,500 --> 00:22:38,660
+ It's somehow implied in most of my optimizations
+
+401
+00:22:38,660 --> 00:22:40,860
+ in a way that maybe I've parameterized myself out
+
+402
+00:22:40,860 --> 00:22:42,500
+ of that.
+
+403
+00:22:42,500 --> 00:22:45,460
+ And by virtue of having not specifically specified it
+
+404
+00:22:45,460 --> 00:22:47,820
+ in these problems, it will find those solutions,
+
+405
+00:22:47,820 --> 00:22:50,060
+ unless you tell it not to.
+
+406
+00:22:50,060 --> 00:22:55,500
+ So yeah, Leslie Kelbling talks about the-- what did she call
+
+407
+00:22:55,500 --> 00:22:56,180
+ it--
+
+408
+00:22:56,180 --> 00:22:58,060
+ background utilities, for instance.
+
+409
+00:22:58,060 --> 00:23:02,700
+ She says, you can tell the robot to put the dishes from the sink
+
+410
+00:23:02,700 --> 00:23:04,500
+ into the dishwasher, but you also
+
+411
+00:23:04,500 --> 00:23:07,140
+ have to tell it, like, never throw a mug through the window
+
+412
+00:23:07,140 --> 00:23:09,980
+ and never stick your finger in a light socket.
+
+413
+00:23:09,980 --> 00:23:13,020
+ There's all these things that we have in our head
+
+414
+00:23:13,020 --> 00:23:15,340
+ from common sense that we haven't told the robot not
+
+415
+00:23:15,340 --> 00:23:16,540
+ to do them.
+
+416
+00:23:16,540 --> 00:23:19,420
+ And if you just let it go in the simulator,
+
+417
+00:23:19,420 --> 00:23:20,980
+ it's going to do those things.
+
+418
+00:23:20,980 --> 00:23:23,380
+ And when you see real robot videos saying
+
+419
+00:23:23,380 --> 00:23:27,340
+ they learned to do something and they never threw their fist
+
+420
+00:23:27,340 --> 00:23:30,300
+ through the door or whatever, then you have to ask,
+
+421
+00:23:30,300 --> 00:23:32,260
+ why didn't it happen?
+
+422
+00:23:32,260 --> 00:23:33,980
+ And how much reward engineering did you
+
+423
+00:23:33,980 --> 00:23:36,780
+ do in order to make that not happen?
+
+424
+00:23:36,780 --> 00:23:41,940
+ This code is all--
+
+425
+00:23:41,940 --> 00:23:44,860
+ I'm trying to make it run better in notebooks,
+
+426
+00:23:44,860 --> 00:23:47,740
+ but otherwise it's going to be pushed.
+
+427
+00:23:47,740 --> 00:23:51,980
+ OK, so yeah, use the stiffness control.
+
+428
+00:23:51,980 --> 00:23:53,460
+ You'll see, if you look at the code,
+
+429
+00:23:53,460 --> 00:23:56,300
+ that we do have some mechanisms right inside multi-body plant
+
+430
+00:23:56,300 --> 00:24:01,540
+ to set random distribution so that it is easy to do.
+
+431
+00:24:01,540 --> 00:24:05,260
+ It's doing multiprocessing using subprocesses.
+
+432
+00:24:05,260 --> 00:24:10,220
+ If this was my research project and I
+
+433
+00:24:10,220 --> 00:24:12,820
+ wanted to make it run faster or whatever,
+
+434
+00:24:12,820 --> 00:24:15,020
+ there's lots of things I could do, for instance.
+
+435
+00:24:15,020 --> 00:24:18,740
+ Right now, it's very, very many of the 10-second simulations
+
+436
+00:24:18,740 --> 00:24:20,580
+ sort of do something interesting for a second
+
+437
+00:24:20,580 --> 00:24:22,820
+ and then find themselves in some sort of fixed point.
+
+438
+00:24:22,820 --> 00:24:25,500
+ And I just keep simulating for nine more seconds.
+
+439
+00:24:25,500 --> 00:24:26,780
+ And I should not do that.
+
+440
+00:24:26,780 --> 00:24:29,020
+ I should just truncate the simulation.
+
+441
+00:24:29,020 --> 00:24:32,060
+ But I'm just-- let it go.
+
+442
+00:24:32,060 --> 00:24:33,540
+ There's some funny bugs, right?
+
+443
+00:24:33,540 --> 00:24:36,900
+ So the first one, which is just classic for me,
+
+444
+00:24:36,900 --> 00:24:39,340
+ was I wrote down all my functions.
+
+445
+00:24:39,340 --> 00:24:40,940
+ And I wrote them down as cost functions
+
+446
+00:24:40,940 --> 00:24:42,660
+ because I'm an optimal control person, not a reinforcement
+
+447
+00:24:42,660 --> 00:24:43,740
+ learning person.
+
+448
+00:24:43,740 --> 00:24:45,760
+ And it's like, wow, this looks like it's
+
+449
+00:24:45,760 --> 00:24:48,740
+ doing exactly the opposite of what I wanted to do.
+
+450
+00:24:48,740 --> 00:24:50,620
+ And in fact, it was doing exactly the opposite
+
+451
+00:24:50,620 --> 00:24:52,260
+ of what I wanted it to do.
+
+452
+00:24:52,260 --> 00:24:56,820
+ So now you'll see my code says reward equals negative cost
+
+453
+00:24:56,820 --> 00:24:57,660
+ on the last line.
+
+454
+00:24:57,660 --> 00:25:00,980
+ OK, that's just my bad.
+
+455
+00:25:00,980 --> 00:25:03,860
+ When I did that, there was kind of a funny subtle thing,
+
+456
+00:25:03,860 --> 00:25:07,060
+ which was I had this early termination.
+
+457
+00:25:07,060 --> 00:25:10,700
+ If the simulation went unstable, I would stop the simulation.
+
+458
+00:25:10,700 --> 00:25:13,980
+ And that made sense when I had costs and I was minimizing.
+
+459
+00:25:13,980 --> 00:25:17,740
+ But when I flipped the cost upside down,
+
+460
+00:25:17,740 --> 00:25:20,740
+ now if it got an early termination,
+
+461
+00:25:20,740 --> 00:25:24,500
+ it would receive less cost.
+
+462
+00:25:24,500 --> 00:25:26,660
+ So it did a very good thing for a while.
+
+463
+00:25:26,660 --> 00:25:28,900
+ It started learning how to flip the box up or whatever.
+
+464
+00:25:28,900 --> 00:25:32,020
+ But it slowly started discovering that if I crash,
+
+465
+00:25:32,020 --> 00:25:33,860
+ I don't incur much cost.
+
+466
+00:25:33,860 --> 00:25:36,460
+ So I woke up or I came back after dinner or whatever,
+
+467
+00:25:36,460 --> 00:25:38,460
+ and it's like, it's crashing all the time.
+
+468
+00:25:38,460 --> 00:25:39,420
+ Why is it every time--
+
+469
+00:25:39,420 --> 00:25:41,740
+ it's reporting so many crashes.
+
+470
+00:25:41,740 --> 00:25:46,980
+ And it had explicitly been told by me to crash.
+
+471
+00:25:46,980 --> 00:25:49,580
+ So it's pretty good at finding the bugs in your simulator
+
+472
+00:25:49,580 --> 00:25:52,380
+ if that's what you wanted to do.
+
+473
+00:25:52,380 --> 00:25:55,300
+ But to be clear, that cost function is not tuned.
+
+474
+00:25:55,300 --> 00:25:57,500
+ It's really just-- that's what I--
+
+475
+00:25:57,500 --> 00:26:00,380
+ so I added the 10 just so that every step
+
+476
+00:26:00,380 --> 00:26:02,100
+ got some positive reward.
+
+477
+00:26:02,100 --> 00:26:04,540
+ And then it subtracted from 10 any costs.
+
+478
+00:26:04,540 --> 00:26:08,460
+ But as long as it was encouraged to keep taking steps,
+
+479
+00:26:08,460 --> 00:26:10,780
+ then that resolved that problem.
+
+480
+00:26:10,780 --> 00:26:12,240
+ But these are just not tuned at all.
+
+481
+00:26:12,240 --> 00:26:15,260
+ Like, those are the first numbers I typed in, always.
+
+482
+00:26:15,260 --> 00:26:18,420
+ And you could do much better.
+
+483
+00:26:18,420 --> 00:26:20,260
+ OK, yeah?
+
+484
+00:26:20,260 --> 00:26:23,220
+ You mentioned about how sometimes, like,
+
+485
+00:26:23,220 --> 00:26:25,700
+ if you enter a state where, like, the system
+
+486
+00:26:25,700 --> 00:26:27,580
+ has to go through all this medicine before,
+
+487
+00:26:27,580 --> 00:26:29,580
+ like, you use that wacky action.
+
+488
+00:26:29,580 --> 00:26:33,340
+ Do you know of any ways of fixing that?
+
+489
+00:26:33,340 --> 00:26:35,740
+ So the question is, how do you fix
+
+490
+00:26:35,740 --> 00:26:39,580
+ the problem of getting wacky actions when you enter a state?
+
+491
+00:26:39,580 --> 00:26:40,940
+ Right.
+
+492
+00:26:40,940 --> 00:26:44,580
+ I mean, Abhi did mention one idea.
+
+493
+00:26:44,580 --> 00:26:46,660
+ So I think there's a couple ideas there.
+
+494
+00:26:46,660 --> 00:26:51,020
+ First of all, you could try to somehow put a prior
+
+495
+00:26:51,020 --> 00:26:53,900
+ on your policy so that it does reasonable things.
+
+496
+00:26:53,900 --> 00:26:57,220
+ And then maybe the neural network only learns something
+
+497
+00:26:57,220 --> 00:26:59,500
+ in addition to a reasonable controller.
+
+498
+00:26:59,500 --> 00:27:03,180
+ That would be one way to do it.
+
+499
+00:27:03,180 --> 00:27:05,140
+ The one that Abhi talked about was
+
+500
+00:27:05,140 --> 00:27:09,900
+ about restricting your policy to take actions that
+
+501
+00:27:09,900 --> 00:27:12,860
+ would keep you near your data.
+
+502
+00:27:12,860 --> 00:27:15,780
+ So if you say, I've seen some amount of--
+
+503
+00:27:15,780 --> 00:27:17,320
+ there's states that I've seen, there's
+
+504
+00:27:17,320 --> 00:27:18,700
+ states that I know I haven't seen.
+
+505
+00:27:18,700 --> 00:27:20,580
+ You can either keep track of them explicitly,
+
+506
+00:27:20,580 --> 00:27:22,660
+ or you can keep track of them implicitly
+
+507
+00:27:22,660 --> 00:27:24,380
+ with a couple different approaches.
+
+508
+00:27:24,380 --> 00:27:29,540
+ Ensemble networks is one way people do that.
+
+509
+00:27:29,540 --> 00:27:32,340
+ And you could try to ask your controller
+
+510
+00:27:32,340 --> 00:27:35,860
+ to stay near the data in safe territory,
+
+511
+00:27:35,860 --> 00:27:37,300
+ even if that could be conservative.
+
+512
+00:27:37,300 --> 00:27:39,380
+ But that comes up-- there's a lot of different--
+
+513
+00:27:39,380 --> 00:27:41,740
+ I've seen that from the very control side.
+
+514
+00:27:41,740 --> 00:27:44,780
+ I've seen that from the talk last Thursday.
+
+515
+00:27:44,780 --> 00:27:47,980
+ And that's another idea.
+
+516
+00:27:47,980 --> 00:27:49,600
+ I mean, the other one, I think, would
+
+517
+00:27:49,600 --> 00:27:53,060
+ be to try to visit aggressively all the states,
+
+518
+00:27:53,060 --> 00:27:55,900
+ somehow to try to--
+
+519
+00:27:55,900 --> 00:27:58,580
+ I mean, there's a good sense of what these distributions are.
+
+520
+00:27:58,580 --> 00:28:00,380
+ They're very hard to write down, of course.
+
+521
+00:28:00,380 --> 00:28:03,340
+ But there's the distribution that you're exploring.
+
+522
+00:28:03,340 --> 00:28:05,180
+ There's the distribution that you would have
+
+523
+00:28:05,180 --> 00:28:06,220
+ under the optimal policy.
+
+524
+00:28:06,220 --> 00:28:10,740
+ And your goal in learning should be
+
+525
+00:28:10,740 --> 00:28:13,000
+ to try to sample from the distribution that's
+
+526
+00:28:13,000 --> 00:28:16,460
+ relevant to the optimal policy.
+
+527
+00:28:16,460 --> 00:28:20,940
+ So there are various ways to try to do that quickly.
+
+528
+00:28:20,940 --> 00:28:23,660
+ The default way would just be you get some distribution
+
+529
+00:28:23,660 --> 00:28:26,300
+ from your bad policy, and it extremely slowly
+
+530
+00:28:26,300 --> 00:28:28,420
+ walks towards your good policy.
+
+531
+00:28:28,420 --> 00:28:33,020
+ Anything you can do to try to get the relevant data faster
+
+532
+00:28:33,020 --> 00:28:34,820
+ can also address this problem.
+
+533
+00:28:34,820 --> 00:28:36,540
+ So that's-- sorry, three big things.
+
+534
+00:28:36,540 --> 00:28:39,640
+ But in the extreme case, so if I'm
+
+535
+00:28:39,640 --> 00:28:42,660
+ trying to do swing up for a cart pole or an acrobat
+
+536
+00:28:42,660 --> 00:28:45,700
+ or something like this, the random policy
+
+537
+00:28:45,700 --> 00:28:49,300
+ always visits these states for a really long time.
+
+538
+00:28:49,300 --> 00:28:51,460
+ It takes a long, long time with random exploration
+
+539
+00:28:51,460 --> 00:28:53,900
+ to ever finally decide to get up here.
+
+540
+00:28:53,900 --> 00:28:58,020
+ But if you can do something like start it up here a bunch,
+
+541
+00:28:58,020 --> 00:29:01,380
+ then you can skew the distribution
+
+542
+00:29:01,380 --> 00:29:03,460
+ to be the relevant states more quickly.
+
+543
+00:29:03,460 --> 00:29:10,180
+ I hope I don't discourage questions
+
+544
+00:29:10,180 --> 00:29:11,620
+ by being long-winded in my answers.
+
+545
+00:29:12,140 --> 00:29:14,260
+ OK.
+
+546
+00:29:14,260 --> 00:29:17,580
+ So let's just look a little under the hood of PPO.
+
+547
+00:29:17,580 --> 00:29:20,660
+ I don't want to give the full derivation.
+
+548
+00:29:20,660 --> 00:29:23,180
+ But this is right from the PPO paper,
+
+549
+00:29:23,180 --> 00:29:24,940
+ since I picked PPO and used it for that.
+
+550
+00:29:24,940 --> 00:29:29,940
+ The first thing you'll see is effectively
+
+551
+00:29:29,940 --> 00:29:33,700
+ the equation you saw in the talk last Thursday
+
+552
+00:29:33,700 --> 00:29:36,180
+ and in your problem set.
+
+553
+00:29:36,180 --> 00:29:37,420
+ This is the advantage function.
+
+554
+00:29:37,420 --> 00:29:39,820
+ This is the log probability of the gradient,
+
+555
+00:29:39,820 --> 00:29:41,740
+ the gradient of the log probabilities, which
+
+556
+00:29:41,740 --> 00:29:49,420
+ is the reinforce idea, roughly.
+
+557
+00:29:49,420 --> 00:29:50,340
+ OK.
+
+558
+00:29:50,340 --> 00:29:52,740
+ There's also some sort of complicated-looking KL
+
+559
+00:29:52,740 --> 00:29:58,380
+ divergence-type terms that come from TRPO.
+
+560
+00:29:58,380 --> 00:30:00,820
+ But if you look, there's actually--
+
+561
+00:30:00,820 --> 00:30:04,380
+ despite that being emphasized in the paper, in the end,
+
+562
+00:30:04,380 --> 00:30:06,300
+ they say there's two versions of the algorithm.
+
+563
+00:30:06,300 --> 00:30:08,700
+ One of them uses that complicated KL divergence-type
+
+564
+00:30:08,700 --> 00:30:10,140
+ thing, and one of them doesn't.
+
+565
+00:30:10,140 --> 00:30:12,780
+ It just does standard actor-critic and clips.
+
+566
+00:30:12,780 --> 00:30:16,340
+ And that's actually what people use.
+
+567
+00:30:16,340 --> 00:30:19,060
+ So actually, PPO, I think, in the end,
+
+568
+00:30:19,060 --> 00:30:28,420
+ is very much like the old-school actor-critic algorithm, which
+
+569
+00:30:28,420 --> 00:30:30,060
+ I know best from--
+
+570
+00:30:30,060 --> 00:30:34,660
+ the original actor-critic papers were back in '99
+
+571
+00:30:34,660 --> 00:30:36,700
+ by Condon and Tsiklis.
+
+572
+00:30:36,700 --> 00:30:41,140
+ And they did beautiful analysis of the convergence
+
+573
+00:30:41,140 --> 00:30:42,020
+ of those algorithms.
+
+574
+00:30:42,020 --> 00:30:48,340
+ OK.
+
+575
+00:30:48,340 --> 00:30:53,620
+ So that's an example that I hope motivates
+
+576
+00:30:53,620 --> 00:30:55,820
+ us to understand a little bit more about actor-critic
+
+577
+00:30:55,820 --> 00:30:56,340
+ algorithms.
+
+578
+00:30:56,340 --> 00:31:00,820
+ And the actor in actor-critic algorithms is a policy,
+
+579
+00:31:00,820 --> 00:31:02,780
+ and the critic is a value function.
+
+580
+00:31:02,780 --> 00:31:05,660
+ So we need to learn a little bit more about value functions.
+
+581
+00:31:05,660 --> 00:31:09,140
+ [WRITING ON BOARD]
+
+582
+00:31:10,100 --> 00:31:13,580
+ [SOUND OF WATER RUNNING]
+
+583
+00:31:13,580 --> 00:31:33,540
+ [TAPPING ON BOARD]
+
+584
+00:31:33,540 --> 00:31:37,020
+ [SOUND OF WATER RUNNING]
+
+585
+00:31:37,020 --> 00:31:40,500
+ [TAPPING ON BOARD]
+
+586
+00:31:40,500 --> 00:31:43,980
+ [SOUND OF WATER RUNNING]
+
+587
+00:31:44,980 --> 00:31:48,460
+ [TAPPING ON BOARD]
+
+588
+00:31:48,460 --> 00:31:51,940
+ [SOUND OF WATER RUNNING]
+
+589
+00:31:51,940 --> 00:31:55,420
+ [TAPPING ON BOARD]
+
+590
+00:31:55,420 --> 00:31:58,900
+ [TAPPING ON BOARD]
+
+591
+00:32:23,860 --> 00:32:27,340
+ [SOUND OF WATER RUNNING]
+
+592
+00:32:27,340 --> 00:32:31,980
+ OK.
+
+593
+00:32:31,980 --> 00:32:41,420
+ So I want you to have the mathematical understanding
+
+594
+00:32:41,420 --> 00:32:42,900
+ of a value function, but I also just
+
+595
+00:32:42,900 --> 00:32:45,100
+ want you to have a very intuitive understanding
+
+596
+00:32:45,100 --> 00:32:46,540
+ of a value function.
+
+597
+00:32:46,540 --> 00:32:52,460
+ For manipulation, these things should be very, very intuitive.
+
+598
+00:32:52,460 --> 00:33:00,340
+ I almost wish-- so when Abhishek was showing the dexterous hand
+
+599
+00:33:00,340 --> 00:33:05,500
+ opening the door, I wish I had some magic AR goggles that
+
+600
+00:33:05,500 --> 00:33:08,340
+ would somehow show me, as it was progressing,
+
+601
+00:33:08,340 --> 00:33:11,220
+ the value function estimate.
+
+602
+00:33:11,220 --> 00:33:15,380
+ What you would expect to see is if the value function is
+
+603
+00:33:15,380 --> 00:33:21,780
+ the expected cost to go, or expected--
+
+604
+00:33:21,780 --> 00:33:25,860
+ I have to watch my cost versus reward--
+
+605
+00:33:25,860 --> 00:33:34,060
+ expected long-term cost or reward,
+
+606
+00:33:34,060 --> 00:33:37,220
+ depending on if you're a positive person
+
+607
+00:33:37,220 --> 00:33:40,260
+ or a negative person.
+
+608
+00:33:40,260 --> 00:33:42,620
+ I'm a negative person, apparently.
+
+609
+00:33:42,620 --> 00:33:44,220
+ OK.
+
+610
+00:33:44,220 --> 00:33:47,300
+ So basically, it tells me-- my value estimate
+
+611
+00:33:47,300 --> 00:33:49,620
+ says if I'm in this state right now
+
+612
+00:33:49,620 --> 00:33:52,980
+ and I continue to execute my policy,
+
+613
+00:33:52,980 --> 00:33:56,580
+ then what reward should I expect to receive?
+
+614
+00:33:56,580 --> 00:34:01,900
+ So what I would like to see for the robot opening the door
+
+615
+00:34:01,900 --> 00:34:05,020
+ is that I would expect to see some future rewards.
+
+616
+00:34:05,020 --> 00:34:10,220
+ And if I were to move the hand in the direction of the door,
+
+617
+00:34:10,220 --> 00:34:14,780
+ I would expect to see the reward staying high.
+
+618
+00:34:14,780 --> 00:34:17,340
+ Let's say I only got a reward when I actually successfully
+
+619
+00:34:17,340 --> 00:34:18,260
+ turned the door knob.
+
+620
+00:34:18,260 --> 00:34:22,660
+ So I would expect to roughly see in the direction of the door
+
+621
+00:34:22,660 --> 00:34:25,180
+ that I'd get-- there's a high reward prediction if I'm doing
+
+622
+00:34:25,180 --> 00:34:25,900
+ the right thing.
+
+623
+00:34:25,900 --> 00:34:29,780
+ If I deviate, I would expect to see my expected long-term
+
+624
+00:34:29,780 --> 00:34:30,860
+ reward go down.
+
+625
+00:34:30,860 --> 00:34:32,620
+ There's directions that I should not move.
+
+626
+00:34:32,620 --> 00:34:35,660
+ It's taking me farther from my possible goal.
+
+627
+00:34:35,660 --> 00:34:37,540
+ But if I'm moving in the direction,
+
+628
+00:34:37,540 --> 00:34:40,340
+ depending on if there's a discount or shaping
+
+629
+00:34:40,340 --> 00:34:42,140
+ or anything like this, but I would roughly
+
+630
+00:34:42,140 --> 00:34:44,340
+ like to see that my rewards are predicting--
+
+631
+00:34:44,340 --> 00:34:48,580
+ there's a path that this function is roughly
+
+632
+00:34:48,580 --> 00:34:51,540
+ telling me a path of where I should move through space
+
+633
+00:34:51,540 --> 00:34:54,780
+ in order to accomplish the task.
+
+634
+00:34:54,780 --> 00:34:57,540
+ And to make that a little bit more concrete,
+
+635
+00:34:57,540 --> 00:35:00,400
+ the simplest example that I always have to use,
+
+636
+00:35:00,400 --> 00:35:02,700
+ I think, just to make that concrete,
+
+637
+00:35:02,700 --> 00:35:06,980
+ is imagine you're a robot in a grid world.
+
+638
+00:35:06,980 --> 00:35:12,820
+ I'm sorry for those of you that know this well.
+
+639
+00:35:12,820 --> 00:35:14,620
+ Just take a second on it.
+
+640
+00:35:14,620 --> 00:35:16,900
+ Imagine I'm a little robot living on a grid.
+
+641
+00:35:16,900 --> 00:35:27,740
+ And my action space is to move up, down, left, right.
+
+642
+00:35:31,140 --> 00:35:33,980
+ And let's say I have a goal that's down here,
+
+643
+00:35:33,980 --> 00:35:37,620
+ and I have some bad regions, pits of despair,
+
+644
+00:35:37,620 --> 00:35:42,020
+ or something like this over here.
+
+645
+00:35:42,020 --> 00:35:47,500
+ And let's say I get a reward of a million
+
+646
+00:35:47,500 --> 00:35:50,340
+ when I get to the goal, and I get some penalty
+
+647
+00:35:50,340 --> 00:35:52,020
+ when I fall in the pit.
+
+648
+00:35:52,020 --> 00:35:53,900
+ And maybe I have a cost of taking an action.
+
+649
+00:35:57,100 --> 00:36:01,860
+ The reward function in this task is very simple.
+
+650
+00:36:01,860 --> 00:36:07,340
+ Everywhere here, the reward might be just a small penalty
+
+651
+00:36:07,340 --> 00:36:09,460
+ for taking an action.
+
+652
+00:36:09,460 --> 00:36:11,580
+ And it's not until I get to the goal
+
+653
+00:36:11,580 --> 00:36:17,020
+ that I actually get some big one-step reward.
+
+654
+00:36:17,020 --> 00:36:20,660
+ But the value function captures the long-term expected reward.
+
+655
+00:36:20,660 --> 00:36:24,460
+ So it can tell me if I have an optimal policy,
+
+656
+00:36:24,460 --> 00:36:27,700
+ then this is a pretty good state to be in.
+
+657
+00:36:27,700 --> 00:36:29,820
+ And this is almost as good state to be in.
+
+658
+00:36:29,820 --> 00:36:33,660
+ And it can start backing up the long-term reward
+
+659
+00:36:33,660 --> 00:36:38,740
+ into a map that tells the system where to go.
+
+660
+00:36:38,740 --> 00:36:40,860
+ So here's my goal.
+
+661
+00:36:40,860 --> 00:36:43,900
+ Here's my pit of despair.
+
+662
+00:36:43,900 --> 00:36:48,220
+ And if I start solving from the reward function to the value
+
+663
+00:36:48,220 --> 00:36:54,980
+ function, then it's going to find this function now,
+
+664
+00:36:54,980 --> 00:36:57,300
+ which you see the height of the function.
+
+665
+00:36:57,300 --> 00:36:59,060
+ This is my cost formulation, sorry.
+
+666
+00:36:59,060 --> 00:37:05,540
+ This being in the pit is a very bad place to be.
+
+667
+00:37:05,540 --> 00:37:08,020
+ Being at the goal is a great place to be.
+
+668
+00:37:08,020 --> 00:37:11,780
+ But it goes through the entire state space.
+
+669
+00:37:11,780 --> 00:37:16,140
+ And basically, it figures out how much cost
+
+670
+00:37:16,140 --> 00:37:19,300
+ I would expect to incur over the long run.
+
+671
+00:37:19,300 --> 00:37:24,540
+ And it provides effectively a map that gets me to the goal.
+
+672
+00:37:24,540 --> 00:37:26,700
+ So we'll work through the basic mechanics of it.
+
+673
+00:37:26,700 --> 00:37:29,100
+ But basically, if I'm in some state
+
+674
+00:37:29,100 --> 00:37:33,980
+ here, rather than solving some long path planning problem,
+
+675
+00:37:33,980 --> 00:37:35,580
+ I can use my value function to just say,
+
+676
+00:37:35,580 --> 00:37:37,980
+ if I'm going downhill on the value function,
+
+677
+00:37:37,980 --> 00:37:41,740
+ then it's going to take me where I need to be to the goal.
+
+678
+00:37:41,740 --> 00:37:44,980
+ It turns a long-term delayed reward problem
+
+679
+00:37:44,980 --> 00:37:47,100
+ into a one-step decision-making problem.
+
+680
+00:37:47,100 --> 00:38:01,500
+ So if this is my value function here,
+
+681
+00:38:01,500 --> 00:38:07,300
+ then the features of it that make the algorithms like you
+
+682
+00:38:07,300 --> 00:38:12,860
+ just saw possible and that Avi was using in his lecture
+
+683
+00:38:12,860 --> 00:38:16,660
+ is that it has this beautiful property, which
+
+684
+00:38:16,660 --> 00:38:22,140
+ is my value function at state x is
+
+685
+00:38:22,140 --> 00:38:28,740
+ equivalent to my one-step cost plus my value
+
+686
+00:38:28,740 --> 00:38:31,100
+ function at the next state.
+
+687
+00:38:31,100 --> 00:38:38,660
+ And if I'm going to do this for a particular set of parameters,
+
+688
+00:38:38,660 --> 00:38:54,180
+ then this is a sum over many rewards
+
+689
+00:38:54,180 --> 00:38:57,940
+ from the current time up to n steps into the future.
+
+690
+00:38:57,940 --> 00:38:59,740
+ And it has a beautiful recursive property
+
+691
+00:38:59,740 --> 00:39:03,140
+ that says my value function I can compute by saying,
+
+692
+00:39:03,140 --> 00:39:05,420
+ I'll take the one-step cost plus the cost
+
+693
+00:39:05,420 --> 00:39:08,660
+ to go from the next step, from wherever I get to.
+
+694
+00:39:08,660 --> 00:39:23,500
+ This idea of a value function or cost-to-go function
+
+695
+00:39:23,500 --> 00:39:29,700
+ underlies all of the fundamental results in optimal control.
+
+696
+00:39:29,700 --> 00:39:32,300
+ It's the reason that we have good solutions
+
+697
+00:39:32,300 --> 00:39:34,460
+ to the linear quadratic regulator problem.
+
+698
+00:39:34,460 --> 00:39:38,100
+ It is the thing that underlies all of the deep results
+
+699
+00:39:38,100 --> 00:39:39,420
+ in robust control.
+
+700
+00:39:39,420 --> 00:39:42,260
+ And it is certainly a mainstay for reinforcement learning,
+
+701
+00:39:42,260 --> 00:39:44,260
+ too.
+
+702
+00:39:44,260 --> 00:39:48,140
+ What reinforcement learning has particularly emphasized
+
+703
+00:39:48,140 --> 00:39:51,580
+ is when you can't solve these value functions perfectly,
+
+704
+00:39:51,580 --> 00:39:53,660
+ but you're going to use approximation methods
+
+705
+00:39:53,660 --> 00:39:55,540
+ to estimate the value function.
+
+706
+00:39:56,540 --> 00:39:57,040
+ OK.
+
+707
+00:39:57,040 --> 00:40:05,980
+ I'll make one more point here.
+
+708
+00:40:05,980 --> 00:40:11,100
+ So if I were to somehow find the optimal value function--
+
+709
+00:40:11,100 --> 00:40:15,540
+ and our notation is typically something like this--
+
+710
+00:40:15,540 --> 00:40:21,300
+ which is the cost-to-go that I would get if I was following
+
+711
+00:40:21,300 --> 00:40:24,140
+ the optimal policy.
+
+712
+00:40:24,140 --> 00:40:26,340
+ That also has a beautiful recursive structure.
+
+713
+00:40:26,340 --> 00:40:47,300
+ It turns out that, like I said, if someone's
+
+714
+00:40:47,300 --> 00:40:50,620
+ computed the value function, the cost-to-go function,
+
+715
+00:40:50,620 --> 00:40:53,660
+ then it turns my long-term path planning problem
+
+716
+00:40:53,660 --> 00:40:54,460
+ into a short-term.
+
+717
+00:40:54,460 --> 00:40:57,220
+ I just need to figure out what's the best thing to do in one
+
+718
+00:40:57,220 --> 00:41:01,100
+ step, plus given this map that someone gave me
+
+719
+00:41:01,100 --> 00:41:02,420
+ of the long-term cost-to-go.
+
+720
+00:41:02,420 --> 00:41:16,020
+ OK.
+
+721
+00:41:16,020 --> 00:41:17,780
+ I really think value functions are
+
+722
+00:41:17,780 --> 00:41:21,020
+ a fundamental property of control,
+
+723
+00:41:21,020 --> 00:41:23,180
+ of reinforcement learning, of all these things.
+
+724
+00:41:23,180 --> 00:41:28,500
+ There's evidence from the brain that there are signals that--
+
+725
+00:41:28,500 --> 00:41:30,740
+ there are neurons in your dopaminergic system
+
+726
+00:41:30,740 --> 00:41:32,260
+ that light up when you anticipate
+
+727
+00:41:32,260 --> 00:41:33,340
+ you're going to get reward.
+
+728
+00:41:33,340 --> 00:41:34,980
+ There's like-- I don't think this
+
+729
+00:41:34,980 --> 00:41:36,260
+ is some arbitrary concept.
+
+730
+00:41:36,260 --> 00:41:39,860
+ This is deeply embedded in the fabric of control,
+
+731
+00:41:39,860 --> 00:41:41,460
+ of making long-term decisions.
+
+732
+00:41:41,460 --> 00:41:41,960
+ OK.
+
+733
+00:41:41,960 --> 00:41:46,740
+ And I really do think it's very intuitive.
+
+734
+00:41:47,700 --> 00:41:52,780
+ It's a way to capture the roadmap to the goal.
+
+735
+00:41:52,780 --> 00:41:55,860
+ So how do we use some concept of value functions
+
+736
+00:41:55,860 --> 00:42:00,820
+ in a deep learning setting?
+
+737
+00:42:00,820 --> 00:42:09,260
+ The first thing is that we need to think about the approximation
+
+738
+00:42:09,260 --> 00:42:12,500
+ version of this.
+
+739
+00:42:12,500 --> 00:42:19,060
+ RL is, if you approximate dynamic programming--
+
+740
+00:42:19,060 --> 00:42:34,420
+ in fact, one of the conferences, the few conferences that
+
+741
+00:42:34,420 --> 00:42:36,500
+ really focused on RL all the way through,
+
+742
+00:42:36,500 --> 00:42:40,260
+ was a conference called ADP RL.
+
+743
+00:42:40,260 --> 00:42:43,860
+ It's still alive, but approximate dynamic
+
+744
+00:42:43,860 --> 00:42:44,620
+ programming in RL.
+
+745
+00:42:44,620 --> 00:42:46,540
+ This was one of the places you could continue
+
+746
+00:42:46,540 --> 00:42:49,540
+ to publish RL works, even when it was not super popular.
+
+747
+00:42:49,540 --> 00:42:56,220
+ And it's asking the question of, if I
+
+748
+00:42:56,220 --> 00:43:07,780
+ want to store or represent v hat with a function approximator,
+
+749
+00:43:07,780 --> 00:43:17,460
+ let's say, then there's the objective
+
+750
+00:43:17,460 --> 00:43:19,660
+ that's sort of natural, given the sort of recursive
+
+751
+00:43:19,660 --> 00:43:20,160
+ structure.
+
+752
+00:43:31,700 --> 00:43:38,140
+ You'd like to have v hat given some-- let
+
+753
+00:43:38,140 --> 00:43:41,900
+ me call it alpha, the parameters of my function approximator--
+
+754
+00:43:41,900 --> 00:43:42,400
+ minus--
+
+755
+00:43:42,400 --> 00:43:42,900
+, minus.
+
+756
+00:43:42,900 --> 00:44:07,320
+ So this now becomes like a supervised learning loss.
+
+757
+00:44:07,320 --> 00:44:08,820
+ This is called the Bellman residual.
+
+758
+00:44:08,820 --> 00:44:16,700
+ [TYPING]
+
+759
+00:44:16,700 --> 00:44:19,500
+ You can similarly-- you can do this on policy,
+
+760
+00:44:19,500 --> 00:44:22,420
+ or you can do it for the optimal policy, if you can compute it.
+
+761
+00:44:22,420 --> 00:44:28,700
+ So it turns out that learning cost-to-go functions--
+
+762
+00:44:28,700 --> 00:44:30,420
+ it's not surprising, I guess--
+
+763
+00:44:30,420 --> 00:44:32,340
+ can be done mostly with supervised learning.
+
+764
+00:44:32,340 --> 00:44:38,060
+ So it makes sense that you could try to train a neural network
+
+765
+00:44:38,060 --> 00:44:40,900
+ to try to represent a value function.
+
+766
+00:44:40,900 --> 00:44:42,380
+ One thing that doesn't make sense--
+
+767
+00:44:42,380 --> 00:44:43,860
+ I don't know if people have caught up on this.
+
+768
+00:44:43,860 --> 00:44:45,380
+ So I write this down.
+
+769
+00:44:45,380 --> 00:44:47,020
+ Abhishek wrote this down, too, roughly.
+
+770
+00:44:47,020 --> 00:44:49,380
+ He did it for the Q functions.
+
+771
+00:44:49,380 --> 00:44:50,900
+ This isn't actually what people do.
+
+772
+00:44:50,900 --> 00:44:52,500
+ I don't know if people know that.
+
+773
+00:44:52,500 --> 00:44:55,740
+ So every once in a while, you'll see people talk
+
+774
+00:44:55,740 --> 00:44:57,700
+ about solving this exactly.
+
+775
+00:44:57,700 --> 00:45:03,220
+ But actually, this doesn't work as well as you would expect.
+
+776
+00:45:03,220 --> 00:45:06,700
+ Anybody know the catch, the subtlety that's written here,
+
+777
+00:45:06,700 --> 00:45:08,060
+ but often not done in practice?
+
+778
+00:45:08,060 --> 00:45:20,900
+ The way you would think to do this with supervised learning--
+
+779
+00:45:20,900 --> 00:45:22,980
+ if you wrote this as your loss function,
+
+780
+00:45:22,980 --> 00:45:25,220
+ and then you would try to take the gradient
+
+781
+00:45:25,220 --> 00:45:28,020
+ of this whole thing with respect to alpha.
+
+782
+00:45:28,020 --> 00:45:32,420
+ People don't do that.
+
+783
+00:45:32,420 --> 00:45:37,140
+ They almost always fix this and only take the gradient
+
+784
+00:45:37,140 --> 00:45:39,420
+ with respect to this.
+
+785
+00:45:39,420 --> 00:45:41,540
+ There's a bunch of ways that people talk about that.
+
+786
+00:45:41,540 --> 00:45:44,420
+ But certainly, the TD updates do that.
+
+787
+00:45:44,420 --> 00:45:48,820
+ Sometimes they'll talk about this as the target network.
+
+788
+00:45:48,820 --> 00:45:52,900
+ But empirically, it seems to work better
+
+789
+00:45:52,900 --> 00:45:56,180
+ to fix this side, this right-hand side,
+
+790
+00:45:56,180 --> 00:45:58,060
+ and only update this side.
+
+791
+00:45:58,060 --> 00:46:00,820
+ There's some theory about why that is.
+
+792
+00:46:00,820 --> 00:46:04,260
+ But it's always struck me as frustrating.
+
+793
+00:46:04,260 --> 00:46:09,380
+ There's some notion that it backs up better.
+
+794
+00:46:09,380 --> 00:46:12,100
+ You want to encourage it going backwards in time,
+
+795
+00:46:12,100 --> 00:46:15,060
+ and maybe this is the way to do it or something like this.
+
+796
+00:46:15,060 --> 00:46:18,860
+ But this is already one place where I think
+
+797
+00:46:18,860 --> 00:46:20,220
+ it's a little unsatisfying.
+
+798
+00:46:20,220 --> 00:46:23,460
+ Our theoretical understanding of that is a little unsatisfying.
+
+799
+00:46:27,620 --> 00:46:32,980
+ But mostly, this is supervised learning, throw it in PyTorch,
+
+800
+00:46:32,980 --> 00:46:35,500
+ take your gradients, lock those parameters,
+
+801
+00:46:35,500 --> 00:46:36,980
+ and then take your gradients, and you
+
+802
+00:46:36,980 --> 00:46:39,660
+ can train your value function.
+
+803
+00:46:39,660 --> 00:46:41,900
+ If you look at the code in stable baselines,
+
+804
+00:46:41,900 --> 00:46:45,540
+ it almost doesn't even call out the--
+
+805
+00:46:45,540 --> 00:46:49,460
+ so my code said MLP policy.
+
+806
+00:46:49,460 --> 00:46:58,500
+ So the inputs in stable baselines
+
+807
+00:46:58,500 --> 00:47:03,420
+ that a lot of the algorithms, basically, you
+
+808
+00:47:03,420 --> 00:47:08,100
+ have x coming in, you get your big neural network here,
+
+809
+00:47:08,100 --> 00:47:09,820
+ and you have your actions coming out.
+
+810
+00:47:09,820 --> 00:47:12,140
+ That's what you have your pi.
+
+811
+00:47:12,140 --> 00:47:16,260
+ And they just will add one extra output
+
+812
+00:47:16,260 --> 00:47:20,700
+ to the same architecture for v hat.
+
+813
+00:47:20,700 --> 00:47:25,860
+ So it's actually plus value all hidden in this.
+
+814
+00:47:25,860 --> 00:47:27,860
+ So it's very common to use the same architectures
+
+815
+00:47:27,860 --> 00:47:30,460
+ for your policy and just throw one extra output on
+
+816
+00:47:30,460 --> 00:47:32,020
+ for your value function.
+
+817
+00:47:46,140 --> 00:47:47,380
+ Value functions are intuitive.
+
+818
+00:47:47,380 --> 00:47:49,340
+ Value functions are essential.
+
+819
+00:47:49,340 --> 00:47:54,900
+ There are reasonable approaches to train a value function.
+
+820
+00:47:54,900 --> 00:48:01,300
+ Now, here's where there's a lot more options that open up.
+
+821
+00:48:01,300 --> 00:48:03,100
+ So what do you do with your value function
+
+822
+00:48:03,100 --> 00:48:03,840
+ once you have it?
+
+823
+00:48:03,840 --> 00:48:12,460
+ In the classic dynamic programming world,
+
+824
+00:48:12,460 --> 00:48:14,220
+ you'd say, once I have my value function,
+
+825
+00:48:14,220 --> 00:48:15,220
+ I've solved the problem.
+
+826
+00:48:15,220 --> 00:48:15,820
+ I'm done.
+
+827
+00:48:15,820 --> 00:48:19,020
+ Because if I have a value function,
+
+828
+00:48:19,020 --> 00:48:20,620
+ then I can say my optimal policy--
+
+829
+00:48:20,620 --> 00:48:22,540
+ if I found the optimal value function,
+
+830
+00:48:22,540 --> 00:48:25,220
+ then my optimal policy really, like I said,
+
+831
+00:48:25,220 --> 00:48:29,380
+ should just be the one step I should minimize over u,
+
+832
+00:48:29,380 --> 00:48:34,820
+ my one step cost plus my value function.
+
+833
+00:48:42,460 --> 00:48:48,500
+ So if I know the value function, I know the policy mostly.
+
+834
+00:48:48,500 --> 00:49:02,180
+ The problem with this is that it assumes I know the dynamics
+
+835
+00:49:02,180 --> 00:49:03,780
+ and I know the cost.
+
+836
+00:49:03,780 --> 00:49:05,660
+ I don't fault anybody for assuming
+
+837
+00:49:05,660 --> 00:49:07,160
+ they know the cost most of the time.
+
+838
+00:49:07,160 --> 00:49:08,280
+ I mean, there are settings.
+
+839
+00:49:08,280 --> 00:49:11,420
+ But in robotics, I always say we know the cost.
+
+840
+00:49:11,420 --> 00:49:13,580
+ But knowing you know the dynamics,
+
+841
+00:49:13,580 --> 00:49:16,900
+ if you need to know the dynamics in order to make your decision,
+
+842
+00:49:16,900 --> 00:49:20,780
+ then this is hard to use in a setting where I'm
+
+843
+00:49:20,780 --> 00:49:23,740
+ like got a robot making salad.
+
+844
+00:49:23,740 --> 00:49:28,980
+ So the alternatives here--
+
+845
+00:49:36,380 --> 00:49:43,300
+ one is a Q-learning, and the second one is actor-critic.
+
+846
+00:49:43,300 --> 00:49:56,860
+ The Q-learning roughly says, why don't I just
+
+847
+00:49:56,860 --> 00:50:00,260
+ take this whole function here, and I'll just
+
+848
+00:50:00,260 --> 00:50:01,620
+ learn that instead.
+
+849
+00:50:01,620 --> 00:50:27,460
+ So I'll just call this thing Q. If I learn that whole thing,
+
+850
+00:50:27,460 --> 00:50:32,900
+ then my optimal policy is just looking up Q.
+
+851
+00:50:32,900 --> 00:50:34,340
+ I don't need to know something.
+
+852
+00:50:34,340 --> 00:50:37,900
+ I don't have some other hidden terms that I have to know.
+
+853
+00:50:37,900 --> 00:50:50,220
+ It has other benefits like off-policy,
+
+854
+00:50:50,220 --> 00:50:51,260
+ which is a big deal.
+
+855
+00:50:51,260 --> 00:50:54,340
+ I'm not trying to make that a small deal.
+
+856
+00:50:54,340 --> 00:50:56,900
+ That's a huge deal, and other benefits.
+
+857
+00:50:56,900 --> 00:51:04,220
+ I think the first idea, the first reason
+
+858
+00:51:04,220 --> 00:51:07,980
+ you might need a Q function is because you
+
+859
+00:51:07,980 --> 00:51:09,100
+ don't have the model.
+
+860
+00:51:09,100 --> 00:51:11,580
+ So having just the value function by itself
+
+861
+00:51:11,580 --> 00:51:14,780
+ isn't enough to tell me what control action I should take.
+
+862
+00:51:14,780 --> 00:51:16,940
+ But having just the Q function is enough,
+
+863
+00:51:16,940 --> 00:51:23,020
+ because I can just minimize directly on the Q.
+
+864
+00:51:23,020 --> 00:51:27,900
+ The actor-critic thing is make an explicit policy
+
+865
+00:51:27,900 --> 00:51:28,820
+ parameterization.
+
+866
+00:51:28,820 --> 00:51:41,100
+ So you're basically trying to learn this function,
+
+867
+00:51:41,100 --> 00:51:46,220
+ the minimizer, as well as V simultaneously.
+
+868
+00:51:46,220 --> 00:51:50,420
+ Those are two solutions to the same--
+
+869
+00:51:50,420 --> 00:51:52,940
+ they have different aspects, but I'd say first and foremost,
+
+870
+00:51:52,940 --> 00:51:55,580
+ two solutions to this problem of having the value function
+
+871
+00:51:55,580 --> 00:51:56,620
+ alone is not enough.
+
+872
+00:51:56,620 --> 00:52:03,940
+ Now, it's interesting.
+
+873
+00:52:03,940 --> 00:52:09,500
+ This min over U for Q is a non-trivial problem
+
+874
+00:52:09,500 --> 00:52:10,860
+ to solve, potentially.
+
+875
+00:52:10,860 --> 00:52:16,780
+ If Q is a deep network and U is a continuous action space,
+
+876
+00:52:16,780 --> 00:52:20,860
+ then that amounts to solving some potentially very
+
+877
+00:52:20,860 --> 00:52:23,860
+ non-convex problem in order to even take your actions here.
+
+878
+00:52:23,860 --> 00:52:31,860
+ So as a result, for continuous action spaces,
+
+879
+00:52:31,860 --> 00:52:35,380
+ people often prefer actor-critic.
+
+880
+00:52:50,180 --> 00:52:51,700
+ There are a few examples of people
+
+881
+00:52:51,700 --> 00:52:54,220
+ that stay in the Q-learning domain
+
+882
+00:52:54,220 --> 00:52:56,420
+ and try to just solve this optimization.
+
+883
+00:52:56,420 --> 00:53:12,900
+ That's an approach being pushed hard at Google,
+
+884
+00:53:12,900 --> 00:53:14,260
+ where they're saying, we're going
+
+885
+00:53:14,260 --> 00:53:15,300
+ to just learn the Q function.
+
+886
+00:53:15,300 --> 00:53:17,220
+ We'll just solve that optimization on the fly.
+
+887
+00:53:17,220 --> 00:53:20,060
+ That's what the opt part is.
+
+888
+00:53:20,060 --> 00:53:22,420
+ They also-- Qt opt is more than that.
+
+889
+00:53:22,420 --> 00:53:25,860
+ It talks about how to do decentralized Q-learning also.
+
+890
+00:53:25,860 --> 00:53:33,380
+ But I think there's a group at DeepMind also that's quite
+
+891
+00:53:33,380 --> 00:53:37,260
+ still thinking about the advantages of Q-learning
+
+892
+00:53:37,260 --> 00:53:40,420
+ from experience replay kind of perspective.
+
+893
+00:53:40,420 --> 00:53:43,140
+ And that started with Martin a long time ago.
+
+894
+00:53:43,140 --> 00:53:47,000
+ He was maybe the first to talk about fitted Q-learning
+
+895
+00:53:47,000 --> 00:53:48,580
+ with a neural network.
+
+896
+00:53:48,620 --> 00:53:50,580
+ And he did a big series of experiments.
+
+897
+00:53:50,580 --> 00:53:52,820
+ 2005 was right when I was getting my PhD.
+
+898
+00:53:52,820 --> 00:53:56,940
+ We were at the same conferences.
+
+899
+00:53:56,940 --> 00:54:00,300
+ And he was talking about neural Q-learning at the time.
+
+900
+00:54:00,300 --> 00:54:01,380
+ And I remember that well.
+
+901
+00:54:01,380 --> 00:54:12,420
+ So this is a big idea, a big branch of work.
+
+902
+00:54:12,420 --> 00:54:15,180
+ But it tends to be more popular in the discrete actions.
+
+903
+00:54:15,180 --> 00:54:17,980
+ And if you look at the stable baselines,
+
+904
+00:54:17,980 --> 00:54:21,460
+ and you look at all the DQN and other methods that are
+
+905
+00:54:21,460 --> 00:54:24,940
+ explicitly Q-learning, they're optimized
+
+906
+00:54:24,940 --> 00:54:26,940
+ for discrete action spaces.
+
+907
+00:54:26,940 --> 00:54:29,220
+ And Actor-Critic is the version that
+
+908
+00:54:29,220 --> 00:54:31,220
+ works really well with continuous action spaces.
+
+909
+00:54:43,860 --> 00:54:48,420
+ All right, so now let's come back to the view
+
+910
+00:54:48,420 --> 00:54:54,340
+ we had of policy gradient, where we have a policy.
+
+911
+00:54:54,340 --> 00:54:56,580
+ We're doing black box optimization on it.
+
+912
+00:54:56,580 --> 00:54:58,340
+ Why would we need a value function?
+
+913
+00:54:58,340 --> 00:54:59,180
+ Why would that help?
+
+914
+00:54:59,180 --> 00:55:05,180
+ Can we connect those dots?
+
+915
+00:55:05,180 --> 00:55:06,060
+ Why is it useful?
+
+916
+00:55:06,060 --> 00:55:08,020
+ So it makes sense if you have a value function,
+
+917
+00:55:08,020 --> 00:55:08,820
+ that's not enough.
+
+918
+00:55:08,820 --> 00:55:10,900
+ But now let's flip back from the other perspective.
+
+919
+00:55:10,900 --> 00:55:12,740
+ If I've got a policy, why isn't that enough?
+
+920
+00:55:12,740 --> 00:55:16,500
+ Why is-- if I've got a policy, why do I also
+
+921
+00:55:16,500 --> 00:55:17,740
+ use a value function?
+
+922
+00:55:17,740 --> 00:55:20,060
+ Why is it helpful to do both simultaneously?
+
+923
+00:55:20,060 --> 00:55:24,060
+ Because you might start with some place where the policy's
+
+924
+00:55:24,060 --> 00:55:25,580
+ not trained well.
+
+925
+00:55:25,580 --> 00:55:28,260
+ You might start in a place where the policy is not trained well.
+
+926
+00:55:28,260 --> 00:55:31,700
+ And so how does the value function help you with that?
+
+927
+00:55:31,700 --> 00:55:37,300
+ So you can know how to act whenever you [INAUDIBLE]
+
+928
+00:55:37,300 --> 00:55:42,620
+ OK, so you're leveraging this fact
+
+929
+00:55:42,620 --> 00:55:44,900
+ that the value function provides a map, roughly tells you
+
+930
+00:55:44,900 --> 00:55:48,460
+ where to go from a long way out.
+
+931
+00:55:48,460 --> 00:55:49,220
+ Yes, OK, good.
+
+932
+00:55:49,220 --> 00:55:50,740
+ So I'm with you on that.
+
+933
+00:55:50,740 --> 00:55:53,180
+ So I think the value function, if you
+
+934
+00:55:53,180 --> 00:55:56,620
+ can learn it simultaneously, can give you
+
+935
+00:55:56,620 --> 00:56:00,300
+ the ability to train your policy more locally.
+
+936
+00:56:00,300 --> 00:56:06,860
+ There's a very specific role it plays, too,
+
+937
+00:56:06,860 --> 00:56:10,680
+ in the policy gradient world, which
+
+938
+00:56:10,680 --> 00:56:11,820
+ I wonder if we can capture.
+
+939
+00:56:11,820 --> 00:56:13,420
+ If anybody knows.
+
+940
+00:56:13,420 --> 00:56:13,920
+ Yeah?
+
+941
+00:56:13,920 --> 00:56:15,460
+ AUDIENCE: It provides a baseline.
+
+942
+00:56:15,460 --> 00:56:16,620
+ ERIK DEMAINE: Yeah, it provides a baseline.
+
+943
+00:56:16,620 --> 00:56:18,500
+ We did it-- we just did a problem set on this.
+
+944
+00:56:18,500 --> 00:56:20,900
+ The advantages functions in your problem set
+
+945
+00:56:20,900 --> 00:56:22,700
+ were exactly this idea.
+
+946
+00:56:22,700 --> 00:56:25,500
+ So what does that baseline provide
+
+947
+00:56:25,500 --> 00:56:28,260
+ for the reinforced algorithms?
+
+948
+00:56:28,260 --> 00:56:35,580
+ If I'm doing my long-term optimization,
+
+949
+00:56:35,580 --> 00:56:38,660
+ and I'm getting noisy random samples
+
+950
+00:56:38,660 --> 00:56:43,380
+ of the objective function, then if I'm
+
+951
+00:56:43,380 --> 00:56:47,500
+ trying to estimate a gradient locally,
+
+952
+00:56:47,500 --> 00:56:49,780
+ I'm going to have maybe noisy estimates of my gradients.
+
+953
+00:56:49,780 --> 00:56:51,700
+ I think the pictures in the problem set
+
+954
+00:56:51,700 --> 00:56:53,220
+ were actually better, right?
+
+955
+00:56:53,220 --> 00:56:56,180
+ Were that you'd like to be going straight downhill,
+
+956
+00:56:56,180 --> 00:56:58,860
+ but in practice, the reinforced algorithm is taking you
+
+957
+00:56:58,860 --> 00:57:02,020
+ all over the place, sometimes uphill, sometimes downhill,
+
+958
+00:57:02,020 --> 00:57:03,580
+ whatever.
+
+959
+00:57:03,580 --> 00:57:05,900
+ And the reason for that is you don't know,
+
+960
+00:57:05,900 --> 00:57:11,460
+ from a single rollout of my robot, I get a score of 42.
+
+961
+00:57:11,460 --> 00:57:14,100
+ Was that a good score or a bad score?
+
+962
+00:57:14,100 --> 00:57:16,460
+ And if I ran almost the same policy
+
+963
+00:57:16,460 --> 00:57:18,180
+ from almost the same initial conditions,
+
+964
+00:57:18,180 --> 00:57:21,660
+ and I got a 38, was that a difference in noise,
+
+965
+00:57:21,660 --> 00:57:25,300
+ or was that a difference in actual cost?
+
+966
+00:57:25,300 --> 00:57:31,020
+ So distinguishing between noisy samples from a rollout
+
+967
+00:57:31,020 --> 00:57:37,100
+ and true signal is a hard problem, OK?
+
+968
+00:57:37,100 --> 00:57:41,660
+ And if you know that my expected return with my current policy
+
+969
+00:57:41,660 --> 00:57:45,900
+ was 40, because I've been in this vicinity before,
+
+970
+00:57:45,900 --> 00:57:48,420
+ and I've learned the value of my current policy,
+
+971
+00:57:48,420 --> 00:57:51,500
+ then that gives you this sharp tool to distinguish,
+
+972
+00:57:51,500 --> 00:57:53,220
+ but that 38 was a good thing to do.
+
+973
+00:57:53,220 --> 00:57:55,060
+ I should try to make that happen more often,
+
+974
+00:57:55,060 --> 00:57:58,460
+ and 42 was not such a good thing to do, right?
+
+975
+00:57:58,460 --> 00:58:00,740
+ The particular role it plays is--
+
+976
+00:58:00,740 --> 00:58:10,180
+ let me think how I want to say this.
+
+977
+00:58:10,180 --> 00:58:31,180
+ The value estimate is a baseline in policy gradient
+
+978
+00:58:31,180 --> 00:58:34,220
+ and can dramatically reduce the variance.
+
+979
+00:58:34,700 --> 00:58:37,660
+ [WRITING ON BOARD]
+
+980
+00:58:37,660 --> 00:58:51,220
+ The amount of random walking you do as you descend the landscape
+
+981
+00:58:51,220 --> 00:58:53,060
+ can go down a lot with a good baseline.
+
+982
+00:58:53,060 --> 00:58:54,800
+ I hope you saw that in your problem sets.
+
+983
+00:58:54,800 --> 00:59:03,220
+ OK.
+
+984
+00:59:03,220 --> 00:59:05,780
+ So in practice, the actor-critic methods
+
+985
+00:59:05,780 --> 00:59:08,220
+ are winning for these continuous control
+
+986
+00:59:08,220 --> 00:59:09,380
+ for all these reasons, right?
+
+987
+00:59:09,380 --> 00:59:10,920
+ They're better than the policy search
+
+988
+00:59:10,920 --> 00:59:14,500
+ because they can make the policy search much more effective.
+
+989
+00:59:14,500 --> 00:59:16,740
+ In the case of you have a multi-step problem,
+
+990
+00:59:16,740 --> 00:59:18,780
+ if you have a single-step problem,
+
+991
+00:59:18,780 --> 00:59:21,420
+ then the concept of value function--
+
+992
+00:59:21,420 --> 00:59:23,940
+ the general black box optimization world
+
+993
+00:59:23,940 --> 00:59:25,400
+ doesn't think about value functions
+
+994
+00:59:25,400 --> 00:59:27,780
+ because it doesn't assume anything
+
+995
+00:59:27,780 --> 00:59:31,020
+ about the long-term multi-step problem.
+
+996
+00:59:31,020 --> 00:59:32,740
+ But if you do have a multi-step problem,
+
+997
+00:59:32,740 --> 00:59:33,980
+ then this notion of a value function
+
+998
+00:59:33,980 --> 00:59:35,060
+ becomes an important one.
+
+999
+00:59:35,060 --> 00:59:43,340
+ OK.
+
+1000
+00:59:43,340 --> 00:59:46,940
+ That's sort of the rough taxonomy of these methods.
+
+1001
+00:59:46,940 --> 00:59:49,980
+ Let's dig into just a few more specific details.
+
+1002
+00:59:49,980 --> 01:00:05,260
+,
+
+1003
+01:00:05,260 --> 01:00:08,900
+ So the actor-critic algorithms actually, and even the value
+
+1004
+01:00:08,900 --> 01:00:11,460
+ estimate algorithms, I should say
+
+1005
+01:00:11,460 --> 01:00:14,060
+ there's good work, including that Kanda and Sinsiklis
+
+1006
+01:00:14,060 --> 01:00:19,980
+ work from early 2000s, or '99 actually,
+
+1007
+01:00:19,980 --> 01:00:24,620
+ that understand some rigorous statements about what
+
+1008
+01:00:24,620 --> 01:00:27,740
+ actor-critic or value function learning does,
+
+1009
+01:00:27,740 --> 01:00:30,500
+ even with function approximators.
+
+1010
+01:00:30,500 --> 01:00:32,780
+ Typically, the statements are if you
+
+1011
+01:00:32,780 --> 01:00:35,100
+ can represent your value function perfectly,
+
+1012
+01:00:35,100 --> 01:00:36,660
+ then you can-- many of these algorithms
+
+1013
+01:00:36,660 --> 01:00:40,180
+ enjoy strict convergence to the true value function.
+
+1014
+01:00:40,180 --> 01:00:41,980
+ That's a super powerful thing to say.
+
+1015
+01:00:41,980 --> 01:00:43,740
+ The fact that if I--
+
+1016
+01:00:43,740 --> 01:00:45,660
+ I will eventually learn the true cost to go.
+
+1017
+01:00:45,660 --> 01:00:48,860
+ That's a very powerful thing to say.
+
+1018
+01:00:48,860 --> 01:00:52,300
+ There's a next tier of value methods
+
+1019
+01:00:52,300 --> 01:00:54,700
+ that use linear function approximators, where
+
+1020
+01:00:54,700 --> 01:00:59,340
+ we can say rigorously that it will find the--
+
+1021
+01:00:59,340 --> 01:01:02,940
+ that it will converge to the closest value
+
+1022
+01:01:02,940 --> 01:01:05,940
+ function in the class that is close to your data.
+
+1023
+01:01:05,940 --> 01:01:07,820
+ There's some really strong convergence results
+
+1024
+01:01:07,820 --> 01:01:10,380
+ for linear function approximators.
+
+1025
+01:01:10,380 --> 01:01:13,020
+ OK.
+
+1026
+01:01:13,020 --> 01:01:17,620
+ Most of those are based on this notion of value functions
+
+1027
+01:01:17,620 --> 01:01:18,780
+ being a function of x.
+
+1028
+01:01:18,780 --> 01:01:23,900
+ I mean, even the modern analysis of what's--
+
+1029
+01:01:23,900 --> 01:01:26,420
+ trying to people-- people trying to understand why is deep RL
+
+1030
+01:01:26,420 --> 01:01:27,420
+ working.
+
+1031
+01:01:27,420 --> 01:01:29,660
+ There's people trying to connect ideas
+
+1032
+01:01:29,660 --> 01:01:31,420
+ from deep learning and supervised learning
+
+1033
+01:01:31,420 --> 01:01:34,260
+ with these old results from linear function approximators.
+
+1034
+01:01:34,260 --> 01:01:36,940
+ But they're all based on--
+
+1035
+01:01:36,940 --> 01:01:40,140
+ all of the good theory says that the cost to go
+
+1036
+01:01:40,140 --> 01:01:43,260
+ is a function of my state.
+
+1037
+01:01:43,260 --> 01:01:46,100
+ If you look at the code in stable baselines,
+
+1038
+01:01:46,100 --> 01:01:49,540
+ or in-- you name any of these RL algorithms,
+
+1039
+01:01:49,540 --> 01:01:55,460
+ almost always the gem just has actions coming in,
+
+1040
+01:01:55,460 --> 01:01:57,220
+ has observations coming out.
+
+1041
+01:01:57,220 --> 01:02:08,780
+ And the critic and the policy takes observations in,
+
+1042
+01:02:08,780 --> 01:02:15,500
+ takes my actions out, and my value estimate.
+
+1043
+01:02:15,500 --> 01:02:19,500
+ OK, so there, where I think of--
+
+1044
+01:02:19,500 --> 01:02:25,380
+ my notation is that my dynamics are f of xn, un.
+
+1045
+01:02:25,380 --> 01:02:28,020
+ My observations are some other function.
+
+1046
+01:02:34,460 --> 01:02:38,780
+ This value function is not v of x.
+
+1047
+01:02:38,780 --> 01:02:39,540
+ It's v of y.
+
+1048
+01:02:39,540 --> 01:02:48,140
+ Let me write in big letters here.
+
+1049
+01:02:48,140 --> 01:02:59,420
+ Observations are not states.
+
+1050
+01:02:59,420 --> 01:03:02,260
+ This is like one of my big gripes, I guess,
+
+1051
+01:03:02,260 --> 01:03:04,260
+ with just the sloppiness, I guess,
+
+1052
+01:03:04,260 --> 01:03:06,220
+ of people writing code and the like.
+
+1053
+01:03:06,220 --> 01:03:08,500
+ Let me just make that point.
+
+1054
+01:03:08,500 --> 01:03:09,260
+ I've got a box here.
+
+1055
+01:03:09,260 --> 01:03:13,340
+ I've got some money here.
+
+1056
+01:03:13,340 --> 01:03:19,940
+ Do you want to open the box?
+
+1057
+01:03:19,940 --> 01:03:21,780
+ There's a lot of money in that box, right?
+
+1058
+01:03:21,780 --> 01:03:22,280
+ OK.
+
+1059
+01:03:22,280 --> 01:03:28,660
+ I've got something you probably don't want.
+
+1060
+01:03:28,660 --> 01:03:30,200
+ I mean, you could have it if you want.
+
+1061
+01:03:30,200 --> 01:03:33,080
+ [LAUGHTER]
+
+1062
+01:03:33,080 --> 01:03:34,580
+ OK, my observations are the same.
+
+1063
+01:03:34,580 --> 01:03:35,800
+ I know this is a silly trick.
+
+1064
+01:03:35,800 --> 01:03:38,340
+ But my observations are exactly the same, right?
+
+1065
+01:03:38,340 --> 01:03:40,740
+ But my value, how much I want to open that box,
+
+1066
+01:03:40,740 --> 01:03:41,740
+ has changed completely.
+
+1067
+01:03:41,740 --> 01:03:48,820
+ Observations are not states, especially the biggest culprit
+
+1068
+01:03:48,820 --> 01:03:49,980
+ here.
+
+1069
+01:03:49,980 --> 01:03:54,340
+ You'll see people saying, like, images are our states.
+
+1070
+01:03:59,940 --> 01:04:03,500
+ And that can be true if you have partial observability
+
+1071
+01:04:03,500 --> 01:04:07,580
+ and you have quasi-static dynamics and all these things.
+
+1072
+01:04:07,580 --> 01:04:11,220
+ But beware of this, please.
+
+1073
+01:04:11,220 --> 01:04:12,940
+ Observations in general are not states.
+
+1074
+01:04:12,940 --> 01:04:15,220
+ Partial observability is the easiest example for that.
+
+1075
+01:04:15,220 --> 01:04:18,420
+ But dynamics already is enough that a single image
+
+1076
+01:04:18,420 --> 01:04:21,060
+ doesn't tell me the velocity that my cheetah is running at
+
+1077
+01:04:21,060 --> 01:04:23,100
+ or something like that.
+
+1078
+01:04:23,100 --> 01:04:25,980
+ OK, so there's this big important idea here,
+
+1079
+01:04:25,980 --> 01:04:29,100
+ which is either your observations,
+
+1080
+01:04:29,100 --> 01:04:31,840
+ you need to take a history of observations,
+
+1081
+01:04:31,840 --> 01:04:33,420
+ you need to have a recurrent network,
+
+1082
+01:04:33,420 --> 01:04:35,220
+ all this discussion we talked about before.
+
+1083
+01:04:35,220 --> 01:04:37,700
+ There are ways to make this OK.
+
+1084
+01:04:37,700 --> 01:04:40,740
+ Or there are places where, if you think about this
+
+1085
+01:04:40,740 --> 01:04:52,020
+ as just a very approximate version of the true value
+
+1086
+01:04:52,020 --> 01:04:57,180
+ function, v of x, the actor-critic algorithms
+
+1087
+01:04:57,180 --> 01:04:58,460
+ can still flourish.
+
+1088
+01:04:58,460 --> 01:05:01,460
+ Even if your value function doesn't
+
+1089
+01:05:01,460 --> 01:05:04,780
+ have the information it's required to estimate
+
+1090
+01:05:04,780 --> 01:05:07,260
+ the true cost to go, it can still
+
+1091
+01:05:07,260 --> 01:05:09,260
+ do good things in terms of improving
+
+1092
+01:05:09,260 --> 01:05:12,900
+ the convergence of your actor-critic algorithm.
+
+1093
+01:05:12,900 --> 01:05:17,300
+ But I think any analysis or even just debugging of these tools
+
+1094
+01:05:17,300 --> 01:05:22,620
+ needs to be aware that all the foundations of RL
+
+1095
+01:05:22,620 --> 01:05:23,540
+ are based--
+
+1096
+01:05:23,540 --> 01:05:25,460
+ and of actor-critic algorithms--
+
+1097
+01:05:25,460 --> 01:05:28,780
+ are based on some analysis of the potential convergence
+
+1098
+01:05:28,780 --> 01:05:31,900
+ of the value function to the true value function.
+
+1099
+01:05:31,900 --> 01:05:35,860
+ And if you stick in a deprived state representation,
+
+1100
+01:05:35,860 --> 01:05:37,980
+ then I think there's really nothing that tells--
+
+1101
+01:05:37,980 --> 01:05:40,900
+ I don't know how to tell you if it's doing a good job or not.
+
+1102
+01:05:40,900 --> 01:05:44,180
+ Because you're asking it to solve a different problem.
+
+1103
+01:05:44,180 --> 01:05:47,340
+ And I think we're lacking the tools.
+
+1104
+01:05:47,340 --> 01:05:50,540
+ And I would say, in general, when--
+
+1105
+01:05:50,540 --> 01:05:52,740
+ even just playing with the box flip up last night,
+
+1106
+01:05:52,740 --> 01:05:54,780
+ I think that--
+
+1107
+01:05:54,780 --> 01:05:56,580
+ or if we have student projects.
+
+1108
+01:05:56,580 --> 01:05:59,420
+ If you have a project, and you're working away,
+
+1109
+01:05:59,420 --> 01:06:02,740
+ and your trajectory optimization isn't doing what you expected,
+
+1110
+01:06:02,740 --> 01:06:05,840
+ or your dynamics isn't doing what it's expected,
+
+1111
+01:06:05,840 --> 01:06:09,300
+ or your differential IK isn't doing what's expected,
+
+1112
+01:06:09,300 --> 01:06:12,460
+ I can almost always tell you.
+
+1113
+01:06:12,460 --> 01:06:13,940
+ You can come up with yourself.
+
+1114
+01:06:13,940 --> 01:06:15,860
+ But there's almost always something like, OK,
+
+1115
+01:06:15,860 --> 01:06:18,500
+ it should definitely do x.
+
+1116
+01:06:18,500 --> 01:06:23,060
+ There's theorems that say it should have this property.
+
+1117
+01:06:23,060 --> 01:06:26,300
+ Make sure it has this property, otherwise you have a bug.
+
+1118
+01:06:26,300 --> 01:06:27,740
+ And you can go down the list.
+
+1119
+01:06:27,740 --> 01:06:30,780
+ And you can vet these very complex algorithms.
+
+1120
+01:06:30,780 --> 01:06:32,540
+ You can debug, I think, very effectively.
+
+1121
+01:06:32,540 --> 01:06:36,540
+ Because there's a deep theory behind many
+
+1122
+01:06:36,540 --> 01:06:38,020
+ of those algorithms.
+
+1123
+01:06:38,020 --> 01:06:43,420
+ RL's theory is deep, but it's harder.
+
+1124
+01:06:43,420 --> 01:06:49,420
+ I really think RL is in this place where it's starting
+
+1125
+01:06:49,420 --> 01:06:51,380
+ to work incredibly well, but it's
+
+1126
+01:06:51,380 --> 01:06:54,020
+ missing some of the fundamental theory that would even help
+
+1127
+01:06:54,020 --> 01:06:56,640
+ you-- not just if you care about theory, just like if you want
+
+1128
+01:06:56,640 --> 01:06:59,980
+ to debug your algorithm.
+
+1129
+01:06:59,980 --> 01:07:00,900
+ It went downhill.
+
+1130
+01:07:00,900 --> 01:07:03,220
+ And I could feel myself making stories like, oh,
+
+1131
+01:07:03,220 --> 01:07:05,300
+ it wanted to do x, so my cost might be--
+
+1132
+01:07:05,300 --> 01:07:07,260
+ but no, it might have just gone downhill,
+
+1133
+01:07:07,260 --> 01:07:09,720
+ because it's a random algorithm going in a random direction
+
+1134
+01:07:09,720 --> 01:07:11,940
+ with 50 random rollouts.
+
+1135
+01:07:11,940 --> 01:07:16,260
+ So I think there's a big role for the theory
+
+1136
+01:07:16,260 --> 01:07:19,080
+ to play to talk about-- there's lots of good work
+
+1137
+01:07:19,080 --> 01:07:21,740
+ already on approximate value functions.
+
+1138
+01:07:21,740 --> 01:07:23,260
+ But I think there's a big push that
+
+1139
+01:07:23,260 --> 01:07:25,260
+ needs to happen in terms of closing
+
+1140
+01:07:25,260 --> 01:07:27,980
+ the gap between theory and practice for this stuff
+
+1141
+01:07:27,980 --> 01:07:28,580
+ to work better.
+
+1142
+01:07:28,580 --> 01:07:39,900
+ So let me try to say a few things about the ongoing theory
+
+1143
+01:07:39,900 --> 01:07:44,500
+ of RL, of deep RL.
+
+1144
+01:07:44,500 --> 01:07:53,740
+ And I think this is just such a vibrant area right now,
+
+1145
+01:07:53,740 --> 01:07:56,700
+ because empirically, it's working so well.
+
+1146
+01:07:56,700 --> 01:07:57,200
+ Right?
+
+1147
+01:08:20,780 --> 01:08:26,300
+ Maybe it even starts with some results
+
+1148
+01:08:26,300 --> 01:08:27,940
+ from deep supervised learning.
+
+1149
+01:08:27,940 --> 01:08:36,460
+ There's only a few--
+
+1150
+01:08:36,460 --> 01:08:38,120
+ I mean, there's lots of ideas out there,
+
+1151
+01:08:38,120 --> 01:08:43,380
+ but there's a few sort of really big dominant ideas
+
+1152
+01:08:43,380 --> 01:08:46,860
+ about maybe why supervised learning seems to work now.
+
+1153
+01:08:46,860 --> 01:08:49,140
+ You've probably heard of double descent curves and all
+
+1154
+01:08:49,140 --> 01:08:50,540
+ these different ideas.
+
+1155
+01:08:50,540 --> 01:08:54,900
+ But the arguments roughly go into two parts.
+
+1156
+01:08:54,900 --> 01:09:01,940
+ So the first argument is that if you're doing well,
+
+1157
+01:09:01,940 --> 01:09:05,940
+ your training error, your training loss, goes to 0.
+
+1158
+01:09:05,940 --> 01:09:14,580
+ And the argument there-- there's a handful
+
+1159
+01:09:14,580 --> 01:09:17,580
+ of different sort of pieces of work on this.
+
+1160
+01:09:17,580 --> 01:09:21,140
+ But why does your training loss go
+
+1161
+01:09:21,140 --> 01:09:24,700
+ to 0 for arbitrarily complicated nonlinear objectives,
+
+1162
+01:09:24,700 --> 01:09:25,200
+ it seems?
+
+1163
+01:09:25,200 --> 01:09:31,100
+ There's a very simple argument that people make.
+
+1164
+01:09:31,100 --> 01:09:33,100
+ One of them is called the neural tangent kernel.
+
+1165
+01:09:33,100 --> 01:09:46,540
+ The argument is that if you are in the massive over
+
+1166
+01:09:46,540 --> 01:09:50,340
+ parameterization regime, you've got a big deep network
+
+1167
+01:09:50,340 --> 01:09:53,420
+ and a relatively smaller set of data,
+
+1168
+01:09:53,420 --> 01:09:56,340
+ then even a random initialization
+
+1169
+01:09:56,340 --> 01:10:00,940
+ of your deep network produces some outputs
+
+1170
+01:10:00,940 --> 01:10:03,540
+ in your last layer.
+
+1171
+01:10:03,540 --> 01:10:08,260
+ And it produces a rich enough basis of possible outputs
+
+1172
+01:10:08,260 --> 01:10:10,420
+ that the last layer can effectively just do
+
+1173
+01:10:10,420 --> 01:10:12,580
+ least squares.
+
+1174
+01:10:12,580 --> 01:10:17,020
+ So you can get-- so basically, if your second to last layer
+
+1175
+01:10:17,020 --> 01:10:20,740
+ spans all of the possible space and your last layer is just
+
+1176
+01:10:20,740 --> 01:10:23,740
+ a linear layer, then you actually
+
+1177
+01:10:23,740 --> 01:10:26,420
+ have a least squares problem in the last layer.
+
+1178
+01:10:26,420 --> 01:10:29,100
+ And then all of the other stuff in the beginning
+
+1179
+01:10:29,100 --> 01:10:32,300
+ can just be left-- you'll get to 0 training loss almost
+
+1180
+01:10:32,300 --> 01:10:35,420
+ trivially if you have an ultra wide last layer.
+
+1181
+01:10:35,420 --> 01:10:35,920
+ OK?
+
+1182
+01:10:35,920 --> 01:10:55,340
+ And that's sort of in the massive over parameterization
+
+1183
+01:10:55,340 --> 01:10:55,840
+ regime.
+
+1184
+01:10:55,840 --> 01:10:57,840
+ That's an explanation for maybe why your training
+
+1185
+01:10:57,840 --> 01:10:59,500
+ loss might go to 0.
+
+1186
+01:10:59,500 --> 01:11:00,500
+ OK?
+
+1187
+01:11:00,500 --> 01:11:02,140
+ And the second part then is then sort
+
+1188
+01:11:02,140 --> 01:11:03,460
+ of this implicit regularization.
+
+1189
+01:11:03,460 --> 01:11:06,860
+ [WRITING ON BOARD]
+
+1190
+01:11:06,860 --> 01:11:13,860
+ Stochastic gradient descent.
+
+1191
+01:11:13,860 --> 01:11:27,780
+ OK, so if I'm able to fit my training data by just having
+
+1192
+01:11:27,780 --> 01:11:30,260
+ a really wide second to last layer,
+
+1193
+01:11:30,260 --> 01:11:32,900
+ the last layer is just solving a least squares problem.
+
+1194
+01:11:32,900 --> 01:11:37,420
+ Then I get to-- in the null space of my solutions,
+
+1195
+01:11:37,420 --> 01:11:40,100
+ of 0 training loss, I get to move,
+
+1196
+01:11:40,100 --> 01:11:42,460
+ walk around inside the parameters of my earlier
+
+1197
+01:11:42,460 --> 01:11:44,060
+ layers of the network.
+
+1198
+01:11:44,060 --> 01:11:48,140
+ And there's a lot of ideas about why stochastic gradient descent
+
+1199
+01:11:48,140 --> 01:11:50,460
+ will continue to walk around even after you've got 0
+
+1200
+01:11:50,460 --> 01:11:53,460
+ training loss and will find a solution that generalizes well
+
+1201
+01:11:53,460 --> 01:11:54,940
+ to new examples.
+
+1202
+01:11:54,940 --> 01:11:58,700
+ That's sort of the simplest brush pass
+
+1203
+01:11:58,700 --> 01:12:01,820
+ of what people are talking about in deep supervised learning.
+
+1204
+01:12:01,820 --> 01:12:04,260
+ OK?
+
+1205
+01:12:04,260 --> 01:12:07,140
+ And there's-- I think it's not quite what happens in practice,
+
+1206
+01:12:07,140 --> 01:12:09,380
+ but there's this massive overparameterization regime
+
+1207
+01:12:09,380 --> 01:12:10,620
+ that's happening in practice.
+
+1208
+01:12:10,620 --> 01:12:11,120
+ Yeah?
+
+1209
+01:12:11,120 --> 01:12:11,620
+ [INAUDIBLE]
+
+1210
+01:12:11,620 --> 01:12:17,380
+ Yeah.
+
+1211
+01:12:17,380 --> 01:12:20,340
+ There's a lot of ideas about it.
+
+1212
+01:12:20,340 --> 01:12:23,060
+ But it seems that of the solutions which
+
+1213
+01:12:23,060 --> 01:12:27,540
+ fit my data perfectly, I mean, SGD
+
+1214
+01:12:27,540 --> 01:12:31,180
+ tends to walk around and find them that have a--
+
+1215
+01:12:31,180 --> 01:12:34,340
+ they minimize particular norms of the parameters and stuff
+
+1216
+01:12:34,340 --> 01:12:36,660
+ like this that tend to give you nice smooth functions
+
+1217
+01:12:36,660 --> 01:12:37,820
+ around your data.
+
+1218
+01:12:37,820 --> 01:12:40,740
+ And even do ridiculous things around noisy data,
+
+1219
+01:12:40,740 --> 01:12:46,980
+ like fit the generalizing curve, but still explain noisy data
+
+1220
+01:12:46,980 --> 01:12:49,020
+ with 0 training loss.
+
+1221
+01:12:49,020 --> 01:12:52,220
+ It's a big topic that I don't mean to go into,
+
+1222
+01:12:52,220 --> 01:12:56,180
+ but thank you for asking.
+
+1223
+01:12:56,180 --> 01:12:57,540
+ The point I want to make, though,
+
+1224
+01:12:57,540 --> 01:13:01,900
+ is that the theory we have for deep supervised learning, which
+
+1225
+01:13:01,900 --> 01:13:03,700
+ assumes massive overparameterization
+
+1226
+01:13:03,700 --> 01:13:06,500
+ and ultra-wide last layers, simply
+
+1227
+01:13:06,500 --> 01:13:12,620
+ doesn't explain why we're having success in deep RL
+
+1228
+01:13:12,620 --> 01:13:17,500
+ with a 255 layer, three layer network.
+
+1229
+01:13:17,500 --> 01:13:21,460
+ It's just not the same regime at all.
+
+1230
+01:13:21,460 --> 01:13:24,380
+ So I don't see how this--
+
+1231
+01:13:24,380 --> 01:13:28,140
+ there's more gap to close in understanding
+
+1232
+01:13:28,140 --> 01:13:31,260
+ the connections between why supervised learning--
+
+1233
+01:13:31,260 --> 01:13:32,800
+ it's not enough, I think, to just say,
+
+1234
+01:13:32,800 --> 01:13:34,800
+ supervised learning works, so RL starts working.
+
+1235
+01:13:34,800 --> 01:13:44,220
+ I do think some of the black box optimization
+
+1236
+01:13:44,220 --> 01:13:48,500
+ that we talked about maybe is part of the--
+
+1237
+01:13:48,500 --> 01:14:02,540
+ I should-- I think the story I told you a little bit about,
+
+1238
+01:14:02,540 --> 01:14:06,540
+ about black box optimization working fairly well, even
+
+1239
+01:14:06,540 --> 01:14:10,700
+ in noisy landscapes, I do think that's part of the story that's
+
+1240
+01:14:10,700 --> 01:14:13,420
+ emerging, is that some of the--
+
+1241
+01:14:13,420 --> 01:14:17,220
+ what sounded to me as very naive algorithms
+
+1242
+01:14:17,220 --> 01:14:21,420
+ for gradient descent in RL might be getting around
+
+1243
+01:14:21,420 --> 01:14:24,220
+ some of the fundamental complexity of the landscape
+
+1244
+01:14:24,220 --> 01:14:27,700
+ in a nice, smart way.
+
+1245
+01:14:27,700 --> 01:14:29,620
+ So I think that's part of the emerging story,
+
+1246
+01:14:29,620 --> 01:14:33,220
+ is the black box optimization, both in its--
+
+1247
+01:14:35,780 --> 01:14:49,980
+ sort of its local robustness to bad landscapes,
+
+1248
+01:14:49,980 --> 01:14:53,620
+ and some of its global optimization aspects.
+
+1249
+01:15:02,660 --> 01:15:06,620
+ I think both of those have a role
+
+1250
+01:15:06,620 --> 01:15:10,780
+ to play to understanding when and why RL works.
+
+1251
+01:15:10,780 --> 01:15:25,620
+ I think the stochastic objectives that we talked about
+
+1252
+01:15:25,620 --> 01:15:27,460
+ is an important part of the story.
+
+1253
+01:15:27,460 --> 01:15:40,260
+ It connects to the idea of randomized smoothing.
+
+1254
+01:15:40,260 --> 01:15:49,540
+ Remember I said if you have a discontinuous loss
+
+1255
+01:15:49,540 --> 01:15:52,700
+ function like this, but then you take the expected value
+
+1256
+01:15:52,700 --> 01:15:55,460
+ over some kernel, you might smooth the loss function out
+
+1257
+01:15:55,460 --> 01:16:00,380
+ beautifully just by having a stochastic formulation instead
+
+1258
+01:16:00,380 --> 01:16:03,260
+ of a deterministic formulation.
+
+1259
+01:16:03,260 --> 01:16:04,740
+ I think this is a big part of it.
+
+1260
+01:16:04,740 --> 01:16:08,140
+ In fact, I would go so far as to hypothesize.
+
+1261
+01:16:08,140 --> 01:16:12,340
+ So I have a couple of versions of my box flipping code.
+
+1262
+01:16:12,340 --> 01:16:14,780
+ The one I showed you that I trained last night
+
+1263
+01:16:14,780 --> 01:16:17,300
+ was the box has random initial conditions,
+
+1264
+01:16:17,300 --> 01:16:19,420
+ but it's the same box all the time
+
+1265
+01:16:19,420 --> 01:16:22,140
+ because I'm using full state feedback.
+
+1266
+01:16:22,140 --> 01:16:24,380
+ The next version that I just haven't run yet
+
+1267
+01:16:24,380 --> 01:16:25,740
+ takes key points from the box.
+
+1268
+01:16:25,740 --> 01:16:31,420
+ And then I can take and make different sized boxes
+
+1269
+01:16:31,420 --> 01:16:34,020
+ and different masses of boxes.
+
+1270
+01:16:34,020 --> 01:16:36,580
+ You would think that that would be a harder optimization
+
+1271
+01:16:36,580 --> 01:16:37,780
+ problem.
+
+1272
+01:16:37,780 --> 01:16:40,340
+ But I'll go out on a limb, and I would say--
+
+1273
+01:16:40,340 --> 01:16:42,020
+ when I run it tonight or whatever--
+
+1274
+01:16:42,020 --> 01:16:44,580
+ that it's probably going to be an easier optimization problem,
+
+1275
+01:16:44,580 --> 01:16:47,540
+ or let's say a better optimization problem.
+
+1276
+01:16:47,540 --> 01:16:53,180
+ I would actually expect to say that the policies we would get
+
+1277
+01:16:53,180 --> 01:16:57,020
+ out of that optimization might be less ridiculous.
+
+1278
+01:16:57,020 --> 01:17:00,500
+ And I would guess that it learns faster,
+
+1279
+01:17:00,500 --> 01:17:03,820
+ learns reasonable policies faster.
+
+1280
+01:17:03,820 --> 01:17:06,220
+ And my intuition for that is that I
+
+1281
+01:17:06,220 --> 01:17:11,180
+ think when you ask too narrow of a problem,
+
+1282
+01:17:11,180 --> 01:17:13,220
+ then there are many quirky solutions that
+
+1283
+01:17:13,220 --> 01:17:15,300
+ almost solve the problem.
+
+1284
+01:17:15,300 --> 01:17:20,140
+ But when you ask that the same policy solves
+
+1285
+01:17:20,140 --> 01:17:24,020
+ a whole distribution of problems, like all the boxes,
+
+1286
+01:17:24,020 --> 01:17:25,820
+ then all the quirky solutions where you just
+
+1287
+01:17:25,820 --> 01:17:28,220
+ happen to throw your finger into the back corner
+
+1288
+01:17:28,220 --> 01:17:30,460
+ and knock it up and the box happened to land on it,
+
+1289
+01:17:30,460 --> 01:17:32,220
+ whatever, that just doesn't happen
+
+1290
+01:17:32,220 --> 01:17:34,540
+ if you have arbitrary boxes.
+
+1291
+01:17:34,540 --> 01:17:36,940
+ It's just not a good solution.
+
+1292
+01:17:36,940 --> 01:17:39,500
+ The solution that works for all boxes of all sizes,
+
+1293
+01:17:39,500 --> 01:17:41,420
+ whatever it is you got, you put your finger on
+
+1294
+01:17:41,420 --> 01:17:43,180
+ and you twist it up, I would think.
+
+1295
+01:17:43,180 --> 01:17:43,760
+ I'll find out.
+
+1296
+01:17:43,760 --> 01:17:44,460
+ I'll run tonight.
+
+1297
+01:17:48,140 --> 01:17:50,260
+ And I think there's something important
+
+1298
+01:17:50,260 --> 01:17:53,700
+ that we need to understand in that space.
+
+1299
+01:17:53,700 --> 01:18:00,060
+ Here's the thing.
+
+1300
+01:18:00,060 --> 01:18:02,740
+ RL can't solve every problem.
+
+1301
+01:18:02,740 --> 01:18:03,380
+ We know that.
+
+1302
+01:18:03,380 --> 01:18:06,500
+ You can write any optimization problem as an RL problem,
+
+1303
+01:18:06,500 --> 01:18:08,420
+ as a one-step RL problem.
+
+1304
+01:18:08,420 --> 01:18:10,180
+ There are NP-hard optimization problems.
+
+1305
+01:18:10,180 --> 01:18:13,060
+ We just know there's problems.
+
+1306
+01:18:13,060 --> 01:18:17,340
+ I would be mining Bitcoin now if RL solved every problem.
+
+1307
+01:18:17,340 --> 01:18:21,060
+ Because it just doesn't do that.
+
+1308
+01:18:21,060 --> 01:18:23,580
+ There's something about the types of problems
+
+1309
+01:18:23,580 --> 01:18:28,380
+ that we're asking which RL is solving well.
+
+1310
+01:18:28,380 --> 01:18:30,580
+ And it's something about the distribution of problems
+
+1311
+01:18:30,580 --> 01:18:31,900
+ that we're asking.
+
+1312
+01:18:31,900 --> 01:18:34,940
+ Roughly, I would say that maybe the biggest thing maybe
+
+1313
+01:18:34,940 --> 01:18:44,780
+ is manipulation is easy if we formulate it this way.
+
+1314
+01:18:44,780 --> 01:18:46,820
+ I think that's maybe my number one takeaway.
+
+1315
+01:18:46,820 --> 01:18:48,940
+ I'll say a few more of the existing work stuff.
+
+1316
+01:18:48,940 --> 01:18:55,300
+ But I think deeply that there's something
+
+1317
+01:18:55,300 --> 01:18:57,580
+ about the distribution of problems
+
+1318
+01:18:57,580 --> 01:18:58,980
+ that the real world gives us.
+
+1319
+01:18:58,980 --> 01:19:02,540
+ My human intelligence is limited also.
+
+1320
+01:19:02,540 --> 01:19:04,700
+ And somehow, I'm pretty effective in my kitchen.
+
+1321
+01:19:04,700 --> 01:19:06,020
+ I mean, not great.
+
+1322
+01:19:06,020 --> 01:19:09,700
+ But I can get around my kitchen without throwing boxes
+
+1323
+01:19:09,700 --> 01:19:11,420
+ through the window.
+
+1324
+01:19:11,420 --> 01:19:14,340
+ So there's something about the distribution of kitchens
+
+1325
+01:19:14,340 --> 01:19:17,580
+ in the world that doesn't have the crazy scenarios.
+
+1326
+01:19:17,580 --> 01:19:20,540
+ And I think somehow that makes the optimization problems
+
+1327
+01:19:20,540 --> 01:19:21,820
+ better that I can learn.
+
+1328
+01:19:21,820 --> 01:19:24,620
+ There's something about the distribution of the world
+
+1329
+01:19:24,620 --> 01:19:26,300
+ and the distribution of our problems
+
+1330
+01:19:26,300 --> 01:19:28,540
+ that I don't know how to capture yet.
+
+1331
+01:19:28,540 --> 01:19:29,820
+ But it seems important.
+
+1332
+01:19:29,820 --> 01:19:36,580
+ There's a bunch of good work on controlled parameterizations.
+
+1333
+01:19:36,580 --> 01:19:44,900
+ [WRITING]
+
+1334
+01:19:44,900 --> 01:19:48,460
+ That make-- or value function parameterizations
+
+1335
+01:19:48,460 --> 01:19:53,980
+ that aren't super present in the neural network deep RL
+
+1336
+01:19:53,980 --> 01:19:54,860
+ community.
+
+1337
+01:19:54,860 --> 01:19:55,980
+ But they're sort of coming.
+
+1338
+01:19:55,980 --> 01:19:56,940
+ They're coming behind.
+
+1339
+01:19:56,940 --> 01:19:59,700
+ And they're taking even classic control problems--
+
+1340
+01:19:59,700 --> 01:20:04,380
+ LQR, LQG, some of these classic control problems--
+
+1341
+01:20:04,380 --> 01:20:07,460
+ asking, does stochastic gradient descent work for them?
+
+1342
+01:20:07,460 --> 01:20:09,120
+ What about robust control formulations?
+
+1343
+01:20:09,120 --> 01:20:10,740
+ Some of the formulations that we really
+
+1344
+01:20:10,740 --> 01:20:15,500
+ understand well from an optimization perspective,
+
+1345
+01:20:15,500 --> 01:20:17,220
+ can stochastic gradient descent--
+
+1346
+01:20:17,220 --> 01:20:19,220
+ how do we understand stochastic gradient descent
+
+1347
+01:20:19,220 --> 01:20:20,820
+ on those problems?
+
+1348
+01:20:20,820 --> 01:20:24,580
+ And there's some really deep things happening there.
+
+1349
+01:20:24,580 --> 01:20:29,260
+ And while it's still a long way from the neural network case,
+
+1350
+01:20:29,260 --> 01:20:33,140
+ I feel like that's the theory community chasing.
+
+1351
+01:20:33,140 --> 01:20:36,820
+ And if we can even catch up a little bit more,
+
+1352
+01:20:36,820 --> 01:20:38,780
+ then I think it's going to give good dividends.
+
+1353
+01:20:38,780 --> 01:20:42,500
+ So as an example, for instance, some of the work
+
+1354
+01:20:42,500 --> 01:20:49,060
+ that Jack and others in my group have been thinking about,
+
+1355
+01:20:49,060 --> 01:20:51,620
+ if you have a convex reparameterization--
+
+1356
+01:20:51,620 --> 01:21:02,580
+ [WRITING]
+
+1357
+01:21:02,580 --> 01:21:03,780
+ --e.g. from robust control--
+
+1358
+01:21:03,780 --> 01:21:11,620
+ [WRITING]
+
+1359
+01:21:11,620 --> 01:21:13,200
+ If you look at my underactuated notes,
+
+1360
+01:21:13,200 --> 01:21:14,540
+ there's a bunch of cases where it's like,
+
+1361
+01:21:14,540 --> 01:21:15,700
+ here's a crazy hard problem.
+
+1362
+01:21:15,700 --> 01:21:19,620
+ But if you change coordinates into this new set of decision
+
+1363
+01:21:19,620 --> 01:21:22,540
+ variables, then you can write it as an optimization problem
+
+1364
+01:21:22,540 --> 01:21:24,260
+ that's convex.
+
+1365
+01:21:24,260 --> 01:21:28,540
+ The fact that those tricks even exist actually
+
+1366
+01:21:28,540 --> 01:21:32,300
+ implies something topologically.
+
+1367
+01:21:32,300 --> 01:21:34,820
+ If they have certain properties, those reparameterizations,
+
+1368
+01:21:34,820 --> 01:21:37,020
+ like if they're smooth and other things like this--
+
+1369
+01:21:37,020 --> 01:21:45,140
+ [WRITING]
+
+1370
+01:21:45,140 --> 01:21:47,260
+ --about, let's say, policy gradient.
+
+1371
+01:21:47,260 --> 01:21:52,460
+ [WRITING]
+
+1372
+01:21:52,460 --> 01:21:54,940
+ And there's a stream of results from the theory community
+
+1373
+01:21:54,940 --> 01:22:00,580
+ saying, well, actually, LQR, we know how to solve it in MATLAB.
+
+1374
+01:22:00,580 --> 01:22:02,500
+ But actually, that means that we can solve it
+
+1375
+01:22:02,500 --> 01:22:03,780
+ with stochastic gradient descent, too.
+
+1376
+01:22:03,780 --> 01:22:05,280
+ Even though the cost function is not
+
+1377
+01:22:05,280 --> 01:22:08,860
+ convex in the control parameters and the policy parameters,
+
+1378
+01:22:08,860 --> 01:22:11,140
+ it can't have local minima because
+
+1379
+01:22:11,140 --> 01:22:13,380
+ of the existence of these reparameterizations.
+
+1380
+01:22:13,380 --> 01:22:14,940
+ And even some pretty hard--
+
+1381
+01:22:14,940 --> 01:22:18,660
+ increasingly harder problems, we're actually saying, oh,
+
+1382
+01:22:18,660 --> 01:22:21,860
+ that would have worked with SGD also.
+
+1383
+01:22:21,860 --> 01:22:24,340
+ And I think as we grow that body of knowledge,
+
+1384
+01:22:24,340 --> 01:22:30,180
+ we'll get closer and closer to understanding
+
+1385
+01:22:30,180 --> 01:22:31,340
+ why these things work.
+
+1386
+01:22:31,340 --> 01:22:36,340
+ But there is some limits.
+
+1387
+01:22:36,340 --> 01:22:36,840
+ Right?
+
+1388
+01:22:36,840 --> 01:22:41,180
+ I guess I said Bitcoin.
+
+1389
+01:22:41,180 --> 01:22:43,380
+ That's not what I wrote in my notes, but here we go.
+
+1390
+01:22:43,380 --> 01:22:45,060
+ Yeah.
+
+1391
+01:22:45,060 --> 01:22:48,940
+ Someone's got to do that next week now that I wrote it.
+
+1392
+01:22:48,940 --> 01:22:54,980
+ But it doesn't solve-- there's problems that are just
+
+1393
+01:22:54,980 --> 01:22:55,980
+ fundamentally hard.
+
+1394
+01:22:55,980 --> 01:22:59,300
+ We have hardness results, hardness theories.
+
+1395
+01:22:59,300 --> 01:23:01,100
+ You can write all of them as an RL problem.
+
+1396
+01:23:01,100 --> 01:23:04,900
+ Like I said, it's hopelessly generic.
+
+1397
+01:23:04,900 --> 01:23:09,980
+ And you're not going to run PPO and suddenly solve that.
+
+1398
+01:23:09,980 --> 01:23:14,540
+ So there's something more going on between our RL algorithms
+
+1399
+01:23:14,540 --> 01:23:16,500
+ and our RL formulations.
+
+1400
+01:23:16,500 --> 01:23:18,540
+ There's some structure that's hidden there
+
+1401
+01:23:18,540 --> 01:23:23,060
+ in the cases where it's working that's not visible yet.
+
+1402
+01:23:23,060 --> 01:23:24,180
+ But we have to discover it.
+
+1403
+01:23:24,180 --> 01:23:25,300
+ That should be our mission.
+
+1404
+01:23:28,620 --> 01:23:34,380
+ OK, so that was a whirlwind tour of RL in a couple lectures.
+
+1405
+01:23:34,380 --> 01:23:39,340
+ And Happy Thanksgiving.
+
+1406
+01:23:39,340 --> 01:23:41,180
+ I'm happy to keep helping with projects.
+
+1407
+01:23:41,180 --> 01:23:45,100
+ And we'll transition into some like the boutique lectures
+
+1408
+01:23:45,100 --> 01:23:48,860
+ that you guys picked starting next week.
+

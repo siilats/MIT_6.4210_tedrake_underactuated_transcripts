@@ -1,0 +1,1203 @@
+ So task and motion planning is actually, well, let's see, it's a place that I think I would
+ like to grow the class. I'd like to maybe even move this up in the syllabus into some
+ of the more core material, because I think if you have this in your toolbox, then you
+ can program more and more complicated things. And the state machines that some of you have
+ been using will get you so far, but not to loading a dishwasher, for instance. It's also
+ a topic that there's some really good research being done on campus. So Leslie and Tomas
+ in CSAIL are leaders in this field. And Brian Williams also, who's an aero-astro in CSAIL,
+ does some really nice work on a version of this problem. So there's a lot of expertise
+ on campus if you get excited about these kind of topics. Okay, so let me try to set it up
+ relative to what we've talked about before. And then remember, the plan is for me to talk
+ for the first half, and then Boyan's going to talk for the second half. So I'll try to
+ not talk too long. So remember, I used this as the example to motivate task-level planning
+ before. When we were trying to load the dishwasher, this is, now that you've seen it and now you've
+ thought about it, think about writing a state machine that would think about all the possible
+ cases that this system might have to potentially be in. Maybe there's plates on top, maybe
+ there's mugs on top, maybe there's the dishwasher's open, maybe it's not. It would blow the stack.
+ You'd have an enormous state machine. And the way that the size of the state machine
+ tends to grow as the number of tasks accumulate and the number of possible transitions accumulate,
+ it can grow very, very badly. Okay? So in that project, we did not write a big state
+ machine. We didn't write a big behavior tree. We used planning. And just to remind you that
+ the way it looked back then was we defined task-level actions, right? And they were finite.
+ There was a list of things that we programmed with different skills or different actions
+ that would do things like open the dishwasher door, close the dishwasher door, start the
+ dishwasher. We even loaded a soap packet if we needed to. Okay? And each of those was
+ implemented in this sort of abstract class of an action primitive interface. Okay? Which
+ had just a few sort of reasonable is candidate, get outcomes. We'll talk about those again
+ in just a minute. Okay? What's interesting is to, so let's just think about is candidate
+ for a second. So asking, could I run this skill right now? Or more carefully, if I was
+ in this state, could I run this skill? That's potentially in a very advanced query of trying
+ to understand when it's suitable to be, you know, to try to open the dishwasher door could
+ involve solving intelligence or something. This is, but in this context, we have simplified
+ the problem down so that the state is actually a discrete finite state. Even though the problem
+ is very complicated, we, in that example, coded the state of the dishwasher as things
+ like the number of clean items we've already put away, the number of, there's a few things
+ that are more continuous value, but they were still sampled in a sort of slightly subtle
+ way. But mostly I want you to think about this at the high level, that those choices
+ were enumerated into a discrete set. And we could do search on this task level objective,
+ primarily with graph search, a more advanced form of graph search and incremental type
+ of graph search. But we roughly turned this into a big graph search problem in order to
+ decide what we were going to do next. Okay? You know, there was really enumerate, explicit
+ enumerations, enums of the different states that the system could be in. Okay? And that
+ is an instantiation of this bigger idea from AI planning. You know, STRIPS is the language
+ we mentioned very quickly before. It really is, it's a, you know, longstanding tradition
+ of how to write planning problems, planning descriptions, where you can list initial state,
+ all state, set of actions. For each action, you list the preconditions, you list the effects
+ of the action, and this defines a planning problem. And the, you see the action primitive
+ interface is candidate is exactly the preconditions that you would see from STRIPS. And get outcomes
+ exactly represents the effect set of this, of that action. And just defining that, where
+ the, if you can write the preconditions and the effects on a discrete state space, then
+ you're in the land of AI planning and things. We have very strong tools for that.
+ I mentioned quickly PDIDL before, the planning domain definition language, which you should
+ think of as an extension of the STRIPS vocabulary, where there's concepts of like, there's an
+ object oriented sort of concept in there. There's, so there's now then the notion of
+ object instances. It's a more expressive way to write big, discrete planning problems.
+ But it can, if you chose, the winning planners that use PDDL actually do not typically do
+ standard graph search anymore. But you could convert this into a very big graph search
+ and do graph search on it. The winning planners do much more heuristic search on a factorized,
+ considering the factorization in the problem.
+ And then if you have this high level planning power, then you can accommodate some of the,
+ so we've made it weak in the sense by having to discretize the world into a handful of
+ finite buckets. And that weakens our ability to describe all the things that could happen
+ in the world. But you can overcome some of that with feedback and online replanning.
+ So in the dish loading example, we would reevaluate our discrete symbol grounding of the world
+ every time we took an action. And if something changed, we could handle unexpected outcomes.
+ So that was the example I gave of that is that someone came and closed the dishwasher
+ door and it would realize that, realize its preconditions were no longer met, choose a
+ different path through the discrete search space to continue.
+ Okay, so let me transition to that in a second. So there are cases, so this was a case where
+ despite its complexity, we were able to get very far by doing things with discrete graph
+ search first, and then filling in the details with motion planning second. And then the
+ coupling between that, any gaps in the coupling between the discrete planning and the continuous
+ motion planning were overcome with feedback. But there are similar problems where that's
+ not good enough, especially if you have longer term consequences of your actions that you
+ really cannot decouple the motion planning from the task planning, hence the name of
+ the lecture.
+ So Kalen Garrett, a recent graduate from Leslie and Tomas's group, had a number of nice examples
+ that told that story. I'll use one of his here. I think he's talking, but here we go.
+ So imagine we just have a little suction gripper, and the problem was to move the red object,
+ the A, onto the red region. The B, let me do that again. Yeah, movable blocks, placeable
+ regions. If you think about the continuous values of that problem, there's a continuous
+ state that represents the location of the A block. There's continuous state that represents
+ the location of the B block, where they are in the world, where the gripper is in the
+ world. The only reason that you have to move the A block first, whatever, is because of
+ the continuous location. There was a block that was impeding my ability to solve the
+ simple version of the problem. I wanted to just pick up this block and put it in this
+ region. There was a different block that was in the way. Because of its continuous value,
+ I had to make a different set of, I had to order my discrete actions differently. Does
+ that make sense? The coupling between the discrete and the continuous exposed itself
+ that it really affected what your first action should be. So the planners, these stronger
+ task and motion planners, will solve that harder version of the problem, where they
+ jointly solve for the discrete path through the graph, and the continuous actions of the
+ manipulator, task and motion planning.
+ Here's another example that, let me talk through it again. So this is the PR2, the much-loved,
+ no longer with us, PR2 that Leslie and Tomas used to use constantly. The PR2 slowly went
+ out of existence. They bought every spare part on eBay possible, and it's not around
+ anymore. So this task is to pour the contents of the blue mug into, I forget if it's the
+ white or the red bowl, but basically pour that out. So you would think the simple strategy
+ would just be, okay, first I have to pick up the mug, then I take it over and pour it.
+ But because of the location of the green block at the initial time, and the kinematics of
+ the arm, it was impossible to pick up the blue cup from an orientation that would later
+ allow you to pour at an angle that would get it in. But these were the kinematics of the
+ robot, the joint limits, the size of its hand, were affecting the order in which you had
+ to execute things. You wouldn't have even needed to pick the green block if it wasn't
+ for the kinematic limits and the continuous variables.
+ So that's just another example here of, see the green blocks in the way. But the stronger
+ task and motion planning algorithms will solve that big version of the problem with a sample-based
+ planner. So I want to tell you just quickly a couple of the ideas from task and motion
+ planning and make sure I leave plenty of time for Bojan.
+ So there's a nice survey that Kalin and company wrote about integrated task and motion planning.
+ It's not that old. It's still quite very relevant. So I'd strongly recommend it if you want to
+ get a more encyclopedic coverage of this kind of material. But actually one of the things
+ that they do in that survey is they make a taxonomy of the different approaches that
+ people have taken to task and motion planning. So TAMP is what all the cool kids call task
+ and motion planning. And I think the choices they made about the X and Y axis of the little
+ grid are useful to understand.
+ So I'll give a couple examples that I hope tell the story clearly. But let's think about
+ sequence first versus satisfaction first. Roughly speaking, if I were to make choices
+ about all of the continuous variables in my search problem, then I can reduce the problem
+ back to a discrete graph search. And that would be sort of solve the continuous problems
+ first and then go to the discrete.
+ There's similarly, you could try to solve for a discrete path problem and then try to
+ fill in the details of your motion plan. Now of course, because of the task and motion
+ planning coupling, you can't just fix the high level sequence and then solve for the
+ continuous. But some of these strategies really dominate by thinking about first let's pick
+ a discrete set of actions, try to fill in the continuous thing. If I got a violation,
+ I was not able to find a solution on the continuous problem, then I'll go back and revise my discrete
+ plan. But in some of these problems, the discrete rules, people love their discrete planners,
+ they're very strong. Let's try to find a way to jam continuous reasoning into the discrete
+ planners.
+ Similarly, there's some people, and I would probably put myself in the second class maybe,
+ which is we love our continuous trajectory optimization, right? And we can find ways
+ to jam discrete stuff into our continuous trajectory optimization. And so those are
+ sort of the top and the bottom axes. And the interleaved are the people that are maybe
+ trying to do a little bit more of let's do a little bit of planning, incrementally build
+ my long term plan, and incrementally call my motion planner, and try to do a little
+ bit more explicit coupling.
+ So I thought I would pick two instances here that are two of my favorites here. So the
+ logic geometric programming is people like me that think about trajectory optimization
+ first and try to put some discrete planning into the trajectory optimization framework.
+ And then Padiddle Stream, which was Kalen's work, is a little bit-- it's interleaved,
+ but I would say it's still coming a little bit more from the sampling first and putting
+ motion planning into the sampler.
+ OK, let me tell you just a few things about logic geometric programming. First of all,
+ it's awesome. There's just very compelling examples. This one's from Danny. This was
+ actually follow on work that connected its perception and other things. But the basic
+ idea that a trajectory optimization is solving for these very multi-step processes that are
+ making long term decisions between multiple arms that need to coordinate in order to accomplish
+ a task.
+ Like that was put the yellow block on the red thing. Pretty similar to what we talked
+ about before, right? But where you had to move block A to get block B there. But these
+ are solving definitely multi-step handover kind of problems from a description which
+ is not imposing that the system must make a handover. That is discovered as part of
+ the sequences discovered along with the continuous motions.
+ OK, so I think I could tell you the gist of how that works because I've already told
+ you about kinematic trajectory optimization. So my toy version of kinematic trajectory
+ optimization didn't even have a robot. It just had a point that was going around the
+ red obstacle. And we wrote optimization problems which had a cost. In this case, it was just
+ the shortest path kind of cost. Even a weird one in the square.
+ OK, I started at the x start. My final thing was x goal. And that last one is just the
+ constraint that said for all n, I want to be outside the obstacle. And more generally,
+ I might write that as minimize x0 to xn. And it's important to realize I had to make a
+ choice on the number of steps I'm going to optimize over.
+ The sum over n. Maybe I've got some-- I'll use l for my loss function. And yeah, I'll
+ stick with x since that's on the board. But it could probably just be my joint angles,
+ for instance. Maybe it's xn plus 1 and xn. I wanted to have that. n equals 0 to n minus
+ 1. Subject to-- generally, I might have constraints of the form like this, for instance. And then
+ I had my initial condition, my final condition, right?
+ What logic geometric programming is doing is solving a more complicated version of this,
+ which I would call hybrid kinematic trajectory optimization. There's many different names
+ for it. But if you've taken underactuated, you'll recognize hybrid trajectory optimization.
+ This is a longstanding thing from more dynamic systems, in hybrid systems. But this is a
+ kinematic version of that.
+ So in hybrid kinematic trajectory optimization, I'll do it in a step. Let's call this like--
+ I'll even call this action number 1. And then I'm going to have a second problem, which
+ is action number 2. And for action number 2, I'll similarly write out my new n decision
+ variables. Maybe it's even m decision variables. No need for them to be the same. And I'll
+ have a loss function that's l subject to g and subject to x0 equals something, xm equals
+ something, right?
+ Think about it making just a complete copy of this algorithm. But perhaps when I'm taking
+ action number 2, I'll have a slightly different set of constraints here. Maybe action number
+ 1 represent move the arm without an object. And maybe action number 2 might be move the
+ arm with block A in the gripper.
+ So maybe if I know that block A is in the gripper, then I'll have a constraint here
+ saying, for instance, the q of my robot or my gripper equals the q of block A for all
+ of the steps m.
+ And then maybe I've got an action number 3. You get the point here. But I've got an action
+ number 3, which is move with block B. And I've got all the same things, but my g here
+ would say that the q of the robot has got to equal the location of block B, that block
+ B somehow moves with the robot.
+ So I could solve those. If I knew the sequence a priori, I could solve those one at a time.
+ I could say, I'm going to move block A. I'll run that first problem. And then I'll stop.
+ And I'll take whatever the situation is right now. I'll try to move block B. I'll solve
+ that second problem from the current initial condition.
+ But if you want to solve them jointly, if someone has told you already, given the sequence,
+ if I said, I want to do a sequence which would be, I'm going to move, let's say, action 0.
+ And then I'll do action 1. I'll move block A. And then I'll do action 0 again, because
+ I need to move my robot over to where the block B is. And then I'll do action 2.
+ If someone tells me what the sequence is going to be, then I could solve that whole problem
+ jointly as a single trajectory optimization problem, where I could just accumulate all
+ the costs into one big cost for all the problems.
+ And add extra constraints, saying that x0 from-- let's say xn from action 0 has to equal
+ x0 from action 1.
+ I'll use the constraints of the initial condition of this problem
+ to match the final condition of that problem.
+ I'll take the initial condition of this problem
+ to match the final condition of that problem.
+ And I'll just make constraints that link these two together.
+ Is that clear?
+ xn of action 1 has got to equal x0 of action 0 second time.
+ And the decision variables that I'm handing to my optimizer
+ now is a sequence of x's for this action, a sequence of x's at this action,
+ a sequence of x's for this action.
+ Each of those is a sequence of decision variables
+ that I'm handing the solver.
+ And then I've got a bunch of constraints, which
+ allow those optimization problems to couple each other,
+ so that the final condition of this matches the initial condition of that,
+ so on and so forth.
+ That's a much bigger optimization problem.
+ It's potentially harder for the solver to cope with,
+ but it fits still directly into the nonlinear optimization framework,
+ if someone gives me the action sequence.
+ And that's what you'd call a hybrid trajectory optimization,
+ a hybrid kinematic trajectory optimization problem.
+ And it turns out solvers can do pretty well with that.
+ You can add-- I just used making the initial and final state
+ match as the only requirement, but you could do more requirements.
+ Like for instance, if I'm going to pick up the object,
+ if I'm going to transition from moving the robot to picking up the object,
+ then probably the final state of this had better put the robot
+ where the object is, for instance.
+ You can put the necessary constraints that
+ couple those problems that were previously independent into one.
+ Now why is that better than solving them independently?
+ Because those continuous variables at the interface,
+ if I had to solve this a priori before I even started moving,
+ in order to solve this problem, I would have to make an arbitrary choice
+ at the initial location of that object.
+ I would have to lock in the continuous variables at each of these interfaces.
+ But here it's free to solve for a trajectory only under the constraint.
+ Not that it's at a particular goal, but just
+ at a goal that's good enough to start up this optimization that's
+ consistent with that second optimization.
+ So this is the optimization beginning of task and motion planning.
+ And those problems are well understood and good, again,
+ if that action sequence is given.
+ Not just you need to know the number of them,
+ because you need to know how many decision variables,
+ and you need to know the order of them.
+ The second thing you can do is then formulate-- now
+ this is the continuous optimization people sticking some discreteness in.
+ OK?
+ Let's do a search, a higher level search,
+ that tries to permute the different possible discrete sequences.
+ OK?
+ And for each of those, we'll solve the continuous optimization problem
+ underneath.
+ And if we're smart about it, we don't have to solve all of the possibilities.
+ We can use bounds on one solution to rule out
+ some of the permutations of this.
+ OK?
+ So we saw that a little bit when I talked about branch and bound
+ for-- I talked about it only quickly in the trajectory optimization.
+ But for those of you that know it, I just want to connect to that.
+ But there's a standard approach to mixing
+ some of these discrete and continuous optimizations.
+ It's very well understood and gives strong guarantees
+ when the subproblems are convex.
+ That is not the case, necessarily, in logic geometric programming.
+ Nevertheless, you can set up a strategy
+ where you solve a relaxed version of the problem at each time step.
+ And then you try to refine your solution in order
+ to search for this action sequence.
+ That's the discrete decision.
+ And at each level, you're solving continuous optimization problems.
+ So in my mind, what logic geometric programming does very well
+ is it does this branch-- it sets up this branch and bound over action
+ sequences.
+ It solves very efficiently the hybrid kinematic trajectory optimization
+ problem.
+ It does use non-convex solvers that are going
+ to have local minima and everything like that.
+ So there are no guarantees.
+ But in practice, there's a lot of impressive results.
+ And I think the thing-- my favorite part of the logic geometric
+ programming approach-- so when we have done, in my group,
+ mixed integer branch and bound type algorithms for, let's say,
+ footstep planning of a humanoid, I've been, I think,
+ a little stubborn about saying I want to take the problem instance
+ and I'm going to hand it to Garobi or some well understood solver.
+ And I want to come up with exactly the right problem instance
+ that I can hand to that-- there's a clear problem
+ instance of mixed integer convex.
+ I'm going to formulate that instance.
+ I'm going to hand it over.
+ Mark Toussaint and company, they didn't use Garobi.
+ They wrote their own solver on the end.
+ And they made every-- took every advantage of that.
+ Like anything you could do that would avoid
+ solving the big problem downstream, they would take those shortcuts.
+ So for instance, it might be that if action two required
+ solving a kinematic trajectory optimization problem that would say,
+ move my bag over to here, I could do an inverse kinematics query
+ and understand very quickly that I can't even
+ reach the bag after action zero.
+ And I don't even have to solve the kinematic trajectory optimization
+ problem.
+ So there's a lot of very clever heuristics
+ in there that leverage the kinematic problem in order
+ to prune more and more branches of those trees.
+ And I think that's what made it scale particularly well.
+ Questions about logic geometric programming?
+ This is, I think, one of Mark's favorites,
+ Mark Toussaint's favorite version of it,
+ where he picks up a stick and moves the box.
+ However, it's pretty slick.
+ There's also one I couldn't find quickly this morning
+ where it grabs a hockey stick and pulls something from far away.
+ That's a pretty good one, too.
+ Yes?
+ For the heuristics that prune the thing, how's that different from just hand-carving
+ the-- what was described earlier of just like--
+ OK.
+ So the question is, so I think there are general heuristics just based on geometry,
+ reachability of kinematics and stuff, which feel a little less bespoke
+ than saying, does the dishwasher open at a certain time or something like that.
+ But he still has to define the different actions.
+ And that is the analogy to deciding that there's a move the mug now.
+ The way that they decided, though, is by, in the subproblem,
+ writing a constraint saying that the pick up the mug action
+ means that the mug is welded to the hand for this part of that--
+ during that action.
+ So the encoding of semantics into the optimization
+ happens by the definition of each subproblem.
+ Yes?
+ I guess in this type of example, would there be one that like,
+ it's a [INAUDIBLE]
+ Let's see.
+ Probably go to the stick is one, move the stick is two.
+ And then probably the third one is when it's in contact,
+ I guess three.
+ If I had to guess.
+ And then maybe a move away is even four.
+ But small number.
+ Yeah.
+ I think these are solving impressive, but maybe not super long duration horizon planning
+ problems.
+ The sequences tend to be 10-ish steps or less, let's say, not hundreds or thousands.
+ The thing I worry about with these kind of methods is local minima.
+ So I think the branch and bound performance will eventually-- so you can make stronger
+ or less strong branch and bound type approaches.
+ But I would worry more about local minima in this.
+ OK.
+ Let me quickly talk about Pudittal stream.
+ Leave time for William.
+ So Pudittal stream is a different example.
+ So this is now coming more from the sampling-- or it's from the logical planning, symbolic
+ planning side of the world, and pushing down and bringing a few of the motion planning
+ ideas up into the sample-based planning.
+ And so integrating symbolic planners and black box samplers.
+ And don't tell Kalin.
+ But I'm going to talk about it in a pretty different way than I think Kalin would talk
+ about it.
+ So this is just an example of it doing cool things.
+ It's like put all the objects in the bowl that is most similar to its color.
+ These are advanced, long horizon tasks that they're able to solve with this.
+ But the way I want to think about it-- I hope it's OK-- I want to put it in my language,
+ which is the graph of convex sets language.
+ So if you remember, the graph of convex sets was this idea that you could take the standard
+ shortest path on a graph problem and expand its vocabulary by saying, every time you visit
+ a discrete set, you're allowed to pick one element from a continuous valued function.
+ And we tried to say that the set of those was convex.
+ So the shortest path problem, if you say I want to have a source here and a target here,
+ the shortest path might be choose this real value, continuous value, this continuous value,
+ this continuous value, this continuous value.
+ And in the case of a graph search, where we have convex regions, we've been working on
+ ways to make that solve with optimization.
+ Pudittal stream does not make any assumptions about the convexity of those sets.
+ It's solving a harder problem.
+ And it's doing it with sampling instead of with optimization.
+ And the reason I want to draw this is because this is how I think about the way Pudittal
+ stream works.
+ So one of the key observations in this kind of mixed continuous and discrete planning
+ is this.
+ So if you were to give me the path, if you were to tell me already I'm going to take
+ this path of sets, then the optimization problem is easy for us because it becomes a convex
+ optimization problem.
+ It's only the continuous values that have to be decided.
+ Similarly, if you were to choose the continuous values, the problem is easy.
+ It becomes a discrete graph search.
+ Either one of those is easy.
+ It's only when you put them together that it's hard.
+ What Pudittal stream is doing, in my mind-- so I have this picture of a graph here-- is
+ it's sampling.
+ So the streams in Pudittal stream are samplers, black box samplers.
+ You can think about it for any set here.
+ Every time I evaluate the stream, I pulled one more sample out of that potential set.
+ The samplers, the streams, the samplers that are used in Pudittal stream are inverse kinematics
+ queries or even a collision-free motion planning.
+ Like GCS, you could say that if I'm in this set, one point in this set might correspond
+ to an entire trajectory of a subproblem.
+ So what Pudittal stream does is it-- well, let's see the straw man version of what Pudittal
+ stream does, which Kalin uses as a straw man-- is that you could just pick a bunch of random
+ samples, evaluate your stream 100 times for each set, and then make your edges from all
+ of these points to all of these points.
+ And you have just a really big discrete graph search problem.
+ Similarly, for all the quadratic set of points here, I have to make all the edges here.
+ And you'd get a really big graph search problem.
+ But that would be a way to take your mixed discrete and continuous problem, sample, and
+ turn it into a big graph search.
+ And if you love the power of symbolic graph search, then that can get you far.
+ Now Pudittal stream is much smarter than that.
+ It doesn't do that as the-- you'd add potentially not only a lot of samples, but a lot of irrelevant
+ samples.
+ Because if the optimal path is up here, you're still making a bazillion edges down here.
+ So what Pudittal stream is doing is-- well, there's a handful of different strategies
+ in the Pudittal stream family, I guess.
+ But they interleave the symbolic planning with the continuous sampling.
+ So basically, think about like an A star type algorithm for graph search would expand only
+ a frontier of possible sets.
+ The high likelihood sets that have a likelihood of getting you to the goal with the path are
+ worth sampling more.
+ And so you add more samples.
+ Every time you add a new sample, you connect it up with its parents, whatever.
+ You do make the graph much bigger.
+ But you can do selective sampling in order to scale this to much harder problems.
+ And that's what Pudittal stream is doing.
+ So each sample, again, would be calling an entire collision-free motion planner, for
+ instance.
+ So it's doing like this.
+ But it's finding solutions to very, very hard problems.
+ That's it.
+ OK.
+ So-- oh, I have to say one more thing.
+ We will soon have GCS trying to solve TAMP problems.
+ That's a goal.
+ Sava's here.
+ This is-- think about the-- let's see.
+ Think about-- I changed this into a-- but the picture of the suction gripper picking
+ up block A, moving to block B. This is just a top-down view.
+ OK?
+ So this is the suction gripper here, the arm.
+ OK?
+ These are the boxes.
+ They have to move from here over to here.
+ That's a combinatorial plus continuous planning problem.
+ And what's interesting is the scale of it is there's lots of boxes and lots of possible
+ permutations, lots of possible paths.
+ And there's some initial success suggesting that keeping it in the graph of convex sets
+ kind of framework, we can maybe solve the global optimality in a few seconds.
+ So that's work that I hope we'll have a lot to say about soon.
+ OK.
+ Bojan, let's take over.
+ By the way, I appreciate everybody coming.
+ Tell your friends that next semester, Bojan will be presenting for five minutes, at a
+ random five minutes, during every lecture.
+ So you must come always to all the lectures to see him.
+ OK.
+ There you go.
+ Oh, yeah.
+ Good, good.
+ Don't pull.
+ There you go.
+ Hello, everyone.
+ Welcome to the second half of the lecture.
+ First, I really appreciate that a lot of people showed up today.
+ So you actually should do a show up in every single lecture so you don't-- yeah.
+ So in this part of the lecture, we're going to talk about some recent progress in robotic
+ research that is doing planning with large language models.
+ And this is closely related to the advancement in natural language processing.
+ So we've just talked about task and emotion planning.
+ But in traditional task and emotion planning, what concerns these problems, like those Ross
+ just represented, they are more like some kind of puzzles that requires a lot of logic
+ and motion reasoning.
+ Well, in this part of the lecture, we are going to talk about what if we plan like humans?
+ What if we have priors about each discrete action, the description of the tasks?
+ How do we humans plan?
+ So here are some examples.
+ I spilled my drink.
+ Can you help?
+ If you spill your drink, how would you do it?
+ You will definitely find something to try to clean it up.
+ You might want to go to the kitchen to find some napkins, wipe and throw it to the recycle
+ can.
+ Yeah.
+ And also, so we all want future robots to help us in daily life.
+ And we should be able to communicate to robots.
+ And the robots should be able to complete the task we design.
+ For example, whenever we want to ask a robot to clean up the spilled Coke, the robot should,
+ if it's like a human, it should say, OK, I should generate this sequence of actions.
+ And I should try to accomplish them one by one.
+ So for example, you may want to-- if you've spilled Coke, you definitely put your Coke
+ can in your upright position and find some napkins and wipe the table and throw everything
+ away.
+ So it turns out we humans always love to use language as abstractions to specify tasks
+ and to specify plans.
+ And when you think about it, you actually-- when you do a complicated project, you also
+ communicate with your friends about all those kind of plans with language.
+ It turns out humans' activities on the internet produces a massive amount of knowledge in
+ the form of text.
+ And that could be really useful with the power of deep learning.
+ For example, on the right of the slide, you will see if I don't know how to make certain
+ dishes such as egg fried rice, I'll be able to Google online.
+ And they will tell me step-by-step instructions.
+ So before we dive into how we solve these problems, let's talk about large language
+ models.
+ So I'm sure a lot of people have heard of language models these days.
+ And many of you might have played with it.
+ So for those who don't know, I'm going to give you a short introduction.
+ What is a language model?
+ Language model is a task of predicting what word comes next, given a context.
+ For example, we have a sentence here that says, "The students opened their and asked
+ you to predict the next word."
+ And you will immediately have a list of candidates in your mind.
+ And if I give you a word, you may say it's likely or unlikely.
+ For example, if I say, "Apple here, opened their apple," you will see this is clearly
+ not very reasonable.
+ And you won't put "apple" there.
+ Instead, you might put "books" there.
+ Because you have an internal language model in your mind.
+ More formally, it is like, given a bunch of words we provided as a context, you will be
+ able to predict the next word, which is x t plus 1 here.
+ And this is called language modeling.
+ So you can also think of this as a system that designs a probability of a piece of text.
+ For example, let's say x 1 is my first word, x 2 is my second word.
+ And if you use all these conditional probabilities, you're able to chain them all together and
+ predict the joint probability of a piece of text that actually makes sense.
+ Like there is a probability here, x 1 to x t.
+ So how can we use this?
+ So the highlight here is that whenever you have an internal language model in your mind,
+ given some task-- not some task, but given a piece of text, you are able to predict what
+ is likely coming up next.
+ So first of all, if you have a fixed list of options, like what Russell said here, like
+ we just designed a piece of text describing action 1, 2, and 3.
+ For example, action 1 is move the arm without the object.
+ If you already have a fixed list of options, you can use a language model to evaluate its
+ likelihood.
+ For example, if my spilled my Coke and my available actions is like eat an apple, and
+ second option is like find some napkins, you'll obviously see that finding napkins is more
+ likely coming up next, given the context.
+ So a second way we can utilize this is that if we have all the vocabulary in English,
+ we can actually also sample with our likelihood model.
+ So as I showed here, with a trained language model, it will assign a probability to each
+ word in English dictionary.
+ And then you can sample from that distribution and generate options.
+ That is how text chatbots works.
+ And you actually are already using language models every single day.
+ For example, when you type, Google knows to suggest you something, because it already
+ has a language model that, based on people's history, can predict what's likely coming
+ up next.
+ And when you use Google to search, when you type something, it also suggests a bunch of
+ possible options.
+ Then, OK, now everybody knows what a language model is.
+ Then we are going to dive into large language model.
+ So we've already seen a lot of neural networks these days.
+ And many of them we've presented in this lecture are millions of-- let's say a million, five
+ million parameters that are already considered large.
+ But this really, really large language models of 540 billion parameters, and you can't use
+ your tiny GPU to even inference on these models.
+ So why do we have these huge language models?
+ It is because if we train them on the entire internet, we can incorporate a lot of human
+ knowledge into them and use them to do interesting things.
+ So for example, you can use large language models to write essays for you.
+ For example, I once wrote a blog about computer science schools ranked by BOBAs.
+ And I actually used a GPT-3 to help me writing it, because my English is bad.
+ And this is one example of how to use it.
+ So you just type in best computer science schools ranked by BOBA, home blog, and write
+ the first sentence.
+ It generates things for you.
+ And it knows that Berkeley has 20 BOBA show-offs in front of it.
+ You can also use it to complete your homework.
+ For example, I took this essay--
+ [LAUGHTER]
+ I took this essay prompt from one MIT class that is Minds and Machines.
+ And given the prompt, it somehow knows to write something reasonable about that.
+ And I highly suggest everyone to try that.
+ [LAUGHTER]
+ And with this, language models can actually also do question and answering really well.
+ This is a really recent work from OpenEye that's using chat GPT.
+ So you can ask it all kinds of questions.
+ And it can answer really well for you.
+ So before the age of deep learning, these question-answer models aren't that good.
+ As we dive into the age of getting to the age of really, really big language models,
+ they're getting better and better.
+ It can answer really all kinds of questions.
+ And it actually can relate to previous context as well and can give you a really realistic
+ experience just like you are speaking with some humans.
+ This is-- turns out large language models are really powerful planning.
+ For example, in the most naive way to use this, you can ask it just for a plan of how
+ can I do something.
+ So give me a list of items I will need to make a cup of coffee.
+ And it will show you something.
+ For example, give me detailed robotic instructions to make a cup of coffee in the kitchen.
+ It will give you a bunch of instructions.
+ [VIDEO PLAYBACK]
+ - Detailed robotic instructions matter?
+ [END PLAYBACK]
+ [LAUGHTER]
+ Yeah, I still converse like a human.
+ And I will talk about this problem later on.
+ So these large language models are really powerful.
+ And we really hope to use them for robotics.
+ So however, when I try to use them, it's actually very hard.
+ Because whenever you ask it to, I spilled my drink.
+ Can you help?
+ GPT will tell you you cannot-- you could try using a vacuum cleaner.
+ Well, OK.
+ And one funny fact is that when I was doing research as undergrad, one of my friends was
+ playing with large language models in his project.
+ He asked the language model, give me instructions to get a cup of-- give me a cup of coffee.
+ And the language model tells him to go to a cafe.
+ So we need to have more control about what we can get from the large language models
+ to allow us to do actual robotic tasks.
+ And one core challenge is that our robots can only do a fixed number of commands and
+ need a problem broken down in actionable steps.
+ So actionable is critical here.
+ This is not what large language models usually output.
+ For example, in this task, we have action 1, 2, 3.
+ And there are different skills, but it's just three actions.
+ We don't want large language models to arbitrate things.
+ We want it to choose.
+ So we need large language models to speak robotic languages.
+ So solution 1-- so we can propose that we can just bind each executable skill to some
+ text options, for example, whereas what we already have here is we have all three actions,
+ and we wrote a description about that.
+ And if these skills are actually real-life skills, you can expect the language models
+ to give a reasonable guess about how to generate a sequence of actions like what we did here.
+ This is doing the classification, so it's also easier.
+ We have more control.
+ So basically, as we see, language models can predict the probability of the upcoming task.
+ So what you do is you give it instruction, and you can evaluate the likelihood, the log
+ likelihood, log probability of each option coming up next in the form of text.
+ So this is exactly what a lot of people tried before.
+ So let's say we have a bunch of available options on the right that we can actually
+ use a robot to execute.
+ Let's say we already coded a skill.
+ We can use large language models to complete this, just like how we did in an essay, for
+ example.
+ We can put an example on the table and prompt it to say, I would want-- and it will be able
+ to predict the likelihood score for each option.
+ There is a second solution.
+ That is, we can also prompt the large language model to output in a more structured way,
+ so not just random, actuarized instructions that are long paragraphs.
+ And then we pass the more structured output, because as soon as they are more structured,
+ it's easier for us to pass.
+ So then there's come to this important skill called few-shot prompting of large language
+ models.
+ So what is few-shot prompting?
+ As we just said, large language models can just finish an essay and try to predict the
+ upcoming text in the most likely way.
+ So what if I engineer my context before in a structured way?
+ For example, here I type the United States, and I type this arrow that maps it to Washington,
+ DC, the capital.
+ And then one type of food the country is famous for, and the tallest-- the highest mountain
+ in this country.
+ So I gave it three examples-- United States, China, and Japan.
+ And I prompted it to complete the essay for France.
+ And you will see it actually outputted the capital, the food, and the tallest mountain
+ in that country.
+ So that is one of the-- so the highlight here is that large language models can just, given
+ a context, we can-- if the context is in a structured way, it can copy the logic and
+ extrapolate to what we are querying next.
+ So this is called few-shot prompting.
+ So how can we prompt large language models to do structure planning?
+ So one immediate way to do this is I give it a few examples of a structure plan here.
+ And then I give it new instruction.
+ So I ask a GPT-3 here to generate a plan for bring me a banana from banana lounge.
+ And it turns out, OK, it doesn't have knowledge about banana lounge, but somehow it gives
+ a reasonable plan.
+ We will be able to play GPT-3 for planning at the end of the lecture if we have time.
+ You'll be able to try all kinds of tasks.
+ OK, so given this, so we already know-- now we know what large language model is and how
+ can we use for task planning.
+ Then it remains to combine this kind of new capability and connect them to-- make them
+ actually executable in real life.
+ So the first paper I'm going to mention is a do-as-I-can, not as-I-say paper.
+ It is from Google Robotics and Everyday Robots.
+ And so now we know large language models can do planning for robotics.
+ The problem is that large language models are not grounded in real world.
+ They don't know what's actually possible from a state with a given embodiment.
+ So let's say I already have a bunch of skills.
+ Let's say I train everything either with learning or I have a motion planning algorithm that
+ can give me a plan, like given current observation.
+ We have a bunch of skills, each tied to a language description that we can classify
+ from with the thing we mentioned before.
+ So now we have this problem that large language models aren't actually grounded in real world.
+ Maybe my language model will say, I would like to find-- I spilled my Coke.
+ And obviously, there are a lot of options available.
+ For example, I can either find some napkins, or maybe I need to first go to somewhere else
+ to find napkins.
+ Or I can also, instead of finding napkins, maybe--
+ [INAUDIBLE]
+ Yeah.
+ And maybe you have multiple options that leads to the success or completion of the task.
+ However, what's immediately in front of you may not be valid with respect to every single
+ option.
+ For example, let's say you want to find some-- you can pick up napkins directly, but there
+ is no napkin in front of you.
+ Then you shouldn't execute this task at all.
+ Instead, you should go to find some napkins, maybe in the kitchen.
+ So your plan should also be grounded from current state.
+ And when we talk about grounded from current state, it's helpful to mention a concept called
+ affordance.
+ So what is affordance?
+ It is saying that with respect to a certain task we desire, how likely it is for me to--
+ or in terms of cost, how costly it is, how likely it is for me to accomplish it from
+ my current state, and so on.
+ So for example, we've all learned a little bit of our reinforcement learning.
+ And we know that what a value function is.
+ Whenever a current state is likely to lead to a higher expected return from the future
+ when a state is more likely to lead to a successful completion of the task, we say a current state
+ is of higher value.
+ And in this paper, they used the reinforcement learning in combination with large language
+ models.
+ They first trained reinforcement learning from pixels.
+ Then with the value function from the reinforcement learning algorithm, we can actually calculate
+ if the skill is actually somewhat executable or likely to lead to success from a current
+ observation that is directly from pixels.
+ And so RL provides kind of task-based affordance.
+ And they're encoded in the value function.
+ So what we can do is now we have a list of options.
+ And our language model gives us a prior probability based on the previous context.
+ For example, my task, the description of my task, and then what I've already planned before.
+ And then we can also calculate another probability from our current affordance from the value
+ function of the reinforcement learning algorithm.
+ For example, we can do multiple things at a time.
+ For example, how would you put an apple on the table?
+ Obviously, for a language model, it seems that find an apple and pick up the apple are
+ both valid options.
+ They are both likely coming up given the context of this task.
+ But if I don't have an apple immediately in front of me in my field of view, it will realize
+ I cannot directly pick up an apple at a certain position.
+ So if we ground position making by both language models and value functions, we will be able
+ to get a more reasonable guess.
+ For example, if I don't have an apple in front of me, I will prioritize finding apple first
+ instead of picking up an apple directly.
+ Is it hard to learn a value function in the space of words with the basis function being
+ the language model?
+ Basis?
+ Oh, you mean like state based on?
+ Yeah, yeah.
+ How do you-- I mean, learning a value function that works for apples and goats and all these
+ things seems really hard.
+ Oh, yeah.
+ So actually, I think one thing I don't really like about-- like, I won't say one thing I
+ won't really like.
+ I think it's one limitation of what the vanilla approach in this paper is that they train
+ the separate-- they actually train it with imitation learning for many of the skills.
+ And they train one imitation learning policy for every single object.
+ That is, they need some humans to collect the data for multiple days for your water
+ bottles and for another water bottle, we'll hire another guy to collect it for another
+ day, something like that.
+ But I think one hope people are-- one thing that people think they have hopefully solved
+ in the next few years is that instead of doing this kind of thing, we just have one huge
+ value function model that can take in a current image observation and a piece of text embedding
+ and output things.
+ But the problem is that turns out all this kind of skill learning are in domains where
+ data is extremely expensive.
+ You either hire humans to do it, or you're training simulators, like, store for many,
+ many days to get this kind of thing.
+ So yes, it is currently a big challenge right now.
+ But I think people propose a solution.
+ It is just the data is not there yet.
+ OK.
+ [INAUDIBLE]
+ So usually value functions is just conditional observation, or someone says state.
+ So it is like they actually have one value function, like the function itself, for each
+ of the skills, options.
+ And then for each of the skills, you look into its value function, and you evaluate
+ it by evaluating at the current observation.
+ [INAUDIBLE]
+ Yes.
+ Yes.
+ So in this setup, you need 50 value functions, although I said in the future, you may just
+ have one that also can take on text.
+ Yeah.
+ Any other questions?
+ Good.
+ Everyone is with me.
+ And then, so let's see how does this work.
+ So in this slide, the authors are asking you to accomplish some really long, hard, and
+ tasks that involves, like, nine steps here.
+ And it says, I threw my Coke on the table.
+ How would you throw it away and bring me something to help clean?
+ This looks weird, but it's kind of deliberate to confuse the robot.
+ And the robot just kind of sees accordingly.
+ You'll be able to see that at the very beginning, it finds that finding the Coke can is very
+ likely at the first step.
+ And it's also executable because it's navigation, so it just chose that task.
+ And then-- oh, by the way, if you didn't see, the blue bar indicates the likelihood score
+ from language, and the red bar indicates the likelihood score from affordance.
+ So you will see that-- so let's go to the fourth picture.
+ If you look at that, you will realize that the affordance for dumb is actually extremely--
+ the affordance for everything else is extremely high.
+ No, sorry.
+ I picked the wrong one.
+ Let's look at number five.
+ That model might suggest that actually immediate finish, but my affordance would suggest that
+ many other options are really available for me to accomplish.
+ And these two things together grant an entire plan for this low-horizon planning task.
+ But do you have to predict the future observations then?
+ No.
+ >> How can you plan for the fifth one if you don't know what the image is at time zero?
+ >> If it doesn't know the images at time zero, I think-- so I think one assumption that this
+ type of work often assumes is that your language model is reasonable enough, that your plan
+ generated by language model is already reasonable.
+ And then what the language model sees is that at the time step five, it will see human instructions
+ and robot.
+ I would find a cocaine, pick up the cocaine on to step four.
+ And so it sees a history of task plans like before, but not observations.
+ So this somewhat requires the language model to be good.
+ If the language model is not good enough, you cannot trust it.
+ >> So I guess at the same time, are you saying that [INAUDIBLE]
+ >> Yeah, currently this is set up in this paper, although there are future works that
+ improves upon this.
+ So nobody asked about this, but another thing people might ask is that how does it incorporate
+ feedback in the scene for a stronger way.
+ So it is like, for example, if I found certain tasks to be invisible, how can I adjust my
+ plan accordingly?
+ So this requires a feedback step from the environment that requires more information
+ than just affordance.
+ For example, let's say I try to open my door with my key.
+ I saw my key is in my pocket, but it turns out it's not.
+ So in my mind, I kind of know I need to adjust my plan accordingly and replant.
+ So actually some follow-up works of this have proposed that we can do it, like we can prompt
+ a large language model to do some interesting inner monologue.
+ That is like, they have a success detector that detects certain expected events actually
+ didn't happen.
+ For example, the fact that my key is in my pocket is not there.
+ Then it will just insert one line in the prompt here saying that, oh, I found something.
+ It's not actually there.
+ And then a large language model kind of incorporates that feedback and adjusts its plan in the
+ future accordingly.
+ So that is the magic of prompting large language model.
+ Another interesting thing that people always do is that language models are very tricky
+ and they are really naughty.
+ And to make them actually plan good things, sometimes you need to give them some good
+ incentives.
+ For example, here I just say, let's say we are trying to accomplish a really, really
+ long horizontal scale.
+ If you directly ask a robot to give it an instruction, it will avoid giving you a really
+ good sequence of actions.
+ Instead, what you do is you insert something like a chain of thought.
+ You say, now, after, like humans, I fill my code, after this instruction, I write this
+ sentence.
+ Let's think step by step.
+ And then generate a plan, and you will find the quality of the plan significantly improves.
+ Another thing is that you can have chain of thought, which is saying that instead of saying,
+ let's think step by step, I give a few demos saying that, OK, someone spilled their code.
+ I need to find something to wipe the table and finally throw everything away.
+ So if you give it a few examples of this and now give it a new instruction, it will actually
+ learn to follow the structure and generate a chain of thought, a new chain of thought
+ for the new task.
+ And it actually also helps it generate a plan better.
+ So it is really naughty, and you need to find-- there are a thousand tricks how to prompt
+ it to generate nice things.
+ Is it used in this case?
+ I think I--
+ Yeah.
+ In the latest version of the SACAM paper, they added chain of thought where I added
+ line of reasoning to help language models do better.
+ But I think this can be a non-generating instruction, and it's better to fix the problem
+ of spilling.
+ Yeah.
+ Oh, no.
+ It is-- oh, sorry.
+ Sorry.
+ I misinterpreted your question.
+ So the point I'm making here is that if we want to add a chain of thought prompting to
+ this, this is orthogonal to whether we are doing generative planning or classification-based
+ planning.
+ So if you look at this-- so when it came out, it actually really impressed me, because this
+ make a future of-- future with home robots more likely.
+ Because they-- sorry.
+ I spilled the drink.
+ Can you help with that?
+ Large language models may hold the key to unlocking such tasks.
+ SACAM, when tasks--
+ We're not going to watch the entirety.
+ --followed by picking up the Coke.
+ Or just look at--
+ I spilled my Coke on the table.
+ How would you throw it away and bring me something to clean it up?
+ The robot considers different skills that are available to it and selects the best one
+ according to the SACAM process described above.
+ It uses the affordance model as well as the language model to score the available options.
+ The algorithm starts by finding a Coke can, which is then followed by picking up the Coke
+ can.
+ Once the robot accomplishes that part of the instruction, the skill is appended to the
+ prompt, and the method continues with the next set of skills.
+ On the right, you can see different skills being considered and their scores by the language
+ model, the affordance model, and the combination of the two.
+ Each skill, once it's chosen and executed, gets appended to the prompt, which then allows
+ the model to generate the next part of the solution.
+ In this case, the robot ends by finding a sponge, picking it up, and then in the seventh
+ step of this extended plan, it brings it to the table and puts it down.
+ Since the robot doesn't have the wipe table skill in its repertoire, it finishes the task
+ at this point with a termination.
+ Next, we show two other un-narrated examples of tasks that Seikan is able to accomplish.
+ Because now the large language models are able to parse really, really complex human
+ instructions.
+ You can see examples here, like you give the instruction, like, "I just worked out.
+ Can you bring me a drink and snack to recover?"
+ So you can input with our human language.
+ We are not going to watch the entire video.
+ Let's just assume this is finished successfully.
+ So as you just saw, because we want to emphasize the capability of large language models for
+ planning this paper, we have to have a bunch of skills associated with each executable
+ option.
+ And that is one of the hardest parts that I hope we will solve in the next decade.
+ And then I think we can dive into my paper.
+ It's also with Robotics at Google and Everyday Robotics when I was interning.
+ So we've just saw Seikan.
+ It is amazing.
+ But Seikan didn't tell you that you hard-coded all object locations.
+ If you move the object a little bit, it doesn't work anymore.
+ And it assumes that all the objects are available in the thing.
+ If you remove something, it will not be able to find the alternative thing.
+ Also, it has no perception.
+ You have to let it know where objects are and what objects are available.
+ And by the way, it only can deal with around 30 objects.
+ So this is quite limiting.
+ And also, because of this, you have no perception.
+ And you have a finite list of executable options.
+ So in this project, I'm trying to significantly expand the capability of Seikan.
+ So previously, as I mentioned, Seikan has no perception system.
+ So it is not grounded with what's in the thing and where they are.
+ So in this project, what we do is we can just let the robot navigate the thing, look around,
+ take a lot of pictures.
+ And then with the open vocabulary detector, that is, whenever it sees a new image, let's
+ say it saw this bag, this table, it will do this kind of class agnostic regional proposals,
+ like crop these bags and the table out, and store their locations, three locations.
+ And we do multi-fusion such that we build a single presentation of this entire scene.
+ And then whenever the human asks it about certain object-- for example, I want a bag--
+ and then it will query this single presentation using the visual language models and find
+ its correct location, and also tells me whether it is actually in the scene or not.
+ So for example, here, it just proposed a bunch of objects in the object section at Google.
+ There is this Coke can, this cheap bag, some trash cans, and the yellow sign there.
+ You can actually query with it all kinds of nature language input object names.
+ You can query the plant, like potted plant, green plant, it's all fine.
+ And it will be able to find that object.
+ So this is open vocabulary detection.
+ This is a valid paper.
+ So basically, if you know visual language models, basically, this clip model can give
+ you a likelihood score between text and image describing-- the score describes how closely
+ does the text describe the image.
+ And then we build on that.
+ This paper proposes open vocabulary detection, where I combine object proposal, and we can
+ query everything with text.
+ For example, for the crocodile there, we can query it with toy, green toy, or toy crocodile.
+ And it will be able to estimate the likelihood score for that.
+ So how can we ground planning with scene?
+ So now the robot has been navigating the scene, and I give an instruction called recycle the
+ Coke can.
+ So what it would actually do, just like humans, I would immediately have a list of items in
+ my mind that I should plan with.
+ So somewhat like an established planning domain, I propose this object.
+ This actually might-- this skill might need a Coke can and a recycle bin.
+ And then, because I already built this open vocabulary context, I'm able to find this
+ location of the Coke can and recycle bin in the scene, and how can I approach them?
+ And then, because I have this object-- I have these objects, we can generate executable
+ options.
+ For example, let's say you-- let's say you-- the most naive way to do this is with templates.
+ That is, for every object, I generate options that is go to something, pick up something,
+ put down something.
+ But you can actually also generate it with large language models as well, if you have
+ the skill to execute them.
+ So this is really powerful.
+ For example, I tried before with large language models.
+ If you just give it a few demos like we did with the country and the food and mountains
+ before, you can let large language models to generate possible options.
+ For example, for knife, you can generate peel, cart, and different type of options.
+ So it can get more powerful.
+ Then given all these options, we can do scene-aware context-aware planning.
+ That is, what's available in the scene, what is not.
+ And then I can do this kind of planning.
+ Sure.
+ [INAUDIBLE]
+ Oh, like available objects?
+ [INAUDIBLE]
+ Yes, actually, also done with large language models.
+ I give it a few examples of instruction followed by a list of objects involved, instruction
+ of a list of objects involved, and I can propose it really reliably.
+ For example, we will be able to play with this at the end of the class, I think.
+ So it is like, for example, I just give it-- I don't know, like throw the Coke can in the
+ bin.
+ It's like Coke can, bin.
+ And then when it actually-- it's really, really powerful, because when I test it with really
+ weird, wild task for a robot, for example, fillet a fish, it actually proposed cutting
+ board, a knife, and a fish.
+ So it's all about large language-- prompting large language models here.
+ Every single step can be done with large language models here, except actually executing this
+ is why we still need to carefully-- we need to start in this class really hard, because
+ it is unsolved.
+ It's really hard.
+ Then compared to Seiken-- so above, it is Seiken, where I use language models and value
+ functions to find the most likely action among a fixed set of candidates.
+ So what we can do here is that we can actually propose executable options in the framework,
+ and we can also use affordance as before and try to find the most plausible action among
+ the candidates we generated.
+ So although the skills we have is still limited, in this case, we are able to expand the comparability
+ from a finite set of skills to infinite, because now we can navigate to arbitrary objects.
+ Previously, everything had to be card coded.
+ Now, like in the Google Kitchen, I'm able to ask you to go to-- I ask you to find Band-Aids
+ for me.
+ I heard myself find some Band-Aids or find some medicine for me.
+ It will propose I should go to the first aid station and then navigate there.
+ There is options that are previously not available in the original Seiken paper, and we are doing
+ that here.
+ And you will be able to see the-- Sorry, I should-- So this is-- So this is the-- So
+ this is-- So this is one task that's not achievable by Seiken before, because it just doesn't
+ have a lot of-- doesn't have this concept of a brown-- a woven basket in mind, because
+ it's not in their hard-coded list.
+ And here, I'm showing that with my new framework, it is able to achieve this task that's unachievable
+ before.
+ >> Brown multigrain chips in the woven basket.
+ The robot proposes two objects, woven basket and brown multigrain chips, to look up in
+ the same representation.
+ As visualized in the map at the bottom right, both objects are found and localized.
+ The robot then plans and does a task by combining large language model and affordances as visualized
+ on the top right corner.
+ To wash an apple, the robot proposes three objects, apple, tab, and sink.
+ Training a policy to wash items is beyond the scope of the project, so a simpler pick-and-place
+ version of the task is demonstrated here.
+ The robot correctly picks up the apple and puts it in the sink.
+ If we are unconstrained by available manipulation policies, we can lift the constraint on large
+ language models, and then it will output steps like turn on the tab as next action.
+ >> And the last one is also water the potted plant.
+ So all these tasks are previously unachievable by Seiken, because they have to have a finite
+ list of objects, while we don't.
+ So although this is really powerful, you know that we always need to bind available executable
+ actions to our language options.
+ And that is one of the hardest challenges now, and I think it's an exciting area of
+ research.
+ Once we can solve that problem, combined with this, we can actually have real everyday robots.
+ And then there is one last paper, which I'm going to go through very shortly.
+ Basically, with really powerful language models, you are able to synthesize programs, and you
+ can execute them as programs.
+ But I think we are running out of time, and I hope to show everyone some interactive demos.
+ For example, this is my chat GPT demo.
+ This is a conversation model.
+ So right here, I'm giving you a step-by-step instruction to make Beijing Kouya.
+ It's like deliberately confusing it by mixing two languages.
+ And it kind of gives me this instruction.
+ And you can ask a crazy thing.
+ Someone even built a virtual machine inside it, because you can CD into something and
+ can generate what's inside the directory, your home directory.
+ You do conversation with it, like make directory, and it will output what's in the directory
+ is your newly created folder in it.
+ It's really crazy.
+ You should play with it.
+ It's free.
+ And then this is not free.
+ I paid a little bit for it.
+ So this is GPT-3.
+ So here is what we actually used in the second paper in my follow-up.
+ So basically, I give it a bunch of demonstrations.
+ These are the few short examples.
+ And before the class, I just tried bring me a banana from the banana launch.
+ And it's kind of generated the things.
+ Although in the actual paper, we use a much bigger, even bigger language model compared
+ to GPT-3 here.
+ And in the context, I give 10 demonstrations that have a great variety.
+ Here it's just pick and place.
+ I think it's still really powerful.
+ So what about-- let's try something.
+ Let some students suggest something.
+ Who wants to suggest a task for you to play?
+ [INAUDIBLE]
+ Folder laundry?
+ I see.
+ Is this a correct way to spell laundry?
+ OK.
+ [LAUGHTER]
+ OK.
+ [LAUGHTER]
+ Well, at least it says fold.
+ But like in-- yeah.
+ I got the results on that.
+ On charge GPT.
+ OK.
+ So I'm going-- yeah.
+ I asked for step-by-step.
+ Yeah.
+ You kind of need to-- it's naughty.
+ And then you're prompted to--
+ [LAUGHTER]
+ Yeah.
+ This is just the most naive demo.
+ But with more templates, you'll be able to-- if you give it more diverse demos, it will
+ also be able to generate more diverse things as well.
+ For example, here you already know that I need to use action fold.
+ OK.
+ Let's try something else.
+ You can also type things like-- I don't know.
+ Let's try this.
+ I'm thirsty.
+ Help me out.
+ Ah.
+ How about solve a Rubik's Cube?
+ [LAUGHTER]
+ Yeah.
+ I'll probably ask you to find someone who knows how to solve Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try this.
+ I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ It's not bad.
+ Yeah, yeah, yeah.
+ If you coded this kind of skills with the trajectory planning algorithm, maybe I will be able to
+ solve it.
+ [LAUGHTER]
+ Yeah.
+ Also, feel free to play with chat GPT.
+ You can find all kinds of crazy stuff.
+ What do you want to ask?
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ Yeah.
+ Yeah, yeah, yeah.
+ Exactly.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So I'm going to try to solve a Rubik's Cube.
+ [LAUGHTER]
+ OK.
+ So why is that I can-- instead of using doc, I can use my code.
+ And the chat GPT actually gave him a bunch of answers, saying that because the code,
+ it has first, and it's a valid alternative to doc to make this dish.
+ [LAUGHTER]
+ So you can actually, yeah, scan it.
+ Awesome.
+ Yeah, feel free to--
+ [APPLAUSE]
+ People can come up and play, I guess.
+ Yeah.

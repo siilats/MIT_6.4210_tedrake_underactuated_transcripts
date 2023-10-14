@@ -1,0 +1,1402 @@
+ [SIDE CONVERSATION]
+ OK, let's do it.
+ I want to spend one more lecture today saying, I think,
+ not enough, but I feel like this is
+ such a big topic of learning state representations.
+ There's entire conferences on it and the like.
+ But I hope to say a few more interesting things about it
+ and make you think about it today.
+ So the problem, in my mind, of intuitive physics
+ is largely a problem of learning models, which
+ is a problem of system identification.
+ That's what the control people called it before,
+ or lots of people called it before.
+ And fundamentally, it's about taking input/output data
+ from a system.
+ So you're given data in the form of-- I'll
+ use this as my shorthand for the trajectory of data
+ of u and y plus a parametric model, typically
+ a parametric model, like we have been writing in state space
+ form, for instance.
+ I'll say it like this.
+ These are my parameters.
+ This might depend on the parameters, too.
+ And the goal is to find the parameters,
+ find my parameters theta, to minimize my objective, my system
+ ID objective.
+ Some form of prediction error.
+ I talked very briefly last time about saying
+ there's a difference between a one-step error
+ versus a long-term error.
+ There's also many different notions of error.
+ If anybody has thought much about online optimization,
+ the new way to talk about error in this setting
+ would be as regret, using the language of regret.
+ But basically, I want to predict my y's given my u's,
+ and I'd like to minimize my prediction error from the model
+ and from the data.
+ So again, I always try to start a little bit
+ with some bigger picture, and then
+ we'll dive into some examples and some details.
+ I want to appreciate this in the bigger picture of the things
+ we've been doing in class.
+ This is one of the problems you can ask,
+ given those equations.
+ But it's actually-- there's many questions you ask--
+ we've been asking on those equations.
+ So the slightly more exhaustive form of this
+ is that we could, in general, have dynamics
+ that are time-varying.
+ They depend on state.
+ They depend on u.
+ They have potentially random inputs, w.
+ This is all the things we've been talking about.
+ And now we're emphasizing the parameters, theta.
+ Same thing for y.
+ Can depend on all of those things.
+ And by the way, in code, now you maybe appreciate finally--
+ or maybe you still don't appreciate,
+ but you might not like-- but this set of things
+ is exactly what we call the context in Drake.
+ That's just why it's a structure.
+ It has inputs, states, parameters, et cetera.
+ It exactly maps to that picture of the world.
+ And because sometimes you need all of them,
+ sometimes you need some of them, it's just a structure.
+ And that's why we write the code in that way.
+ And what's nice is that in this view of the world,
+ in this dynamical systems view of the world,
+ f could be a multi-body plant.
+ f could be a neural network.
+ Even more interesting, f can be a system, a diagram,
+ that has a multi-body plant and a neural network,
+ maybe an inverse dynamics controller, all put together.
+ And what I'm saying here still holds.
+ And I can still describe it with some parameter vector theta
+ that I search over in order to solve some input-output
+ identification problem.
+ And in fact, there's a lot of work
+ that's going on now where people are saying,
+ what if I do identification over both the trajectory
+ optimization and the model, for instance?
+ Or there's lots of different combinations
+ where thinking about f as being an entire diagram that
+ has some autonomy inside it can be an interesting version
+ of the problem.
+ So think about this as my general palette of models
+ that we're thinking about.
+ And it's just kind of cute, maybe kind of nice
+ to realize that all the things we've
+ been talking about in class are just slightly different takes
+ on what we're doing with that set of equations written
+ in that form.
+ Simulation, for instance, is just given x0 and a bunch
+ of u's.
+ Solve for x, basically.
+ You're given the parameters.
+ You're given all those other things.
+ But that's basically just solving for x
+ by integrating forward.
+ And planning is just, if I'm given some objective,
+ maybe I'm given x0, solve for some trajectory like this.
+ Given x0 plus an objective.
+ Solve for x.
+ OK?
+ Perception, certainly in its state estimation form,
+ is just, again, this is given now my parameters,
+ maybe given my observations, my actions that I know I put in,
+ and my parameters, solve for x.
+ And system ID is, given the data we talked about,
+ solve for theta.
+ But these are all very related problems.
+ They must be.
+ Very related problems making slightly different attacks
+ at the basic governing equations.
+ And I think sometimes we see them.
+ We see all that.
+ The particular way that you address this problem,
+ when y is a point cloud, can leverage particular structure
+ of those equations that you don't think about typically
+ when you think about planning.
+ But they really have to be the same thing.
+ It's just a matter of specialized algorithms
+ exploit special structure in the equations.
+ OK?
+ And to some extent, I mean, there's
+ been trends towards just thinking about,
+ let's do gradient descent at this level of abstraction
+ for any one of these chains.
+ OK?
+ But I think it's very powerful to think about it
+ in that bigger context.
+ In fact, the difference between perception and system ID
+ is sort of subtle.
+ You could almost argue they're solving,
+ in this level of detail, the same problem.
+ Because some people would say perception also
+ has to estimate the parameters.
+ To estimate the parameters, you probably
+ have to estimate the state.
+ Really, the only difference is the perception's
+ trying to do it online.
+ And system ID typically is done in batch,
+ where you have a collection of data
+ before that you're trying to estimate the parameters.
+ Is that useful to think of it in that level?
+ I don't know if that's just-- but that's very important to me.
+ That's very-- this is partly why I
+ think the systems view of the world,
+ the dynamical systems view of the world,
+ is so powerful that I can apply my same reasoning about all
+ of these different algorithms to systems that might just
+ be a multi-body system, might have a neural network,
+ might have a whole combination of them.
+ And what changes as I change the model class, if I change f,
+ basically last lecture, we said when f is a multi-body plant,
+ then there's special structure, make system ID,
+ or parameter estimation in this case,
+ a least squares problem, at least some descriptions of it,
+ a least squares problem.
+ [WRITING ON BOARD]
+ That's what I spent most of the lecture on last time,
+ was telling you some of the details about how that plays
+ out.
+ And I really want you to think about this
+ as there's a spectrum of models.
+ Let's say this is my model spectrum here.
+ And in some cases, there's very structured models
+ with specialized algorithms.
+ And there's some very general models
+ with more general and potentially weaker algorithms,
+ maybe necessarily weaker algorithms.
+ So I'd say that, I guess, on the extreme part of the spectrum,
+ if f and g are, let's say, linear models or tabular
+ models, those tend to be the two cases that we can do the most.
+ We can bring the biggest, most powerful algorithms to bear.
+ Then that's like the extreme structure.
+ We can understand everything.
+ I'd say that the multi-body models are somewhere over here.
+ I would say neural networks are, broadly speaking,
+ deep learning stuff is here.
+ It's not actually all the way to the extreme.
+ I think there are just big black box game engine
+ kind of simulators are harder, right?
+ Potentially.
+ If I, for instance, have-- if g is a game quality rendering
+ engine, and it's sitting on the GPU, and I can put doubles in
+ and I get doubles out, but I can't really ask for any
+ structure there, that's maybe the hardest case, the most
+ general types of models.
+ And all we can hope to do there are the kind of black box
+ optimizations we've talked about.
+ If you can assume that your models-- if f is at least known
+ to be differentiable, then that's a little bit more
+ structured, and I can do gradient descent type
+ algorithms, right?
+ And if I go farther and farther, then there's more
+ structure and more powerful algorithms.
+ But you're making more assumptions, right?
+ So the linear models cannot capture the
+ complexity of the world.
+ The multi-models can capture a little bit more, but not all.
+ They're not going to capture deformable things and fluid
+ things very efficiently.
+ So what I kind of want to do today is just walk a little
+ bit more on this space and give you a couple more nice
+ examples on that line.
+ Some places, maybe even here, we can learn a
+ little bit more.
+ So there's some things about the system ID problem that are
+ very clear if you go all the way here.
+ There's some things that we're learning more and more on that
+ end of the spectrum.
+ Is the real world on the right?
+ Is the real world--
+ yeah, I guess the real world is on the right.
+ If you're--
+ I mean, the real world is not a mathematical object that I'm
+ searching over.
+ So I guess I wouldn't put it directly on the spectrum.
+ These are the class of models, right?
+ But it's a good question.
+ You also have a question for perception.
+ Yeah.
+ Can you give an example about control in the [INAUDIBLE]
+ in what case you would try to estimate x given u and y?
+ What if y is u observed?
+ In the state estimation case, y is u observed?
+ Yes.
+ The standard state estimation--
+ I mean, if I think in the simplest case, maybe it'd be
+ the Kalman filter, for instance, where it really
+ explicitly takes in the actions that you've sent and
+ the observations you get and estimates x.
+ And I think more generally, that's true.
+ It is true that a lot of times when we've talked about point
+ cloud perception or whatever, we haven't used this.
+ We've been just learning static models from y to some
+ pose, but I think as soon as you think about that as a
+ dynamical system and do a filtering kind of approach,
+ then you would naturally bring in u.
+ Great question.
+ There's a bunch of different entries on here, and I wanted
+ to avoid listing all the things.
+ There's a lot of shiny things up and down the axis here, and
+ I don't want to just list them off.
+ I'll just call out a few examples that I think I can say
+ something interesting about.
+ But people--
+ I was looking to see if they're here, but there's a
+ few people in the class that are working on like
+ Lagrangian neural networks, for instance.
+ They're an interesting point on the spectrum.
+ And there are many, many entries.
+ OK, so multibody can't do everything, right?
+ We've certainly--
+ I'm the first to admit that.
+ I don't--
+ so the multibody parameterization, saying that
+ F equals ma kind of is the governing law that makes some
+ assumptions, and I don't feel bad about that.
+ I think that limits the things it can describe, but it also
+ gives power to my ability in terms of writing algorithms,
+ but even in terms of generalization
+ and other things.
+ So neural networks are general purpose function
+ approximators, and they're good for that.
+ That's an important thing to have.
+ But a physics-based model makes a few specific things,
+ saying I will not be able to describe things where energy
+ is not conserved, because I'm putting in as a conservation
+ law, conservation of energy.
+ Mass is conserved.
+ These are priors that you're putting in, strong priors,
+ which limit the class of models you can describe, but
+ also allow you to generalize more broadly.
+ So you have to just decide, I think, and that's the name of
+ the intuitive physics game is how can we walk up and down
+ this, use the structure when it makes sense, but not give
+ up the structure too quickly.
+ And there's things like spreading peanut butter on
+ toast, where I know mass is conserved, but I don't know
+ how to use that efficiently with multibody equations.
+ So there's plenty of work to do for you
+ guys in the middle.
+ Let's just-- limitations of multibody parameterizations,
+ just to name a few specific ones.
+ So to be clear, when I'm talking about the multibody,
+ we've been talking about our state representation is
+ positions and velocities.
+ And our parameters, we saw in the last lecture that the
+ parameters are only of a few types.
+ They're the inertial parameters, mass, moment of
+ inertia, center of mass, location.
+ And then the kinematics of the multibody tree, so the
+ location of the joints relative to each other and
+ stuff like this.
+ These are the parameters of the multibody family, as
+ typically written.
+ Which doesn't immediately address--
+ I think we can grow them towards it, but it doesn't
+ immediately really address perception.
+ Why?
+ Because the joint positions and velocities of the
+ multibody state may or may not be observable, for instance.
+ We don't have any notion of that in this set of
+ equations.
+ That's an easy one to say.
+ I think an important one that I almost feel bad about, like I
+ feel it's almost a historical accident, that we have ways
+ to talk about uncertainty over velocities or uncertainty
+ over positions.
+ But we don't really have uncertainty over geometry.
+ Like somehow, almost historically, we haven't
+ really explicitly parametrized the geometry parameters in
+ those equations and written distributions over them.
+ And ML has been pushing us on that front.
+ But I would say that's obviously important to
+ multibody equations, but somehow tucked in as a detail.
+ It's typically assumed that we know the geometry.
+ And like I said, for a robot, you kind of just get a ruler
+ and measure the link length and don't worry about it.
+ But when it's contact mechanics and the geometry
+ influences your friction cone and whether you're in contact
+ or not, those become vital to the time evolution of these
+ equations.
+ But it's surprising maybe that we haven't spent enough time
+ thinking about distributions over geometry and the like.
+ And building on that, I think the multibody, as we've
+ written, I wrote multibody, but really the stuff we've
+ been talking about is rigid body.
+ Multibody could be deformable, but we haven't talked yet
+ about deformable or fluids or I'll just say plus plus, all
+ the non-rigid type physics.
+ And maybe there's one more really big one I'll put in my
+ list here is that this paradigm doesn't immediately give
+ ideas about state abstraction or model reduction.
+ So I'll try to fill in with some examples some of those,
+ but this is just kind of motivating why I'll take a
+ couple deep dives today.
+ So what do I mean by that?
+ So I gave an example of chopping onions
+ as a hard problem.
+ I know that I could definitely simulate chopping onions.
+ I could write the pose and velocities of
+ all the onion pieces.
+ But that's probably not the model I want to identify and
+ use for planning and things like this.
+ There should be some way when I'm chopping onions to somehow
+ write a simpler version of that set of equations that
+ still builds on physics, I would think, but doesn't have
+ to have the entire complexity.
+ So these are just big maybe--
+ there's things that I chose not to put in here, but this
+ is maybe a big list of things that we could do better.
+ Questions at the high level?
+ Is it helpful to talk about the high level stuff?
+ I mean, any questions at the high level?
+ You guys can fire whatever.
+ These are now the--
+ we're getting into the deep dives of more boutique
+ lectures, I guess.
+ So feel free to ask off-the-cuff questions.
+ OK, let me take a slightly deeper dive on this side and
+ tell you a few things that if you're willing to put even
+ more structure in--
+ I could have picked tabular or linear, but I'll pick linear
+ first, OK?
+ And I think there are lessons because we have such good
+ algorithms for this.
+ There's a few more lessons that you can take from the
+ linear case that will apply all the way.
+ But they're just so hard to think about over here.
+ And they're so clear over here, OK?
+ So let's just think about what it would look like to do
+ linear system ID.
+ And I'm going to do it at a level that gives you some
+ details, but also I'm trying to aim at the big points here.
+ So in this case, the model class I'm searching over in
+ state space form is always written like this, basically.
+ Very classic form of the linear state space equations.
+ V is just another--
+ we typically distinguish between the observation noise
+ and the process noise.
+ So the system ID question here is given again data U and Y.
+ Find now A, B, C, and D to explain the data.
+ A, B, and C, and D are matrices.
+ They're the matrices that are the parameters.
+ Those are my thetas.
+ If I were to vectorize them, they'd be my thetas.
+ And the solution is, again, as I promised, is very powerful,
+ very clear.
+ And it's going to go back to least squares.
+ It's going to look a lot like the multibody in the simple
+ case, and it's going to do more than the multibody could in
+ the output case.
+ So let's just-- remember in multibody, I assumed actually
+ the data was U and X. I chose to say that I had positions
+ and velocities, and I had torques, and I was trying to
+ find the masses and inertias and lengths.
+ So the analogy here would be, if I wanted to do a closest
+ analogy to what we did in multibody, let's
+ do a subproblem.
+ Let's say, given U and X, find A and B. That's actually
+ the closer analogy to what we did in the multibody.
+ And it's going to line up just like-- remember what we did in
+ the multibody case?
+ We took our data matrix, we took our parameter vector, and
+ we did least squares to minimize the one-step error.
+ Guess what?
+ We can do exactly the same thing here, and it's even
+ simpler because we've already written it in a linear form.
+ So we're going to make our data matrix times our
+ parameter, and the way I'll write that is I'm going to say,
+ let's call it X--
+ what did I call it?
+ I'm going to minimize over A, B. I'll write it in the rolled
+ out form first, just to make it clear.
+ What I want to do is I'm trying to use Xn as the
+ prediction and Xn as the data when I write these things
+ down, just to make my notation clear.
+ OK, I'd like to, over all of my data n, I'd like to just
+ find the A and B that make that least squares residual as
+ small as possible.
+ That's a one-step prediction error, and I just want to find
+ the minimum of A and B. Is that clear?
+ Yeah.
+ And I can do that in the data matrix form by constructing a
+ big data matrix.
+ It's actually easier to write it--
+ it's cleaner to write it as a couple data matrices.
+ Let's make the data matrix for X, which is just--
+ I'm going to stack all my--
+ these are vectors, right?
+ So they're horizontally concatenated X. I'll do my U
+ data matrix.
+ And then I'll even--
+ even though it's redundant, I'll make my X prime data
+ matrix, which is just this whole thing shifted by 1.
+ And then I can write this as a big least squares problem
+ where I'm just trying to find A and B times the big
+ matrix X U minus X prime.
+ So it's just another way to write that in matrix form.
+ And I only chose to write it because it forms the data
+ matrix like we did in multibody, and I just want you
+ to see that connection.
+ This was before my masses, my lumped parameters.
+ Now it's my AB matrix.
+ But if multibody was least squares, it's not surprising
+ that linear is least squares in that case.
+ And you can just solve this.
+ This is just backslash operator in MATLAB or NP dot
+ linalg dot whatever.
+ That's just a simple least squares.
+ And it has important properties that people
+ understand very well so that in my governing equations,
+ if W-- as long as W and V are uncorrelated with X and U,
+ then this is an unbiased estimator.
+ And people know a lot about-- if you
+ want to write a system ID paper and get it accepted
+ at the sys ID conference, you have
+ to say all these things about asymptotic, biasness,
+ everything like this.
+ It's a very mature discipline.
+ The thing we hadn't done in multibody
+ that we can do in linear systems is the input output case.
+ And if I don't even know what X is,
+ I want it to discover X for me.
+ That's beautiful.
+ That's what we hope our neural nets will do.
+ But we can do it perfectly here.
+ And doing it reveals a few details
+ that really are general.
+ If we do the input output data back to the given U and Y,
+ the algorithm that I'll describe here is roughly--
+ there's a few different names for it.
+ But at least the most famous piece of it
+ is called the Hohkalman algorithm.
+ There's tools in MATLAB to do it.
+ The one that would be closest to what we're doing today
+ is N4SID, if you care.
+ If you ever go looking for it, that's
+ the particular choice of realization we're going to use.
+ So this is more complicated, because it's only
+ a least squares problem the way I've written it.
+ You'd like to say I'm going to just form a new data matrix
+ again.
+ But if I have this, I can't fit A and B in the least square
+ sense unless I have-- until I have X. X is unknown.
+ I have to somehow solve for X and A and B jointly.
+ What's amazing is that you sort of can do that.
+ And the reason is because as much as complex as that is,
+ you can actually write Y as a function
+ of the history of U's.
+ So the first thing you have to look at
+ is a model of the form-- this one's potentially biased, OK.
+ But it turns out this is actually a history of U's.
+ And this is a big matrix, potentially.
+ OK.
+ I can write Y at some long step as a rolled out version
+ that's still linear in the entire history of U's.
+ OK.
+ This thing, if you remember or if you connect back
+ to when you learned signals and systems, if you took 003
+ or there's a couple different places,
+ you might have seen something like this.
+ This is the impulse response of the dynamical system.
+ It's often called the Markov parameters of the model.
+ The point is we can actually fit a model without solving
+ for X that describes the input/output data.
+ And this one we can just use least squares for.
+ OK.
+ And then as a second step, we can
+ try to recover A, B, C, and D that explains G.
+ That's the magic of the linear system ID case.
+ But when you do that, that second step, find A, B, C,
+ and D to describe G, reveals some fundamental truths
+ about system identification that I want you to see.
+ OK.
+, And one of the most important ones
+ is that there are many different-- the optimal solution
+ of reconstructing G given A, B, C, and D is not unique.
+ Fundamentally, it's not unique.
+ It's only unique up to a similarity transform.
+ That's-- if you know your linear algebra,
+ that's a precise statement.
+ But it's super-- I can make it intuitive
+ in a couple examples.
+ OK.
+ So if my goal in life is to model the input/output data,
+ and I've chosen some state realization x on the inside,
+ that's only a construct inside my system.
+ It has no bearing on the actual data.
+ So if someone were to come along and just say,
+ I'm going to change x1 and x2.
+ I'm just going to flip them.
+ I'm just going to switch x1 and x2.
+ That would change the rows of A and B. And it has to-- and C.
+ It has to describe the same model.
+ Is that clear?
+ Example, if I were to permute x, let's say x1 and x2.
+ [WRITING ON BOARD]
+ OK.
+ So I can tell I don't have you guys.
+ So does that make sense?
+ Right?
+ So if you were to train a neural network,
+ a recurrent neural network, an LSTM or something like this,
+ OK, and it's got 50 hidden units.
+ If you were to just change the 49th unit with the 30th unit,
+ so just go ahead and just make a switch operation, right?
+ It's going to describe the same-- you have to wire
+ the inputs.
+ You have to change the inputs and outputs.
+ It's going to be the same model.
+ OK?
+ Why is that important?
+ Because the optimization is not unique.
+ And that can actually affect the way you--
+ you can't write an optimization that
+ asks to get a unique solution to some complicated cost
+ function, right?
+ In linear system ID, we're very clever about knowing
+ how to parameterize a family of models that
+ are the same up to a similarity transform.
+ And I don't know how to do that for LSTMs,
+ but the problem has to be there.
+ OK?
+ Sorry.
+ [INAUDIBLE]
+ That's right.
+ That's right.
+ That's why I realized my notation was overloaded,
+ and I switched.
+ Thank you.
+ Yeah.
+ Right?
+ So if you just said, I'm going to just take those units,
+ take the activation of those units, and just flop them,
+ it's the same model.
+ OK?
+ That means when gradient descends trying to go downhill
+ to fit your recovery, it had to make a choice.
+ I'm going to use neuron 32 for the red brick,
+ and I'm going to use neuron 33 for the blue brick.
+ OK?
+ And that choice is-- the fact that there is a choice that it
+ has to make is bad for optimization,
+ I would say, in general.
+ Right?
+ That means you have to do some symmetry breaking.
+ There's a place where gradient descent had to make a choice
+ and go down one of these things.
+ And in general, in more mature optimizations,
+ we structure the parameter landscape
+ so that it doesn't have to make that choice.
+ And I would imagine there's a future, that we're not there
+ yet, where we're parameterizing neural networks better so
+ that it has this kind of topology.
+ OK, that's just an example.
+ Similarly, the scale of the state variables x
+ is unspecified.
+ If I could take x and say I want it
+ to be between negative 1 and 1.
+ I could say x, I want it to be negative 10 and 10,
+ negative a million and a million.
+ Right?
+ And I'll just-- if you give me an a, b, and c that
+ has one of those values and you want
+ to change it to the other one, I'll just scale up the input,
+ scale down the output, and have exactly the same model.
+ There's nothing in the problem that tells me how to scale that.
+ OK?
+ So in linear systems, we have beautiful understanding
+ of how to-- Ho Cullman makes a particular choice.
+ It says, of the similar models, I'm
+ going to pick the model that is well-balanced numerically
+ so that the controllability-- I know
+ I'm saying things that I haven't given you the background for--
+ but that the controllability Gramian and the observability
+ Gramian are balanced.
+ And those are called the balanced realizations.
+ And we understand a lot about them.
+ And maybe it's happening in implicit regularization
+ in the neural models somehow.
+ But it seems absent from the discussion.
+ OK?
+ So I really think that there's so many lessons from this.
+ I know how to do it in linear systems,
+ but that lesson has to be important for more
+ complicated systems.
+ That's not unique to linear systems.
+ But the clarity of the math in linear systems
+ allows us to make progress on it.
+ And we have to shove that down the road.
+ OK?
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ I mean, I think-- so one way it might manifest
+ would be different architectures.
+ CNNs were a beautiful architecture
+ for translation and variance in images.
+ I can't tell you that for state-space models in control,
+ this is the right architecture to use.
+ We haven't given you the architectures
+ that are obviously right.
+ I think there's lessons that might say that you should
+ have an architecture that is-- I mean,
+ we're seeing equivariant networks and things like this.
+ These kind of things, I think, will potentially
+ render the problem-- some of the lessons
+ from linear optimization up into the more complicated settings.
+ Yeah?
+ I don't know if your question was also about what
+ will be the benefit.
+ Is that part of what you were asking?
+ Because I was also kind of curious,
+ do you think that the benefit of having these things included
+ in the optimization and the parameterization
+ is that it's about overall just better--
+ Good.
+ --lower predictive error and generalization?
+ Good.
+ So that's fair.
+ So how would I measure the success of the neural network
+ versions of system ID right now?
+ I mean, I think they tend to be very successful in getting
+ the training error low already.
+ I think there's questions about how well they
+ generalize or extrapolate.
+ I think there's questions about how reliable the convergence
+ is.
+ I mean, I think we can almost always make them work.
+ But if I knew it was going to work,
+ I'd be in a different space.
+ So I think it's just levels of maturity of that
+ and potentially extrapolation kind of benefits.
+ Great question.
+ Yeah.
+ [INAUDIBLE]
+ Yeah.
+ So you can ask the question that for all A, B, C, and D that
+ reconstruct G, choose the one that balances--
+ that is somehow balanced in some-- so there's
+ an extra objective saying all things equal.
+ I'd like the amount of control effort
+ coming in to roughly be the same as the number--
+ the amount of observation requirement.
+ I mean, it's a-- yeah.
+ It's very clear.
+ It's controllability Gramian and observability Gramian.
+ I'm trying to say it clearly.
+ But there's a very natural objective
+ that you say I'd like basically my eigenvalues
+ for one half of the problem to be
+ the same as my eigenvalues of the other half of the problem.
+ And that's a natural choice in the linear system setting.
+ Yeah.
+ OK.
+ So let me just show you-- the linear systems
+ can't do everything.
+ They're too weak of a model class.
+ But they can do maybe more than you think.
+ So let me just as an example of connecting to perception
+ with linear systems.
+ I have an example here of doing-- imagine
+ I have a two-link robot, a cart-pull system.
+ And I've got key points on it that I'm tracking.
+ And you'd like to ask the question--
+ so the cart-pull is an interesting nonlinear system.
+ If it's going through its entire state space,
+ then you need nonlinear equations to capture it.
+ But if it stays near a fixed point at the bottom or the top,
+ then actually you expect the linear system to be OK.
+ So let me just paint that picture.
+ So I have my multi-body plant, my scene graph and everything.
+ I've added a simple system, which just takes the body
+ poses and renders some key points, my little key point
+ system.
+ And all I'm going to let the system ID-- that's my output
+ now-- I'm going to let my system ID look at the key points
+ and look at the u's.
+ It does not know that this is a two-link robot that
+ has position and velocity.
+ It doesn't know that it's coming from f equals ma.
+ It's just saying, describe the input/output data.
+ And if we think it's done a good job,
+ then I would hope it kind of figures out
+ that there should be about two states with two positions
+ and two velocities.
+ So this is the data I fed it.
+ I generated a few rollouts of-- I made a simple balancing
+ controller just to keep it in the linear regime.
+ But this is my little cart-pull system.
+ You see it's a little cart with wheels and a pull that
+ could fall down, my inverted pendulum thing.
+ But it's staying-- the pull's not falling a lot.
+ I kept it in the linear regime, which
+ is the limitation of this model.
+ But that's what it has to work with.
+ Given that view, find me a model.
+ I don't know what the state is.
+ Come up with a state realization that
+ describes that input/output data.
+ And I run the Hoh-Kolman algorithm on it.
+ And I get a-- this is my input/output data.
+ Oh, that was just waiting for me to press the next one.
+ This is what my impulse response looks like,
+ which is the data's impulse response and the model's
+ impulse response.
+ It did a pretty good job.
+ And what's important here is that I
+ can solve for any choice of the number of state variables.
+ I can ask, what's the best A, B, C, and D?
+ And it'll tell me what's the reconstruction error given
+ a choice of-- I did zero states, one state, two states,
+ three states, whatever.
+ And what you see is that there's a lot of error
+ if you have zero state.
+ It's not an input/output static map.
+ You get one state, it gets better.
+ Two states, it gets a lot better.
+ After four states-- we know the real nonlinear equations
+ have four states.
+ After four states, you have diminishing returns.
+ So something good in the linear regime,
+ we have tools that find the state representation, even
+ a nice state representation by some understanding,
+ that figures out that that data came
+ from a system that has two degrees of freedom with two
+ velocities.
+ Sorry, yeah?
+ So why does it still improve when you add more states
+ than it actually has?
+ Because the system's not linear.
+ And because it has noise and other things,
+ you could try to start explaining the noise.
+ It's not that it-- yeah, it can't
+ do a perfect reconstruction given the input/output data I've
+ given it with any number of states, actually.
+ Did I make that point well enough?
+ Maybe.
+ This is what I'd like LSTMs to do, too.
+ And we do see that sometimes.
+ You can go in and you can look at the behavior
+ of a recurrent network and try to identify
+ what a particular state it's doing.
+ It's just more complicated.
+ And here we can understand it.
+ [INAUDIBLE]
+ The dimension of D is fixed, yes.
+ So the reason that I made that plot
+ is that you can solve it for any particular choice of state.
+ So I say try one state.
+ Then I have a clear parameterization.
+ I can solve the problem.
+ And because it's only one variable to search for,
+ this is what people do in practice, even
+ for really complicated systems.
+ You can just say, how many states am I going to give it?
+ And you expect a diminishing returns.
+ And at some point you say, I've got a good model at four
+ states.
+ [INAUDIBLE]
+ Do people like this version?
+ Or do you want to see robots pushing soft things around
+ or something?
+ I've got one more lesson from the linear case
+ that I could do, or I could skip to the graph networks
+ and stuff.
+ [INAUDIBLE]
+ I think the number of key points is--
+ it's relatively insensitive, of course, at some point.
+ But it's sensitive in a particular way in which
+ the noise floor, basically.
+ I think the key points, for instance, at the end of the pole
+ are probably doing a lot of the work in some sense.
+ And if I took away the ones at the bottom,
+ it would be-- but the way to think about that
+ is because of the signal-to-noise ratio
+ between the noise I'm injecting in both measurement
+ and process compared to the magnitude of the signal,
+ how much it tells me about the dynamics.
+ I suspect I could just do it with half the key points
+ and it would be fine, especially if I kept the ones at the top.
+ Yeah.
+ What do people want?
+ Choose your own adventure.
+ Task-relevant states, approximate information states.
+ How do you learn a state that doesn't
+ have to reconstruct all the observations?
+ He votes for that.
+ And we have one vote, so I guess the majority has it.
+ OK.
+ Silence doesn't pay.
+ OK.
+ Let me tell you quickly about task-relevant models.
+ It's not a closed discussion in linear systems by any means.
+ So I would say in input-output reconstruction,
+ we're pretty mature.
+ This notion of learning task-relevant states
+ is still pretty new.
+ And I think we're going back and understanding it
+ in the linear system setting in order
+ to go forward with the more complicated.
+ OK.
+ So this is my standard model.
+ But if you think about what u and y are in our robot context,
+ u might be torques, y might be pixels.
+ And there's a bunch of people in the state representation
+ learning world that have nicely told the story
+ that reconstructing the observations
+ is more than you need to solve control problems.
+ So this is one of the ones I think
+ that makes the point nicely.
+ So Amy Zhang has a nice line of work
+ where she says, OK, if you're an autonomous car,
+ there's features of the pixel space that just are not
+ relevant to driving.
+ And there's others that matter very much.
+ OK.
+ If you're trying to learn a model for decision-making,
+ not for just prediction, then it might
+ be that predicting that there's a barn or a tree
+ is your kind of wasting state and making your problem
+ harder, potentially.
+ It might be very hard to construct that.
+ So maybe an extreme example is that you're just
+ trying to solve one of the RL gym examples,
+ and someone's playing a movie behind the cheetah.
+ And if your task is to do model-based RL for something
+ on the cheetah, you shouldn't try
+ to reproduce the gone with the wind
+ or whatever's playing in the background.
+ Right?
+ That's just a lot of work to reconstruct those.
+ It would require a lot of state.
+ So how do you not do that?
+ Right?
+ The prediction cost, the standard sort
+ of reconstruction cost from system ID
+ asks you to reconstruct all the observations.
+ That was always the classic framing.
+ So there's a lot of interest and some nice work,
+ I think, on learning task-relevant models.
+ And I have to pick a slice to tell you,
+ but I think the one that complements the linear story
+ is a particular version.
+ Now, actually, I know some people
+ are working on things like student-teacher kind
+ of models of this.
+ That would be one way to-- well, I'll
+ make that connection when it makes sense.
+ OK.
+ So what makes a model good for decision making?
+ Right?
+ What makes a good x?
+ Ultimately, what makes a good x is
+ if I can write my optimal policy as a function of x.
+ Right?
+ The real objective would be if someone told me
+ what the optimal policy was, I would
+ like to find an x that captures enough information
+ about the task so that I can make, as a function of x,
+ optimal decisions.
+ I think that's a very natural way to say what would be a task
+ relevant x.
+ And the claim from that picture is
+ that knowing where the barn is should not affect my policy.
+ Therefore, it doesn't need to be an x.
+ Knowing where the road is very much decides this,
+ and so it must be an x.
+ So this metric of saying x should
+ be sufficient to make optimal decisions
+ is a nice metric for task relevance.
+ The problem is the way we're doing this so far
+ is that our goal of system identification
+ is so that we can build a controller.
+ There's a chicken and the egg problem.
+ If someone has to tell you the optimal controller,
+ then this objective directly is tough.
+ People try.
+ People will say, like, I'll do-- this
+ is where the student-teacher kind of idea comes in,
+ for instance.
+ There's ways that people will try
+ to find surrogates for that optimal policy
+ and find an x that is sufficient for predicting it.
+ But there's a nice idea, an interesting theorem,
+ and I like thinking it through in the linear systems case.
+ In the reinforcement learning, dynamic programming,
+ optimal control world-- I guess I can-- you guys know all those,
+ so I can say RLDP, optimal control world--
+ it turns out that if x is sufficient to predict the one
+ step reward, then it's also sufficient for making
+ optimal decisions.
+ That's pretty cool.
+ If x is sufficient to predict the one step reward or cost,
+ then it's sufficient for this problem.
+, OK?
+ So an interesting way to think about that
+ is that really I have a system going on here,
+ but it kind of has two outputs, right?
+ I have the full observations, and I also have-- at every n,
+ I have a reward function, a scalar reward function.
+ This might be high dimensional images,
+ but this is always a scalar reward.
+ And it turns out, theorem, if you have a state inside here
+ that can perfectly predict reward,
+ then building a controller based on that state
+ can perfectly predict the optimal policy.
+ The reward is a function of x and u in general.
+ Yeah?
+ So one step reward-- like, sufficient to predict
+ one step reward, the prediction is
+ predicted in that case.
+ That's a different thing.
+ So I'll just repeat it.
+ So Leroy says, well, since reward is a function of x and u,
+ then that doesn't seem surprising.
+ But x is high dimensional.
+ I'm only giving you a scalar.
+ Right?
+ I'm giving you a scalar observation.
+ And it's not clear that you can go from a scalar observation
+ back to a huge state, internal state.
+ So my question was, is one step reward
+ the reward on that state, or the reward on that state
+ and any detection that you take?
+ It's only the rewards you observe
+ during the rollouts in system identification.
+ So I've observed 10 rollouts of my system.
+ And I've got data for u.
+ I've got data for y.
+ And I've got data for r.
+ I don't have some magical ability
+ to see what reward would have been at different states.
+ But the model has to be able to predict.
+ So this is-- OK, maybe what your point is
+ is that this is a big requirement in the sense
+ that it has to be able to predict
+ the reward for all x's and all u's.
+ That's true.
+ Yeah.
+ But the good news is that it doesn't
+ require solving the optimal control problem.
+ That solving the optimal control problem
+ once you have this state is sufficient to actually--
+ you can solve it after.
+ You can first find your state representation.
+ So actually, the proposal that this suggests
+ would be that what you should really do
+ is think about task-relevant models
+ as doing system identification.
+ But instead of doing it from predicting
+ y as a function of u, you should try
+ to build a system model that just predicts
+ the reward as a function of u.
+ OK?
+ Now, where this gets more complicated
+ is that this theorem says I'm able to perfectly predict
+ reward, and then it's sufficient.
+ The interesting case is when this becomes an approximation.
+ And there's a nice paper called Approximate Information States.
+ We always call it AIS, which talks
+ about putting a bound on how well you can perform,
+ given a bound on how well you can predict your outputs.
+ So it goes into the approximation case.
+ This is also related if people have heard of bisimulation.
+ Bisimulation tries to do this kind of with state aggregation.
+ But if you've heard of bisimulation,
+ there's a nice line of work thinking about that, too, saying,
+ I'm going to combine two states in my MDP, for instance,
+ if they are identical with the view of the reward.
+ OK?
+ That's only useful if you've seen it.
+ So that's a super powerful idea.
+ And there's nice work now about saying, what can we understand?
+ Once I started thinking about this kind of idea,
+ the immediate question I asked is,
+ can we understand how that works in the tabular case?
+ And we've got a paper on that recently.
+ And can we understand how that works in the LQG case, the linear case?
+ And we submitted a paper about that at midnight last night.
+ This is ongoing.
+ I'm super excited about these ideas.
+ But that's a very different and exciting, I think,
+ view of what the model should do.
+ And I do think, naturally, the idea of a task-relevant model
+ is one that should be sufficient to predict the reward.
+ OK?
+ But this question of state representation
+ is really the first fundamental question, in my mind,
+ of what I mean by intuitive physics.
+ It's funny, because Josh Tenenbaum coined the word intuitive physics,
+ or he popularized it, certainly.
+ It came from cognitive psychology.
+ He popularized it in our world.
+ And he and I will be having a conversation about intuitive physics.
+ And about halfway in, we're almost always--
+ because we do this every once in a while-- almost always,
+ we realize halfway that you don't mean the same thing when
+ you say intuitive physics as I mean when I say intuitive physics.
+ OK, but for me, it's the search over models
+ and this question of how do you find states.
+ And then how do you-- the second question is control
+ with these approximate models.
+ And you can't decouple them completely, in my mind.
+ I think the quest is finding representations
+ that are rich enough, that are task-relevant enough, that
+ are tractable enough, both for system ID and for control design.
+ OK, so let's walk a little bit more back and forth
+ on that line of model complexity.
+ I want to tell you quickly about this work
+ that Danny Dreis did very recently.
+ And I just think it's awesome.
+ And it's just another example on the spectrum of complexity.
+ So let me set that up with-- again,
+ we talked about the various limitations of multibody.
+ One of them was not being able to talk about deformable objects
+ or not being able to talk about geometry.
+ And this is-- Danny's work was trying
+ to address that shortcoming.
+ And he did it with NERF, compositional NERF.
+ So let's say a very popular approach
+ in visual dynamic learning here is to say,
+ I'm going to take an image in.
+ I'm going to define my state x with an auto-encoder
+ kind of framework.
+ I'm going to predict an image out.
+ This would be-- do people know what auto-encoders are, roughly?
+ If you try to learn a neural network function,
+ let's say this would be my encoder.
+ This would be my decoder over here.
+ And my state is in the middle here.
+ I'm going to try to compress my image
+ into some small latent vector x so that I
+ can reconstruct the image.
+ This is very much not the task-relevant case.
+ This is the reconstruct the observations case.
+ And it's also missing the dynamics that I love.
+ But this is a very common approach.
+ And the reason it's nice is that you can train it directly
+ on images first and then think about the dynamics later.
+ So once you have that representation--
+ and by the way, in this world, everybody calls it z, not x.
+ That's the latent state, I'll call it, z.
+ And then people will try to learn a dynamics
+ model on that as a second pass, for instance.
+ And you can imagine trying to learn that parameter
+ to reconstruct the inputs and outputs with z.
+ But that has no notion of physics in it.
+ That has no notion of-- there's multiple objects
+ in the scene in it.
+ There's no notion-- there's no structure
+ that's coming from geometry.
+ So there's a line of work.
+ It started with-- for us, it started
+ with Yunzhu Li, who started using
+ some of the geometric reconstruction,
+ the NERF, the volumetric reconstruction, as a decoder.
+ So these neural radiance fields here
+ are a choice, are one way that you
+ could imagine going from some vector representation
+ up to a complete image by these volumetric reconstructions.
+ So Yunzhu and his collaborators started coming up
+ with latent states that had this extra requirement
+ that they needed to be able to do not only reproduce
+ the image, but also do novel view synthesis.
+ And they used this neural radiance field as a decoder.
+ But Danny thought, what's crazy about that
+ is that if you have multiple objects in the scene,
+ you're trying to compress all of them
+ into a single vector, a single NERF.
+ Obviously, there's multiple objects moving.
+ And they should each have their own geometry representation.
+ So let me tell you what it does.
+ And then we'll spend a little bit more on how it works.
+ So this is a simple manipulation pipeline.
+ Perception wasn't the major focus.
+ We made all the objects--
+ Danny made all the objects bright colors
+ so that masking and segmentation were easy.
+ He could have trained a mask R-CNN on this.
+ But he just said, I'll just make the shoe red
+ and the other objects very colorful.
+ And then he wanted to generate a data set of pushing.
+ And he just took his robot, put a blue cylinder on the end,
+ and started just moving it random vectors across the table
+ and shoving the objects around.
+ And he did this in two steps.
+ So the first step was, I'm going to look at the scene.
+ And I'm going to break it down into individual models based
+ on just the mask.
+ So mask R-CNN could have done it.
+ But we could do it with just color-based segmentation here.
+ I'm going to group the pixels and say, these pixels,
+ for the purple, this represents one view of that object.
+ And I'm going to train a NERF, effectively,
+ on just that object.
+ And I'll do the same thing.
+ I'll treat this one image as a observed view
+ of the original shoe from this angle, and similarly,
+ and so forth.
+ And then he's going to train a model here
+ that's using the NERF as its underlying geometry
+ representation in order to do this sort of reconstruction.
+ And he's learning a model on the NERF
+ that can predict forward dynamics.
+ So this is the rendered from the current observation.
+ This is the output of the model when
+ you started from the initial observation
+ and you just simulated forward.
+ The prediction error, the objective of our system ID,
+ is roughly the difference between those two
+ rendered images.
+ And in my mind, that worked.
+ It works incredibly well, just as an ability
+ to predict complex unknown objects forward
+ in time with physical interaction.
+ I was like, what?
+ Yes?
+ It's on the control of the [INAUDIBLE]
+ or is that being predicted?
+ In the data generation and this initial thing,
+ he's just open loop, straight line,
+ trajectory-- well, I mean, it's position controlled trajectories
+ like this.
+ Just something that--
+ OK, so it wasn't completely random.
+ He would just take the center of mass of the colors
+ and move through them.
+ I guess, but I mean, like, predicting the motion
+ of the end effect from the initial observation.
+ Yes.
+ Yes.
+ Yes, this is a long term prediction.
+ Yeah, yeah.
+ OK.
+ And it has the property-- this is
+ what you'd expect out of the compositional version
+ of the architecture-- is that it has the property that you
+ could put new objects down that have never
+ interacted with each other.
+ And it's surprisingly able to generalize fairly well.
+ It's not perfect.
+ You can easily find artifacts in the rendered images.
+ But it's actually able to predict how novel objects that
+ have never touched each other before would interact.
+ This is also not a super dynamic regime,
+ but it's a contact rich manipulation relevant regime.
+ And it even works for deformable objects.
+ This is-- yeah, here we go.
+ So this is, I don't know, a party snake or something.
+ Poor Danny.
+ Danny was a visiting student here
+ who arrived two weeks before COVID from Germany.
+ And so we mostly collaborated remotely.
+ And he went back to Germany and did all his experiments
+ in Germany.
+ So I only know these through the video.
+ OK, so that's a forward neural network model
+ that's predicting long-term deformations
+ of a deformable object that it had never seen before.
+ So that's cool.
+ And the way it works is this is-- I only
+ mean this as one example of a wider
+ class of interesting models that are from just a deep neural
+ network doing everything to like,
+ I'm going to put in a little bit of structure.
+ I'm going to admit that there's geometry.
+ I'm going to admit that there's some sort of contact
+ mechanics.
+ But I'm going to try to leverage the power of learning
+ a network.
+ So the way it works here is that for each of the images,
+ this is an image with multiple objects in it.
+ There's going to be a mask for each of those objects.
+ And there's going to be a trajectory of those masks.
+ Each one of those masks gets shoved through an encoder,
+ de-rendered with a nerf into a new image.
+ And you learn your latent vectors in this way.
+ And then you learn a dynamics model
+ using a graph neural network as the representation
+ because we don't know how many objects
+ there are going to be at runtime.
+ You want to be able to assemble new models.
+ So we use this graph neural network structure
+ where the neural net weight are on the edges of the graph
+ to do long-term predictions.
+ And you can then test, for instance,
+ by just de-rendering a future observation.
+ And that's what we showed you, the reconstruction
+ from a long-term simulation versus the reconstruction
+ from the original.
+ I could put my initial thing in, render to z, get an image out.
+ That would be the instantaneous reconstruction, if you will.
+ Or I can do the long-term simulation.
+ So you take your scene observation.
+ You decompose it.
+ You actually have to give not just
+ the actual pixels of the object, but a little bit of a buffer
+ around it in order for the nerf to learn
+ about the edges of the objects and stuff like this.
+ And then there's the prediction.
+ And it's only a very small--
+ so the one way that there's a little bit of physics bias,
+ if you will, is just that it's object-centric,
+ that there's a mask, our CNN-type network that's
+ doing segmentation and saying that there's
+ some number of objects and I want
+ to learn different models for different objects.
+ The second way is that when he makes the graph neural network,
+ whether you put an edge in or not
+ is dependent on whether the geometry representation
+ overlaps.
+ Those are the only physics-based biases in this model.
+ But they're enough to give stronger, longer-term,
+ long-horizon predictions.
+ So he did ablation studies, for instance,
+ where he said, I'll put all of the objects in the scene
+ and I'll assume that they can all interact
+ with all of the other objects.
+ And he compared that to say, OK, well, I
+ can take my nerf representation and just query,
+ are they overlapping?
+ Should there be any forces that interact between those two?
+ And that's a little bit of physics bias.
+ And it gives you these sparser adjacency matrices.
+ And naturally, it's an easier function
+ to learn and to roll out more stably into longer horizons.
+ And so surprisingly long, in my mind,
+ surprisingly long, long-term predictions.
+ And you can find errors.
+ And bricks will slowly kind of fade
+ into different colors and other things.
+ But it's surprisingly good.
+ [INAUDIBLE]
+ One open-loop prediction.
+ Oh, I'm sorry.
+ So every time the video resets, it's the next one.
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ And then Danny and everybody who's
+ building these types of models have
+ ways to do basic planning and control on top of them.
+ I would say we can talk a little bit at the very, very end--
+ it is almost the very, very end--
+ about the state of the art of those planning and control
+ algorithms.
+ But they're still weak, I would say.
+ So he did a RRT in the latent space in order to do this.
+ And he considered that the weakness of the work so far.
+ So it's future work.
+ But that task, just to make it clear,
+ he tried to push the blue squares into the blue region,
+ the yellow squares into the yellow region.
+ But the model, originally, before training,
+ had no idea what a cube was, what the dynamics of a cube
+ was.
+ There's no sense of mass or anything directly.
+ It's all embedded in the neural network.
+ One other thing I just have to at least mention
+ is that there's been a lot of nice work
+ on using particle representations.
+ So we talked about rigid body representations.
+ But if you want to do deformable objects or fluids
+ or other things, another choice that Jens has
+ done a lot of nice work on and other people
+ have done a lot of nice work on now
+ is to just represent your relatively complicated thing
+ with a bunch of fluids, a bunch of particles.
+ And some of the physics-based simulators
+ that you see out there actually do use particles, not
+ rigid bodies.
+ So NVIDIA Flex is probably the most famous one.
+ But they have great animations of semi-rigid things,
+ rigid things, fluid things, all interacting beautifully
+ by simulating bazillions of particles on a GPU.
+ So Yunzu was asking, well, can we
+ use that as our underlying representation
+ in a neural network?
+ And he's done a beautiful line of work
+ thinking about these kind of things,
+ where he would, again, use the graph neural network.
+ And he would add the edges in the graph
+ based on not only the location of the particles
+ relative to each other, but if they were particles associated
+ with a rigid object, they would have a different graph
+ topology and a different set of edges that would somehow
+ impose the rigid.
+ If they were deformable, if they were fluid,
+ they all had slightly different underlying elements.
+ And then he did these long-term rollouts
+ of really complicated things, of objects
+ that could blend into one big object, of rigid grippers.
+ We had a bunch of things that were like sticky white rice
+ that he was trying to squish into shapes up in the lab.
+ Of pretty complicated fluid simulations
+ that could be represented again in a neural network
+ and then used as a surrogate model for planning and control.
+ So those are just two instances on this landscape
+ of using a bit of physics and putting in more structure that
+ can potentially generalize more.
+ So I was telling Anthony as we walked in
+ that I feel like I could talk a bunch more
+ about these kind of things, especially
+ because I didn't say anything about how
+ you do control with these.
+ And that's another whole topic.
+ So let me just call out very quickly a few ideas about that.
+ Once you have a big model that's a compositional nerve
+ for a particle-based graph neural network or a feedforward
+ neural network, then there's a big question
+ about how do you do planning and control with that.
+ And the answers are surprising to me.
+ But a lot of times, the answers are,
+ even though they're differentiable,
+ people do black box rollouts, black box optimization
+ on that.
+ And there's, I think, some subtle reasons
+ that people have studied for why that is,
+ partly just because GPUs are good.
+ But that seems to be the state.
+ And they are strong algorithms, but they
+ tend to work with relatively limited planning horizons
+ compared to what we're used to with physics-based models,
+ relatively short planning horizons.
+ But the other thing that I think is almost more central to these
+ is that neural networks are able to represent almost anything.
+ And the training error does go to zero.
+ But they tend to predict very well near the training data
+ and do arbitrary things away from the data.
+ And if you write an optimizing-based planner
+ against that, then it's very easy for your optimization
+ to try to exploit the things that your model's not good at.
+ So I think the same way we had keys
+ to making a rock star behavior-cloning demo,
+ I think the keys to making a rock star learned model control
+ demo are to add in a few extra heuristics and costs that
+ force you to stay close to your training data.
+ And in general, physics-based models, you tend to say--
+ remember, I moved the ball once, and I
+ was able to throw it across-- well,
+ Jean-Jacques was able to throw it across the room, right?
+ That's extrapolation.
+ It's beautiful.
+ The neural network is going to be
+ able to model almost anything around the data,
+ but it has a harder time extrapolating,
+ partly because we haven't put any structure in.
+ Why should it?
+ So OK.
+ That's a quick blast through some intuitive physics.
+ I think it's a huge, open, exciting research topic,
+ and it's bringing in people from PureML
+ and people from robotics and people
+ from all kinds and perception and all that.
+ So maybe it'll bring in you guys, too.
+ I will see you Tuesday.
+ [BLANK_AUDIO]

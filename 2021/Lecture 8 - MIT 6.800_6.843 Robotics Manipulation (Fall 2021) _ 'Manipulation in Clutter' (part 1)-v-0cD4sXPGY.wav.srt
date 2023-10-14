@@ -1,0 +1,4316 @@
+1
+00:00:00,000 --> 00:00:07,760
+ I think we're ready to go, yeah?
+
+2
+00:00:07,760 --> 00:00:08,760
+ OK.
+
+3
+00:00:08,760 --> 00:00:11,240
+ Welcome back, everybody.
+
+4
+00:00:11,240 --> 00:00:18,840
+ So before I launch into the technical part, let me just make sure-- so the PSET was released
+
+5
+00:00:18,840 --> 00:00:20,600
+ this morning.
+
+6
+00:00:20,600 --> 00:00:26,720
+ But I want to make sure you're also thinking about the looming project proposal first draft,
+
+7
+00:00:26,720 --> 00:00:28,360
+ and just say a few words about that.
+
+8
+00:00:28,360 --> 00:00:31,300
+ So some of you have already been working on teaming.
+
+9
+00:00:31,300 --> 00:00:35,240
+ Thank you for those of you that are already thinking about that, or thinking about your
+
+10
+00:00:35,240 --> 00:00:36,240
+ projects.
+
+11
+00:00:36,240 --> 00:00:39,280
+ Feel free to be reaching out to us now if you have ideas.
+
+12
+00:00:39,280 --> 00:00:46,840
+ The goal for the first draft is for you to put together a somewhat well-formed idea,
+
+13
+00:00:46,840 --> 00:00:51,080
+ but that will be-- it's fair to say, is this a good project?
+
+14
+00:00:51,080 --> 00:00:55,680
+ We're going to give you feedback on the first draft, expecting that you might have picked
+
+15
+00:00:55,680 --> 00:00:59,640
+ up something too big, picked up something too small.
+
+16
+00:00:59,640 --> 00:01:02,320
+ And our goal is to help you on that with the first draft.
+
+17
+00:01:02,320 --> 00:01:07,560
+ Ideally, you will have your teams locked in for the first draft, and we're just optimizing
+
+18
+00:01:07,560 --> 00:01:10,440
+ your proposal and discussing it with you.
+
+19
+00:01:10,440 --> 00:01:16,000
+ And that's our best chance to give you direct feedback on the written part.
+
+20
+00:01:16,000 --> 00:01:19,840
+ If a little bit of team shuffling happened because of changes in the direction or something
+
+21
+00:01:19,840 --> 00:01:21,280
+ from the first draft, that would be OK.
+
+22
+00:01:21,280 --> 00:01:27,480
+ But really, ideally, before that first draft, you will have your teams locked in and a pretty
+
+23
+00:01:27,480 --> 00:01:29,920
+ good idea of what you want to do.
+
+24
+00:01:29,920 --> 00:01:31,840
+ Feel free to reach out to us now.
+
+25
+00:01:31,840 --> 00:01:34,680
+ The 6-800 folks are going to get feedback in two forms.
+
+26
+00:01:34,680 --> 00:01:38,640
+ They'll get the technical feedback from the three of us, and then you'll get the writing
+
+27
+00:01:38,640 --> 00:01:41,520
+ feedback from the CIM staff.
+
+28
+00:01:41,520 --> 00:01:44,800
+ The grad students will get just our feedback.
+
+29
+00:01:44,800 --> 00:01:50,400
+ And I think this will be clear on the submissions, but the 6-800 folks are going to submit on
+
+30
+00:01:50,400 --> 00:01:58,600
+ Canvas, and the 843 will submit on Gradescope.
+
+31
+00:01:58,600 --> 00:02:00,320
+ I'm excited to see what you come up with.
+
+32
+00:02:00,320 --> 00:02:03,440
+ The projects are always the best part of class for me.
+
+33
+00:02:03,440 --> 00:02:06,320
+ I just get to see, and I get to learn, honestly.
+
+34
+00:02:06,320 --> 00:02:09,360
+ A lot of these questions, like we said one about teaser the other day, I just don't know
+
+35
+00:02:09,360 --> 00:02:14,240
+ how well it works on manipulation problems where the points might be arbitrarily small.
+
+36
+00:02:14,240 --> 00:02:19,340
+ That was just one example, but I get to figure things out by watching you guys try and tell
+
+37
+00:02:19,340 --> 00:02:21,160
+ me what worked and what didn't work.
+
+38
+00:02:21,160 --> 00:02:26,160
+ So pick good projects so we can learn a lot.
+
+39
+00:02:26,160 --> 00:02:27,160
+ Good.
+
+40
+00:02:27,160 --> 00:02:32,880
+ So let me make sure that we're starting the next piece of the class, which I've called
+
+41
+00:02:32,880 --> 00:02:37,620
+ in various places either manipulation and clutter or bin picking, because that's the
+
+42
+00:02:37,620 --> 00:02:40,760
+ specific instantiation of it we'll think about.
+
+43
+00:02:40,760 --> 00:02:46,700
+ But let me just make sure the roadmap so far is clear.
+
+44
+00:02:46,700 --> 00:02:51,540
+ So we started with a quick discussion of the hardware basics.
+
+45
+00:02:51,540 --> 00:02:56,900
+ But then the way I want you to think about rolling out the capabilities that you have,
+
+46
+00:02:56,900 --> 00:03:01,820
+ so you're getting more and more functional in your manipulation tools.
+
+47
+00:03:01,820 --> 00:03:04,280
+ First thing we did is we assumed perception was given.
+
+48
+00:03:04,280 --> 00:03:07,920
+ We just knew where the object was, and we talked all about kinematics and how to do
+
+49
+00:03:07,920 --> 00:03:14,420
+ a basic controller to just reach out and grab it, move something from point A to point B.
+
+50
+00:03:14,420 --> 00:03:19,420
+ Last time, the last section was removing that assumption of perception, and we're going
+
+51
+00:03:19,420 --> 00:03:25,420
+ to start at least from depth, reasoning about pose estimation, find that known object in
+
+52
+00:03:25,420 --> 00:03:26,420
+ the scene.
+
+53
+00:03:26,420 --> 00:03:32,180
+ But that was just a beginning view of what the perception problem is.
+
+54
+00:03:32,180 --> 00:03:37,020
+ So what we're going to do now is we're going to continue to make that more and more rich.
+
+55
+00:03:37,020 --> 00:03:39,140
+ Our tools are going to be more and more robust.
+
+56
+00:03:39,140 --> 00:03:41,700
+ We're going to start thinking about more complex scenes.
+
+57
+00:03:41,700 --> 00:03:47,820
+ Now we'll have many objects, which brings its own problems, and more diverse objects.
+
+58
+00:03:47,820 --> 00:03:51,780
+ So our tools are going to have to deal with the diversity of the objects.
+
+59
+00:03:51,780 --> 00:03:57,820
+ This will lead us into the deep perception tools in one of the upcoming lectures.
+
+60
+00:03:57,820 --> 00:04:02,220
+ But first, we're even just going to be thinking about how do we deal with all these objects?
+
+61
+00:04:02,220 --> 00:04:05,900
+ What does it do to our geometric perception, for instance?
+
+62
+00:04:05,900 --> 00:04:11,500
+ And in general, we'll try to keep now the perception and control as both topics in the
+
+63
+00:04:11,500 --> 00:04:12,500
+ class.
+
+64
+00:04:12,500 --> 00:04:17,380
+ We will no longer assume perception is handed to us.
+
+65
+00:04:17,380 --> 00:04:21,900
+ In this first wave, even though the scenes are getting complex, we're still doing what
+
+66
+00:04:21,900 --> 00:04:25,660
+ I would consider to be relatively simple manipulation, kind of pick and place.
+
+67
+00:04:25,660 --> 00:04:30,860
+ So we want to locate and compute geometrically where I can get in and make a good grasp and
+
+68
+00:04:30,860 --> 00:04:35,660
+ move it to point A to point B. I made the point in the first lecture that
+
+69
+00:04:35,660 --> 00:04:37,700
+ manipulation is more than pick and place.
+
+70
+00:04:37,700 --> 00:04:41,980
+ So when I'm loading the dishwasher, I don't move like that.
+
+71
+00:04:41,980 --> 00:04:43,380
+ I have much more.
+
+72
+00:04:43,380 --> 00:04:45,340
+ I have in-hand reorientation.
+
+73
+00:04:45,340 --> 00:04:49,380
+ I might be bumping up against things to let things slide in my hand because I made intentional
+
+74
+00:04:49,380 --> 00:04:50,380
+ contact.
+
+75
+00:04:50,380 --> 00:04:53,620
+ There's all these things we're going to get to, but not yet.
+
+76
+00:04:53,620 --> 00:04:57,380
+ First we're going to stick with-- we're going to get it from point A to point B, but the
+
+77
+00:04:57,380 --> 00:04:59,300
+ scene is complicated.
+
+78
+00:04:59,300 --> 00:05:04,460
+ And we'll just keep leveling up.
+
+79
+00:05:04,460 --> 00:05:12,700
+ So I think as we start the conversation about more complicated environments, I think one
+
+80
+00:05:12,700 --> 00:05:20,980
+ of the first obvious natural questions would be, how do you stimulate or test in your robot
+
+81
+00:05:20,980 --> 00:05:23,860
+ all the random environments that you want to use?
+
+82
+00:05:23,860 --> 00:05:27,540
+ So this is work from Greg.
+
+83
+00:05:27,540 --> 00:05:33,700
+ He's done sort of random sinks inspired by the dish loading examples, but also random
+
+84
+00:05:33,700 --> 00:05:36,100
+ kind of kitchen type environments.
+
+85
+00:05:36,100 --> 00:05:43,340
+ And he's looked into probabilistic languages for generating diverse environments in simulation
+
+86
+00:05:43,340 --> 00:05:45,420
+ maybe that can be calibrated to the real world.
+
+87
+00:05:45,420 --> 00:05:51,340
+ We'll get back to that if we can in the more advanced lectures.
+
+88
+00:05:51,340 --> 00:05:55,300
+ But my point for today is actually this is super hard.
+
+89
+00:05:55,300 --> 00:05:59,100
+ In general, I'd say that's super hard.
+
+90
+00:05:59,100 --> 00:06:03,180
+ If you're autonomous, I'm going to switch slides just because that's going to distract
+
+91
+00:06:03,180 --> 00:06:04,180
+ people.
+
+92
+00:06:04,180 --> 00:06:12,300
+ But if you're like an autonomous driving company, for instance, the cache of value that you
+
+93
+00:06:12,300 --> 00:06:15,980
+ have is the number of miles you've driven in the real world and the number of times
+
+94
+00:06:15,980 --> 00:06:21,660
+ you've taken someone that-- and it took the real world data and turned that into a simulation
+
+95
+00:06:21,660 --> 00:06:22,660
+ scenario.
+
+96
+00:06:22,660 --> 00:06:26,980
+ The number of scenarios you've had of random things that happen in the world is like your
+
+97
+00:06:26,980 --> 00:06:30,700
+ treasure chest of experience that you have.
+
+98
+00:06:30,700 --> 00:06:35,860
+ And whoever has more bigger treasure chests feels like they're doing really well.
+
+99
+00:06:35,860 --> 00:06:40,220
+ The same thing would be kind of true in manipulation, but we haven't had the same scale of effort.
+
+100
+00:06:40,220 --> 00:06:45,000
+ We haven't had people manually labeling kitchens yet.
+
+101
+00:06:45,000 --> 00:06:49,100
+ Maybe that's next year.
+
+102
+00:06:49,100 --> 00:06:54,300
+ So far, there are shortcuts that people are using in manipulation, simpler instances of
+
+103
+00:06:54,300 --> 00:06:58,600
+ the problem where you can generate random scenes sort of simply.
+
+104
+00:06:58,600 --> 00:07:03,740
+ They're still very useful for feeding some of the pipelines we want to feed.
+
+105
+00:07:03,740 --> 00:07:08,060
+ When we're training deep learning systems, we want to have lots of examples of images
+
+106
+00:07:08,060 --> 00:07:12,840
+ that are relevant and lots of examples of robots picking up random things.
+
+107
+00:07:12,840 --> 00:07:15,440
+ And you don't need it to be an elaborate kitchen to make that true.
+
+108
+00:07:15,440 --> 00:07:18,120
+ You can just dump a lot of things in a bin, for instance.
+
+109
+00:07:18,120 --> 00:07:21,500
+ That's what we're going to start with.
+
+110
+00:07:21,500 --> 00:07:27,980
+ But it's a sliver of the much bigger problem of trying to actually parameterize the whole
+
+111
+00:07:27,980 --> 00:07:34,220
+ world, writing a distribution over all possible worlds, not in a multiverse kind of way, but
+
+112
+00:07:34,220 --> 00:07:38,820
+ in a what could I possibly see if I wanted a robot to work in everybody's kitchen kind
+
+113
+00:07:38,820 --> 00:07:43,820
+ of way.
+
+114
+00:07:43,820 --> 00:07:47,260
+ So here's an example, actually very early on at TRI.
+
+115
+00:07:47,260 --> 00:07:51,500
+ One of the ways we started, we said we want to start feeding our machine learning hungry
+
+116
+00:07:51,500 --> 00:07:53,660
+ algorithms with data.
+
+117
+00:07:53,660 --> 00:07:56,300
+ And lots of people have done variants of this.
+
+118
+00:07:56,300 --> 00:07:58,460
+ This is just TRI's version of it.
+
+119
+00:07:58,460 --> 00:08:00,860
+ We call it the clutter clearing task.
+
+120
+00:08:00,860 --> 00:08:06,040
+ And it was a very useful thing to get up off the ground where we basically can pour any
+
+121
+00:08:06,040 --> 00:08:11,060
+ object in the bin and watch the robot pick it up and put it in the other bin kind of
+
+122
+00:08:11,060 --> 00:08:12,060
+ all day long.
+
+123
+00:08:12,060 --> 00:08:15,980
+ And it's great because you can have important visitors.
+
+124
+00:08:15,980 --> 00:08:23,060
+ You say, put your wallet in there and maybe you give it back.
+
+125
+00:08:23,060 --> 00:08:30,260
+ But this robot really does run all day long for a long time, collecting lots of data,
+
+126
+00:08:30,260 --> 00:08:31,260
+ lots of grasps.
+
+127
+00:08:31,260 --> 00:08:33,380
+ It's a super useful pipeline to have.
+
+128
+00:08:33,380 --> 00:08:37,740
+ So let's make sure we can do that kind of pipeline.
+
+129
+00:08:37,740 --> 00:08:40,100
+ It is funny because there are some weird objects that get put in.
+
+130
+00:08:40,100 --> 00:08:44,140
+ So it just became throw any random object that's roughly the size of the gripper in
+
+131
+00:08:44,140 --> 00:08:45,140
+ there.
+
+132
+00:08:45,140 --> 00:08:46,620
+ It doesn't matter if it's soft or hard.
+
+133
+00:08:46,620 --> 00:08:47,980
+ This thing will just kind of pick it up.
+
+134
+00:08:47,980 --> 00:08:49,900
+ And people would throw the weirdest things in there.
+
+135
+00:08:49,900 --> 00:08:53,220
+ And then every once in a while, the robot, after running for eight hours or something,
+
+136
+00:08:53,220 --> 00:08:56,180
+ you'd look and it had thrown some of them out.
+
+137
+00:08:56,180 --> 00:08:59,820
+ Someone found this rubber duck that looked like Spock.
+
+138
+00:08:59,820 --> 00:09:01,140
+ Have you ever seen this?
+
+139
+00:09:01,140 --> 00:09:02,740
+ It's kind of like a rubber duck.
+
+140
+00:09:02,740 --> 00:09:03,740
+ And it always threw that one out.
+
+141
+00:09:03,740 --> 00:09:09,980
+ As far as I could tell, it was like always reject the Spock duck.
+
+142
+00:09:09,980 --> 00:09:13,420
+ Okay.
+
+143
+00:09:13,420 --> 00:09:21,580
+ So one of the things that happens as we start simulating, working in simulation on these
+
+144
+00:09:21,580 --> 00:09:27,340
+ more complicated scenes is that we have to get more advanced with our simulation.
+
+145
+00:09:27,340 --> 00:09:33,500
+ And simulation of complex scenes can be a pretty complicated thing.
+
+146
+00:09:33,500 --> 00:09:39,900
+ So to start, we'll just be talking about how do you populate a bin with lots of random
+
+147
+00:09:39,900 --> 00:09:40,900
+ objects.
+
+148
+00:09:40,900 --> 00:09:47,940
+ And the simplest version of that is just drop a bunch of objects out of the sky and you'll
+
+149
+00:09:47,940 --> 00:09:50,340
+ get a random set of configurations every time.
+
+150
+00:09:50,340 --> 00:09:53,900
+ Start picking them and moving them to the other bin.
+
+151
+00:09:53,900 --> 00:09:59,060
+ Now it's pretty interesting to think about, and I think by the end of the lecture, hopefully
+
+152
+00:09:59,060 --> 00:10:03,460
+ understand pretty well why that is the choice that people make in order to make these random
+
+153
+00:10:03,460 --> 00:10:07,500
+ bins of clutter.
+
+154
+00:10:07,500 --> 00:10:09,880
+ But it's pretty subtle.
+
+155
+00:10:09,880 --> 00:10:16,020
+ It doesn't have to be red bricks, although you know I love the little foam red brick.
+
+156
+00:10:16,020 --> 00:10:22,160
+ One of the classic data sets that people use in manipulation of just random household objects
+
+157
+00:10:22,160 --> 00:10:28,660
+ is the YCB, which is the Yale, Berkeley, and CMU.
+
+158
+00:10:28,660 --> 00:10:33,780
+ I always think of that in the wrong way, but it was CMU at the time, right?
+
+159
+00:10:33,780 --> 00:10:36,300
+ And so this is the data set.
+
+160
+00:10:36,300 --> 00:10:41,940
+ You'll see an unusually large number of spam cans and mustard bottles and sugar boxes in
+
+161
+00:10:41,940 --> 00:10:43,340
+ manipulation papers.
+
+162
+00:10:43,340 --> 00:10:44,340
+ And this is why.
+
+163
+00:10:44,340 --> 00:10:48,900
+ It's because there was a project early on to say, let's take some things you can order
+
+164
+00:10:48,900 --> 00:10:50,180
+ on Amazon.
+
+165
+00:10:50,180 --> 00:10:52,060
+ We'll scan them once at high fidelity.
+
+166
+00:10:52,060 --> 00:10:53,620
+ We'll give you good CAD models.
+
+167
+00:10:53,620 --> 00:10:55,540
+ And we'll give you rough inertial properties.
+
+168
+00:10:55,540 --> 00:10:57,340
+ And we'll distribute them to the world.
+
+169
+00:10:57,340 --> 00:11:01,980
+ And even say, if you write us a nice letter, we'll send you those actual parts.
+
+170
+00:11:01,980 --> 00:11:06,340
+ So everybody can have the same data and play with the same data in the different labs.
+
+171
+00:11:06,340 --> 00:11:11,860
+ Now unfortunately, Cheez-It, as a company, didn't comply.
+
+172
+00:11:11,860 --> 00:11:16,780
+ So now you buy a Cheez-It box at the store with the same SKU, and it says low carb on
+
+173
+00:11:16,780 --> 00:11:17,780
+ it.
+
+174
+00:11:17,780 --> 00:11:20,260
+ And so it's like your images are broken.
+
+175
+00:11:20,260 --> 00:11:21,660
+ But it's roughly the same.
+
+176
+00:11:21,660 --> 00:11:27,620
+ And the sugar boxes tend to leak sugar all over the lab, and then the mice come.
+
+177
+00:11:27,620 --> 00:11:31,580
+ But it's been pretty darn good to the field.
+
+178
+00:11:31,580 --> 00:11:35,780
+ There's a lot of other data sets out there that you might know about or have used if
+
+179
+00:11:35,780 --> 00:11:38,460
+ you work on computer vision.
+
+180
+00:11:38,460 --> 00:11:45,700
+ But a lot of them you would think you would want to use don't have enough information
+
+181
+00:11:45,700 --> 00:11:48,020
+ to be simulated in a manipulation context.
+
+182
+00:11:48,020 --> 00:11:52,540
+ So a lot of object data sets that are good enough for visual rendering don't have inertial
+
+183
+00:11:52,540 --> 00:11:55,220
+ properties or friction properties or other things.
+
+184
+00:11:55,220 --> 00:11:59,980
+ So you have to do some work to either make some assumptions or whatever.
+
+185
+00:11:59,980 --> 00:12:06,540
+ This is a data set that, with a little bit of work, can be good enough for simulation
+
+186
+00:12:06,540 --> 00:12:07,540
+ too.
+
+187
+00:12:07,540 --> 00:12:09,900
+ So it's been a bedrock.
+
+188
+00:12:09,900 --> 00:12:15,820
+ And you can drop random boxes and mustard bottles and spam cans from the sky.
+
+189
+00:12:15,820 --> 00:12:18,860
+ And I said it in the notes too.
+
+190
+00:12:18,860 --> 00:12:22,940
+ It always cracks me up that you can see the central limit theorem, even if it's spam cans
+
+191
+00:12:22,940 --> 00:12:25,740
+ and mustard bottles and Campbell's soup.
+
+192
+00:12:25,740 --> 00:12:34,540
+ You can just drop them, and they fall into these canonical distributions.
+
+193
+00:12:34,540 --> 00:12:38,300
+ And what's that going to do for us down the line?
+
+194
+00:12:38,300 --> 00:12:45,940
+ So we're going to make a grasping system that will reach into this and pick up any box and
+
+195
+00:12:45,940 --> 00:12:47,300
+ move it to the next side.
+
+196
+00:12:47,300 --> 00:12:52,200
+ You could imagine asking the question, should I estimate the pose of each box one at a time
+
+197
+00:12:52,200 --> 00:12:56,700
+ with ICP, with iterative closest point, ICP.
+
+198
+00:12:56,700 --> 00:12:58,120
+ And you could potentially.
+
+199
+00:12:58,120 --> 00:13:01,940
+ But we'll take a different approach that's going to be more robust and not assume as
+
+200
+00:13:01,940 --> 00:13:04,420
+ much about the known objects.
+
+201
+00:13:04,420 --> 00:13:06,380
+ We'll explore that too.
+
+202
+00:13:06,380 --> 00:13:11,180
+ But when you start taking overhead pictures like this, this is the stuff that we're going
+
+203
+00:13:11,180 --> 00:13:15,900
+ to, next week, start feeding into our machine learning pipeline.
+
+204
+00:13:15,900 --> 00:13:23,060
+ So if I can simulate diverse images of cluttered sinks, and I can, in simulation, make ground
+
+205
+00:13:23,060 --> 00:13:29,140
+ truth labels saying this pixel is associated with a Domino's sugar, and this one's associated
+
+206
+00:13:29,140 --> 00:13:34,140
+ with a Cheez-It, then that's the perfect cache of training data for training a machine learning
+
+207
+00:13:34,140 --> 00:13:39,660
+ system.
+
+208
+00:13:39,660 --> 00:13:46,940
+ So that was a little bit about the motivation for why we're going to generate cluttered
+
+209
+00:13:46,940 --> 00:13:47,980
+ scenes.
+
+210
+00:13:47,980 --> 00:13:54,700
+ But because the ask on the simulator has gone up significantly, and because I think it's
+
+211
+00:13:54,700 --> 00:13:58,780
+ important and I like it, we're going to talk about simulating contact.
+
+212
+00:13:58,780 --> 00:14:05,180
+ And my promise to you here is that I hope you will level up your use of simulation.
+
+213
+00:14:05,180 --> 00:14:12,380
+ Some people in your questions or comments or PSET have asked questions like, should
+
+214
+00:14:12,380 --> 00:14:15,980
+ I have had a physics course recently before I take this class?
+
+215
+00:14:15,980 --> 00:14:18,180
+ Is that sort of a prerequisite?
+
+216
+00:14:18,180 --> 00:14:20,980
+ We'll talk about equations of motion again here.
+
+217
+00:14:20,980 --> 00:14:24,380
+ But I do hope that you don't feel like it's a prerequisite.
+
+218
+00:14:24,380 --> 00:14:30,960
+ I think it's important to me, actually, that I think a skill as a roboticist is to be able
+
+219
+00:14:30,960 --> 00:14:34,260
+ to abstract a little bit.
+
+220
+00:14:34,260 --> 00:14:38,620
+ So roboticists sort of have to be the jack of all trades.
+
+221
+00:14:38,620 --> 00:14:39,620
+ And I think there is a skill.
+
+222
+00:14:39,620 --> 00:14:45,700
+ It really is a skill you will develop, continue to develop, of getting the gist of something,
+
+223
+00:14:45,700 --> 00:14:49,860
+ and knowing that you can dig down, and having the ability to dig down for details if and
+
+224
+00:14:49,860 --> 00:14:51,860
+ when you want.
+
+225
+00:14:51,860 --> 00:14:55,220
+ So for those of you that know something about multibody dynamics, I hope you'll get a lot
+
+226
+00:14:55,220 --> 00:14:56,220
+ out of this.
+
+227
+00:14:56,220 --> 00:14:58,940
+ For those of you that feel less comfortable, I hope you still get a bunch out of it and
+
+228
+00:14:58,940 --> 00:15:06,740
+ know where to dig in a little bit farther if it doesn't all land immediately.
+
+229
+00:15:06,740 --> 00:15:12,180
+ And then we'll end talking about some of the things I promised last time about static equilibrium.
+
+230
+00:15:12,180 --> 00:15:18,600
+ I think even if you don't love every equation I write, I think you will still become a more
+
+231
+00:15:18,600 --> 00:15:23,420
+ proficient user of simulation and at least understand why sometimes simulation blows
+
+232
+00:15:23,420 --> 00:15:26,420
+ up.
+
+233
+00:15:26,420 --> 00:15:55,180
+ OK, why is simulation hard for robotics, especially manipulation?
+
+234
+00:15:55,180 --> 00:16:01,340
+ I would contrast this with simulating a quadrotor or simulating an autonomous vehicle, most
+
+235
+00:16:01,340 --> 00:16:07,260
+ autonomous vehicles, or a lot of different robots that don't make and break contact with
+
+236
+00:16:07,260 --> 00:16:10,500
+ the world as an integral part of their operation.
+
+237
+00:16:10,500 --> 00:16:13,200
+ Those tend to be much easier to simulate.
+
+238
+00:16:13,200 --> 00:16:23,820
+ But when you start simulating contact, then things get a lot more difficult.
+
+239
+00:16:23,820 --> 00:16:29,900
+ In all the cases, the equations are still f equals ma.
+
+240
+00:16:29,900 --> 00:16:36,080
+ So there's nothing different about that set of equations for manipulation.
+
+241
+00:16:36,080 --> 00:16:40,860
+ So what makes simulating contact more difficult?
+
+242
+00:16:40,860 --> 00:16:45,580
+ There's two basic points that I'll make.
+
+243
+00:16:45,580 --> 00:16:59,700
+ I think one of the major reasons is that we get stiff differential equations.
+
+244
+00:16:59,700 --> 00:17:02,860
+ And I mean, technically, they're even differential inclusions.
+
+245
+00:17:02,860 --> 00:17:07,940
+ But I think even this idea of getting stiff equations, I'll make sure you understand what
+
+246
+00:17:07,940 --> 00:17:10,420
+ I mean by that.
+
+247
+00:17:10,420 --> 00:17:22,940
+ And the fact that the computational geometry gets very complicated and potentially fragile
+
+248
+00:17:22,940 --> 00:17:31,620
+ are sources of instability, of difficulty that are not present if you're a quadrotor
+
+249
+00:17:31,620 --> 00:17:35,820
+ flying through space without making contact.
+
+250
+00:17:35,820 --> 00:17:38,420
+ So what do I mean by stiff differential equations?
+
+251
+00:17:38,420 --> 00:17:43,580
+ I'll come over here and start fresh.
+
+252
+00:17:43,580 --> 00:17:49,900
+ Fundamentally, we have equations that look like f equals ma.
+
+253
+00:17:49,900 --> 00:17:52,700
+ And we need to integrate them numerically.
+
+254
+00:17:52,700 --> 00:17:56,300
+ So fundamentally, we're doing numerical integration of equations.
+
+255
+00:17:56,300 --> 00:18:21,860
+ So let me take a very overly simple sort of idea where I'm really just integrating a function.
+
+256
+00:18:21,860 --> 00:18:23,780
+ And there's no feedback or anything.
+
+257
+00:18:23,780 --> 00:18:26,660
+ So imagine I have some function f of t.
+
+258
+00:18:26,660 --> 00:18:28,580
+ And I want to take an integral.
+
+259
+00:18:28,580 --> 00:18:37,460
+ I want to figure out what is x at time t, which would be the integral from 0 to t of
+
+260
+00:18:37,460 --> 00:18:49,140
+ f of t prime dt prime plus whatever x of 0 was.
+
+261
+00:18:49,140 --> 00:18:51,540
+ How do I go about doing that?
+
+262
+00:18:51,540 --> 00:18:56,340
+ Well, thinking about what you already know about integration, you could use this to derive
+
+263
+00:18:56,340 --> 00:18:58,300
+ the basic rules of integration.
+
+264
+00:18:58,300 --> 00:19:02,540
+ But certainly, people use them in numerical integration too, is that you end up breaking
+
+265
+00:19:02,540 --> 00:19:12,340
+ up the problem into a series of discrete evaluations of your function and then taking coarse approximations
+
+266
+00:19:12,340 --> 00:19:13,340
+ of your function.
+
+267
+00:19:13,340 --> 00:19:19,820
+ That would be a trapezoidal type of approximation.
+
+268
+00:19:19,820 --> 00:19:22,620
+ And you integrate all the pieces.
+
+269
+00:19:22,620 --> 00:19:27,700
+ And if you're saying something about calculus, you take a limit as those intervals go to
+
+270
+00:19:27,700 --> 00:19:28,860
+ 0.
+
+271
+00:19:28,860 --> 00:19:32,220
+ But if you're writing an algorithm, they don't go to 0.
+
+272
+00:19:32,220 --> 00:19:35,180
+ There's some finite discretization that has to happen in your solver in order to make
+
+273
+00:19:35,180 --> 00:19:43,260
+ progress.
+
+274
+00:19:43,260 --> 00:19:44,260
+ And there's various ways.
+
+275
+00:19:44,260 --> 00:19:46,480
+ I mean, we have the trapezoidal rules to do this.
+
+276
+00:19:46,480 --> 00:19:49,340
+ You can also take higher order integration.
+
+277
+00:19:49,340 --> 00:19:55,940
+ You can evaluate more times inside each region and make a more advanced approximation, but
+
+278
+00:19:55,940 --> 00:19:58,540
+ still taking coarse time steps.
+
+279
+00:19:58,540 --> 00:20:03,900
+ There's lots that's known about that in the numerical integration.
+
+280
+00:20:03,900 --> 00:20:06,260
+ So what are the cases that make that hard?
+
+281
+00:20:06,260 --> 00:20:17,860
+ So if I had a different function here that did something like this, and I'm happily marching
+
+282
+00:20:17,860 --> 00:20:25,300
+ along and I take my random integration intervals and I'm approximating it with my segments
+
+283
+00:20:25,300 --> 00:20:33,900
+ here and I just got a little unlucky and had to go like that, you can get potentially very
+
+284
+00:20:33,900 --> 00:20:41,620
+ big errors in your integral if your function changes very quickly.
+
+285
+00:20:41,620 --> 00:20:54,100
+ So this would be f of t changing quickly.
+
+286
+00:20:54,100 --> 00:20:55,100
+ And what does it imply?
+
+287
+00:20:55,100 --> 00:20:58,700
+ It implies that you're going to need to take very small time steps.
+
+288
+00:20:58,700 --> 00:21:16,260
+ So if this is time, this is my time step here, it implies to get accurate solutions, you
+
+289
+00:21:16,260 --> 00:21:21,700
+ need delta t to be small.
+
+290
+00:21:21,700 --> 00:21:28,980
+ And at some point, if I make them small enough, I can get a good, accurate integration.
+
+291
+00:21:28,980 --> 00:21:33,180
+ But this one, as I've drawn it, is actually particularly frustrating, because you don't
+
+292
+00:21:33,180 --> 00:21:36,340
+ need small delta t everywhere.
+
+293
+00:21:36,340 --> 00:21:38,820
+ You only just need it right there.
+
+294
+00:21:38,820 --> 00:21:43,940
+ So it's kind of a waste of energy to take a constant delta t and just simulate slowly
+
+295
+00:21:43,940 --> 00:21:45,540
+ all the time, because that gets expensive.
+
+296
+00:21:45,540 --> 00:21:49,700
+ And that's when simulators get slow, is that they're taking these really small time steps,
+
+297
+00:21:49,700 --> 00:21:54,180
+ all because there's a fear of a possible event like this.
+
+298
+00:21:54,180 --> 00:21:57,620
+ But that happens.
+
+299
+00:21:57,620 --> 00:22:04,500
+ So this is one of the ways that someone would call it a stiff differential equation, when
+
+300
+00:22:04,500 --> 00:22:08,780
+ you have a difference in time scales or something that makes your time scale need to be very,
+
+301
+00:22:08,780 --> 00:22:09,780
+ very small.
+
+302
+00:22:09,780 --> 00:22:14,980
+ That would be considered a stiff differential equation.
+
+303
+00:22:14,980 --> 00:22:21,300
+ And this was a x dot, it's a differential equation, right?
+
+304
+00:22:21,300 --> 00:22:22,940
+ Stiff is a kind of overloaded word.
+
+305
+00:22:22,940 --> 00:22:31,740
+ People use it for when some variables have big time steps and others are changed fast.
+
+306
+00:22:31,740 --> 00:22:35,500
+ But this is fundamentally what's happening in contact.
+
+307
+00:22:35,500 --> 00:22:39,300
+ I think that's not totally surprising, that you could be moving along suddenly, and you
+
+308
+00:22:39,300 --> 00:22:40,900
+ make contact, and you get these big jumps.
+
+309
+00:22:40,900 --> 00:22:44,980
+ But we'll try to understand a little bit more deeply why that's happening and how people
+
+310
+00:22:44,980 --> 00:22:48,580
+ are addressing it.
+
+311
+00:22:48,580 --> 00:22:53,940
+ So contact leads to these stiff differential equations.
+
+312
+00:22:53,940 --> 00:22:55,100
+ Now it's interesting to think.
+
+313
+00:22:55,100 --> 00:22:59,460
+ So if you've thought about numerical integration before, there's actually a lot of tools to
+
+314
+00:22:59,460 --> 00:23:01,820
+ potentially address those kind of problems.
+
+315
+00:23:01,820 --> 00:23:07,060
+ If you're in MATLAB and you've got a suite of integrators to choose from, and you think,
+
+316
+00:23:07,060 --> 00:23:09,420
+ OK, I've got an equation, a system that does this.
+
+317
+00:23:09,420 --> 00:23:11,900
+ Well, there's a bunch of things I could try to do.
+
+318
+00:23:11,900 --> 00:23:32,580
+ So one of them would be variable step integration, also known as error controlled.
+
+319
+00:23:32,580 --> 00:23:38,540
+ And the basic ideas there would be you try to take big time steps, but you take a couple
+
+320
+00:23:38,540 --> 00:23:41,140
+ of different-- you try to take different integrations.
+
+321
+00:23:41,140 --> 00:23:48,660
+ So maybe I'll use a fourth order update and a fifth order update, both in my big steps.
+
+322
+00:23:48,660 --> 00:23:52,940
+ And if they match, I feel like I've got confidence that I've chosen a safe step.
+
+323
+00:23:52,940 --> 00:23:56,620
+ If they give very different results with two different integration schemes, then you think,
+
+324
+00:23:56,620 --> 00:23:57,900
+ oh, I missed something.
+
+325
+00:23:57,900 --> 00:24:00,300
+ I need to reduce my time step.
+
+326
+00:24:00,300 --> 00:24:05,420
+ And these can have the property that they can take big time steps here and then possibly
+
+327
+00:24:05,420 --> 00:24:08,840
+ take small time steps here.
+
+328
+00:24:08,840 --> 00:24:10,540
+ And they can work for robotics.
+
+329
+00:24:10,540 --> 00:24:15,260
+ Not many simulators use them because it's kind of annoying.
+
+330
+00:24:15,260 --> 00:24:18,620
+ Like if you want your simulation to play at real time, for instance, this is going to
+
+331
+00:24:18,620 --> 00:24:22,780
+ have something that is fast sometimes and then slow during the interesting parts and
+
+332
+00:24:22,780 --> 00:24:24,700
+ then fast again.
+
+333
+00:24:24,700 --> 00:24:26,860
+ So it's not as popular for that reason.
+
+334
+00:24:26,860 --> 00:24:28,300
+ Certainly game engines don't use that.
+
+335
+00:24:28,300 --> 00:24:32,220
+ Game engines want to have a locked time step and do this.
+
+336
+00:24:32,220 --> 00:24:37,020
+ We do have a whole integration suite in Drake to do that kind of stuff.
+
+337
+00:24:37,020 --> 00:24:41,620
+ And we actually, when we're debugging our fixed time step algorithms, which we also
+
+338
+00:24:41,620 --> 00:24:46,580
+ like, but we like the ability to run the error controlled integration to check that we get
+
+339
+00:24:46,580 --> 00:24:48,700
+ the right answer, even if it runs slow.
+
+340
+00:24:48,700 --> 00:24:55,820
+ And then it can use it as unit tests against our faster solvers.
+
+341
+00:24:55,820 --> 00:25:08,340
+ There's another idea there too, which is to do explicit event detection, where you might
+
+342
+00:25:08,340 --> 00:25:15,220
+ actually-- if this is a contact happening, you might actually tell your simulator about
+
+343
+00:25:15,220 --> 00:25:21,260
+ the existence of these events and say, look for the distance between my objects going
+
+344
+00:25:21,260 --> 00:25:23,160
+ crossing 0.
+
+345
+00:25:23,160 --> 00:25:25,340
+ You know about zero crossing detection.
+
+346
+00:25:25,340 --> 00:25:30,220
+ And you can sometimes do more to tell your simulators about that.
+
+347
+00:25:30,220 --> 00:25:36,980
+ But in addition to being potentially slow and this being great-- in fact, for my walking
+
+348
+00:25:36,980 --> 00:25:40,980
+ robots, we did a lot of event detection and we simulated very well and we're very happy
+
+349
+00:25:40,980 --> 00:25:42,140
+ with that.
+
+350
+00:25:42,140 --> 00:25:45,340
+ But in manipulation, it doesn't scale.
+
+351
+00:25:45,340 --> 00:25:50,540
+ If I have a robot foot that hits the ground every once in a while, I can register every
+
+352
+00:25:50,540 --> 00:25:52,060
+ event and be very happy with that.
+
+353
+00:25:52,060 --> 00:25:57,260
+ If I'm a dexterous hand grabbing a mug and I've got a million events happening in one
+
+354
+00:25:57,260 --> 00:26:00,140
+ grasp, it just doesn't work.
+
+355
+00:26:00,140 --> 00:26:08,740
+ So we traditionally haven't used event detection in manipulation.
+
+356
+00:26:08,740 --> 00:26:11,140
+ So what do people do?
+
+357
+00:26:11,140 --> 00:26:16,260
+ There's a lot of good work in the simulator world for multibody simulation of basically
+
+358
+00:26:16,260 --> 00:26:22,780
+ trying to figure out how to make these approximations robust, if not correct.
+
+359
+00:26:22,780 --> 00:26:26,220
+ We don't actually know-- well, a lot of them that we're using a lot, we don't actually
+
+360
+00:26:26,220 --> 00:26:27,780
+ have any guarantees that they're correct.
+
+361
+00:26:27,780 --> 00:26:31,100
+ Some of them might add energy into the system.
+
+362
+00:26:31,100 --> 00:26:33,700
+ There's some problems with some of them.
+
+363
+00:26:33,700 --> 00:26:35,900
+ But we try to take big time steps.
+
+364
+00:26:35,900 --> 00:26:41,220
+ And we think a lot about the integration scheme that we use inside there, often to the point
+
+365
+00:26:41,220 --> 00:26:47,380
+ where we are solving a small optimization problem to make the best update we can over
+
+366
+00:26:47,380 --> 00:26:49,460
+ a finite interval.
+
+367
+00:26:49,460 --> 00:26:54,180
+ And this has allowed people to take big time steps again and have performance simulators.
+
+368
+00:26:54,180 --> 00:27:03,780
+ So more advanced integration, and they often lead to these time stepping methods.
+
+369
+00:27:03,780 --> 00:27:18,560
+ One of the most famous is-- they're called solving linear complementarity problems, LCP.
+
+370
+00:27:18,560 --> 00:27:31,580
+ That's the name of the optimization solved at each step.
+
+371
+00:27:31,580 --> 00:27:35,460
+ And these don't call Mosek or Garobi or SNOPT.
+
+372
+00:27:35,460 --> 00:27:39,980
+ They're calling highly specialized solvers that are tuned in exactly for the multibody
+
+373
+00:27:39,980 --> 00:27:40,980
+ equations.
+
+374
+00:27:40,980 --> 00:27:43,380
+ They use as much as they can about the sparsity.
+
+375
+00:27:43,380 --> 00:27:49,260
+ And they have to be specialized in order to be effective.
+
+376
+00:27:49,260 --> 00:27:55,340
+ And still, I heard a great talk yesterday about a new integration scheme for these kind
+
+377
+00:27:55,340 --> 00:27:56,340
+ of methods.
+
+378
+00:27:56,340 --> 00:27:57,940
+ I mean, this is continued to be active research.
+
+379
+00:27:57,940 --> 00:28:07,380
+ And it can be a game changer for the field if someone makes progress in that.
+
+380
+00:28:07,380 --> 00:28:14,660
+ So I'm going to try to tell you at least the basic ideas behind here and connect it to
+
+381
+00:28:14,660 --> 00:28:15,660
+ the physics.
+
+382
+00:28:15,660 --> 00:28:19,380
+ So I want you to have an intuition from the physical equations.
+
+383
+00:28:19,380 --> 00:28:21,140
+ Why do these jumps happen?
+
+384
+00:28:21,140 --> 00:28:22,740
+ What can we do about them?
+
+385
+00:28:22,740 --> 00:28:24,780
+ And I want you to come away with a practical understanding.
+
+386
+00:28:24,780 --> 00:28:32,140
+ Like if my simulator looks like-- my objects look like they're Mexican jumping beans, what
+
+387
+00:28:32,140 --> 00:28:33,140
+ do I do about it?
+
+388
+00:28:33,140 --> 00:28:37,580
+ Or if my atlas used to explode, right?
+
+389
+00:28:37,580 --> 00:28:42,740
+ So we'd be working on our atlas in simulation, and it would literally explode.
+
+390
+00:28:42,740 --> 00:28:46,660
+ And that would be frustrating when you're working on a controller.
+
+391
+00:28:46,660 --> 00:28:51,900
+ And sometimes it was our fault, and sometimes it was the simulator's fault.
+
+392
+00:28:51,900 --> 00:28:55,740
+ But you should come away from this with an increased understanding of what you would
+
+393
+00:28:55,740 --> 00:28:57,940
+ do about it and why that sometimes happens.
+
+394
+00:28:57,940 --> 00:28:58,940
+ All right.
+
+395
+00:28:58,940 --> 00:29:09,980
+ So let's think about some of the basic physics of contact.
+
+396
+00:29:09,980 --> 00:29:20,540
+ I'm happy to take any questions about that, too, if people have any questions.
+
+397
+00:29:20,540 --> 00:29:22,020
+ OK.
+
+398
+00:29:22,020 --> 00:29:27,580
+ Let's say I've got a sphere, mass m.
+
+399
+00:29:27,580 --> 00:29:30,460
+ You're going to do this a bit on your p-set, too.
+
+400
+00:29:30,460 --> 00:29:31,460
+ Gravity's down.
+
+401
+00:29:31,460 --> 00:29:32,460
+ OK.
+
+402
+00:29:32,460 --> 00:29:35,180
+ I've got a ground plane.
+
+403
+00:29:35,180 --> 00:29:37,020
+ What does the sphere do?
+
+404
+00:29:37,020 --> 00:29:39,060
+ OK.
+
+405
+00:29:39,060 --> 00:29:40,380
+ So it's going to come down.
+
+406
+00:29:40,380 --> 00:29:44,660
+ Now, the natural thing to say is that's a ball that would bounce.
+
+407
+00:29:44,660 --> 00:29:48,940
+ But in our class, spheres don't bounce.
+
+408
+00:29:48,940 --> 00:29:51,300
+ We have-- yeah.
+
+409
+00:29:51,300 --> 00:29:54,640
+ In manipulation, you mostly don't want things to be bouncing around.
+
+410
+00:29:54,640 --> 00:29:59,100
+ And in practice, a lot of things you're picking up, you pick them up with a padded finger
+
+411
+00:29:59,100 --> 00:30:00,380
+ or something like this.
+
+412
+00:30:00,380 --> 00:30:08,140
+ But you can certainly expect it to bounce if there's some elasticity, if there's an
+
+413
+00:30:08,140 --> 00:30:11,140
+ elastic contact.
+
+414
+00:30:11,140 --> 00:30:16,620
+ The coefficient of restitution is what we talk about.
+
+415
+00:30:16,620 --> 00:30:17,620
+ But we drive it to 0.
+
+416
+00:30:17,620 --> 00:30:18,620
+ OK.
+
+417
+00:30:18,620 --> 00:30:33,340
+ So here, we're going to do inelastic.
+
+418
+00:30:33,340 --> 00:30:34,340
+ We can get back to elastic.
+
+419
+00:30:34,340 --> 00:30:36,860
+ It's not that we can't simulate.
+
+420
+00:30:36,860 --> 00:30:43,100
+ Elastic is just-- I think the exposition is cleaner if we just let it go, funk, OK, for
+
+421
+00:30:43,100 --> 00:30:44,100
+ now.
+
+422
+00:30:44,100 --> 00:30:45,100
+ Right?
+
+423
+00:30:45,100 --> 00:30:46,900
+ So that's an assumption.
+
+424
+00:30:46,900 --> 00:30:48,980
+ It's like an elasticity 0.
+
+425
+00:30:48,980 --> 00:30:52,780
+ So the ball is going to go down, hit the ground, and stop.
+
+426
+00:30:52,780 --> 00:30:53,780
+ OK?
+
+427
+00:30:53,780 --> 00:30:57,460
+ But it's actually really subtle how it happens, right?
+
+428
+00:30:57,460 --> 00:30:59,420
+ And it has all those issues, right?
+
+429
+00:30:59,420 --> 00:31:05,820
+ So the equations of motion here are simple, right?
+
+430
+00:31:05,820 --> 00:31:16,260
+ I can call it q or I'll call it z, I guess, just my z height here of the ball.
+
+431
+00:31:16,260 --> 00:31:17,940
+ It's just f equals ma, right?
+
+432
+00:31:17,940 --> 00:31:28,380
+ So it's just going to be negative g, mg, sorry.
+
+433
+00:31:28,380 --> 00:31:32,900
+ And when it's in the air, that's all that's happening.
+
+434
+00:31:32,900 --> 00:31:33,900
+ OK?
+
+435
+00:31:33,900 --> 00:31:39,300
+ When we hit the ground, when we get to the second configuration-- oops, let me make it
+
+436
+00:31:39,300 --> 00:31:44,860
+ exactly kiss the ground here for this.
+
+437
+00:31:44,860 --> 00:31:50,940
+ There's going to be a new force involved, which is going to be our contact force.
+
+438
+00:31:50,940 --> 00:31:55,740
+ We're going to have various notation to talk about spatial forces, right?
+
+439
+00:31:55,740 --> 00:32:08,340
+ So you remember we did spatial velocities already, accelerations, where we said the
+
+440
+00:32:08,340 --> 00:32:16,100
+ big V could have all the stuff.
+
+441
+00:32:16,100 --> 00:32:25,780
+ It's got a rotational component and a translational component, right?
+
+442
+00:32:25,780 --> 00:32:36,820
+ And we're going to have spatial forces, too, where I'll have a big F. Let's just say I'm
+
+443
+00:32:36,820 --> 00:32:41,260
+ going to have the translational torques, OK?
+
+444
+00:32:41,260 --> 00:32:48,500
+ And I'll have the small f be my translational velocities, OK?
+
+445
+00:32:48,500 --> 00:32:57,780
+ They can have a relative to b, all this stuff.
+
+446
+00:32:57,780 --> 00:33:03,060
+ They don't always need all that, but it's available, OK?
+
+447
+00:33:03,060 --> 00:33:08,940
+ In particular, we're going to typically work in a coordinate frame that's called the contact
+
+448
+00:33:08,940 --> 00:33:13,300
+ frame, which would be right here.
+
+449
+00:33:13,300 --> 00:33:16,600
+ OK?
+
+450
+00:33:16,600 --> 00:33:21,740
+ So that's just a long way of me saying I want to call that force-- the force on, let's say,
+
+451
+00:33:21,740 --> 00:33:26,820
+ body-- I'll call it force on m in the contact frame.
+
+452
+00:33:26,820 --> 00:33:32,580
+ And since my contact frame-- I'm going to always say that the normal is the z component.
+
+453
+00:33:32,580 --> 00:33:36,020
+ It's the z component.
+
+454
+00:33:36,020 --> 00:33:40,220
+ It'll save us later, but I know it feels heavy right now.
+
+455
+00:33:40,220 --> 00:33:45,140
+ It's also called the normal force.
+
+456
+00:33:45,140 --> 00:33:55,500
+ And I'll sometimes, in the notes, I actually sort of-- I almost always write this, and
+
+457
+00:33:55,500 --> 00:33:59,140
+ I long to get myself to really write this all the time.
+
+458
+00:33:59,140 --> 00:34:00,140
+ So I sometimes just write the normal force like that.
+
+459
+00:34:00,140 --> 00:34:01,140
+ Yeah?
+
+460
+00:34:01,140 --> 00:34:02,140
+ Yeah?
+
+461
+00:34:02,140 --> 00:34:03,140
+ You're writing a little bigger.
+
+462
+00:34:03,140 --> 00:34:04,140
+ I think that's what you're trying to do.
+
+463
+00:34:04,140 --> 00:34:05,140
+ Sounds good.
+
+464
+00:34:05,140 --> 00:34:06,140
+ Yeah.
+
+465
+00:34:06,140 --> 00:34:07,140
+ The request was to write bigger.
+
+466
+00:34:07,140 --> 00:34:08,140
+ I'm sure the people watching online think that too.
+
+467
+00:34:08,140 --> 00:34:25,140
+ So if there's anything you need me to rewrite, I'm happy to, but otherwise I'll be bigger
+
+468
+00:34:25,140 --> 00:34:26,140
+ going forward.
+
+469
+00:34:26,140 --> 00:34:27,140
+ Yeah?
+
+470
+00:34:27,140 --> 00:34:28,140
+ Yeah?
+
+471
+00:34:28,140 --> 00:34:29,140
+ Yeah.
+
+472
+00:34:29,140 --> 00:34:30,140
+ Yeah.
+
+473
+00:34:30,140 --> 00:34:31,140
+ Yeah.
+
+474
+00:34:31,140 --> 00:34:32,140
+ Yeah.
+
+475
+00:34:32,140 --> 00:34:33,140
+ OK.
+
+476
+00:34:33,140 --> 00:34:40,580
+ So when we're in the contact configuration, we get this additional component here.
+
+477
+00:34:40,580 --> 00:34:43,940
+ It happens that everything's in the same frame.
+
+478
+00:34:43,940 --> 00:34:48,860
+ So it's going to be a world z here.
+
+479
+00:34:48,860 --> 00:34:56,140
+ On mass is what I care about here, but it happens that c and w are aligned in this case.
+
+480
+00:34:56,140 --> 00:35:01,780
+ OK.
+
+481
+00:35:01,780 --> 00:35:04,940
+ So what do we expect the trajectory of the ball to look like?
+
+482
+00:35:04,940 --> 00:35:11,940
+ So if I have time here, maybe I need to-- I start with an initial z.
+
+483
+00:35:11,940 --> 00:35:18,100
+ It's even simpler to think about z dot first.
+
+484
+00:35:18,100 --> 00:35:21,540
+ Let's think about z dot.
+
+485
+00:35:21,540 --> 00:35:29,180
+ Let's say it starts at 0.
+
+486
+00:35:29,180 --> 00:35:33,140
+ Before contact-- let's say that my time of contact happens over here.
+
+487
+00:35:33,140 --> 00:35:37,500
+ Time of contact.
+
+488
+00:35:37,500 --> 00:35:42,660
+ Before contact, I just have this linear acceleration-- sorry, constant acceleration, which means
+
+489
+00:35:42,660 --> 00:35:46,660
+ a linear velocity.
+
+490
+00:35:46,660 --> 00:35:57,140
+ Now, at the moment of contact, I have a decision to make.
+
+491
+00:35:57,140 --> 00:36:01,500
+ I have lots of-- there's a couple different-- there's only really two different ways, I'd
+
+492
+00:36:01,500 --> 00:36:06,020
+ say, to talk about what f should be.
+
+493
+00:36:06,020 --> 00:36:11,460
+ But the pure version that I think you kind of like mathematically would be to say, I
+
+494
+00:36:11,460 --> 00:36:15,940
+ never penetrate the ground.
+
+495
+00:36:15,940 --> 00:36:21,900
+ That force does whatever it needs to do in order to prevent me from penetrating the ground.
+
+496
+00:36:21,900 --> 00:36:25,380
+ That's sort of a natural definition.
+
+497
+00:36:25,380 --> 00:36:32,220
+ But in order for that to be true, if I'm coming down with a positive z velocity, and then
+
+498
+00:36:32,220 --> 00:36:38,660
+ all of a sudden, at this instant that I hit the ground, my z velocity has to instantaneously
+
+499
+00:36:38,660 --> 00:36:39,660
+ become 0.
+
+500
+00:36:39,660 --> 00:36:42,300
+ Otherwise, I will penetrate the ground.
+
+501
+00:36:42,300 --> 00:37:11,540
+ That means that I have a discontinuous jump at the moment I hit the ground.
+
+502
+00:37:11,540 --> 00:37:26,700
+ So that is what we'll call the rigid-- what people call the rigid contact model.
+
+503
+00:37:26,700 --> 00:37:47,300
+ Say, how do I solve for the force?
+
+504
+00:37:47,300 --> 00:37:57,900
+ I'll call it force on m.
+
+505
+00:37:57,900 --> 00:38:19,340
+ And one is, I would say, the rigid contact approach.
+
+506
+00:38:19,340 --> 00:38:37,540
+ So you actually solve a small optimization problem, potentially, in the harder cases.
+
+507
+00:38:37,540 --> 00:38:42,860
+ And you try to compute, what is the smallest force possible that could avoid penetration?
+
+508
+00:38:42,860 --> 00:38:45,500
+ So this becomes a constrained optimization.
+
+509
+00:38:45,500 --> 00:39:06,260
+ I could write it as-- so there's some constraint where z has got to be greater than or equal
+
+510
+00:39:06,260 --> 00:39:08,220
+ to 0 for all time.
+
+511
+00:39:08,220 --> 00:39:13,060
+ And the force ends up being whatever it needs to be in order to make z greater than or equal
+
+512
+00:39:13,060 --> 00:39:15,120
+ to 0.
+
+513
+00:39:15,120 --> 00:39:19,260
+ And among all the forces that could keep z from going less than 0, it's the smallest
+
+514
+00:39:19,260 --> 00:39:20,860
+ one.
+
+515
+00:39:20,860 --> 00:39:34,940
+ That's called the principle of least action.
+
+516
+00:39:34,940 --> 00:39:43,780
+ Comes from the principle of least action.
+
+517
+00:39:43,780 --> 00:39:46,100
+ So that's a well-defined problem.
+
+518
+00:39:46,100 --> 00:39:52,780
+ I could figure out-- I could solve for whatever f needs to be to make sure that z never goes
+
+519
+00:39:52,780 --> 00:39:53,780
+ less than 0.
+
+520
+00:39:53,780 --> 00:39:54,780
+ Yes?
+
+521
+00:39:54,780 --> 00:40:00,780
+ So if you have the frequency change of the velocity, doesn't that mean that the velocity
+
+522
+00:40:00,780 --> 00:40:01,780
+ is infinite?
+
+523
+00:40:01,780 --> 00:40:02,780
+ Good.
+
+524
+00:40:02,780 --> 00:40:04,760
+ So, yes, that was exactly the next question.
+
+525
+00:40:04,760 --> 00:40:07,860
+ So the question is, doesn't that mean f has to be infinite?
+
+526
+00:40:07,860 --> 00:40:09,060
+ Yes.
+
+527
+00:40:09,060 --> 00:40:14,140
+ So in order to do rigid contact, in order for this to happen, where f is going to be
+
+528
+00:40:14,140 --> 00:40:20,260
+ 0 in the continuous time until the moment that it hits the ground, and if the velocity
+
+529
+00:40:20,260 --> 00:40:24,660
+ changes discontinuously, the acceleration-- so the way to think about that is f has to
+
+530
+00:40:24,660 --> 00:40:25,660
+ be impulsive.
+
+531
+00:40:25,660 --> 00:40:27,380
+ It has to be a delta function.
+
+532
+00:40:27,380 --> 00:40:37,700
+ It has to have finite results, change in velocity over an infinitesimal instant in time.
+
+533
+00:40:37,700 --> 00:40:44,700
+ A delta function.
+
+534
+00:40:44,700 --> 00:41:00,220
+ It's going to look something like this.
+
+535
+00:41:00,220 --> 00:41:05,780
+ There's some delta function sitting there.
+
+536
+00:41:05,780 --> 00:41:09,780
+ The moment you make contact, you have an impulsive collision.
+
+537
+00:41:09,780 --> 00:41:16,460
+ Now, that's not-- so nothing is actually rigid in practice.
+
+538
+00:41:16,460 --> 00:41:22,020
+ I mean, even when people run on treadmills, it happens-- I worked on walking robots a
+
+539
+00:41:22,020 --> 00:41:26,100
+ lot, so people who run on treadmills, if you look at the way you run on treadmills, at
+
+540
+00:41:26,100 --> 00:41:29,420
+ the moment of heel strike, you see a big, huge spike.
+
+541
+00:41:29,420 --> 00:41:33,380
+ And then you'll see the constant sort of stance force.
+
+542
+00:41:33,380 --> 00:41:34,380
+ That's a real thing.
+
+543
+00:41:34,380 --> 00:41:38,940
+ You'll see this kind of a pattern on a gate analysis machine, if you're going running
+
+544
+00:41:38,940 --> 00:41:41,100
+ on a gate analysis machine.
+
+545
+00:41:41,100 --> 00:41:48,780
+ Most people don't run on a treadmill with real-time force feedback, but it's cool.
+
+546
+00:41:48,780 --> 00:41:50,580
+ So that's sort of a real thing.
+
+547
+00:41:50,580 --> 00:41:54,900
+ Now, the real systems aren't infinitely rigid, so there'll be a little bit of deformation
+
+548
+00:41:54,900 --> 00:41:56,120
+ of the objects.
+
+549
+00:41:56,120 --> 00:41:58,540
+ So in practice, it's not an impulse.
+
+550
+00:41:58,540 --> 00:42:03,740
+ It's spread out a little bit over time, but it can be very sharp.
+
+551
+00:42:03,740 --> 00:42:09,260
+ And in fact, I think you should really think about this as rigid contact is not reality.
+
+552
+00:42:09,260 --> 00:42:12,700
+ It's an approximation we make to reality that can be good for some algorithms and bad for
+
+553
+00:42:12,700 --> 00:42:14,700
+ other algorithms.
+
+554
+00:42:14,700 --> 00:42:17,980
+ For some of the trajectory optimization, it actually makes things good, because we can
+
+555
+00:42:17,980 --> 00:42:23,700
+ do explicit event detection, make a decision variable exactly for that, and then otherwise
+
+556
+00:42:23,700 --> 00:42:25,660
+ have simple problems.
+
+557
+00:42:25,660 --> 00:42:31,580
+ For simulation, it's typically not-- for manipulation simulation, it's not typically done.
+
+558
+00:42:31,580 --> 00:42:36,740
+ OK, does that make sense, this fact that you need an impulse here?
+
+559
+00:42:36,740 --> 00:42:39,980
+ So that's potentially bad news for a simulator.
+
+560
+00:42:39,980 --> 00:42:43,540
+ If you're not doing event-- so I think when you have this, you want to be doing event
+
+561
+00:42:43,540 --> 00:42:45,660
+ detection.
+
+562
+00:42:45,660 --> 00:42:50,940
+ Otherwise you're not going to integrate that very carefully.
+
+563
+00:42:50,940 --> 00:42:57,140
+ OK.
+
+564
+00:42:57,140 --> 00:43:13,380
+ If however, in discrete time, if we're willing to do these fixed time step solvers, we can
+
+565
+00:43:13,380 --> 00:43:22,140
+ make an approximation.
+
+566
+00:43:22,140 --> 00:43:27,460
+ So this, if I wrote this a little bit more carefully, might say z of t greater than or
+
+567
+00:43:27,460 --> 00:43:31,860
+ equal to 0 for all possible t.
+
+568
+00:43:31,860 --> 00:43:36,260
+ In discrete time, when we're taking these big time step algorithms, one of the things
+
+569
+00:43:36,260 --> 00:43:38,700
+ that we do is we relax that a little bit.
+
+570
+00:43:38,700 --> 00:43:47,500
+ We say that, well, z at my dt, as my constant interval of dt, so my, let's say, dt times
+
+571
+00:43:47,500 --> 00:43:54,220
+ k, my k step has to be greater than or equal to 0.
+
+572
+00:43:54,220 --> 00:43:55,860
+ Did I say that well enough?
+
+573
+00:43:55,860 --> 00:44:04,620
+ So I plot z-- time here, z of t.
+
+574
+00:44:04,620 --> 00:44:14,340
+ If I'm making discrete updates, and I'm only looking at it at fixed dt's, 2 dt, 3 dt, I
+
+575
+00:44:14,340 --> 00:44:17,340
+ got small, sorry.
+
+576
+00:44:17,340 --> 00:44:23,580
+ If I only require that z is greater than 0 here, at the finite points, I only implement
+
+577
+00:44:23,580 --> 00:44:30,980
+ my constraint at these points, then it's enough to say the total integral of the force over
+
+578
+00:44:30,980 --> 00:44:41,340
+ an interval is sufficient to put me out of penetration.
+
+579
+00:44:41,340 --> 00:44:45,340
+ OK.
+
+580
+00:44:45,340 --> 00:45:05,340
+ So that can be finite, again, and that can be well behaved.
+
+581
+00:45:05,340 --> 00:45:09,340
+ Does that make sense?
+
+582
+00:45:09,340 --> 00:45:10,860
+ Yeah?
+
+583
+00:45:10,860 --> 00:45:17,580
+ So basically, I'm not even-- so if I hit the ground somewhere in the interval between delta
+
+584
+00:45:17,580 --> 00:45:22,140
+ t and 2 delta t, I don't have to potentially do event detection.
+
+585
+00:45:22,140 --> 00:45:26,420
+ I have to solve for some force, which when integrated over this interval, will make sure
+
+586
+00:45:26,420 --> 00:45:32,260
+ that I'm out of penetration, or exactly on penetration at the end of the interval.
+
+587
+00:45:32,260 --> 00:45:37,700
+ That means my force has a finite duration of time to work over, and becomes finite again.
+
+588
+00:45:37,700 --> 00:45:42,060
+ It removes these delta functions that are nasty.
+
+589
+00:45:42,060 --> 00:45:45,860
+ And that's the fundamental idea that happens in these discrete time time-stepping solvers.
+
+590
+00:45:45,860 --> 00:45:46,860
+ Yeah?
+
+591
+00:45:46,860 --> 00:45:56,820
+ What happens if you're predicted to hit the ground in between the time steps?
+
+592
+00:45:56,820 --> 00:45:57,820
+ So I get that delta t divided by 2.
+
+593
+00:45:57,820 --> 00:46:02,820
+ So the question is, what happens if you're predicted to hit just between the time steps?
+
+594
+00:46:02,820 --> 00:46:04,940
+ So it handles that very well.
+
+595
+00:46:04,940 --> 00:46:12,460
+ So it gets-- the forces are allowed to be non-zero if, at the end of time, the constraint
+
+596
+00:46:12,460 --> 00:46:14,140
+ needs to be active.
+
+597
+00:46:14,140 --> 00:46:16,500
+ That's the semi-implicit methods.
+
+598
+00:46:16,500 --> 00:46:20,980
+ So the rules are, at the end of each interval, you must satisfy the constraints.
+
+599
+00:46:20,980 --> 00:46:26,380
+ And you're allowed to have force that's non-zero if it's required to make your constraints
+
+600
+00:46:26,380 --> 00:46:32,260
+ act-- that you stay out of penetration at the end of time.
+
+601
+00:46:32,260 --> 00:46:39,060
+ The harder one, actually, is if I'm leaving contact in the middle of an interval, then
+
+602
+00:46:39,060 --> 00:46:43,380
+ you must be able to leave contact without force.
+
+603
+00:46:43,380 --> 00:46:46,140
+ That's the trade-off that the solvers typically make.
+
+604
+00:46:46,140 --> 00:46:50,940
+ But they solve these small problems such that, at the end of each interval, you will satisfy
+
+605
+00:46:50,940 --> 00:46:51,940
+ those constraints.
+
+606
+00:46:51,940 --> 00:46:52,940
+ Yes?
+
+607
+00:46:52,940 --> 00:47:03,940
+ [INAUDIBLE]
+
+608
+00:47:03,940 --> 00:47:04,940
+ OK.
+
+609
+00:47:04,940 --> 00:47:09,980
+ So the question is, if I have torque limits, but I simulated a high frequency, can I get
+
+610
+00:47:09,980 --> 00:47:12,220
+ arbitrarily large forces?
+
+611
+00:47:12,220 --> 00:47:17,540
+ So I think-- you have to be a little careful there.
+
+612
+00:47:17,540 --> 00:47:24,500
+ So I think, if the torques are limited at every step, but they are changing very rapidly,
+
+613
+00:47:24,500 --> 00:47:30,300
+ and you integrate them badly, then you could imagine adding power into the system and cause
+
+614
+00:47:30,300 --> 00:47:34,660
+ things to look aphysical or whatever.
+
+615
+00:47:34,660 --> 00:47:37,900
+ But I think that would be-- that's not the governing equations that are wrong in that
+
+616
+00:47:37,900 --> 00:47:38,900
+ case.
+
+617
+00:47:38,900 --> 00:47:43,340
+ That's meaning that you're probably integrating them incorrectly.
+
+618
+00:47:43,340 --> 00:47:47,420
+ So if you take large, quickly changing torques, and you're not integrating carefully, things
+
+619
+00:47:47,420 --> 00:47:55,900
+ could lead to high errors.
+
+620
+00:47:55,900 --> 00:48:02,580
+ OK.
+
+621
+00:48:02,580 --> 00:48:08,340
+ So this is the rigid contact assumption.
+
+622
+00:48:08,340 --> 00:48:10,400
+ And it's gross in this way.
+
+623
+00:48:10,400 --> 00:48:16,580
+ But with some time-averaged approximations, it can become reasonable again.
+
+624
+00:48:16,580 --> 00:48:31,860
+ And the hope is to try to enforce these constraints completely.
+
+625
+00:48:31,860 --> 00:48:53,300
+ Assumption two is a soft contact model, or compliant contact.
+
+626
+00:48:53,300 --> 00:49:11,260
+ OK.
+
+627
+00:49:11,260 --> 00:49:17,020
+ And in a soft or compliant contact, you no longer try to solve an optimization problem.
+
+628
+00:49:17,020 --> 00:49:19,700
+ I mean, there's versions that combine all these ideas.
+
+629
+00:49:19,700 --> 00:49:24,220
+ But in the simplest form of soft contact, you actually prescribe that the force is a
+
+630
+00:49:24,220 --> 00:49:25,460
+ function.
+
+631
+00:49:25,460 --> 00:49:28,580
+ You allow your system to penetrate, two bodies to penetrate a little bit.
+
+632
+00:49:28,580 --> 00:49:31,060
+ So the ball is going to go a little bit under the ground.
+
+633
+00:49:31,060 --> 00:49:35,740
+ But you make a force that resists that's proportional, let's say, to like a spring pushing you out
+
+634
+00:49:35,740 --> 00:49:36,860
+ of the ground.
+
+635
+00:49:36,860 --> 00:49:44,860
+ The ground becomes a spring.
+
+636
+00:49:44,860 --> 00:49:56,580
+ OK, so you might have something like your force in the world or in the contact frame
+
+637
+00:49:56,580 --> 00:50:13,220
+ equals 0 if z is greater than or equal to 0, or negative kz if z is less than 0.
+
+638
+00:50:13,220 --> 00:50:21,740
+ And physically, that might look like the ball actually will go under the ground.
+
+639
+00:50:21,740 --> 00:50:31,220
+ And I've got a little tiny spring pushing me back up, producing some force.
+
+640
+00:50:31,220 --> 00:50:36,220
+ OK.
+
+641
+00:50:36,220 --> 00:50:45,180
+ More generally, we'll add damping and stuff too.
+
+642
+00:50:45,180 --> 00:50:59,300
+ Something like that.
+
+643
+00:50:59,300 --> 00:51:00,300
+ These are still discontinuous.
+
+644
+00:51:00,300 --> 00:51:05,380
+ Sorry, they're continuous, but they're not differential.
+
+645
+00:51:05,380 --> 00:51:09,180
+ Some changes at the moment where you hit the ground.
+
+646
+00:51:09,180 --> 00:51:10,380
+ But it's at least continuous.
+
+647
+00:51:10,380 --> 00:51:18,820
+ In fact, the way that people will plot these, the way to think about it here, is if I think
+
+648
+00:51:18,820 --> 00:51:26,500
+ of z as my function here, the rigid contact model for all positive z's, the force must
+
+649
+00:51:26,500 --> 00:51:28,560
+ be 0.
+
+650
+00:51:28,560 --> 00:51:42,100
+ And when z equals 0, it could be anything positive here.
+
+651
+00:51:42,100 --> 00:51:51,500
+ For my soft contact model, I'm going to get something that looks more like this, where
+
+652
+00:51:51,500 --> 00:51:58,020
+ this is my stiffness k.
+
+653
+00:51:58,020 --> 00:52:05,020
+ It's a spring law.
+
+654
+00:52:05,020 --> 00:52:14,420
+ OK.
+
+655
+00:52:14,420 --> 00:52:20,480
+ In fact, I made it easy with the-- it's just a ball falling down vertically.
+
+656
+00:52:20,480 --> 00:52:29,340
+ So the distance between the ball and the world and the ground is just z.
+
+657
+00:52:29,340 --> 00:52:35,620
+ More generally, that distance-- we've already seen a name for that distance.
+
+658
+00:52:35,620 --> 00:52:38,880
+ We've used phi for sine distance function.
+
+659
+00:52:38,880 --> 00:52:42,540
+ And actually, sine distance function is exactly what we want to use here, again, for all the
+
+660
+00:52:42,540 --> 00:52:44,740
+ contact computations.
+
+661
+00:52:44,740 --> 00:52:52,060
+ So more generally, this could be phi, which would be a total function of q, all my position
+
+662
+00:52:52,060 --> 00:53:08,320
+ variables, which is the sine distance function, let's say, between body A and body B.
+
+663
+00:53:08,320 --> 00:53:12,960
+ So the general version of these plots, they still, in the frame of the contact, phi plays
+
+664
+00:53:12,960 --> 00:53:16,080
+ an extremely important role.
+
+665
+00:53:16,080 --> 00:53:17,080
+ It's the number.
+
+666
+00:53:17,080 --> 00:53:18,240
+ It's a scalar.
+
+667
+00:53:18,240 --> 00:53:25,280
+ But it happens to represent exactly the distance between the objects.
+
+668
+00:53:25,280 --> 00:53:29,400
+ And it sort of defines the coordinate system of our contact frame.
+
+669
+00:53:29,400 --> 00:53:36,280
+ So we want where phi is going up to be the z-axis of our contact frame.
+
+670
+00:53:36,280 --> 00:53:42,820
+ And we still make these plots, saying that the force in z of our contact frame, it can
+
+671
+00:53:42,820 --> 00:53:51,320
+ look like this in the rigid, or like this in the soft.
+
+672
+00:53:51,320 --> 00:53:53,680
+ You can choose different curves if you want to.
+
+673
+00:53:53,680 --> 00:53:54,680
+ Yeah?
+
+674
+00:53:54,680 --> 00:54:00,200
+ This model has to bounce, right?
+
+675
+00:54:00,200 --> 00:54:07,140
+ Doesn't have to bounce if there's dissipation.
+
+676
+00:54:07,140 --> 00:54:12,000
+ You can, in fact, a lot of times, you'll have even an asymmetric dissipation, so that it
+
+677
+00:54:12,000 --> 00:54:17,400
+ will come in and it'll try to resist a lot of energy, like when you're pulling back up.
+
+678
+00:54:17,400 --> 00:54:18,400
+ Yeah?
+
+679
+00:54:18,400 --> 00:54:22,360
+ You have to put in the damping, otherwise it will bounce.
+
+680
+00:54:22,360 --> 00:54:23,920
+ You would bounce if you didn't have damping.
+
+681
+00:54:23,920 --> 00:54:24,920
+ Otherwise, yeah.
+
+682
+00:54:24,920 --> 00:54:25,920
+ So they don't have--
+
+683
+00:54:25,920 --> 00:54:26,920
+ Yeah.
+
+684
+00:54:26,920 --> 00:54:27,920
+ Mm-hmm.
+
+685
+00:54:27,920 --> 00:54:35,940
+ the same thing.
+
+686
+00:54:35,940 --> 00:54:43,380
+ And you can simulate soft contact in continuous time, or discrete time.
+
+687
+00:54:43,380 --> 00:54:45,560
+ You can try to do the event detection or not.
+
+688
+00:54:45,560 --> 00:54:48,700
+ That really doesn't change.
+
+689
+00:54:48,700 --> 00:54:54,300
+ But in particular, so choosing k is a big deal.
+
+690
+00:54:54,300 --> 00:54:58,980
+ This is one of the things that you should think about when your simulator is not working
+
+691
+00:54:58,980 --> 00:55:04,100
+ well, is that where is the stiffness in my problem coming from?
+
+692
+00:55:04,100 --> 00:55:09,180
+ If k is very large, then I could have a stiff set of differential equations.
+
+693
+00:55:09,180 --> 00:55:17,620
+ I'm making my equations more stiff, and I probably have to take smaller time steps.
+
+694
+00:55:17,620 --> 00:55:20,020
+ So how do you pick k?
+
+695
+00:55:20,020 --> 00:55:23,740
+ Well, it depends on the inertia in your system.
+
+696
+00:55:23,740 --> 00:55:27,620
+ So if I'm a 400-pound humanoid, and I'm sitting on the ground, and I don't want to be six
+
+697
+00:55:27,620 --> 00:55:37,060
+ feet under the ground, then I need a large k to keep me pushing back up.
+
+698
+00:55:37,060 --> 00:55:38,900
+ So you have to be careful.
+
+699
+00:55:38,900 --> 00:55:44,180
+ What we really care about is the stiffness and acceleration.
+
+700
+00:55:44,180 --> 00:55:54,260
+ So you can potentially choose a large k and have an inertial system and still have a reasonable
+
+701
+00:55:54,260 --> 00:55:59,820
+ set of accelerations that are not too stiff, which is why walking robots have often worked
+
+702
+00:55:59,820 --> 00:56:02,420
+ well and they've been easy to simulate.
+
+703
+00:56:02,420 --> 00:56:07,600
+ But if Atlas starts trying to pick up a toothpick or something like this, then you get this
+
+704
+00:56:07,600 --> 00:56:13,620
+ huge range of inertias, and you have to pick some stiffness to rule them all.
+
+705
+00:56:13,620 --> 00:56:15,060
+ And that's where things get really bad.
+
+706
+00:56:15,060 --> 00:56:20,140
+ You get some huge forces to try to keep Atlas out of the ground, and you apply it to a little
+
+707
+00:56:20,140 --> 00:56:23,580
+ toothpick and things go, pfft.
+
+708
+00:56:23,580 --> 00:56:24,580
+ That does happen.
+
+709
+00:56:24,580 --> 00:56:31,620
+ And I heard a talk from-- we worked a lot on the Atlas simulation.
+
+710
+00:56:31,620 --> 00:56:35,860
+ And at the end of the simulation, we had to do all this work on model-based control.
+
+711
+00:56:35,860 --> 00:56:41,060
+ And we're thinking about-- we take the URDF in, we write a great controller.
+
+712
+00:56:41,060 --> 00:56:43,100
+ It's optimal in some ways or whatever.
+
+713
+00:56:43,100 --> 00:56:47,460
+ And after the simulation, I hear this talk, and they say, we had trouble making the simulator
+
+714
+00:56:47,460 --> 00:56:48,460
+ work fast enough.
+
+715
+00:56:48,460 --> 00:56:53,060
+ So we realized that if we make the fingers 10 times heavier, then the simulator could
+
+716
+00:56:53,060 --> 00:56:54,060
+ run faster.
+
+717
+00:56:54,060 --> 00:56:55,060
+ And I'm like, what?
+
+718
+00:56:55,060 --> 00:56:59,140
+ I just-- I wrote all this math to assume that the fingers were a certain-- you can't just
+
+719
+00:56:59,140 --> 00:57:00,780
+ change the fingers behind the scenes.
+
+720
+00:57:00,780 --> 00:57:05,620
+ I'm a pretty laid-back guy, but I think those pictures, those cartoons where it gets red
+
+721
+00:57:05,620 --> 00:57:08,020
+ and then steam starts coming out of the ears.
+
+722
+00:57:08,020 --> 00:57:11,260
+ Because I didn't sleep for two years working on that robot, and then people are just changing
+
+723
+00:57:11,260 --> 00:57:14,020
+ masses behind the scenes.
+
+724
+00:57:14,020 --> 00:57:15,020
+ But that's true.
+
+725
+00:57:15,020 --> 00:57:18,820
+ I mean, if you have a dexterous hand with little light inertias in your fingers and
+
+726
+00:57:18,820 --> 00:57:21,260
+ a big, heavy robot, that's the bad case.
+
+727
+00:57:21,260 --> 00:57:25,380
+ That's the really bad case for trying to choose these spring constants and trying to make
+
+728
+00:57:25,380 --> 00:57:26,380
+ a good simulator.
+
+729
+00:57:26,380 --> 00:57:27,380
+ Yeah?
+
+730
+00:57:27,380 --> 00:57:28,380
+ Could you not just take different spring constants for different things?
+
+731
+00:57:28,380 --> 00:57:37,140
+ So in that case, a smaller one for the feet, and then a different one for the ground?
+
+732
+00:57:37,140 --> 00:57:38,500
+ So that's a subtle point.
+
+733
+00:57:38,500 --> 00:57:41,660
+ So how do you choose these stiffnesses?
+
+734
+00:57:41,660 --> 00:57:45,620
+ Do you choose them per body or per pair of bodies?
+
+735
+00:57:45,620 --> 00:57:47,740
+ Most of the simulators, you pick them per body.
+
+736
+00:57:47,740 --> 00:57:52,280
+ And then the stiffness that you get as you interact between two bodies is some combination
+
+737
+00:57:52,280 --> 00:57:54,860
+ of those two stiffnesses.
+
+738
+00:57:54,860 --> 00:57:59,700
+ Really the true properties would be a function of the material properties-- pair of material
+
+739
+00:57:59,700 --> 00:58:01,020
+ properties.
+
+740
+00:58:01,020 --> 00:58:04,940
+ But it becomes very cumbersome to have to-- for every possible pair of materials to specify
+
+741
+00:58:04,940 --> 00:58:05,940
+ that.
+
+742
+00:58:05,940 --> 00:58:12,980
+ I mean, even then, I think you could have big forces coming from Atlas's feet interacting
+
+743
+00:58:12,980 --> 00:58:15,940
+ with the solver with small forces at the fingers.
+
+744
+00:58:15,940 --> 00:58:24,940
+ And things are still very tough in the stiffness of the differential equation sense.
+
+745
+00:58:24,940 --> 00:58:28,780
+ And if you don't do event detection, which I said people really don't, you have to think
+
+746
+00:58:28,780 --> 00:58:35,000
+ that the stiffness you choose is not just about the resting depth of my-- the resting
+
+747
+00:58:35,000 --> 00:58:37,340
+ penetration at steady state.
+
+748
+00:58:37,340 --> 00:58:41,740
+ That stiffness has to do all the work of stopping you when you fall into the ground, that initial
+
+749
+00:58:41,740 --> 00:58:42,740
+ contact.
+
+750
+00:58:42,740 --> 00:58:45,380
+ It has to do the work of the impulse, too.
+
+751
+00:58:45,380 --> 00:58:47,420
+ So people think, oh, it's not a big deal.
+
+752
+00:58:47,420 --> 00:58:50,900
+ I'm going to just let my robot at steady state go a little bit under the ground.
+
+753
+00:58:50,900 --> 00:59:01,580
+ But that's not true, because at impact, you might go way into the ground and not be happy.
+
+754
+00:59:01,580 --> 00:59:11,900
+ So you'll see, actually, if you look at the code, when you call multibody plant, there's
+
+755
+00:59:11,900 --> 00:59:17,140
+ this mysterious time step parameter.
+
+756
+00:59:17,140 --> 00:59:21,020
+ It defaults to 0.
+
+757
+00:59:21,020 --> 00:59:24,980
+ So now you know a lot more about what that time step's doing.
+
+758
+00:59:24,980 --> 00:59:32,660
+ So in the Drake systems framework, each individual system can declare what its update rates are.
+
+759
+00:59:32,660 --> 00:59:36,040
+ You don't have to, say, use one time step for the entire system.
+
+760
+00:59:36,040 --> 00:59:40,380
+ You can say this subsystem must be integrated at this time step.
+
+761
+00:59:40,380 --> 00:59:45,980
+ If time step is 0, then it tries to use the continuous time variable step integration
+
+762
+00:59:45,980 --> 00:59:48,100
+ and do accurate integration.
+
+763
+00:59:48,100 --> 00:59:50,780
+ And it should be stable, but it will be slow.
+
+764
+00:59:50,780 --> 00:59:54,140
+ And it will slow down at the contacts.
+
+765
+00:59:54,140 --> 00:59:55,140
+ It'll take big steps.
+
+766
+00:59:55,140 --> 00:59:58,140
+ Your simulator will move fast, and then it'll make contact, and it'll slow down.
+
+767
+00:59:58,140 --> 01:00:00,980
+ It'll simulate very carefully, and then it'll speed back up.
+
+768
+01:00:00,980 --> 01:00:04,060
+ But for sanity checking your physics, that's great.
+
+769
+01:00:04,060 --> 01:00:06,260
+ That's super useful.
+
+770
+01:00:06,260 --> 01:00:13,500
+ If you then pick-- oftentimes, we'll pick 1 kilohertz or something here, 1 millisecond
+
+771
+01:00:13,500 --> 01:00:17,140
+ for the time step, or some small numbers like this.
+
+772
+01:00:17,140 --> 01:00:24,020
+ If you see your system blowing up, the first thing you should do is figure out what's causing
+
+773
+01:00:24,020 --> 01:00:25,020
+ stiffness.
+
+774
+01:00:25,020 --> 01:00:30,020
+ But you can also turn the time step down and expect it to work better, and then slowly
+
+775
+01:00:30,020 --> 01:00:31,020
+ move it back up.
+
+776
+01:00:31,020 --> 01:00:32,020
+ Yeah?
+
+777
+01:00:32,020 --> 01:00:33,020
+ I imagine someone has.
+
+778
+01:00:33,020 --> 01:00:34,020
+ What would happen if you made the stiffness change depending on the depth?
+
+779
+01:00:34,020 --> 01:00:35,020
+ So if you have a [INAUDIBLE] linear, and you made it so it has a time steeper, the stiffness
+
+780
+01:00:35,020 --> 01:00:36,020
+ would increase, and then you'd be able to resist--
+
+781
+01:00:36,020 --> 01:00:37,020
+ Yeah, good.
+
+782
+01:00:37,020 --> 01:00:38,020
+ --like 1 kilohertz or something like that.
+
+783
+01:00:38,020 --> 01:00:49,460
+ Right, so people will choose different functions for this.
+
+784
+01:00:49,460 --> 01:00:55,020
+ Some of them do increase in a nonlinear way as you go deep.
+
+785
+01:00:55,020 --> 01:00:56,780
+ Absolutely, that's a good idea.
+
+786
+01:00:56,780 --> 01:01:00,220
+ I think-- yeah, absolutely a good idea.
+
+787
+01:01:00,220 --> 01:01:04,700
+ I only cartoon the linear spring.
+
+788
+01:01:04,700 --> 01:01:07,340
+ Yeah.
+
+789
+01:01:07,340 --> 01:01:14,160
+ OK, so we thought a little bit about normal forces and trying to prevent penetration.
+
+790
+01:01:14,160 --> 01:01:15,460
+ Let's think about friction.
+
+791
+01:01:15,460 --> 01:01:16,460
+ Yeah?
+
+792
+01:01:16,460 --> 01:01:25,420
+ I'll come over here.
+
+793
+01:01:25,420 --> 01:01:38,740
+ Caveat, rigid body friction has all these weird quirks.
+
+794
+01:01:38,740 --> 01:01:42,020
+ So it's an imperfect model.
+
+795
+01:01:42,020 --> 01:01:47,140
+ You can get yourself in situations where there's no good solution given their models, or there's
+
+796
+01:01:47,140 --> 01:01:51,100
+ no unique solution, for instance.
+
+797
+01:01:51,100 --> 01:02:02,820
+ So with that caveat, I'll tell you what the common models are, right?
+
+798
+01:02:02,820 --> 01:02:06,400
+ Degenerate solutions.
+
+799
+01:02:06,400 --> 01:02:12,000
+ But despite that, everybody uses it.
+
+800
+01:02:12,000 --> 01:02:15,140
+ So just to think, I've got maybe my ball coming down.
+
+801
+01:02:15,140 --> 01:02:16,140
+ It's still plastic.
+
+802
+01:02:16,140 --> 01:02:17,300
+ It's still going to stick.
+
+803
+01:02:17,300 --> 01:02:21,340
+ But now when it hits the ground, boom, I'm going to have not only a normal force, but
+
+804
+01:02:21,340 --> 01:02:24,100
+ I'll have some tangential force.
+
+805
+01:02:24,100 --> 01:02:34,420
+ So in my z frame, and then I'll have my, let's say, cx, or my-- sometimes I'll call this--
+
+806
+01:02:34,420 --> 01:02:36,220
+ this is the normal force.
+
+807
+01:02:36,220 --> 01:02:39,740
+ I often use the shorthand Fn.
+
+808
+01:02:39,740 --> 01:02:53,980
+ And this is the tangential force, often shorthand F tangential.
+
+809
+01:02:53,980 --> 01:03:01,820
+ The same way that the normal force, the cleanest statement of the-- sorry, did you have a question?
+
+810
+01:03:01,820 --> 01:03:05,460
+ The simplest statement of the question is the normal force is whatever the smallest
+
+811
+01:03:05,460 --> 01:03:09,220
+ force it needs to be to resist penetration.
+
+812
+01:03:09,220 --> 01:03:15,380
+ The simplest specification of the friction force is it's the force that it needs to be
+
+813
+01:03:15,380 --> 01:03:19,660
+ to stop horizontal motion.
+
+814
+01:03:19,660 --> 01:03:47,140
+ So Fcx is whatever force is needed to stop horizontal motion, which is tangential velocity.
+
+815
+01:03:47,140 --> 01:03:54,260
+ So that would be the velocity of body A relative to body B at the contact frame, expressed
+
+816
+01:03:54,260 --> 01:03:59,860
+ in the contact frame.
+
+817
+01:03:59,860 --> 01:04:03,780
+ In let's say x, the contact frame.
+
+818
+01:04:03,780 --> 01:04:10,900
+ If I had no limits on friction, this is what it's going to do.
+
+819
+01:04:10,900 --> 01:04:16,220
+ You're going to solve for whatever force is needed.
+
+820
+01:04:16,220 --> 01:04:18,980
+ But in practice, friction is limited.
+
+821
+01:04:18,980 --> 01:04:24,420
+ So we up to some limit.
+
+822
+01:04:24,420 --> 01:04:35,580
+ And the standard model of that is Coulomb friction, where we say that the-- I'll just
+
+823
+01:04:35,580 --> 01:04:44,220
+ write Ft is less than some coefficient of friction times my normal force.
+
+824
+01:04:44,220 --> 01:04:46,980
+ Anyway I've drawn it, my normal force is always positive.
+
+825
+01:04:46,980 --> 01:04:52,460
+ But I can do this, just to be careful I guess.
+
+826
+01:04:52,460 --> 01:05:10,540
+ So this is a coefficient of friction.
+
+827
+01:05:10,540 --> 01:05:19,940
+ It's also-- the Coulomb friction is also known-- described often as called the friction cone.
+
+828
+01:05:19,940 --> 01:05:33,740
+ Because that is a conic constraint.
+
+829
+01:05:33,740 --> 01:05:39,180
+ You see in 3D, my plot there, in 3D I still have the normal and I have two tangential
+
+830
+01:05:39,180 --> 01:05:40,900
+ velocities.
+
+831
+01:05:40,900 --> 01:05:43,260
+ I always have this contact frame.
+
+832
+01:05:43,260 --> 01:05:55,660
+ In the contact frame, if I have my normal force, then the tangential force is proportional
+
+833
+01:05:55,660 --> 01:05:56,740
+ to the normal force.
+
+834
+01:05:56,740 --> 01:06:00,180
+ So it comes up like a cone.
+
+835
+01:06:00,180 --> 01:06:04,980
+ Depending on what my normal force is, if I have more normal force, if I'm pushing down
+
+836
+01:06:04,980 --> 01:06:09,660
+ harder on the ground, I can have more friction force, proportionally.
+
+837
+01:06:09,660 --> 01:06:18,180
+ If I were able to draw that well enough on the screen, if I have tangential direction
+
+838
+01:06:18,180 --> 01:06:24,380
+ 1, tangential direction 2, and my normal direction, then it really does look like a friction cone.
+
+839
+01:06:24,380 --> 01:06:32,980
+ Because if that's an L2, which it almost always is, an L2, you know, Euclidean distance there,
+
+840
+01:06:32,980 --> 01:06:39,140
+ then it really is this cone.
+
+841
+01:06:39,140 --> 01:06:41,820
+ So we call that the friction cone.
+
+842
+01:06:41,820 --> 01:06:56,620
+ It's the admissible frictions, which are a function of the normals.
+
+843
+01:06:56,620 --> 01:06:57,820
+ So the definition is pretty simple.
+
+844
+01:06:57,820 --> 01:07:05,220
+ It's whatever-- up to this limit, it's whatever the friction needs to be to match that.
+
+845
+01:07:05,220 --> 01:07:12,060
+ And then if you are sliding, if you are not able to produce enough friction to completely
+
+846
+01:07:12,060 --> 01:07:16,060
+ stop resist motion, then it will be the maximum dissipation.
+
+847
+01:07:16,060 --> 01:07:21,420
+ So it will be whatever force it does that slows you down the most, which is always resist--
+
+848
+01:07:21,420 --> 01:07:23,660
+ it's in the direction resisting your velocity.
+
+849
+01:07:23,660 --> 01:07:24,660
+ OK?
+
+850
+01:07:24,660 --> 01:07:32,800
+ So these are all details, but friction tries to stop you in the tangential velocity.
+
+851
+01:07:32,800 --> 01:07:38,780
+ Sliding friction tends to be-- we tend to have two coefficients of frictions.
+
+852
+01:07:38,780 --> 01:07:43,940
+ Let me make sure this plot makes sense here.
+
+853
+01:07:43,940 --> 01:07:53,220
+ But the same way I was able to draw the normal force as a function of the sine distance,
+
+854
+01:07:53,220 --> 01:08:01,700
+ here I'm looking at the tangential velocity in the contact frame.
+
+855
+01:08:01,700 --> 01:08:04,060
+ That's x here.
+
+856
+01:08:04,060 --> 01:08:10,940
+ And the plot that you will see is that when there's zero velocity, when zero velocity
+
+857
+01:08:10,940 --> 01:08:20,180
+ is possible, I can have whatever force I'm allowed to have up to the mu static friction,
+
+858
+01:08:20,180 --> 01:08:25,180
+ if I distinguish between the two.
+
+859
+01:08:25,180 --> 01:08:43,060
+ And once I start sliding, I expect my force to be as big as possible to resist motion.
+
+860
+01:08:43,060 --> 01:08:45,220
+ OK?
+
+861
+01:08:45,220 --> 01:08:49,940
+ And this would be potentially a different number.
+
+862
+01:08:49,940 --> 01:08:53,940
+ Sometimes the dynamics friction and static friction are set the same, but typically you
+
+863
+01:08:53,940 --> 01:08:56,980
+ can get more force in stiction than when you're sliding.
+
+864
+01:08:56,980 --> 01:08:58,460
+ You get slightly less force.
+
+865
+01:08:58,460 --> 01:09:06,780
+ So you'll get a transition to a maximum dissipation with a slightly smaller limit.
+
+866
+01:09:06,780 --> 01:09:12,780
+ And you will see some of the simulators don't-- if you don't do this strict optimization sort
+
+867
+01:09:12,780 --> 01:09:19,140
+ of to get to impose those exactly, you'll see approximations of this that look like
+
+868
+01:09:19,140 --> 01:09:30,020
+ these kind of nonlinear, stiff sort of approximations of that that are used in the simulators.
+
+869
+01:09:30,020 --> 01:09:37,180
+ One of them that we use in Drake is called the Strebeck approximation.
+
+870
+01:09:37,180 --> 01:09:40,180
+ Strebeck.
+
+871
+01:09:40,180 --> 01:09:47,540
+ German.
+
+872
+01:09:47,540 --> 01:09:52,100
+ Now the same thing you asked about for stiffnesses is true here.
+
+873
+01:09:52,100 --> 01:09:56,460
+ The static friction you'd expect and the dynamic friction you expect between two objects is
+
+874
+01:09:56,460 --> 01:09:59,420
+ really a function of the material pairs.
+
+875
+01:09:59,420 --> 01:10:04,340
+ But in practice, almost all the simulators, all the URDFs, everything, you specify a coefficient
+
+876
+01:10:04,340 --> 01:10:06,900
+ of friction for this object and for this object.
+
+877
+01:10:06,900 --> 01:10:13,580
+ And then the simulators do a best effort for every pair to turn it into some averaged coefficient
+
+878
+01:10:13,580 --> 01:10:22,700
+ of friction between the two.
+
+879
+01:10:22,700 --> 01:10:27,220
+ So all of these things lead to potential stiffness in the equations.
+
+880
+01:10:27,220 --> 01:10:30,660
+ The numerical integration story I told you at the beginning, all this stuff, these are
+
+881
+01:10:30,660 --> 01:10:33,900
+ all big, ugly functions that are going boom.
+
+882
+01:10:33,900 --> 01:10:38,020
+ So that's what makes simulating these things hard.
+
+883
+01:10:38,020 --> 01:10:42,340
+ And the best solvers-- I mean, the good work here is a lot of work at the numerical methods
+
+884
+01:10:42,340 --> 01:10:49,620
+ of simulating those equations efficiently, taking as big steps as you can in the details
+
+885
+01:10:49,620 --> 01:10:54,780
+ of how you do matrix inverses or basically these squares kind of solutions.
+
+886
+01:10:54,780 --> 01:10:55,780
+ They're really in the weeds.
+
+887
+01:10:55,780 --> 01:10:58,580
+ They're trying to exploit all the sparsity in the equations.
+
+888
+01:10:58,580 --> 01:11:08,700
+ It's tough stuff.
+
+889
+01:11:08,700 --> 01:11:09,700
+ It gets worse, too.
+
+890
+01:11:09,700 --> 01:11:12,820
+ So it gets worse, too.
+
+891
+01:11:12,820 --> 01:11:14,280
+ I told you there's two big problems.
+
+892
+01:11:14,280 --> 01:11:16,660
+ There was the stiffness of the equations.
+
+893
+01:11:16,660 --> 01:11:20,380
+ The other thing that happens is that the contact geometries are really ugly.
+
+894
+01:11:20,380 --> 01:11:27,780
+ So one of the things that I kind of alluded to here is that a lot of the models allow
+
+895
+01:11:27,780 --> 01:11:32,060
+ you to penetrate the ground a little bit, or two objects will penetrate themselves a
+
+896
+01:11:32,060 --> 01:11:34,360
+ little bit.
+
+897
+01:11:34,360 --> 01:11:39,020
+ Even the rigid models, it turns out that the optimization problems we solve in order to
+
+898
+01:11:39,020 --> 01:11:42,000
+ make them efficient, we tend to linearize.
+
+899
+01:11:42,000 --> 01:11:46,700
+ We take Jacobians, for instance, to linearize the friction cones and the constraints.
+
+900
+01:11:46,700 --> 01:11:51,020
+ And because that's an approximation, we can actually-- even the rigid models do allow
+
+901
+01:11:51,020 --> 01:11:52,200
+ some penetration.
+
+902
+01:11:52,200 --> 01:11:55,940
+ So you get two bodies that are overlapping.
+
+903
+01:11:55,940 --> 01:12:00,140
+ As you will see in your problem set, even computing sign distance functions when things
+
+904
+01:12:00,140 --> 01:12:02,900
+ are in overlapping gets ugly.
+
+905
+01:12:02,900 --> 01:12:06,180
+ And it's not exactly-- you want something that's slightly different than the sign distance
+
+906
+01:12:06,180 --> 01:12:07,180
+ inside.
+
+907
+01:12:07,180 --> 01:12:09,420
+ You want maximum penetration depth.
+
+908
+01:12:09,420 --> 01:12:11,800
+ But that stuff gets really, really bad.
+
+909
+01:12:11,800 --> 01:12:14,260
+ And it's a source of a lot of problems in simulators.
+
+910
+01:12:14,260 --> 01:12:19,380
+ So let me just-- actually, I had some slides I put together the other day.
+
+911
+01:12:19,380 --> 01:12:24,280
+ So let me show you some of the work that we do to try to make that better.
+
+912
+01:12:24,280 --> 01:12:26,080
+ But it's hard stuff.
+
+913
+01:12:26,080 --> 01:12:28,640
+ So in walking, this wasn't really a problem for me.
+
+914
+01:12:28,640 --> 01:12:34,860
+ Really, point contacts, simple geometries were pretty good.
+
+915
+01:12:34,860 --> 01:12:42,300
+ But once you get more-- if you get like a coffee mug interacting with a dexterous hand
+
+916
+01:12:42,300 --> 01:12:46,660
+ and they start overlapping, and you think, OK, where are the forces to be applied on
+
+917
+01:12:46,660 --> 01:12:48,860
+ these two overlapping bodies?
+
+918
+01:12:48,860 --> 01:12:52,660
+ You'll quickly realize-- and I actually made a little GUI in the course notes.
+
+919
+01:12:52,660 --> 01:12:57,220
+ If you start taking bodies and plot them over each other, you'll realize there's kind of
+
+920
+01:12:57,220 --> 01:12:58,220
+ no good answer.
+
+921
+01:12:58,220 --> 01:13:02,980
+ If you want to summarize the overlap of two bodies with a single point force or wrench
+
+922
+01:13:02,980 --> 01:13:09,620
+ or something to push it out of contact, out of penetration, it's a bad problem.
+
+923
+01:13:09,620 --> 01:13:12,660
+ So if you think about these, this is a logical choice.
+
+924
+01:13:12,660 --> 01:13:13,660
+ It's not the only choice.
+
+925
+01:13:13,660 --> 01:13:16,340
+ You could imagine putting it here or here or here.
+
+926
+01:13:16,340 --> 01:13:17,980
+ You probably don't want to put it there.
+
+927
+01:13:17,980 --> 01:13:23,220
+ But where should you push the force to push things out of penetration?
+
+928
+01:13:23,220 --> 01:13:29,180
+ This is the way that point contact, if you try to summarize the overlap of two bodies
+
+929
+01:13:29,180 --> 01:13:34,100
+ with a single point as is implemented in Drake, it makes one set of choices, which is no better
+
+930
+01:13:34,100 --> 01:13:35,260
+ or worse than any other.
+
+931
+01:13:35,260 --> 01:13:37,220
+ I mean, it's the one we chose that was best.
+
+932
+01:13:37,220 --> 01:13:45,180
+ It still looks a little weird in this particular configuration.
+
+933
+01:13:45,180 --> 01:13:51,140
+ But the problem with it, if you noticed, is that it's going, it's going, it's going, and
+
+934
+01:13:51,140 --> 01:13:54,300
+ then it changes discontinuously.
+
+935
+01:13:54,300 --> 01:13:59,020
+ So for almost any rule that you pick of how am I going to decide, give an instantaneous
+
+936
+01:13:59,020 --> 01:14:04,180
+ snapshot of two bodies, which direction I should put the force, if you go into deeper
+
+937
+01:14:04,180 --> 01:14:11,040
+ penetration, then that force can change very discontinuously.
+
+938
+01:14:11,040 --> 01:14:13,500
+ This is a big reason why simulators blow up.
+
+939
+01:14:13,500 --> 01:14:18,220
+ If you get a little bit too much penetration, boom, you just explode out.
+
+940
+01:14:18,220 --> 01:14:22,860
+ If my ball's coming down here, all of a sudden it explodes out the side.
+
+941
+01:14:22,860 --> 01:14:26,340
+ This is a big problem.
+
+942
+01:14:26,340 --> 01:14:31,220
+ Partial phi, partial q happens to be the gradients, the normals and stuff.
+
+943
+01:14:31,220 --> 01:14:35,820
+ But it's really, that's kind of what it looks like on the inside, and it's messy stuff.
+
+944
+01:14:35,820 --> 01:14:40,460
+ So you will see in our simulators, if you were to open up the URDF of the YCB objects
+
+945
+01:14:40,460 --> 01:14:47,020
+ or my little red foam brick, we actually, to make that good and consistent and to make
+
+946
+01:14:47,020 --> 01:14:54,200
+ the forces always appear in the same location stably, we will actually often annotate our
+
+947
+01:14:54,200 --> 01:14:56,840
+ geometry with little point spheres.
+
+948
+01:14:56,840 --> 01:15:03,100
+ So our box is actually a box collision geometry and eight sphere geometries of radius almost
+
+949
+01:15:03,100 --> 01:15:04,940
+ zero.
+
+950
+01:15:04,940 --> 01:15:09,300
+ That way, when you drop those boxes, there's going to be consistent contact forces between
+
+951
+01:15:09,300 --> 01:15:13,380
+ the spheres and the other boxes that are inset just a little bit.
+
+952
+01:15:13,380 --> 01:15:18,820
+ And that's what gives you robust and stable simulations.
+
+953
+01:15:18,820 --> 01:15:20,620
+ But it's a total pain.
+
+954
+01:15:20,620 --> 01:15:27,700
+ And for all settings, knowing where to put those spheres is a major pain point.
+
+955
+01:15:27,700 --> 01:15:33,300
+ So one of the things we've been working on inside Drake is this generalization of that
+
+956
+01:15:33,300 --> 01:15:39,580
+ idea, where we try to, instead of taking one point at a time, most simulators choose a
+
+957
+01:15:39,580 --> 01:15:44,700
+ few points with some heuristics, but it leads to instability.
+
+958
+01:15:44,700 --> 01:15:49,300
+ We've been trying to just do the harder work, the extra computational geometry, to take
+
+959
+01:15:49,300 --> 01:15:53,420
+ an integral over an entire surface between the two bodies.
+
+960
+01:15:53,420 --> 01:15:58,020
+ And so we have a very robust and numerically stable contact wrench that comes out of that,
+
+961
+01:15:58,020 --> 01:15:59,860
+ forces and torques that comes out of that.
+
+962
+01:15:59,860 --> 01:16:04,420
+ So it's moving away from point contact, but it's much less than a full finite.
+
+963
+01:16:04,420 --> 01:16:07,540
+ It looks a little bit like a finite element method when I draw it like that.
+
+964
+01:16:07,540 --> 01:16:10,020
+ But the geometries and the masses are not changing.
+
+965
+01:16:10,020 --> 01:16:13,540
+ It is a rigid shape that stays the same shape all the time.
+
+966
+01:16:13,540 --> 01:16:17,500
+ But instantaneously, we're just integrating the force more like a limit surface, for those
+
+967
+01:16:17,500 --> 01:16:22,780
+ of you that know about limit surfaces, but for 3D geometries.
+
+968
+01:16:22,780 --> 01:16:29,140
+ And you'll see lots of examples of just some things that were very unstable before become
+
+969
+01:16:29,140 --> 01:16:32,020
+ very stable when you just do the extra work of integrating that extra.
+
+970
+01:16:32,020 --> 01:16:34,340
+ And it's a lot of extra work.
+
+971
+01:16:34,340 --> 01:16:42,980
+ Now when boxes penetrate, we take an integral, and we get beautiful, smooth contact forces.
+
+972
+01:16:42,980 --> 01:16:48,100
+ You can make one object hard and one object soft.
+
+973
+01:16:48,100 --> 01:16:57,420
+ You can make them both soft, and you get some surface that's in between the two.
+
+974
+01:16:57,420 --> 01:17:00,020
+ And there's just a lot of computational geometry behind it.
+
+975
+01:17:00,020 --> 01:17:01,020
+ Yeah?
+
+976
+01:17:01,020 --> 01:17:08,020
+ So if you had a soft object and a hard object in the real world, and you motion-sync both
+
+977
+01:17:08,020 --> 01:17:16,660
+ one across the other, wouldn't you get a really different limit force?
+
+978
+01:17:16,660 --> 01:17:24,500
+ So I think the notion of penetration is like a weird limitation of rigid body physics.
+
+979
+01:17:24,500 --> 01:17:30,300
+ Actually things are moving out of the way, and they're resisting along this surface.
+
+980
+01:17:30,300 --> 01:17:36,100
+ So how do you take two geometries, act like their geometries haven't changed, but then
+
+981
+01:17:36,100 --> 01:17:39,460
+ kind of produce a force as if the things had moved out of the way?
+
+982
+01:17:39,460 --> 01:17:40,720
+ That's the game we end up playing.
+
+983
+01:17:40,720 --> 01:17:47,440
+ So if you actually took a rigid object and shoved it to a soft, we have to think exactly
+
+984
+01:17:47,440 --> 01:17:48,440
+ about how that would work.
+
+985
+01:17:48,440 --> 01:17:50,980
+ And the material properties would start coming into play, right?
+
+986
+01:17:50,980 --> 01:17:54,580
+ If I took a book and shoved it through a teddy bear, maybe.
+
+987
+01:17:54,580 --> 01:17:55,580
+ I don't know.
+
+988
+01:17:55,580 --> 01:17:56,580
+ That's probably not what you're thinking.
+
+989
+01:17:56,580 --> 01:18:02,540
+ But yeah, I mean, the teddy bear is going to deform underneath it, right?
+
+990
+01:18:02,540 --> 01:18:04,220
+ And it's going to resist in certain ways.
+
+991
+01:18:04,220 --> 01:18:10,660
+ This is our proposed approximation of that.
+
+992
+01:18:10,660 --> 01:18:14,580
+ So when you see some of the more advanced sims, like for the Allegro hand picking up
+
+993
+01:18:14,580 --> 01:18:21,920
+ the mug, you'll see some of these extra renders off to the side here of the full contact patch
+
+994
+01:18:21,920 --> 01:18:26,980
+ being computed.
+
+995
+01:18:26,980 --> 01:18:33,020
+ And it just like over and over again, we've seen simulations that were kind of barely
+
+996
+01:18:33,020 --> 01:18:39,620
+ stable or unstable or took a lot of work sprinkling contact spheres all over the place that give
+
+997
+01:18:39,620 --> 01:18:45,940
+ very stable contact forces with the extra work that goes into that.
+
+998
+01:18:45,940 --> 01:18:50,700
+ So it's like picking up pieces of potato or whatever we're simulating in this one, right?
+
+999
+01:18:50,700 --> 01:18:53,300
+ I mean, you're doing a lot of work to simulate those surfaces.
+
+1000
+01:18:53,300 --> 01:18:59,540
+ But we think it's kind of a Goldilocks between the point contact, which is fast, but unstable
+
+1001
+01:18:59,540 --> 01:19:03,000
+ and inaccurate, and finite elements too expensive.
+
+1002
+01:19:03,000 --> 01:19:10,220
+ This is like getting just the geometry piece, not all the extra state variables.
+
+1003
+01:19:10,220 --> 01:19:11,420
+ We've done things like simulate Legos.
+
+1004
+01:19:11,420 --> 01:19:17,460
+ You get these beautiful, stable matings of Legos.
+
+1005
+01:19:17,460 --> 01:19:23,820
+ And when you actually do these sort of experiments of trying to drop things that cross that terrible
+
+1006
+01:19:23,820 --> 01:19:29,380
+ boundary, and you look at the difference between a point contact model, even in the friction
+
+1007
+01:19:29,380 --> 01:19:35,140
+ in this case is the simple thing, versus the hydroelastic model, it just takes a lot of
+
+1008
+01:19:35,140 --> 01:19:38,100
+ the grossness and gets rid of it.
+
+1009
+01:19:38,100 --> 01:19:43,900
+ So all of our-- some of the discontinuities that just come from the geometry computations
+
+1010
+01:19:43,900 --> 01:19:51,780
+ get better.
+
+1011
+01:19:51,780 --> 01:20:00,980
+ Things that were discontinuous solutions become continuous.
+
+1012
+01:20:00,980 --> 01:20:03,520
+ So there's two major sources of grossness.
+
+1013
+01:20:03,520 --> 01:20:06,140
+ One is the stiffness of the equations.
+
+1014
+01:20:06,140 --> 01:20:11,140
+ The other one is, I think, the computational geometry of penetrating bodies.
+
+1015
+01:20:11,140 --> 01:20:15,540
+ I guess I'll save the static equilibrium since we're running up on time.
+
+1016
+01:20:15,540 --> 01:20:16,540
+ But people have questions.
+
+1017
+01:20:16,540 --> 01:20:22,460
+ I mean, this is a lot of-- I hope opening up your awareness of these topics, you don't
+
+1018
+01:20:22,460 --> 01:20:24,820
+ have to know every detail about all these models.
+
+1019
+01:20:24,820 --> 01:20:26,980
+ I didn't give you every detail.
+
+1020
+01:20:26,980 --> 01:20:30,500
+ But I hope you'll come away with this sense that there's these parameters sitting around
+
+1021
+01:20:30,500 --> 01:20:31,500
+ in your simulator.
+
+1022
+01:20:31,500 --> 01:20:36,820
+ If you want to simulate faster, you've got to make things less stiff and then take bigger
+
+1023
+01:20:36,820 --> 01:20:38,140
+ time steps.
+
+1024
+01:20:38,140 --> 01:20:39,300
+ Those two have to play together.
+
+1025
+01:20:39,860 --> 01:20:45,100
+ When I see people saying, oh, we chose a time step of five milliseconds and we never looked
+
+1026
+01:20:45,100 --> 01:20:48,900
+ back and we started changing robots or whatever, that just doesn't make sense to me.
+
+1027
+01:20:48,900 --> 01:20:51,220
+ You have to-- those two have to be tuned together.
+
+1028
+01:20:51,220 --> 01:20:54,660
+ You put a different robot in, the first thing you should do is find the right time step
+
+1029
+01:20:54,660 --> 01:20:58,100
+ for that robot so you can get maximum simulation performance.
+
+1030
+01:20:58,100 --> 01:20:59,100
+ Yeah?
+
+1031
+01:20:59,100 --> 01:21:24,860
+ Is this-- so this is clearly an approximation of what's going on in the real world for
+
+1032
+01:21:24,860 --> 01:21:25,860
+ in-population reasons.
+
+1033
+01:21:25,860 --> 01:21:26,860
+ Is this usually good enough for simulation?
+
+1034
+01:21:26,860 --> 01:21:27,860
+ If we do things with these sort of simulation in sim and then try to do it in the real world,
+
+1035
+01:21:27,860 --> 01:21:28,860
+ are the policies or whatever we figure out robust enough to--
+
+1036
+01:21:28,860 --> 01:21:29,860
+ Yeah.
+
+1037
+01:21:29,860 --> 01:21:30,860
+ -- make it look like it's real?
+
+1038
+01:21:30,860 --> 01:21:31,860
+ Yeah.
+
+1039
+01:21:31,860 --> 01:21:32,860
+ So, you know, there's a lot of approximations in here.
+
+1040
+01:21:32,860 --> 01:21:33,860
+ Is it good enough?
+
+1041
+01:21:33,860 --> 01:21:37,780
+ Can we do things in simulation and expect them to transfer to reality, right?
+
+1042
+01:21:37,780 --> 01:21:42,660
+ So you will see simulators out there that are using these equations and they can be
+
+1043
+01:21:42,660 --> 01:21:43,660
+ made very accurate.
+
+1044
+01:21:43,660 --> 01:21:48,320
+ So I-- like, let me just say, like, Mojoko is a great simulator.
+
+1045
+01:21:48,320 --> 01:21:51,940
+ But if you are a machine learning person who is trying to make your learning curve look
+
+1046
+01:21:51,940 --> 01:21:56,740
+ good, you can take these parameters and make them ridiculous and make videos that make--
+
+1047
+01:21:56,740 --> 01:22:00,420
+ that don't look like physics and they become easier to optimize and you get a better learning
+
+1048
+01:22:00,420 --> 01:22:01,420
+ curve.
+
+1049
+01:22:01,420 --> 01:22:05,220
+ So there are a lot of-- I think it's not Mojoko's fault, but people have taken those parameters
+
+1050
+01:22:05,220 --> 01:22:07,100
+ and made them ridiculous.
+
+1051
+01:22:07,100 --> 01:22:10,580
+ And then those simulations are not going to transfer to reality.
+
+1052
+01:22:10,580 --> 01:22:15,920
+ If you take and set these parameters well, then I do think there's a lot of good sim
+
+1053
+01:22:15,920 --> 01:22:17,780
+ to real work coming out.
+
+1054
+01:22:17,780 --> 01:22:23,180
+ I mean, over and over again, we're training things in simulation and seeing them work
+
+1055
+01:22:23,180 --> 01:22:24,180
+ in reality.
+
+1056
+01:22:24,180 --> 01:22:31,580
+ And I think we have spent a lot of time matching those two and not every simulator has.
+
+1057
+01:22:31,580 --> 01:22:33,980
+ There are still foibles in these formulations.
+
+1058
+01:22:33,980 --> 01:22:37,100
+ So maybe one of my favorite ones, if you hang with me for the last minute.
+
+1059
+01:22:37,100 --> 01:22:44,580
+ But one of the classic examples of where the Coulomb friction model isn't good enough.
+
+1060
+01:22:44,580 --> 01:22:49,340
+ So if I take a four-legged table, and let's just say it's balancing on the ground.
+
+1061
+01:22:49,340 --> 01:22:53,780
+ So to say that it's not penetrating, there's four contact forces, assuming there's four
+
+1062
+01:22:53,780 --> 01:22:56,460
+ points, four contact forces.
+
+1063
+01:22:56,460 --> 01:22:59,980
+ The sum of those forces has to equal the weight of the table.
+
+1064
+01:22:59,980 --> 01:23:03,660
+ But the actual balance of the forces need not be uniform.
+
+1065
+01:23:03,660 --> 01:23:07,380
+ There's really nothing in the don't penetrate the ground that tells me how those forces
+
+1066
+01:23:07,380 --> 01:23:09,660
+ should be distributed.
+
+1067
+01:23:09,660 --> 01:23:12,440
+ But the friction depends on the normal force.
+
+1068
+01:23:12,440 --> 01:23:18,500
+ So if I walk up and shove the table sideways, these rules don't tell me where it's going
+
+1069
+01:23:18,500 --> 01:23:19,500
+ to go.
+
+1070
+01:23:19,500 --> 01:23:20,500
+ It could go off to one side.
+
+1071
+01:23:20,500 --> 01:23:21,500
+ It can go off to the other side.
+
+1072
+01:23:21,500 --> 01:23:25,060
+ But my equations haven't actually told me which of those solutions is real.
+
+1073
+01:23:25,060 --> 01:23:28,980
+ Because I could have put a lot of my normal force on one corner, so I get a lot of friction
+
+1074
+01:23:28,980 --> 01:23:31,340
+ in one corner, it starts spinning.
+
+1075
+01:23:31,340 --> 01:23:37,460
+ I've written degenerate equations on the board and in our code and in every rigid body model
+
+1076
+01:23:37,460 --> 01:23:38,460
+ everywhere.
+
+1077
+01:23:38,460 --> 01:23:40,420
+ So that's real.
+
+1078
+01:23:40,420 --> 01:23:44,620
+ At some point, you have to model the deformation to resolve some of those inefficiencies.
+
+1079
+01:23:44,620 --> 01:23:47,580
+ OK, I know we're up against the hour.
+

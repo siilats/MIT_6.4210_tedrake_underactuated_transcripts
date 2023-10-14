@@ -1,0 +1,1500 @@
+ It's around the right time.
+ I'm just going to go for it.
+ OK.
+ So last time, we talked about force control.
+ I tried to give a couple examples about how sometimes
+ it's more natural to program using the language of forces
+ in your controllers instead of using the languages of positions.
+ But we mostly assumed that the robot was a point.
+ And so I promised that today we'd go through and add
+ the rest of the robot back in.
+ And that is exactly what we'll do.
+ It's a part of a bigger discussion
+ about manipulator control.
+ I'll mention again at the end, but there
+ are aspects of manipulator control
+ that might have you focus on executing trajectories
+ at high speeds with very high accuracy,
+ possibly with uncertain payloads.
+ But we're going to talk about the force control
+ aspects of manipulator control primarily today.
+ So I'll take you through a couple steps.
+ But I want to call out that at the end, we'll have--
+ Rachel actually does work on this regularly
+ with her Franca robots.
+ So she's going to show you some of her case studies
+ at the end, which will be an extra treat.
+ OK, so just to set it up and remember,
+ there are tasks like this one, for instance.
+ I gave a couple different examples last time,
+ where really, the task requires thinking
+ about something about forces.
+ You're trying to apply the right amount of force
+ to maintain frictional contact between the hand and the book.
+ And then between the book and the table,
+ you need to be in that sweet spot
+ where the book's still able to slide on the table,
+ but the hand isn't sliding on the book.
+ That extra part is-- actually, this is a pretty good example.
+ The video wasn't actually meant to show force control.
+ It was meant to show this cleverness at the end, which
+ even though there was some uncertainty,
+ having driven the book to the end,
+ if you choose the right kinematic strategies
+ at the end, you can reduce all the uncertainty
+ by just pushing to the end and then grabbing the book.
+ OK, but that's a good example, I think,
+ of something you'd like to do with force control,
+ writing on the board, erasing the board,
+ picking up the really big flat Cheez-It box.
+ These are all good examples, I think.
+ This was the one we spent time on last time,
+ was just actually trying to reason about what forces you
+ should apply at the finger in order
+ to stay in the friction cone on the end.
+ And this was a strong regulator on the forces
+ you would apply at your finger in order to not slide.
+ OK, so let's add the robot back in.
+ And I'm going to do it mostly--
+ of course, we want to apply this on the KUKA.
+ But I actually think for the board and for all the concepts,
+ it's totally fine for me to do everything
+ with a double pendulum for today.
+ And then we're going to use the general form
+ of the double pendulum.
+ But any time we want to get into the details,
+ I'll just choose two angles instead of seven to work with.
+ And I'm going to spend a little bit more time
+ on this part of the board today.
+ I realized I was always showing my backside to the camera.
+ So let's see if this works.
+ If you guys don't like that, you should tell me.
+ But let me try.
+ OK, let's spend our time today mostly thinking
+ about a double pendulum.
+ I actually will often call this the simple double pendulum
+ when I use point masses for the dynamics.
+ But we're going to stay mostly in the general form today.
+ All right, so a lot of times when I draw the pendulum,
+ I'll think of it as coming down from the top
+ as a hanging pendulum.
+ If you're a KUKA, maybe you're bolted on the bottom.
+ No big deal.
+ So importantly, I'm going to parameterize the double pendulum
+ with just the two angles.
+ I'm going to put my end effector here,
+ which I'll call the kinematics of this.
+ I'll have some point.
+ We'll potentially call it the contact point
+ if that's the places where we want to make contact.
+ We've got gravity coming down, of course.
+ I'm going to allow motors in both of these places.
+ So I have a torque here, torque here, masses distributed,
+ and the like.
+ So this fits right into the same equations
+ we've been using for the big, complicated EWA.
+ It's got the standard manipulator equation form,
+ plus potentially any contact forces, which we'll add later.
+ And in particular, it's nice because Q here is just
+ theta 1 and theta 2, super easy.
+ And U here is just tau 1, tau 2.
+ And the equations are derived in the notes,
+ well, the linked notes.
+ But if you care, it just comes up,
+ especially if you just do lumped masses,
+ then the terms come out particularly easy.
+ And we could write them on the board.
+ I won't, but they look like that.
+ OK, so what we want to do here is figure out
+ what torques to apply to achieve some sort of force control
+ or program the interaction here at the contact point.
+ That's the goal that we're trying to achieve.
+ And there's a really core idea that I
+ want to start with, which is this idea of feedback
+ canceling control.
+ So given the system as written, if I have U as an input,
+ so I can apply torques at both of those joints,
+ and if I know m, c, and tau g, the gravity forces,
+ then I can write a controller that
+ sort of changes the dynamics, the effective dynamics
+ of the robot, almost at will.
+ At some point, maybe I'll have torque limits
+ or other problems.
+ But let's just think about how I can already
+ change the dynamics of this to pretty much anything I want.
+ So as an example that I actually use typically
+ in underactuated to talk about how this approach is limiting
+ in the more general sense, but it's actually very useful here,
+ what if you had a goal of just replacing
+ the dynamics of your two-link pendulum
+ and make it act like a one-link pendulum?
+ Or, I mean, there's only two degrees of freedom,
+ so you can't make it act like a four-link pendulum.
+ You can sort of impose whatever two-link dynamics you'd like.
+ So what would that look like?
+ The equations of the single pendulum
+ are even simpler, right?
+ Maybe I have-- this would be equivalent to saying
+ I'd like the accelerations of my two-link pendulum.
+ It's deeper desired, right?
+ Let's say I'd like the first link to just swing around
+ as if the whole thing was just a one-link pendulum.
+ So maybe this gives me something like negative g
+ over l sine theta, maybe with some damping.
+ That would make this first thing act
+ like as if it had the dynamics of a single pendulum.
+ So if nothing else, it would be canceling
+ any effects that are coming from theta 2 moving around
+ so that theta 1 moves like a simple pendulum.
+ And there's a handful of things you could write here.
+ Let me just sort of cartoon it.
+ Let's just say I want the dynamic acceleration of that
+ to be 0.
+ In practice, if it doesn't start straight,
+ maybe I would put a little feedback control
+ to make it go straight.
+ But in general, I want to basically make this--
+ pretend that it's not there and not move.
+ And I'll just make the whole thing sort of swing
+ like a single pendulum.
+ So that's just a different desired acceleration for this.
+ It's not the one that naturally happens with the physics
+ of the double pendulum.
+ But as you can see sort of algebraically,
+ if I were to just choose to apply a controller which
+ goes in and exactly cancels out the terms in my equations
+ of motion, and then for this one I'm a little bit more clever.
+ I'll do this.
+ [AUDIO OUT]
+ Then if I were to run this as a controller--
+ this is my control, this one which looks very similar.
+ It is my plant, my equations of motion.
+ If I put them together into the closed loop dynamics,
+ then c cancels, tau cancels, and I get mq double dot
+ equals mq double dot desired.
+ And because we know--
+ I mean, the world knows.
+ We haven't spent time on it in this class,
+ but the world knows that mass is always positive.
+ Even in the mass matrix form, mass matrices
+ are always positive definite or semi-definite,
+ depending on the system.
+ But in general, we're going to say in these cases,
+ it's safe to do m inverse.
+ That exists, which implies that I get q double dot
+ equals q double dot desired.
+ So this kind of works, and I have a simple example
+ of that in a notebook.
+ I can take my original dynamics of the pendulum,
+ and if I run that, this is just the-- if u equals 0,
+ what happens with the double pendulum?
+ It just falls down with respect to gravity.
+ And if I write a simple controller that just does
+ almost exactly what I just said, and I
+ write that in a simple leaf system
+ here and put it in feedback with my plant--
+ [AUDIO OUT]
+ I wait for the first one to finish running.
+ I was just saying that somehow all of my computers
+ feel slow today.
+ I don't know what's happening.
+ Here we go.
+ All right.
+ So the double pendulum with that simple controller
+ suddenly just acts exactly like a single pendulum.
+ And that doesn't seem too surprising or whatever.
+ I can also just--
+ I mean, I don't even have to respect gravity.
+ I could just do the same thing but make gravity
+ be the negative of the true gravity,
+ and I could run that controller too.
+ And I just have a new system that--
+ because I've just overwritten the dynamics completely,
+ that new system can be whatever I want.
+ I could do it like I'm a pendulum in space
+ or a pendulum upside down or whatever.
+ So this is a powerful idea, which
+ is if you write the right controller
+ and you have enough control authority,
+ then you can basically overwrite the dynamics of your system.
+ Now, what can go wrong with that?
+ Yeah, please.
+ [INAUDIBLE]
+ OK, so he says it seems very dependent on your ability
+ to estimate the torques.
+ I mean, it also means estimating the masses accurately,
+ estimating Coriolis terms accurately,
+ the gravitational terms.
+ Absolutely.
+ So that's great.
+ I mean, people do things like this in practice.
+ And it's interesting to run the sensitivity analysis.
+ There's ways to sort of see how sensitive are you
+ to your mass matrix estimate and the like.
+ But to an extent, I mean, this works.
+ So it works in the case of a known robot arm.
+ Let's be super clear, actually, that if I
+ were to write the dynamics of a full manipulation problem,
+ where the equations of motion included
+ both the robot and the world, the manipulator
+ and the manipulate--
+ and the manipuland-- you guys know
+ the word-- I don't know if I've used the word manipuland a lot.
+ But that's what people often call
+ the thing you're manipulating.
+ It's kind of-- actually, props to Steffi if she's out there.
+ She made me laugh about how ridiculous this is.
+ It sounds like a place where everybody's happy
+ and manipulating, right?
+ But that's the word people use, right?
+ That's the object.
+ OK, if you had equations, what would
+ happen if you had equations that included
+ both the masses of the robot and the masses of the manipuland?
+ Well, I can't write this form anymore
+ because I don't have torque applied directly to the objects.
+ I only have seven actuators on my robot,
+ and I don't have actuators directly affecting.
+ So I can't directly overwrite the dynamics
+ of the objects in the world.
+ This B matrix becomes low rank.
+ And so that's why this is a lecture in underactuated
+ because the whole system is underactuated
+ if you consider the robot and the world.
+ And that's kind of what the other class I teach
+ on robotics is called underactuated robotics.
+ It's all about that.
+ So that's definitely a limitation.
+ But of course, like you said, these are also limitations.
+ You have to estimate this.
+ And also, if you ask your system to follow
+ some dynamics that just requires ridiculous amounts of torque,
+ and you have torque limits, there's
+ lots of things that could potentially interfere with this.
+ But locally, within reason, if you
+ want to change your dynamics a bit,
+ then it's an incredibly practical, powerful idea.
+ And this philosophy is going to underlie what we're going to do.
+ Basically, the goal is make my big, complicated robot
+ act like it's a point robot at the end.
+ And I can apply forces at the end,
+ or I can program the interaction at the end.
+ OK, so let's generalize that idea
+ or implement a version of that idea that
+ is going to act like a stiffness controller.
+ So if I want to program the interactions,
+ but I'll start by just programming them
+ at the joint level.
+ So instead of having my double pendulum
+ act like a simple pendulum, I'll make
+ it act like a system that, when I push it,
+ has some desired mechanical response.
+ OK?
+ So there's a bunch of different controllers
+ we could have written here.
+ We talked, even in lecture two, about the differences
+ in torque control and position control.
+ If I were to write a position controller for this,
+ I might write a PD control, something like this Q.
+ That's one controller I could write.
+ The philosophy in stiffness control, though,
+ is not to have somehow just a rigid position,
+ but to actually program the response.
+ If I were to-- I want my pendulum to act,
+ not like a simple pendulum, but like a different mechanical
+ system, which has a particular response to torque
+ perturbations.
+ So I'd like to act like it's a pendulum that's
+ hanging down that has some springs, some rotary springs,
+ here, that have a certain stiffness, and maybe
+ some damping.
+ So I'd like it to act a system like this.
+.
+ This is the interaction that I would like.
+ I would like it to be that if my pendulum is sitting there,
+ and I were to go up and push on it--
+ now, the push, in this case, is written in the--
+ the coordinates of this equation is in torques.
+ But you can imagine coming in and just
+ giving a torque perturbation.
+ Or if I had a force that I pushed on the end,
+ I could transform that into the torque coordinates.
+ But if there's a perturbation in torque,
+ whether it's because someone actually pushed on me
+ or the robot's moving and it didn't realize
+ it ran into the dishwasher or whatever it is,
+ then I'd like it to respond gracefully as if it was
+ a mass spring damper system.
+ This is almost-- this is just the generalization of the mx
+ double dot equals kx plus bx dot equals--
+ this would be the simple mass spring damper
+ that you get from 18.03.
+ And this is just the joint version of that.
+ OK, so using the same philosophy from the feedback cancellation,
+ whatever is back here, I can write this controller
+ by canceling out the dynamics of the plant that I don't like
+ and inserting the dynamics I do like,
+ just like the pendulum example.
+ So the controller I write here, it's very simple.
+ It's going to look not so different than before.
+ I'll just choose u to cancel out pow g.
+ I'm going to leave-- see, I have this term
+ I don't have to cancel out.
+ I've left that alone for now.
+ We'll talk about that.
+ And then I'll just add in my-- this
+ looks almost identical to the PD controller I did--
+ we put as our strong end.
+ But it has one extra term.
+ It's got the PD control.
+ I made this point last time too, right?
+ So I'm going to add in my PD plus some gravity compensation.
+ Same thing I said for the point finger.
+ And in practice, when the EWA is doing this,
+ it's actually doing much more than just gravity compensation.
+ Did I get something wrong?
+ Yeah?
+ [INAUDIBLE]
+ Yes.
+ Good.
+ Thank you.
+ Yep.
+ I have to flip it.
+ When I put it on this side and I want
+ to think of it as a stiffness, I get it like this.
+ And when it's on this side, I have to do this.
+ Thank you for catching that.
+ There was a high probability I was
+ going to get at least one of those signs wrong today.
+ There were so many of them that looked similar.
+ OK.
+ On EWA, they're doing gravity compensation.
+ But they're also doing friction compensation
+ and some pretty subtle stuff at the actuator level
+ to try to basically cancel out the effective dynamics
+ of the arm and replace it with this stiffness
+ kind of interaction when you run the EWA in joint stiffness
+ control or joint impedance control.
+ We'll say that in a second.
+ OK.
+ Now, again, so what's the big difference
+ in practice between having this versus having this?
+ It can make a huge difference in practice
+ because if you think about even the double pendulum,
+ if I need to choose a stiffness that allows me to work sort
+ of when I'm at a horizontal position where I've
+ got gravity pulling down and this term could be large,
+ if I want to have a small position error here,
+ I need to choose KP very big in the PD controller.
+ OK.
+ And here, KP could be excessive down here
+ to have that kind of KP that I would need here
+ just to get a reasonable.
+ So if you want reasonable performance all over the state
+ space, with the PD controller, you
+ have to choose KP very large, KP very large to damp that out.
+ OK.
+ If I subtract out gravity, then I
+ can write a smaller KP that has a similar response
+ all over the workspace.
+ That makes a big difference in practice.
+ It means you can choose these much lower
+ and you can be much more responsive.
+ So in practice, when people are running these controllers,
+ you bump into the robot and it's like,
+ and maybe it's a fault and powers down.
+ If you do it like this, then the EWA,
+ the way we typically operate it, will just kind of
+ be soft enough to get out of the way.
+ OK.
+ We chose our desired dynamics to use the initial mass.
+ So you should think of these things as always going together.
+ This one is just like the MA in F equals MA.
+ Those two really go together.
+ And we chose not to change them.
+ You can imagine the same kind of trick
+ where you go through and you try to cancel out M and C.
+ But it typically requires high bandwidth to achieve well,
+ good accuracy of your mass.
+ That would take you into a joint impedance control mode.
+ [WRITING ON BOARD]
+ And sometimes this stiffness control,
+ you might call it the simple impedance control.
+ I think impedance control is the more general term.
+ And it often gets used for the whole set of concepts.
+ EWA, actually, when you go into their settings,
+ it's like you're definitely choosing joint impedance mode.
+ And they are doing some amount of mass cancellation.
+ But actually, they're only compensating
+ for the masses of the rotors and not for the whole robot.
+ And it's actually a very subtle, I think,
+ well thought out, carefully designed control
+ that does exactly this kind of thing.
+ So they are technically changing this a little bit,
+ but not in the way of making a different effective mass.
+ Does that make sense?
+ It's really a lot like the feedback cancellation story.
+ But it's trying to do a little bit less.
+ And it's even more robust because of it.
+ [SIDE CONVERSATION]
+ I had thought about possibly spending some time talking
+ in more detail about the EWA implementation.
+ I decided if most of you are not using EWA all your life
+ or care more about RL agents in simulation or whatever it is,
+ maybe that I shouldn't dig in too much to those details.
+ But I will recommend that the papers are totally fantastic.
+ Strongly recommend the papers, which
+ are linked from the notes by Albus Schaefer and Christian
+ Ott about the elastic control of elastic joint robots.
+ I would say impedance control.
+ Alessandro De Luca has some great notes, too,
+ if you're interested.
+ Mark Spong had some of the early work of it.
+ There's a lot.
+ There's a really good literature there
+ that I was tempted to talk about, but decided not to.
+ So let me remind you a point I made earlier when I was just
+ telling you the virtues of EWA is the fact that we do have
+ that kind of capability, and we exploit it often.
+ So in the pieces of the dish task, for instance,
+ opening that door.
+ So the joint trajectory that is programmed is a big part of it.
+ And it's a big part of the job.
+ So it's a really big part of the job.
+ The joint trajectory that is programmed
+ to follow during that opening motion
+ is actually deviating probably significantly,
+ depending on how accurately we modeled and actually
+ captured the location of the dishwasher,
+ and even the hinge of the dishwasher.
+ You can imagine that if you're trying to move down exactly
+ some kinematic constraint given by the door of the dishwasher,
+ if you're a little bit off, then it pays a lot
+ to be flexible enough to just follow whatever contour is
+ given by the actual position of the dishwasher
+ and not by your course approximation.
+ You can see that over and over again.
+ For the EWAs upstairs, we have a little IKEA cabinet
+ that you can open, and you'll see the same thing.
+ If you spend any time trying to open those IKEA cabinet doors,
+ your fingers will typically slip right off
+ if you're in too stiff of a mode and you have to get soft.
+ Similarly, when you push down here,
+ so it's still in a joint impedance mode there,
+ and it's not tracking the position trajectory
+ super accurately, but it's accomplishing the task.
+ Cool.
+ Does that make sense?
+ All right.
+ Now, the interesting part here is how we go from this basic--
+ I guess that's distracting.
+ So how do we take this idea now and implement it
+ at the end effector?
+ So instead of affecting the dynamics in Q,
+ we want to write the dynamics at the end effector.
+ So I want to go up, and I want to push
+ on the fingertip of the EWA and have
+ it act like a mass spring damper system in 3D or whatever.
+ So--
+ [WRITING ON BOARD]
+ So this is sometimes called Cartesian stiffness control,
+ end effector stiffness control.
+ OK, so how do you take those basic equations
+ and impose a dynamics in the end effector?
+ Now, we have the end position of the arm
+ given by some kinematic function of Q.
+ So this is the relationship we get to work with.
+ And I would like to impose something
+ like mp c double dot plus bc dot--
+ tell me if I get the sign wrong--
+ equals some-- this is my goal.
+ It's to achieve something like this.
+ The interesting thing is that the way that--
+ if I were to try to rewrite the original Q
+ coordinates in this form, I have to somehow change between Q
+ and P. OK?
+ It turns out you can take those initial equations.
+ I think it's very easy in the derivation
+ to end up at a dead end.
+ But I promise you that the proper change of coordinates
+ that gets you through is you have
+ to write your end effector mass.
+ This is the Jacobian here.
+ I use the Jacobian times mass inverse of the original system
+ Jacobian transpose.
+ Take the inverse of this whole thing.
+ And that's my new effective mass.
+ It's not surprising that you're going to use the Jacobian
+ to change coordinates.
+ What's maybe a little surprising is
+ that you can write the equations of motion in the end effector
+ frame as a function of the original coordinates
+ and the Jacobian.
+ So I can get a new set of equations
+ with an altered mass matrix, an altered Coriolis
+ matrix, which still depends on Q and Q dot,
+ an altered torque matrix-- I called it this in the notes--
+ plus my u in the new coordinates plus my external forces.
+ This transformation is often called operation space form
+ of the dynamics.
+ It's super useful.
+ OK?
+ Yes?
+ I was just about to ask you that.
+ It's not really fair.
+ If you ask me before I ask you, then do I still
+ get to ask you, right?
+ I'm going to ask you.
+ Is it obvious that this matrix is invertible?
+ What are the conditions that would require
+ that that matrix be invertible?
+ In general, you'd expect this to exist.
+ This would be like the right inverse of A
+ if A has full row rank.
+ OK?
+ So let's first ask, does the Jacobian have full row rank?
+ You can certainly find singular configurations
+ where it doesn't.
+ But in reasonable parts of the workspace,
+ J tends to be, for instance, could be like 3 by nQ,
+ for instance, if I'm trying to do n-defector.
+ It tends to be full row rank and low column rank
+ because it's a long, short matrix.
+ OK?
+ So this has every reason to work.
+ And then M is actually also positive definite.
+ So this thing is going to be well-conditioned, too.
+ So this thing, yes, will have an inverse,
+ as long as J doesn't go singular, which
+ is as it should be.
+ If you just try to start jamming J transpose
+ into your original equations of motion, like I said,
+ you'll find yourself stuck.
+ But I think it must be the case that if I
+ were to push on the n-defector of a physical contraption,
+ it will push back on me with some physical force.
+ That force that it pushes back on is configuration dependent.
+ There's some big, complicated set of mass.
+ I'll have more or less of it working against me
+ at each axis, depending on the configuration of that mass.
+ OK?
+ OK, but this was the magic step we need.
+ Now we can do, if we start working
+ in this, the dynamics in the operation space,
+ or the n-defector space, then we can just
+ do feedback cancellation in this lower space.
+ OK, yes?
+ [INAUDIBLE]
+ So we had a good question about this,
+ even when I was talking about singularities.
+ Like, what is your ability to produce force at this end point?
+ The controller can't produce force in that direction
+ instantaneously.
+ But it can produce a force dot.
+ So you have to be careful, if you
+ start writing these controllers in those singular
+ configurations, and you tend to either do
+ the kind of things we talked about with writing it
+ in a constrained least squares and put some boundaries on it,
+ or something like that.
+ Yeah, but I think, try not to do that, or be careful about it.
+ There's something else that's happening here, too, right?
+ So if I write a controller that tells
+ me to act like a certain dynamics in the xyz
+ configuration, but let's say I have
+ seven degrees of freedom of my robot,
+ then you've still got to do something else.
+ The same way in our Jacobian-based controller,
+ we talked about putting a secondary objective
+ in the null space, something, for instance,
+ just stay in a comfortable joint configuration.
+ You need to do something like this
+ to stabilize the null space of this controller, too.
+ So such that this basically almost equals this.
+ OK?
+ Plus null space stabilization.
+ OK.
+ So that has some implications.
+ The fact that we tend to not try to change m and c,
+ and the fact that it is configuration-dependent
+ means that instantaneously, you can make your robot act
+ like a mass-spring-damper system.
+ The mass that it acts like, though,
+ will be configuration-dependent, almost always.
+ So in the quasi-static analysis case,
+ if the accelerations are small, and you're just
+ trying to push and see how far does it deflect before it
+ stops, before you hit a new steady state,
+ the mass doesn't matter there.
+ The inertial terms don't matter in the static analysis.
+ But in the dynamic analysis, if you
+ start trying to understand the dynamics of your robot,
+ then it is going to be notable, maybe not hugely important.
+ Like I said, it would be beautiful and clean
+ to make them somehow constant a function of q,
+ but we tend to not do that.
+ There's theoretical limits on how much
+ you can change the mass to before you write
+ a controller that is unstable.
+ And Neville has some great surveys on that.
+ Neville Hogan has some great surveys on that kind of thing.
+ OK, so if you remember--
+ maybe I didn't show all of them before,
+ but this is end-effector impedance control.
+ And again, it's only barely impedance control.
+ It's really more of a stiffness control, I'd say.
+ And watch-- first of all, he's very happy, so it must be good.
+ And second of all, they're going to change the compliance,
+ the effect of compliance.
+ And he's going to show you that by changing the compliance
+ there, now it's a very low compliance.
+ A small force is allowing a big perturbation.
+ Again, the stiffness of that will not
+ change as a function of the position of the end-effector,
+ but the effective mass will.
+ There's no reason why you have to choose the same stiffness
+ in all three axes.
+ You can choose them differently, and that's
+ going to be important at the end of the lecture, I think.
+ That's probably fun to watch.
+ You can also write stiffness in orientation.
+ So I think this one is showing--
+ you can set a rotational compliance, too.
+ If you're now trying to control the whole parameterized
+ in terms of roll-bit-jaw, or however you parameterize
+ the end-effector stiffness, you can similarly
+ command an end-effector stiffness on this.
+ Make it very soft in rotation, very stiff in translation.
+ Pretty beautiful.
+ OK, one more point, a small point or detail
+ to call out here.
+ When you go to implement this controller,
+ one of the things you need is you actually
+ need to insert somehow the acceleration.
+ You need p double dot of c, right?
+ This is just kind of an aside here,
+ but we said p of c is f of kinematics of q.
+ We know p dot of c takes this form, the Jacobian.
+ You end up needing p double dot of c, too, in the derivation.
+ And it comes up in a lot of derivations,
+ so I just want to call it out here.
+ So what is p double dot of c?
+ We want to take one more time derivative of this equation.
+ So using the chain rule, I can write it
+ as jcq q double dot plus j dot cq q dot.
+ And there's a question that we get every couple of months
+ on Stack Overflow.
+ They're like, oh, how do you produce--
+ how do you get j dot in Drake?
+ Sorry, that's a specific version of the question.
+ But this comes up often.
+ And the answer is you don't, or you could,
+ but you really don't want that.
+ You probably don't want that.
+ And this is just a little window into a lot of smart thinking
+ that happens in the manipulator equations about how
+ to optimize different workflows.
+ But j of q is a matrix.
+ It's a-- I'll just even say a matrix.
+ I don't even care about its size right now.
+ J dot of q is going to be partial j, partial q.
+ I may have to be careful how I write this, q, q dot.
+ But that's a tensor somehow if I'm not careful.
+ So this thing is going to be a sum over i.
+ Maybe the simplest way for me to write this,
+ partial j, partial qi, qi dot.
+ Just take element by element gradient of this.
+ You definitely don't want to compute this.
+ You can compute it with autodiff if you want.
+ But we're not going to make that easy for you
+ because you almost never want that.
+ Because j dot q dot is a vector.
+ And pretty much every time you ever
+ want j dot anywhere in any of your controllers,
+ you actually want j dot q dot.
+ So in practice, when people say, oh, where's j dot?
+ You don't want j dot.
+ You want j dot q dot.
+ There's a function for that.
+ And you'll see that over and over.
+ You can compute that fast.
+ It doesn't have to allocate a lot of memory.
+ It's got this nice recursive form.
+ That's the term you always want.
+ And it becomes essential in implementing this controller.
+ Loads of details in there.
+ Everything good so far?
+ OK, so one last idea I want to land before I
+ let Rachel have the stage here.
+ So I've done stiffness control in end-effector coordinates.
+ I could have also done force control
+ in the end-effector coordinates.
+ And it's really pretty easy to do
+ if you make that same quasi-static assumption
+ that we did last time.
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ The recipe is use the operations-based form.
+ A recipe would be to say, assume that q double dot--
+ approximately take the quasi-static assumption
+ like we did last time.
+ And choose your controller to cancel the terms such
+ that fc desired equals fc in the end-effector coordinates.
+ The equations would look almost the same as what I just wrote.
+ But do you remember what happened
+ when I was doing the pure force version of the Cheez-It box
+ flip-up?
+ Did this sort of beautiful force control.
+ It stayed inside the friction cone.
+ It got to the top of the box and sort of by all accounts
+ was done.
+ And then the finger went--
+ kind of shot off into nonsense.
+ That's real.
+ If you're only commanding force and you
+ have no other specification of the objective,
+ if there's not a world to push back on you
+ and the force you expect, then you can go away pretty fast.
+ I think it's relatively rare to do pure force
+ control in all six degrees of freedom.
+ There is a thing that people do do often,
+ which is hybrid force plus either position or stiffness
+ control.
+ So if I have my two-link arm here out in the world
+ and I've got my P contact.
+ And let's say there's a chalkboard over here
+ that I'm trying to write on or push the book.
+ The way we push the book there was very similar to this.
+ Then it's very common to do force control
+ in this direction.
+ And stiffness control in this direction.
+ That's sort of a natural specification of the task.
+ The natural way for me to specify my objective
+ on the board is that I'd like to be pushing into the board
+ with some amount of force.
+ Regulating that force is the primal--
+ the most natural way for me to specify
+ the goal of having white lines appear on the board.
+ Stiffness, of course, or somehow reasoning about the position
+ is what gets the job done in the other axis.
+ So this is a very standard setup to do hybrid force and position
+ control.
+ And there's no reason in the equations
+ why you can't set the dynamics in one axis
+ to be a force command and the other axis
+ to be a stiffness command.
+ This can have very nice properties.
+ If you're trying to do the wall following kind of behavior,
+ it'll do these.
+ The only challenge, I guess, is that you
+ have to estimate the coordinate frame well.
+ If you are a little bit off on your estimation,
+ then you could be applying forces
+ or just acting like a little bit of a stiffness into the board,
+ and you can confuse things a lot.
+ So it's a little bit dependent on the accuracy
+ of your coordinate estimation if the gains are
+ very different in this axis versus this axis.
+ But that's a strategy people use.
+ I think Rachel will give you an example of where it may work
+ or may not work as well.
+ You could also alternatively act like a stiffness
+ into the board too, right?
+ And the example that we just showed of the IWA acting
+ like a very different stiffness in the x direction
+ as in the y direction could be exactly what you'd like here.
+ In this case, then, maybe the goal
+ would be to put a set point of my spring
+ at some virtual wall just behind it,
+ have a carefully chosen stiffness in this axis,
+ and a different stiffness in this axis,
+ and that can get the job done too.
+ And there are differences in the way
+ those get implemented that can make
+ a big difference in practice.
+ But this notion of hybrid force position control
+ is an important piece of that.
+ OK.
+ OK, so I just want to mention what I think are the--
+ the beautiful thing about this is this idea
+ that I can really make my dynamics at my finger
+ act like whatever I want within reason.
+ The problem I have with all this,
+ and I think maybe the biggest limitation in my mind,
+ is that you're only talking about the dynamics
+ at your finger, right?
+ So in the case in the world where
+ you have an EWA with this beautiful point that
+ wants to stay perfectly there, and I'm
+ going to push on the point, that's all good.
+ If you're reaching into a toy box
+ and making contact all over the place,
+ then this doesn't give you a recipe yet.
+ There's something else that's missing.
+ Somehow you either need to estimate
+ the locations of contact, which is hard, by the way.
+ There's good papers on that, but it's not easy.
+ And typically, the sensors that you have,
+ joint sensors are impoverished for that estimation problem.
+ You might need a tactile skin.
+ And even if you did, if you have multiple points of contact,
+ you somehow would need to somehow program
+ the behavior of interaction at multiple points
+ simultaneously or whatever.
+ So how do you program a more general form of interaction?
+ So that's one big limitation.
+ There's another sort of silly, annoying limitation,
+ which is that if you want to change
+ the location of that end effector
+ or even change from joint stiffness to end effector
+ stiffness on the EWA, you have to stop the robot,
+ turn off the control software, change the mode,
+ and then power it back up.
+ And I can totally see why that makes sense,
+ because they don't want to worry--
+ reason about-- I mean, they work so
+ hard to guarantee the passivity properties and safety
+ specified-- safety steps or whatever.
+ And if someone starts flipping between controllers
+ in software, I can see that being something
+ you don't want to support.
+ But it's kind of annoying.
+ And it means that, in general, we
+ are operating primarily in the joint stiffness mode
+ in the work I've shown you.
+ I think Rachel will show you something that uses the end
+ effector modes.
+ But there are sort of problems, I think,
+ that go along with that.
+ Yeah?
+ [INAUDIBLE]
+ So good.
+ So the question is, why not work in torque control mode?
+ So you can send a feedforward torque.
+ Even with a stiffness controller,
+ often you can say, I want to act like KP plus KD
+ plus some feedforward torque.
+ It's typically-- just sending torques
+ puts an onus on you modeling the dynamics well enough
+ to cancel the gravity compensation out
+ and everything like this.
+ You're going to run your controller over some impoverished
+ interface at a lower bandwidth than what's
+ running on the robot.
+ So it really pays to let the EWA stack, or the Franca stack,
+ or whichever stack, do as much of the cancellation
+ at super high rates with super well-calibrated gains for you.
+ So we tend to do--
+ so actually, the way the book worked
+ is we were in a joint stiffness mode, which we tend to use.
+ And then we added an additional feedforward force
+ on top of that joint stiffness controller
+ in order to push into the book.
+ So it's a good question.
+ But for implementation reasons, we tend to not--
+ I mean, if we were working at KUKA,
+ maybe we'd go all the way to torque level.
+ But as a user of a commercial robot arm, you just can't.
+ So the transition here-- let me just call out.
+ So there's actually a fun project at TRI trying to build--
+ it's not Baymax.
+ It's Puno.
+ Puno means chubby and lovable and a little silly
+ in Japanese.
+ This is actually the Toyota THR robot, which is awesome,
+ if you haven't seen it.
+ And that's Baymax from Disney.
+ And we're slowly building Puno.
+ So this kind of makes the point, though.
+ I mean, we'll talk more about the tactile sensing later.
+ There's some really nice tactile sensors and soft bubble grippers
+ there that are all open source.
+ But the goal of this project is to make contact
+ all over the robot.
+ So this is just a kind of a fun video
+ that they had the robot grab a fish tank,
+ because you could put a camera in the fish tank.
+ People were a little worried about it dropping the fish
+ tank, so they were just checking.
+ But it's super fun.
+ So that impedance control, as I've written on the board
+ today, doesn't offer strategies for programming
+ interactions like that, because the location of the contact
+ is sort of not specified a priori.
+ So there's a different mode of operation, which I honestly,
+ I think we have to get to, is just a more general
+ make contact all over the system, instrument contact,
+ tactile sensors all over the robot that are constantly
+ measuring forces and pressures and everything.
+ So that's just a fun project going on.
+ Cool.
+ OK, let me turn it over to Rachel,
+ who's going to tell you about her work.
+ What do you need here?
+ Oh, it's just the--
+ OK.
+ I think it's good now.
+ OK.
+ All right, we'll need to save that.
+ Oh, yes.
+ Is this going to be annoying?
+ Yeah, it's going to be annoying.
+ OK.
+ So what I'm going to do is I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ And I'm going to go ahead and save it.
+ Is this going to be annoying?
+ This is the first time you're all seeing the bottom of my face,
+ which is fun.
+ I do have the bottom of my face.
+ So we've been talking about control over the last two days.
+ And what I basically want to do for the rest of the course
+ is we're going to talk through a case study.
+ I'm going to introduce you to a new robot and a new task.
+ It is not with a dishwasher.
+ And we're going to walk through basically what
+ are the control options that you could do.
+ And then it's going to be specifically,
+ because this is based off work that I've done,
+ what are the control choices that I made.
+ So even more so than usual, this is not
+ objectively the correct answer.
+ This is the choices that we made.
+ And I will walk you through why we decided to make them.
+ So we've been working so far with Kuga.
+ This is the robot we've been dealing with.
+ I'm going to introduce you to a new robot, which
+ is the closest robot to the EWO while technically being
+ a different robot, which is the Franca Amica Panda.
+ Franca Amica is the name of the company.
+ Panda is the name of the robot.
+ They have a very cute story about why they call it a panda.
+ These robots are incredibly similar.
+ They are both 7 DoF.
+ They are made by the same people.
+ It is DLR, the German space agency.
+ The differences are that the Franca Amica is newer.
+ It is significantly cheaper.
+ And it has better documentation.
+ I think Russ's joke is that if you
+ know how something works in the Kuga,
+ you just go read the panda documentation,
+ because they are exceptionally similar.
+ So this is the robot that we're dealing with.
+ Sorry, I forgot to grab the notes.
+ One really neat thing about this robot
+ is that on the underlying system,
+ you can send either joint positions, joint velocities,
+ or joint torques.
+ That is the underlying controller interface.
+ And the really nice thing about that
+ is that allows you to build on top of it
+ a wide range of controllers.
+ So you can build, in joint space, position, velocity,
+ impedance, torque.
+ And in Cartesian space, position, velocity, impedance,
+ force, hybrid, anything you want.
+ To kind of echo the point we made on Tuesday
+ that these controllers are not so different
+ is that you can implement joint position control either
+ by sending positions at the lowest level
+ or by sending torques at the lowest level.
+ You can do position control either way.
+ One difference between the Kuga and the Panda
+ is that if you want to switch control modes
+ or if you want to switch stiffnesses for the Panda,
+ you do not have to turn off the robot and reboot.
+ You can just willy-nilly switch the controllers,
+ which is really nice and something
+ we're going to take advantage of.
+ OK.
+ So this is our robot.
+ It has lots of different control modes.
+ That's cool.
+ Let's meet our new task.
+ The task we are going to consider, which I will draw out,
+ but I also brought a prop, is that let's say
+ we have a childproof medicine bottle where
+ you have to exert a push twist.
+ You have to push down and twist in order to open it.
+ All of you have this in your medicine cabinet.
+ For me, it is nice that we could get a robot
+ to open a medicine bottle.
+ That's something I'd like my robot butler to do.
+ But the broader point is it's a very nice example
+ of a system where you want to both exert force and position
+ in order to accomplish this task.
+ So write this out.
+ If we want the robot to open this bottle,
+ it has to both exert a force downward on the lid
+ while twisting it, which you could
+ think of either as twisting it or exerting a torque.
+ Are we clear on the robot that we're using
+ and the task that we're achieving?
+ Cool.
+ OK.
+ So let's walk through the different ways
+ that we could approach this task.
+ We're going to walk through basically three different
+ control strategies.
+ Option one.
+ Now, I'm asking what control strategy
+ could we use given that we want to exert forces?
+ And not being creative at all, what's
+ the first thing that comes to mind?
+ Yes.
+ So we've talked about force control.
+ You could do force control to implement this task.
+ You could run a force controller.
+ You may guess by the fact that this is option one,
+ and I told you there are three, that we are not
+ going to go with this.
+ There are two main reasons.
+ One, force control scares me.
+ Force control can be pretty dangerous.
+ Russ mentioned force control is great if you are in contact.
+ And to illustrate that, if I have--
+ this is the Franconica Panda.
+ This is one specifically in Alberto's lab.
+ And if I ask it to just exert force down
+ while it's in contact, it doesn't care where that block
+ is, it's just going to keep exerting force down.
+ It's somewhat robust because it doesn't care about position.
+ It's just trying to exert force down.
+ And actually, we'll switch it back
+ that if you ask it to exert no force, then to echo the point,
+ it's actually going to run gravity comp.
+ But here, I'm not asking to exert anything down,
+ but it'll stay in place because it's
+ doing gravity compensation.
+ Cool.
+ Force control is well-defined.
+ If you are actually in contact.
+ But if you are not in contact and you ask force control
+ to exert force, you're kind of in an ill-defined state.
+ If you ask it to exert force and it's not in contact,
+ it's going to do its best to exert force, which means it's
+ just going to whip back at you.
+ Fun fact, I did this by accident the first time.
+ And it nearly cracked the back wall into Songbei's lab.
+ Sorry, Songbei.
+ And was very terrified.
+ I was, oh, god, I have to--
+ it's because I put something in the wrong sign.
+ I was, oh, god, I have to fix that.
+ Did it again.
+ And my nervousness did not recompile.
+ Did it a second time.
+ And then the third time, I was like, I should record it.
+ So that's what you're seeing here.
+ This is a toy example of where force control can be dangerous
+ because hopefully you will not be so dumb as to make a sign
+ error.
+ But in general, you have to ensure that you are in contact.
+ And force control is not well-defined
+ if you're not in contact.
+ So that's one thing that makes me nervous about force control.
+ The second reason that we did not go with force control
+ is you could argue, here, our goal is to exert a torque.
+ But specifying it as a torque could be kind of tricky.
+ And it arguably is not maybe the most intuitive way.
+ And so for that, our second option
+ that we could have taken, looking
+ at what we just covered, if I now want to do a force
+ and a position--
+ [INAUDIBLE]
+ Well, before that, force and position,
+ we're just going to talk about hybrid position force control.
+ One note is, as was mentioned, some people
+ call it hybrid position force control.
+ Some people call it hybrid force position control.
+ Some people call it hybrid velocity force control.
+ They're all effectively the same thing.
+ You just can't call it hybrid control
+ as another thing entirely.
+ So if you do hybrid position force control--
+ now, again, I told you there are three options.
+ So you may guess that we didn't go with option two either.
+ Why?
+ Hybrid position force control arguably
+ would be a great choice for this problem,
+ because it's very easy to specify.
+ We want to exert force in one direction.
+ And we want to control motion in another position.
+ Additionally, my advisor is the dude
+ who advised the person who invented hybrid position force
+ control.
+ So it would have been a very natural choice.
+ Why did we not do it?
+ So it actually comes back to this point
+ Russ made, which is that--
+ I'm sorry.
+ I'm moving a ton, which is what we tell Russ not to do.
+ In order to do hybrid position force control,
+ you are specifying in what directions
+ do I want to exert force and what directions
+ do I want to control motion.
+ And you define those constraints with respect to a frame.
+ And you turn it-- there's a lot of beautiful math.
+ And you specify it using Fafian constraints.
+ But it relies on being able to estimate that frame very
+ accurately.
+ And as Russ mentioned, if you get that frame wrong,
+ you're going to be exerting forces
+ in the wrong directions, which is just the same case of force
+ control being scary.
+ So one is that hybrid position force control is beautiful.
+ I love the math.
+ It is difficult to get it right in a system.
+ That's reason one.
+ The second reason is you might not actually
+ need it for this task.
+ So hybrid position force control works well
+ and is definitely needed if you're in the case
+ where you care very carefully about regulating force.
+ So the classic example is if you want to be writing
+ or you're doing welding or you're doing grinding or sanding,
+ where you really carefully care about regulating
+ what force you are exerting.
+ Oft less so.
+ We are in the case where we want to control how much force we're
+ exerting and we want to be able to exert enough force basically
+ to open the bottle.
+ But we are less concerned with regulating
+ like it has to be exactly this force
+ or we've messed up welding a part that goes on a plane.
+ So hybrid position force control, powerful,
+ hard to get right in some cases, maybe not needed for our task.
+ And so because of all of that, we opted--
+ and again, this is what we opted to do in our research.
+ You could definitely do this with hybrid position force
+ control and that would be an equally valid choice.
+ Also, if my board work becomes either too small or ugly,
+ someone please call me out on it.
+ So what we have to do is use Cartesian impedance mode.
+ To Russ's point that he made on Tuesday,
+ we'll use stiffness control and impedance control fairly
+ interchangeably.
+ In this case, it would be more accurate
+ to say that we're using stiffness control.
+ I'm going to call it impedance control.
+ Also, as Russ pointed out, some people say Cartesian,
+ some people say indefectors, some people say operation space
+ because that matches Osama Kati's seminal paper.
+ Some people say task space.
+ All of those words technically have
+ like slightly different meaning, but we're
+ going to use them interchangeably here.
+ Good so far?
+ OK.
+ So I want to open a bottle using Cartesian impedance control.
+ How am I going to do that?
+ Which Russ somewhat stole my punch line, but that's OK.
+ So let's say that we have a ground
+ and we have our indefector and we're
+ dealing in Cartesian impedance space.
+ So we have a spring.
+ This is a symbol for a damper, if that's unfamiliar to anyone.
+ OK.
+ So we specify a stiffness and a damping and a set point.
+ Technically, because we are in Cartesian impedance control,
+ in our full glory, our stiffness matrix is a 6 by 6.
+ So is our damping matrix.
+ And our set point is in SE3.
+ Everyone good with that notation?
+ OK.
+ So how do we, given a mass-spring damper system,
+ exert force?
+ For right now, I'm just going to focus on the fact
+ that we want to exert force down.
+ We'll get back to that twist part later.
+ How do I exert force down?
+ Russ already mentioned this.
+ If you basically move your set point further into the ground,
+ by let's say some d, this is going to cause your spring
+ to compress the decision.
+ Again, this is a decision we made.
+ It doesn't mean it's objectively the correct thing.
+ It's just the choice we made.
+ Because if I think about what stiffness and what damping
+ do I have to specify, that's a lot of numbers.
+ Those are big matrices and more than I want to deal with.
+ So what we're going to do is, instead
+ of specifying the entire matrix, we're
+ going to actually only consider the diagonal.
+ So what is our stiffness in x, in y, in z, in--
+ oh, I'm not going to remember the order correct--
+ roll, pitch, yaw.
+ Instead of 36 numbers, now I have 6.
+ And rather than controlling the damping matrix,
+ I'm just going to set it to be critically damped.
+ If that does not mean anything to you, that is OK.
+ It's basically a way of setting it
+ such that we minimize oscillations.
+ So that is-- to tie back to a point that was made on Tuesday,
+ I've seen a lot of people who do work now on learning impedance
+ parameters.
+ And there's an interesting thought of,
+ like, you can learn everything.
+ Or if you make these simplifying assumptions,
+ it's a lot smaller thing to learn, which obviously would
+ make your learning problem easier.
+ And so there's a thing to think of,
+ like, how much do you actually need?
+ Sometimes you will need the off-diagonal terms.
+ This is not a decision you can make unilaterally.
+ But it's just something to think about what assumptions
+ can you make about what you actually
+ need to get your controller.
+ Cool.
+ OK.
+ So we have our stiffness and our damping matrix.
+ We have a lot less to specify.
+ Let's think about what stiffness do
+ we want to exert in the z direction,
+ and what is this offset d?
+ If we want to-- what do I need my spring stiffness to be
+ and my offset to be if I want to exert force down?
+ Now, we have told you that we are getting the robot to act
+ like a mass spring damper.
+ And you might reasonably say, OK,
+ it acts like a mass spring damper, but is it actually?
+ And shockingly, with some back of the envelope calculations--
+ again, these were done kind of ad hoc,
+ so don't take them for granted--
+ is that the relationship between your offset in your d,
+ your offset into the ground, and the stiffness of your spring,
+ and the force that you exert is linear.
+ Like, how far I'm exerting, the force that I'm exerting.
+ And so it behaves exactly like a spring,
+ the fact where if you say, for a given stiffness,
+ I want to exert this force, I can pretty closely tell you
+ this is the d that exerts that.
+ And we actually did this across multiple stiffnesses.
+ And the fact that the robot behaves so amazingly well
+ is honestly both suspicious and a credit to the engineering
+ that it actually behaves like a mass spring damper.
+ No one is suspicious of this.
+ OK, you all believe me.
+ [INAUDIBLE]
+ Yeah, r equals 1 for that last one, which--
+ I mean, it's not the densest point.
+ But when we say it acts like a mass spring damper,
+ at least for the panda, it actually
+ does an excellent job of acting like a mass spring damper.
+ So this is to say that if I want to exert a certain downward
+ force, I can pick a certain stiffness.
+ In my work, I have a heuristic for which stiffness,
+ effectively, I want to be as stiff as possible.
+ And that can directly tell me what d that I need to exert.
+ Does everyone follow on that?
+ This is how we can use Cartesian impedance
+ to exert a downward force, because we
+ have a super well-behaved mass spring damper.
+ So you said the Cartesian principle,
+ although it cannot go down actually--
+ Yes, you are asking it to do a thing that it cannot.
+ It gets very frustrated and exerts force at you,
+ which is what you want.
+ Cool.
+ Nishant, Willie, sorry.
+ [INAUDIBLE]
+ So here, I can be very confident that I can exert a force.
+ If this was less well-behaved, then you
+ would not be able to as directly control your force.
+ And that gets back to the point, like, if we needed
+ to control an exact force, you shouldn't
+ be using Cartesian impedance mode.
+ You should probably be using hybrid.
+ [INAUDIBLE]
+ Oh, sorry.
+ The question was, what if this wasn't so well-behaved?
+ OK.
+ This covers what is my offset d and what is my stiffness in d.
+ We've right now only covered the pushing down part.
+ What about the twist?
+ So for the twist, what we basically need to do
+ is we need to generate set points at this d offset, which
+ move in a circle.
+ And luckily, all of you have done this,
+ because this is what was asked in the robot painter example.
+ And I wish I could claim this was all planned,
+ but it just works out very nicely.
+ None of you look happy at the fact that you had to do that.
+ So to review, what do we have to send our controller?
+ We're going to set our stiffness and our offset d based
+ of how much force we want to exert.
+ And then we're going to generate a series of set points
+ that basically trace out a circle,
+ choosing pretty high stiffnesses in the other dimensions
+ with our damping set to be critically damped.
+ Questions so far?
+ OK.
+ So that is essentially what we're going to ask our controller
+ to do.
+ That is not actually the complete picture.
+ So let's say that we have our robot here.
+ This is the same panda from before.
+ And what we're actually going to do in order to--
+ in my work, I call this a push twist--
+ is that we're not exclusively going
+ to run a Cartesian impedance controller.
+ We're going to leverage the fact that we
+ can switch between controllers.
+ So the first thing that we're going to do
+ is we're going to actually do what's called a garden move.
+ It's a move until touch.
+ It moves until it feels contact with something,
+ which allows us to be kind of invariant to what
+ the exact position is in d.
+ Once it moves until touch, it's going
+ to compute those set points based off
+ what that actual distance is.
+ It's going to go around and twist.
+ I don't run my robots very fast, to be fair.
+ And then once it's finished, it's
+ going to do what I call a move out of touch.
+ And so it's actually three controllers
+ that run as part of this-- move until touch,
+ Cartesian impedance to actually twist it,
+ and then move out of touch.
+ Yeah?
+ [INAUDIBLE]
+ You could just run this with Cartesian impedance control
+ direct down.
+ Yeah, it's an equally valid choice.
+ The practical answer is I have move
+ until touch implemented using position control instead
+ of Cartesian impedance control.
+ And so that's just what I call.
+ But there's no good reason for that.
+ Yeah?
+ Oh, I did not repeat the question.
+ Why don't I do move until touch with Cartesian impedance
+ control?
+ Because it's springy.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, so the particular implementation-- sorry,
+ the question is, why does it look like it's not
+ moving continuously?
+ And that's because the implementation
+ that we're running there is that we are actually
+ sending a series of set points.
+ And it's checking that you hit each set point
+ before moving to the next one.
+ There's an interesting-- OK, I consider
+ an interesting implementation detail about how dense
+ do you want those set points.
+ First, we make them somewhat dense,
+ because particularly for this robot with the impedance
+ controller, it does not like doing large motions
+ in impedance mode.
+ It can be pretty dangerous and actually fault sometimes.
+ Yeah?
+ Why does it not like doing big motions in impedance control?
+ So the question is, why does it not like doing big motions
+ in impedance control?
+ Part of that is due to the gains that it said,
+ which you could change.
+ The other question-- the reason why I pause is because I
+ can answer this question with a lot of personal bias, which
+ is that doing large motions running Cartesian control,
+ I would argue, can be somewhat dangerous
+ for the instance of you are not collision checking.
+ If you are moving in an empty world, which
+ is what a lot of people do when they run Cartesian control,
+ and they're not collision checking, then it's fine.
+ But it's not terribly general, because you're not
+ collision checking against the world and checking things,
+ or often checking a lot of other things like that.
+ So it does not like it, for the gains perspective.
+ I do not like it, because it's not general and safe.
+ Hope that answers.
+ OK.
+ There is actually-- and due to time, we won't get into it--
+ there's a couple interesting points about--
+ this is a redundant manipulator.
+ And so there are design decisions
+ about what is the starting configuration before you
+ run that controller, and picking that such that you can control
+ things within an all space and do not run into a singularity.
+ And so we do some heuristics and checks
+ to make sure that that initial configuration allows
+ you to do that smooth motion pretty well.
+ Yeah.
+ [INAUDIBLE]
+ OK.
+ So I've showed you, for one case,
+ to zoom out a little bit with this work,
+ we actually implemented that same controller,
+ but four different ways, where the thing that changed
+ is what is the contact that you are making.
+ And all of these controllers were
+ defined as basically actions that you
+ could do that you could either open the bottle by using
+ your palm, by using a grasp, by using a finger,
+ by using a tool.
+ All of these have different kinematic properties,
+ as well as frictional properties.
+ And so these were different actions that you could take.
+ We're not going to talk about this yet.
+ But basically, we defined those actions in combination
+ with a lot of other actions.
+ And we used a task and motion planning system.
+ This is something that I think was mentioned four lectures ago.
+ In the decision-making lecture, we
+ mentioned that task and motion planning is a powerful tool.
+ Basically, using that to sequence
+ our set of controllers, we can search
+ through basically a combinatorial search
+ base of different ways to solve this problem.
+ So for the interest of today, this
+ is running different Cartesian impedance controllers,
+ as well as position controllers, in order
+ to accomplish this task.
+ If we do a task and motion planning kind of boutique
+ lecture at the end, then I will be
+ able to explain to you how it actually does the search in
+ order to be able to find these sequences
+ and understand what's truly going on in this video.
+ Questions?
+ Yeah.
+ So specifically for this task--
+ and this gets into a little bit about task and motion planning--
+ it's defined as a fluent where the lid is off of the bottle.
+ And we constrain it such that you cannot take the lid off
+ the bottle until you have exerted this forceful-- what
+ we call forceful operation, the push-twist operator.
+ And so it reasons through, OK, my goal
+ is that I want to remove the lid.
+ In order to remove the lid, I have
+ to exert this forceful operation.
+ You also have to fixture the bottle in place.
+ And it kind of reasons through what
+ is the sequence of actions that I need to take,
+ as well as what are the parameters of those actions
+ in order to achieve it.
+ So the planner is actually--
+ we walked through how you do this.
+ The planner actually is the one deciding what is that d.
+ It's the one computing all of that,
+ in addition to the sequence of actions.
+ Task and motion planning is really cool.
+ If you want a boutique lecture on this, please say so.
+ OK.
+ Yeah, any other questions before we--
+ we're just about at the end of time.
+ Sweet.
+ Thanks, everyone.
+ Pset 8 is out.
+ 8 involves hybrid position force control.
+ so you'll be able to implement it.

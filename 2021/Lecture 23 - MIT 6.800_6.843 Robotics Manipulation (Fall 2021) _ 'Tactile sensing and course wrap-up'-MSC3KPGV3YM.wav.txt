@@ -1,0 +1,1374 @@
+ OK, welcome back.
+ So this is the last boutique lecture.
+ And it will include, actually, a little bit of just reflecting
+ on what we did over the course.
+ I find it's useful to sort of say it back in a slightly
+ different way at the end, I hope.
+ But we're going to talk today a little bit
+ about soft robotics.
+ I don't want to say we're going to cover all that there is
+ to say about soft robotics.
+ And its implication for manipulation
+ and for tactile sensing.
+ So when we started way back, lecture two,
+ we talked about robot hardware.
+ We talked about the EWA, why the EWA was cool.
+ I also showed a bunch of cool hands,
+ including some very unconventional hands.
+ One was made out of jamming grippers, like coffee beans.
+ And some of them are unquestionably soft.
+ So this was just one of the ones that I showed
+ was doing pretty dexterous manipulation
+ with pretty floppy fingers.
+ So I want to explore with you today
+ what it is about being soft that could be good, what
+ are the pros and the cons, and give you
+ a quick sense of what's out there
+ and what people are doing.
+ So I mean, I've been interested in soft for a pretty long time.
+ But there were a few--
+ I think it's kind of a punctuated evolution
+ of my relationship with soft.
+ And in particular, there were a couple results out there
+ that really captured my imagination.
+ This is one by Alex Alsbach, who--
+ oh, I didn't mean to leave the music on.
+ Sorry for that.
+ I normally turn those off.
+ OK.
+ He was working at Disney.
+ And he built this inflated Dynamixel sort of robot
+ with inflatable paws and an inflatable chest.
+ And there was something-- he showed this at a humanoids
+ conference that I was attending.
+ And there was just something about the way
+ that this is interacting with the little Mickey Mouse
+ toy and the apple that at the time,
+ when robots were going [MAKES RIDGID NOISE]
+ with their rigid hands--
+ this seemed so natural to me.
+ This really captivated me.
+ Having interactions like that with the world
+ is potentially game-changingly different, in my opinion,
+ than having these rigid objects that
+ are trying to do exact perception
+ and trying to be accurate.
+ This is just a very different way to interact with the world.
+ And Alex went on to build hands based on this kind of ideology.
+ You could have bubbles as fingers.
+ And you can imagine scaling that down.
+ And actually, when TRI started, I was so captivated with this
+ that I immediately recruited Alex to come start a soft
+ robotics team at TRI.
+ So he's the one that's behind the soft robotics stuff
+ that I've shown you from TRI.
+ And you'll see a few more of those.
+ And he's just down the street.
+ He was in the building earlier today.
+ And he's a great guy.
+ But this really, for me, was one of the first times
+ where I thought, jeez, it's not just
+ that that's a cool technology.
+ But that really-- maybe I'm programming my robots wrong
+ because we're touching things with these rigid fingers.
+ And I should really be embracing the softness sooner rather
+ than later because it might change
+ my computational pipeline.
+ So there's a lot of things that people say about soft.
+ And it's like every soft robotics paper
+ sort of starts off with a list of great things
+ about being soft.
+ But some of them, I think, are said a little too quickly.
+ Or I just want to dig in with you a little bit
+ about what is good and bad about being soft.
+ So benefits of being soft, I guess.
+ So one thing that people often say very quickly
+ is that soft robots are inherently safe.
+ Ironically, I had a conversation today
+ about someone telling me how they were injured by a soft
+ robot.
+ But that was apparently in response
+ to me saying I was going to say this in lecture.
+ OK.
+ But this is a standard sort of motivation for being soft
+ is that you can just sort of be inherently safe.
+ But I want to question that a little bit
+ and just make sure we understand that.
+ Another big one that people talk about
+ is that soft robots can be inherently less
+ dependent on perception or geometric models,
+ somehow be robust to-- in particular,
+ people talk about the geometric uncertainty.
+ So what do I mean by that?
+ So the Mickey Mouse mouse little stuffed animal
+ is not something that is like they have an accurate point
+ cloud of that they're doing rigid point cloud
+ registration of and estimating its pose in order to--
+ they've got a simple scripted motion of the hand
+ in that example or the apple.
+ And they just kind of put the object roughly
+ in the right spot.
+ And they've got to put a different object roughly
+ in the right spot.
+ And it would have done pretty much the right thing.
+ And that is probably quite different than what
+ would have happened with a rigid hand.
+ But again, I think we should dig in a little bit
+ to why that happens or how broad that claim deserves to be.
+ There's lots of other motivations out there.
+ Some people say soft has the potential to be very durable.
+ I think we're still--
+ we're going through this revolution of fabrication
+ technologies.
+ And some of the early ones weren't that durable.
+ But there's now-- you'll see videos
+ of people driving over their soft robot with a car
+ or hitting them with a hammer and stuff like that.
+ That's standard fare for a soft robotics project.
+ I've seen them-- you put it on the barbecue,
+ and they light it on fire.
+ And it's like, oh, my soft robot still works.
+ That's cool.
+ I think there is a real potential for them
+ to be low cost, possibly even self-healing.
+ I don't have as much to say about the fabrication
+ part of it.
+ But I do think that is an interesting motivation.
+ And I think we are seeing--
+ I mean, we have seen over the last 10 years,
+ and we'll continue to see a revolution in fabrication
+ that I think does strongly motivate soft robotics.
+ But let's think about at least some of the first two
+ a little bit more critically from a modeling and dynamics
+ and control point of view.
+ And the model-- the way I would love for you
+ to think with me about this for a little bit
+ is actually I think there's a very simple model that
+ can get pretty far.
+ So let's say I have an object to be--
+ maybe it's on wheels if you want to think about it.
+ I want objects that can only move horizontally.
+ So we'll call this our manipuland.
+ And we'll have our--
+ maybe our hand.
+ We have two hands.
+ We'll do bimanual stuff.
+ And because I like to keep the geometry simple,
+ I'll have a point finger.
+ [TAPPING]
+ Right?
+ And these things are only moving--
+ the only degrees of freedom are left to right of the hands,
+ right?
+ And I want to manipulate the manipuland.
+ And maybe you can see where I'm going here.
+ I want to compare this version, which
+ is a pretty rigid picture, and I'm just
+ driving the hand around, with the same picture,
+ but now if I have my point contact here
+ and I attach my finger to my hand with a spring.
+ And maybe it's even a spring and a damper
+ if you like your mechanical drawings a little bit more
+ complete.
+ I could put a damper here between my hand and my finger.
+ And my manipuland, right?
+ Object is a little shorter to right.
+ And let's think a little bit critically
+ about the differences between those two systems, right?
+ Can we actually say that a system that has a spring in it
+ is inherently more safe, is inherently
+ more robust to geometric uncertainty?
+ Does it have all these attributes that we say?
+ OK, so if I were to take this and write my rigid body
+ mechanics for either of these two,
+ and I were to now bring this hand in contact
+ with the manipuland, then what happens?
+ At the moment of contact-- let's maybe think about first
+ the moment of contact.
+ [WRITING ON BOARD]
+ The rigid model is going to have an impulsive event, right?
+ If this is strictly rigid and you're not
+ allowed to penetrate, and you have a velocity
+ before the contact and you're not
+ allowed to have velocity after the contact,
+ then you must have had an impulsive collision
+ at the moment of contact.
+ It could be elastic, it could be inelastic,
+ but there's no question that something
+ happened in zero time in order to keep you
+ from going inside the object.
+ So the rigid has an impulsive collision.
+ Now in this one, the purely soft one here,
+ if I have a point finger here that is massless--
+ if I assume for a minute it's massless,
+ this is like assuming a spherical cow.
+ It's very useful, but a little silly.
+ Then if this is massless and I have a perfect spring here,
+ then I don't have an impulsive collision.
+ Right?
+ So you could argue in that sense that maybe it's
+ better for the object to not have that impulsive force that
+ hits it all of a sudden.
+ You can make those collisions larger or smaller
+ depending on your momentum, I guess,
+ at the moment of collision.
+ But it is true that if you can remove that mass completely,
+ then you get rid of the impulse.
+ And really, I want to make sure that I'm clear.
+ This is an artificial scenario.
+ This never actually happens.
+ Really, we always have something that looks more like this.
+ Right?
+ And we have some mass of my finger here.
+ And we have some imperfect spring
+ that has a stiffness k, maybe a damping b, let's say.
+ And I have a mass of my hand here.
+ OK.
+ So this is the perfect model case.
+ But I think in reality, we should be thinking rather,
+ what is the relative mass of the finger before the spring
+ and after the spring?
+ Huh?
+ OK, and then what is the relative spring constant,
+ or relative stiffness?
+ How large, how stiff is my spring?
+ Right?
+ And that, of course, only matters relative to the mass,
+ again, to give you a total resonant frequency.
+ Or all the characteristic dynamics
+ are going to depend on the ratios of mass and the spring
+ constant.
+ OK, so I think the analogy to be more fair
+ would be, how much benefit is it to have
+ my mass of my finger particularly low
+ in my stiffness low compared to the mass of my robot?
+ And you could tell that in a design like this,
+ this is trying to make the mass of the finger
+ look more like the mass of the latex making the bubble,
+ and the stiffness quite soft, where the bubble deflects
+ easily and potentially over a large deformation
+ before you have the immediate effects of the hand.
+ At the moment of collision.
+ That part seems reasonable?
+ OK.
+ What about at steady state?
+ Like, what about my steady state forces?
+ Like, once I'm in collision now, and I'm
+ applying some force on the hand here, from my whole robot,
+ what forces can I apply in steady state?
+ [WRITING ON BOARD]
+ How do the masses of my finger and the stiffness of my spring
+ relative to my hand affect my steady state forces?
+ [WRITING ON BOARD]
+ They don't, right?
+ Once I've hit a rest length, my new rest length of the spring,
+ then the forces I'm applying here
+ are being completely imparted here.
+ So in steady state, there's no difference, effectively.
+ [WRITING ON BOARD]
+ So if your robot has enough strength to crush, I guess,
+ Mickey Mouse, then your soft robot has that strength,
+ and your hard robot has that strength.
+ So inherent safety maybe is not fair at steady state,
+ I would say.
+ And maybe even more importantly would
+ be that springs can be dangerous.
+ I mean, you can store energy in springs, right?
+ So you could potentially take a pretty soft looking thing
+ and kind of load it up, make it into a catapult,
+ and fire off some pretty large forces if you're not careful.
+ So I always balk a little bit when
+ people say that soft is inherently safe.
+ I think you have to do a little bit more
+ to get safety from soft.
+ Dissipation, I think, does inherently
+ pull energy out of the system.
+ If you have damping in your soft element, which
+ most soft things do, then that pulls energy out.
+ And that is inherently a stabilizing and maybe
+ a safer point of view.
+ But I think stiffness alone doesn't make you safe.
+ [WRITING ON BOARD]
+ [WRITING ON BOARD]
+ It's kind of a strange thing to write, but I'll leave it.
+ OK.
+ There's a trade off, of course, right?
+ So if you do make these things soft,
+ then you can reduce your impact impulse, right?
+ You don't change your steady state.
+ Dissipation can remove.
+ But you give something up if you add a soft spring
+ between your actuators and the world, right?
+ What do you give up in the linear systems sense?
+ There's a word that some of you know, I'm sure.
+ [INAUDIBLE]
+ Yeah, control.
+ Not officially controllability is Boolean,
+ but you could somehow reduce your controlled bandwidth,
+ would be the-- right?
+ So what do I mean by that?
+ Let me just finish the thought real quick.
+ But if my goal, in the linear system sense,
+ if my goal is to make this execute,
+ let's say, a sine wave trajectory,
+ and I'd like to look at what my finger has
+ to do as the frequency of that sine wave gets larger, right?
+ The work that I'm going to have to do goes up fast
+ if I have a very soft actuator.
+ And what that implies, then, is that if somebody surprises you
+ with a disturbance or something, your ability
+ to respond and accurately control
+ the high frequency behavior of this system is poor.
+ Your control authority at high frequencies, I guess,
+ is what really gets you, right?
+ Because you've given up something with the softness,
+ right?
+ So if you have a hard robot, infinite bandwidth and control
+ authority, then you should always
+ be able to outperform a soft robot.
+ You could always act like you're soft, right?
+ So in practice, when we're putting this in,
+ it's somehow admitting that our bandwidth is, in practice,
+ limited in a meaningful regime.
+ Sorry, yes, please.
+ I'm wondering if there's another side of that point.
+ Yeah.
+ The bandwidth that's required to drive a soft robot
+ is also lower than in a stiff case.
+ Like, thinking about the task of grasping
+ the egg with a rigid robot, you need instant bandwidth
+ to not grasp that one perfectly rooted egg.
+ Good.
+ So you need-- you could probably do a one person
+ control loop with a soft robot to get a really soft spring
+ to still grasp the egg.
+ Good.
+ So there was a comment for those hearing about,
+ what if I'm trying to hold an egg, right?
+ And I have an egg-like example coming in a minute.
+ So yeah.
+ Is it that maybe if I have a soft robot,
+ the requirement on my bandwidth is less,
+ and therefore I can get away with the softness?
+ Yeah, I think I agree with the spirit of your comment.
+ I might say that the task demands
+ a certain amount of bandwidth.
+ And many of the tasks we try to do with soft robots
+ don't require high bandwidth, right?
+ I might say it a little bit differently.
+ But those two do play together.
+ I think the place where soft wins
+ is when your bandwidth requirements are low.
+ And actually, probably for a lot of things
+ we do in manipulation, our bandwidth requirements
+ are very low, right?
+ Certainly holding an egg, I wouldn't
+ think would be a particularly high frequency thing, right?
+ So if you're contacting it, it's a delta function,
+ then what you would do is have a real high bandwidth
+ to close the region.
+ OK, great, great.
+ So I said if you had a perfect stiff robot,
+ couldn't you always do better?
+ And so you're pointing out that a contact event is ideally
+ a delta function in practice, because things
+ aren't perfectly stiff.
+ It's going to be a very short time event, right?
+ So you're right.
+ I think you need very high bandwidth
+ to perform incredibly well through a contact event,
+ like exceedingly high bandwidth.
+ And so therefore, why try?
+ Why not let the mechanical system
+ handle that initial contact event,
+ and then you do your thing after the fact?
+ Completely agree.
+ That's a very good way to think about it.
+ OK.
+ OK, so in this picture--
+ I know a very simple picture, but I think hopefully
+ a helpful picture--
+ so we talked a little bit about the safety claim
+ and maybe the bandwidth we mentioned quickly here.
+ Is there a sense in which it's robust to geometric uncertainty
+ in this picture, right?
+ Is one sort of more or less robust
+ to geometric uncertainty?
+ I mean, that's a claim people--
+ it's sort of easy to make when you see a video like this.
+ How does it play out in this simple diagram?
+.
+ Yeah, please.
+ I'm thinking about the case where you've already
+ established a graph, and I'm thinking
+ about varying the shape.
+ In the soft state, I would expect
+ some sort of conduit properties on the force.
+ Like, if you establish a graph and you change the shape,
+ the force should only change proportional to the change
+ in shape.
+ Because you're just changing the length of your spring,
+ and that should change the force you're using.
+ But if you have a completely rigid graph,
+ and you establish it, and you shrunk the object a little bit,
+ you expect a [INAUDIBLE]
+ OK, good.
+ So your thought experiment here, to summarize,
+ is that imagine I'm in contact, and I've
+ made a contact with my rigid or very stiff thing,
+ and I suddenly shrunk or expanded the geometry.
+ That's nice.
+ Then, yeah, this is going to have--
+ I mean, again, I guess this never exists, right?
+ So we're in the very stiff case is more thoughtful.
+ It could have a large reaction force
+ that gets generated.
+ So in some sense, your sensitivity of your controller
+ might be higher because of this geometric uncertainty.
+ I mean, I think even in the super simple case,
+ if you thought this was a 2-centimeter wide brick,
+ and it's actually a 1.9-centimeter brick,
+ you could end up right here and just try to lift it up
+ and completely miss.
+ Or if you were trying to push inside it,
+ you would be exerting very large forces
+ and fighting against it.
+ I agree.
+ But I actually think the bigger case--
+ let's see.
+ I want to distinguish softness from position and force
+ control.
+ These are comparable ideas, and they're separable ideas.
+ So once we have this idea that everything is--
+ at least maybe the stiffness is very large if I have a kuka,
+ with a metal exterior.
+ But there's a stiffness there.
+ And we always put at least a rubber pad or something
+ between our metal and our contact.
+ Position control, I think, is going
+ to be vulnerable to geometric perception errors.
+ But force control is pretty good.
+ We saw examples of flipping up boxes
+ without really estimating anything.
+ And I think it's healthy in this picture
+ to think about this as a force sensor.
+ In fact, most force sensors are somehow
+ having some material of known stiffness,
+ and you're measuring the deflection of that material.
+ If you have a known spring stiffness,
+ and you can measure this deflection,
+ then you've got a force sensor.
+ So I think in this simple picture,
+ you can achieve robustness to geometry
+ just by being in a force control mode
+ instead of being in a position control mode.
+ And I think maybe, in my mind, the argument
+ for geometric robustness is somehow not as great.
+ I could do this.
+ Maybe my ability to do force sensing
+ might be more or less, depending on k.
+ But I don't think I need to be a bubble to be better
+ immune to perception errors.
+ So let's make our diagram a little bit more rich,
+ because I do think geometric robustness is a real thing.
+ But I think we need a more expressive picture to see it.
+ OK, so I hope you're OK with these sort of silly diagrams.
+ OK, let's say I've got my hand, my object, my hand here.
+ And instead of one point finger, let's
+ make an entire array of point fingers.
+ They can have dampers, too.
+ And on this side, too, of course.
+ Now things get more interesting.
+ So let's say I start squeezing my hand together.
+ And let's say I'm large k, the stiff regime.
+ And I don't know-- I mean, in this case,
+ I haven't even given my hand the ability
+ to do well with a lot of geometric information.
+ But-- or if I just had geometric uncertainty,
+ and I was choosing my pose as I was coming in,
+ you could get a similar picture.
+ Well, let's think about the type of contact
+ that you'd get if you just start squeezing your hand together,
+ and you have a pretty stiff set of springs.
+ I think it'd be pretty easy to-- let me exaggerate it here.
+ Like, I've got some object here.
+ It'd be pretty easy to get in a situation
+ where you're in contact sort of in one or two places here.
+ You know, the first part of your weird finger-looking thing
+ is in contact.
+ And the rest of them, they're sort of no contact.
+ Right?
+ Is that picture clear?
+ OK.
+ Now, the picture, of course, changes.
+ If I'm in a very soft regime, you
+ could imagine for some stiffnesses and some objects
+ or whatever being in a situation where
+ the same forces that produced this situation in a stiff
+ regime could produce this very different situation
+ in a soft regime, where you might have a larger force there
+ because it's compressed the spring more,
+ but I'll have forces everywhere.
+ Maybe proportionate.
+ I should be more careful to make them proportional,
+ but I think you get my drift.
+ OK.
+ So why does that matter?
+ Well, let's say we're going to start lifting the object up,
+ if our goal is to lift the object up.
+ What amount of squeezing force do
+ I need to apply in order to successfully lift the object up?
+ I need to have enough vertical force to fight gravity.
+ Every one of my contacts is limited by friction.
+ So at every point of contact here,
+ I've got some friction cone.
+ Maybe they're uniform everywhere
+ in this first example here.
+ In order to successfully--
+ I've got the same thing happening on this side.
+ Right?
+ In order to successfully achieve lift-off,
+ the vertical component of my force coming up here,
+ which has to stay inside the friction cone
+ if I don't want to slip, is going to be limited.
+ My force tangential is going to be
+ less than or equal to mu of my force normal
+ by the static friction law.
+ Right?
+ That's my friction cone.
+ OK.
+ I'm going to have to squeeze hard.
+ In this regime, I might have to squeeze hard
+ in order to achieve enough friction in order
+ to get up high.
+ In this regime, where I have more possible contacts,
+ I can potentially, even with the same material properties,
+ the same friction properties, I could potentially
+ squeeze less to achieve the same lift-off.
+ OK.
+ Now, that could have stability implications
+ in a number of different ways.
+ But it seems at least indicative that maybe this
+ would be a better grasp.
+ I think the real picture is actually more subtle than that.
+ Right?
+ I kind of tried to pick arrows to draw
+ that were roughly landing on the normal surfaces there.
+ But I mean, I've also got some contacts, potentially,
+ here that have friction cones that
+ are using the same coefficient of friction,
+ but potentially on very different normals.
+ Right?
+ And I think, actually, the world of possible contact forces
+ opens up pretty quickly.
+ So now I'm firmly in the camp where
+ if I can contact an object like this,
+ with a whole, in the continuum, a whole patch of contact
+ instead of a point contact, then my ability
+ to manipulate the object seems improved.
+ Let me be careful.
+ You could still argue the counterpoint
+ that you've given something up.
+ Right?
+ If you wanted to somehow explicitly control the contact
+ forces, and you're making contact
+ in all these different places with all
+ these different normals, then to be
+ able to regulate exactly the normal force
+ might be almost impossible now, because you wouldn't be able
+ to know exactly what forces.
+ But to achieve some sufficient force to pick it up,
+ or to resist a wrench, that would
+ be another standard thing, would be if someone came and knocked
+ this, how likely is it to pop out of my hand,
+ or something like this.
+ A grasp that has substantial patch contact
+ seems like a better grasp most of the time.
+ [SIDE CONVERSATION]
+ OK, so I think, for me, the difference from point contact
+ to surface, or people call it patch, contact patches,
+ contact, is a really big deal.
+ And I think that's where a lot of the benefits of softness
+ for geometric robustness and the like come from.
+ And I think it's what kind of captured my imagination when
+ I saw these videos, right?
+ Is that you just really didn't have
+ to know the pose of the object.
+ You didn't even have to know where it was.
+ But you're going to have this like huggable, loving embrace,
+ almost automatically, with like an open loop arm motion.
+ It's pretty good.
+ Let me go out of order, because I screwed up.
+ So I guess one more point before I go on
+ to the sensing aspect of it.
+ Let's compare back in these pictures here.
+ Maybe I'll work with this one.
+ Let's compare sensing or stiffness of the spring,
+ let's say, right at the skin versus something more distal.
+ So I've talked about EWA having elastic joints.
+ And when we talked about-- and some of you
+ have been asked in your project, how do I do contact sensing?
+ How do I know when I'm in contact with the wall,
+ for instance, if I'm writing or something like this,
+ with the EWA?
+ And the answer is, you look at the joint torques,
+ the external torques on the joint.
+ That's where your contact sensors are on EWA.
+ You could, of course, take your EWA
+ and put another sensor at the end,
+ or in the hand, or something.
+ But by default, the EWA gives you some ability
+ to do it in the joints.
+ So what is the picture difference here?
+ So maybe I have my skin, if I will,
+ down here with a low mass, and a k here.
+ And then I've got my finger, or my distal links.
+ And then I have my elbow or something up here,
+ or my main forearm, a more distal link.
+ I'm still just thinking about the one dimensional,
+ easy to think about, mass spring damper sort of case.
+ My claim is that if I were to put some sort of rubber tips
+ or something on the end of the EWA,
+ then I can do some amount of force control and sensing.
+ And people do very successfully with EWA,
+ using this as my force sensor.
+ Using the fact that there's a stiffness in the joint,
+ and this is my force sensor.
+ And I'd like to sort of contrast that
+ with if you were to try to put your softness and your sensor
+ more co-located with the contact.
+ And it's not-- I mean, it's a subtle argument
+ that talks about bandwidth.
+ It talks about all the things we talked about.
+ And you can do it in the linear systems sense.
+ But I think overall, there are, I think,
+ advantages to having a contact sensor that
+ is more co-located with the actual event,
+ and keeping your actual initial contact mass very low.
+ So this is something that when I showed you this video before
+ from Terry, where he was using this bubble sensor that I was
+ talking about to do writing, he had ignored the EWA joint
+ sensors and was just demonstrating
+ that using the skin as a contact force sensor
+ was sufficient to close a control loop that
+ would allow him to write on the board.
+ So I think our tactile sensor's ability to do that
+ and how do we close feedback loops,
+ that's a growing technology.
+ But I think it's an exciting one.
+ I think we can potentially move our softness and our sensing
+ closer and closer to the point of interest.
+ OK, that's just one way to think about softness,
+ and hopefully a helpful one.
+ Let's think about the sensing aspect of it.
+ So we have amazing skin.
+ And I actually put a picture of the skin.
+ Towards the end, we'll talk about what's
+ missing from our robot sensors.
+ But I guess my introduction--
+ I studied it back when I was a grad student.
+ I was in the neuroscience department,
+ and I took the classes on the basic brain and cognitive
+ science classes, where we learned about the sensory
+ system and all of the incredible sensors
+ you have in your fingertip, and everywhere,
+ but especially your fingertips.
+ So what are the possible signals we could get out
+ of a tactile sensor on a robot?
+ I mean, I used to--
+ when I was working on walking, I would
+ have been happy if I just had a reliable binary contact,
+ no contact, binary switch.
+ We did a lot of work in walking, just like,
+ if you could just tell me with any higher accuracy
+ when my foot hits the ground, I would already be happy.
+ Maybe that's still a little bit true today.
+ We've implied here that--
+ and I think a common request would
+ be to have some sort of force sensing
+ from your tactile sensors.
+ And I think there's a characteristically different
+ amount of request from a sensor to give a normal force
+ versus a sheer force.
+ But there's other things, too.
+ People have built robot sensors that
+ try to estimate temperature, to estimate--
+ we could talk about the physics of it,
+ but to try to somehow recognize texture or roughness,
+ for instance.
+ These are all, if you wanted to--
+ if I reached into a toolbox and wanted to find with my--
+ I can't see inside the toolbox, and I
+ wanted to use my exquisite tactile sensing
+ to find the right wrench, let's say.
+ If I feel something that doesn't feel very metal--
+ I mean, metal feels cold and has a certain roughness.
+ And I've got a strong signal, not just from the geometry,
+ but also from all these other signals.
+ So this would have been probably the beginnings
+ of my list a few years ago.
+ But something really did change fairly recently,
+ where I think more and more we're thinking about--
+ these are all things that you might think about when
+ you think about tactile sensors as measuring a point.
+ But if you like my silly diagram at the top there,
+ I think there's really something to be
+ said for thinking about tactile sensing as a geometry sensor,
+ and possibly even a dense geometry sensor.
+ And that was a pretty big change for me to think.
+ Maybe even if I'm buttoning--
+ I don't have any buttons on this shirt.
+ But if I had a shirt with buttons
+ and I wanted to button it, what do you
+ think you're using with your fingertips?
+ Are you trying to estimate the forces
+ that you're applying to the button?
+ Or are you getting a sense that the button's
+ going through the hole by virtue of feeling
+ some sort of geometry?
+ I don't know if I completely know the answer,
+ but it feels like a pretty good geometry.
+ It feels like geometry is pretty important in a lot
+ of the things, the thought experiments
+ that Ted Adelson had me run through when we started
+ talking a lot about this.
+ And Ted, I think, had a great impact
+ when he introduced this geometry view of tactile sensing, which
+ I'm going back to my--
+ here we go.
+ So Ted introduced this-- well, with Kimo--
+ introduced this sensor gel site.
+ Many of you probably heard about it.
+ But let me just sing its praises for a minute.
+ So basically, they asked the question of,
+ what happens if I put a camera behind the skin?
+ How well could I do with that?
+ And how could I make that really effective?
+ And there's a couple subtleties about making that effective.
+ So one of the things that makes that effective
+ is you'd like to have the camera worry
+ about the geometry of the contact,
+ but not worry about all of the RGB complexity of the world,
+ or the lighting conditions of the world,
+ or anything like that.
+ So what they did is they made this small gel layer, hence
+ gel site.
+ They found a nice way to paint the coatings, the top layer
+ of this, so that when you depressed, let's say,
+ an Oreo, hypothetically, onto this gel layer,
+ the image from the other side was a beautiful rendering
+ of the geometry of the contact, without all
+ of the complexity of lighting conditions
+ or the complexity of real world vision, let's say.
+ So that's a reasonable thing to try to do.
+ And what they showed was that it had a lot of really nice
+ properties.
+ So in Ted's lab, there's all kinds of different goos
+ or whatever.
+ And it's super fun.
+ There's enough of it floating around MIT these days.
+ You can probably get your hands on some
+ and just start putting your own finger
+ and put a dollar bill on there.
+ You can see the hair on your finger
+ or the grains of a dollar bill through this thing.
+ And one of the reasons that it's nice that the RGB signal doesn't
+ come through is that they were, at the time,
+ doing strictly geometric reconstructions
+ using photogrammetry.
+ So in a controlled lighting situation,
+ with the RGB of the world excluded,
+ they could just put a red, green, and blue light
+ in known locations and do a classic computer vision
+ trick for extracting depth from that now colored image.
+ And it's just awesome.
+ You could just see everything.
+ This is beautiful geometry sensor.
+ That's a pretty big pad to be sticking on your fingertip.
+ But people have been scaling it down.
+ And I think the vision is that we'll
+ have these things scaled down.
+ So if you have dense geometry available,
+ a dense geometry available in your fingertip,
+ then I think it connects back pretty quickly
+ to all of the things we already talked about
+ in the geometric perception lectures.
+ So as an example, remember we talked about Dart,
+ where we had point cloud measurements coming in.
+ We talked about non-penetration constraints.
+ And then we did our real-time pose estimation and tracking.
+ That was just one of the algorithms
+ we talked about in the geometric perception.
+ And that was based on this idea of having a depth camera that
+ was looking at the scene.
+ We got our point cloud.
+ We also had our free space constraints,
+ all these things you hopefully remember a bit about from Dart.
+ If you have a dense geometry sensor in your fingertip,
+ then it's like you just have one more incredible depth
+ sensor available inside your finger.
+ But it's got a short maximum range.
+ That's OK.
+ I mean, that gives it a lovable limitation, I guess.
+ But it gives you information that's not
+ available from other sensors.
+ So when we started playing with Gelsight with TED,
+ that was the point that we tried to make,
+ Greg made, was that if you have a dense geometry
+ sensor in your fingertip, it snaps right
+ into the geometric perception pipelines.
+ And you can do pose estimation, tracking,
+ you name it, directly through your combination
+ of head-mounted sensors and dense geometry
+ sensors in your fingertips.
+ So as an example of an application
+ that was enabled by that, if you wanted
+ to do an insertion that required some kinematic accuracy,
+ and you wanted to track the position of the screwdriver
+ that had to fit in a relatively small hole,
+ then-- I mean, the first thing that happens,
+ we've talked about before, is that whenever
+ you start touching things, your head-mounted cameras often
+ quickly get occluded by your hand.
+ But even more so, you can get more accuracy
+ from these very local dense sensors
+ in order to take out any of the remaining uncertainty
+ and do finer scale insertions.
+ What's the difference between the left and the right
+ [INAUDIBLE]
+ This one's ignoring Gelsight, using Gelsight and ignoring
+ Gelsight.
+ Maybe it wasn't as profound as we had originally
+ imagined when we made it, but this one is basically
+ missing the hole, and this one's going to make the hole.
+ By the way, why did it make the hole?
+ I remember it being more profound,
+ but that was the with and without Gelsight.
+ That's one in a series of works that people
+ have done with Gelsight.
+ Alberto's lab has taken Gelsight and made a more robust version
+ of it in Gelslim.
+ You can see these similarly architected sensors.
+ Gelslim has got a really--
+ I mean, we used to rip the Gelsight off the finger
+ all the time.
+ Again, I love Gelsight, but let me just make the point.
+ So it's kind of frustrating to have
+ this exquisite geometry sensing right here,
+ but then if you happen to reach in
+ and it doesn't hit exactly where your sensor is,
+ then not only are you blind, but you've ripped the sensor off.
+ So that was kind of frustrating.
+ And that was just the state of the sensor when it started.
+ This one's got a much tougher fabric.
+ It's removed all of the, I think, the frailty on the edges.
+ It's still limited to making contact on the sensor.
+ The geometry is also different.
+ So the photogrammetry, I believe, is gone in this version.
+ I think Rachel can correct me if I'm wrong,
+ but I think they've switched mostly
+ to doing depth reconstruction using deep learning approaches
+ to reconstruction because the photogrammetry required
+ a particular geometry of the red, green, and blue sensors.
+ And that was constraining in the geometries
+ that you could build your sensors.
+ And this, I think, used a longer throw
+ and gave up on the strict photogrammetry reconstruction.
+ Is that true?
+ Yeah.
+ And the work here, by the way, is also awesome.
+ I mean, not only did it use the tactile sensors,
+ but it used it to do cool things,
+ showing feedback control of where objects being moved
+ were observed as requiring different action.
+ And it even has, you could say, a task and motion planning
+ level at the top to be very robust.
+ This sensor here is also inspired by gel site.
+ It's a different approach.
+ Again, living with the two-fingered gripper
+ is kind of limited but beautiful in what you can do.
+ You can do a lot of things with a good brain and a simple hand.
+ On the inside of this is a dot pattern.
+ And we've got a depth camera inside here.
+ So we actually have a connect--
+ it's a PicoFlex inside here that is actually doing
+ explicit depth reconstruction.
+ And then we put dot patterns on here
+ in order to get shear and other forces.
+ And this is super robust.
+ And we've done a lot of cool manipulation with it,
+ including one of the things you do
+ is you say, I'm immune to the transparency of wine glasses.
+ And I'm subtle to the touch.
+ So we can do things like stacking wine glasses.
+ So I do think we're in this sort of series of very cool advances
+ in sensing.
+ The geometry sensing is part of the story.
+ But we do actually have these other types of sensors.
+ Or let's say camera-based geometry sensing
+ is only part of this.
+ I told you about Puno.
+ This is just the hand on Puno.
+ And we have this sort of bigger ambition
+ of building out full Baymax-like humanoid that's
+ making contact all over the place
+ and using tactile sensing all over the body.
+ This is the project that Alex is leading at TRI.
+ And just as another example, there's
+ a whole bunch of different ways to measure geometry or force,
+ which, of course, if you know the stiffness of your sensor,
+ are related.
+ This one is an inductive sensing in the chest, actually.
+ So when you are picking up a massive water
+ bottle with your chest, then we have a sparser--
+ I mean, humans also have a lot more density
+ in their tactile sensing in the hands
+ than in the other parts of their body.
+ And so I think a simpler, cheaper technology
+ is warranted.
+ And even along the arms, we're just
+ using pressure sensors in the air pockets covering the arms.
+ Inductive sensing has been used.
+ Capacitive sensing has been used.
+ Resistive sensing-- basically, every possibility, right?
+ Force-sensing resistors have been used often.
+ They all have their different pros and cons.
+ I'll try that one more time, just in case I get lucky.
+ But maybe I don't get to show you the IIT iCub.
+ I believe it's this one.
+ Very cool initial sensing skin.
+ I would say one of the most advanced systems-level
+ integration of sensing skin technology on a humanoid robot
+ is this from the Italian Institute of Technology,
+ the iCub skin.
+ I encourage you to check it out.
+ They not only built nice tactile sensors that could be arrayed,
+ but they just--
+ just incredible engineering to make these huge arrays that
+ could be formed to the skin of the body.
+ And they just had a whole humanoid with beautiful skin.
+ And there's videos of them applying forces and controlling
+ the robot on a full humanoid.
+ Extremely cool.
+ CSAIL is a pretty-- or MIT is a pretty good place, I guess,
+ for tactile sensing.
+ Voytchek's group has also been doing novel tactile sensors.
+ So this is one of a series of things
+ where they've basically been sewing dense--
+ I think this was FSR at the time--
+ force sensitive material into fabric.
+ And they have smart carpets now.
+ They have smart gloves.
+ And they have just great instrumentation.
+ I think the possibilities for robots
+ to be completely coated with dense sensors,
+ for humans to have a more immersive VR/AR experience
+ with these kind of sensors.
+ I mean, tactile sensing is just, I think, finally coming of age.
+ It's actually kind of weird that it took so long.
+ Everybody has known forever how important tactile sensing is.
+ And it just took a very long time.
+ Ted used to say, I've got this great tactile sensor.
+ And I go to the roboticists.
+ And I say, I've got this great tactile sensor.
+ And they're like, we don't know what to do with it.
+ That's great information.
+ And we don't know what to do with it if you gave it to us.
+ So maybe, I guess, the roboticists
+ are finally waking up.
+ But let me-- I'll finish here by saying that the human skin is
+ actually incredible.
+ And there are many other things that you
+ can do that the human skin does that we're not doing, I think,
+ in most of our tactile sensing yet.
+ So let me just point out a few subtleties
+ in these tactile sensors.
+ So I won't name all of my anatomy anymore.
+ I don't think I could without--
+ I mean, I remember all the corpuscles and Purkinje's
+ and stuff, but just barely.
+ Some of them measure force.
+ Some of them measure temperature.
+ Some of them measure vibration.
+ So actually, the signal that you'd
+ get if I were to try to measure the roughness of this,
+ there's a part of it, possibly, that
+ is about the spatial forces that you feel along your finger.
+ And the fact that your skin has curves and stuff
+ certainly matters.
+ But there's also a big part of your signal
+ that comes in the time domain.
+ Then you have high frequency vibrations
+ that are actually a strong indicator of the roughness
+ of your fabric and stuff like that.
+ So these are things that are totally
+ baked into our human sensing.
+ I mean, people talk about it in research,
+ but I think they're not mainstream in robotics yet.
+ So I do think robustness is less of an issue now,
+ but it's still an issue, I think, as is surface area,
+ or let's say surface coverage.
+ This story I said of somehow ripping off a gel site
+ or reaching into the toolbox and having
+ the first contact between my hand and the world
+ be not where my sensor happens to have incredible resolution,
+ but somehow on the edge of the sensor where
+ I had some plastic housing.
+ And actually, that's the part that almost always
+ bumps into things first.
+ These are still, I think, practical issues that are
+ getting better and better, but they're still real.
+ Sensing slip is a super interesting one.
+ Everybody thinks if I have tactile sensing,
+ then I can be more robust because I
+ can sense when things slip.
+ Actually, Francois had a great example of it.
+ He really wanted to close the feedback loop on slip.
+ That was the project with the ABB arm in Alberto's lab.
+ And I remember him saying at his defense, it's just too hard.
+ Basically, slip happens fast.
+ Slip is an instantaneous event, I guess.
+ You've gone from static friction to a sliding friction regime.
+ And in most cases, with the bandwidth
+ of our sensing plus control, by the time something slips,
+ it's too late.
+ So people talk a lot about--
+ so I've seen very few successes of control systems
+ that react to a slip in order to recover.
+ People talk about trying to predict slip.
+ They talk-- there's a notion of incipient slip,
+ where you're on the verge of slipping,
+ and you try to detect pre-slip events and avoid them
+ and stuff like this.
+ But I think it's too much to say that tactile sensing gives you
+ the ability to recover from slip.
+ And maybe in very--
+ like if something slides extremely slowly out
+ of my hand, then maybe.
+ But blocks falling out of my grasp and stuff
+ happens pretty fast.
+ And there are a few others that are--
+ this is just my random list of other things I wanted to say.
+ Sorry.
+ But I've always wondered--
+ and people have often talked about proximity sensing
+ versus contact sensing.
+ And there's been projects through the years
+ that pop up and produce a new proximity
+ sensor versus contact sensor.
+ So as humans, our tactile sensing
+ is limited that we don't feel things until they actually
+ make contact with us.
+ Almost.
+ We do have hair as mammals.
+ So we do actually get a little bit from that.
+ And it's interesting that you should
+ think about what signal your hair is good for.
+ I think it's not only for warmth and other things,
+ but you can maybe tell if there's something coming
+ by a little bit of aerodynamics on your hair.
+ You can certainly feel as your hair is bent out of the way.
+ It's pretty amazing stuff that happens here
+ because of this instrumentation at the bottom of your hair
+ follicles.
+ But there's really--
+ I mean, we talked about gel sites having a limited throw
+ at the skin, and that being a good thing in terms
+ of making the sensing simpler.
+ But why shouldn't our robots go ahead and detect something
+ before it makes contact?
+ Why shouldn't we bury in our skin
+ things that sense the approach of something,
+ the proximity of something?
+ It's interesting.
+ It just seems like an obviously good thing to do.
+ And it hasn't really taken off.
+ I mean, I could list a couple of possible reasons why.
+ I don't know if people here know why.
+ But I mean, I think it is--
+ I've heard from people that do it that it's
+ hard to make a proximity sensor that works uniformly
+ for all types of objects, like to have something that would
+ respond to a metal and a wood and whatever,
+ like a lot of technologies that are behind the skin
+ and are using non-vision-based techniques
+ are sensitive to material properties.
+ Some things are magnetic or whatever.
+ But I wouldn't be surprised if in a few years
+ we are sensing contact before it happens.
+ It seems like just an obviously good idea.
+ OK.
+ So that was a--
+ I didn't do my chip demo.
+ But I thank you for bringing the chips, by the way.
+ I was just going to make the point
+ that I could squeeze a potato chip in a rigid object,
+ and it would break.
+ And I could squeeze it in this.
+ I'll at least squeeze it in this.
+ It's the distributed contact point, right?
+ So this is the standard thing, would be the egg.
+ It's good for the egg.
+ It's good for the potato chip.
+ It's not just like I can produce more forces.
+ But it's pretty nice to sort of distribute the load
+ across an entire surface.
+ It's good for the object you're hugging, too, right?
+ I could put a lot of force, normal force on this,
+ and the chip's fine.
+ And I've got a few broken chips from playing
+ with my rigid clamp just before lecture,
+ and some grease on my fingers.
+ Yes?
+ So the question that I have is we
+ started off talking about all these really cool open loop
+ achievements with software like things
+ like the thing manipulates the cube without any feedback.
+ What was the gap that led to all this tactile [INAUDIBLE]??
+ We get all these great results with remote.
+ Yeah.
+ I mean, for a long time, and maybe even still today,
+ like the soft robotics journals, wherever,
+ there's incredible fabrication technology, incredible results.
+ I can hit my thing with a hammer.
+ I can put it on the charcoal grill.
+ And then it says control is future work, right?
+ Sorry.
+ I think it's still true.
+ But everybody knows that you should do control.
+ I think the things you can do in open loop
+ are enveloping grasps work really, really well.
+ But there's a whole bunch of things in manipulation
+ that is more than enveloping grasps.
+ That's been a theme over the--
+ if you wanted to do the type of stuff, even the bottle turning,
+ the stuff that Rachel was showing,
+ or any number of things we've shown over the term,
+ you've got to do something more than just the open loop
+ stable.
+ You want to be able to react to your environment,
+ dig into the toolbox, and find the wrench.
+ There's all kinds of motivations for that.
+ I do think that we don't have all those pieces.
+ I mean, deep learning-- so geometric perception
+ works well with tactile, once you have dense geometry.
+ You can combine-- also in the deep pipeline,
+ you can bring your tactile sensors in,
+ especially if they're dense geometry,
+ and you can put them through a convolutional network.
+ And that works pretty well.
+ Yunzhu in our group has done some pretty incredible things
+ with that.
+ Other people have as well.
+ So I think it's coming.
+ But we haven't seen, I think, its full power yet.
+ Yes?
+ So I'm curious.
+ You said we-- that you get more capabilities if we have proximity
+ sensors.
+ But I'm just having a hard time imagining what
+ you'd be able to do with proximity sensors that you
+ couldn't already get with a hand-mounted camera,
+ besides avoiding occlusion.
+ Good question.
+ So what about proximity versus a hand-mounted camera?
+ But I think hand-mounted cameras have been less useful
+ than I expected.
+ And I think the-- certainly depth cameras
+ have a maximum range, and they also have a minimum range.
+ And that minimum range--
+ oftentimes, when you talk to the manufacturers,
+ they're like, well, we just never--
+ nobody ever asked us to make a shorter minimum range.
+ We were always worried about pushing out the maximum,
+ never shortening the minimum.
+ So there's probably hardware improvements
+ that, if it became a priority, could be done.
+ But even RGB techniques, it seems
+ like, once you get pretty close, the RGB signal
+ is just not as good.
+ Maybe your camera is getting blurry,
+ but also just the field of view is very small.
+ So there-- and then, once you're in contact,
+ I think you can start getting local but interesting geometry
+ again.
+ But there seems to be this intermediate space, where
+ you're too close for a camera to be super useful.
+ You're not touching in contact yet.
+ So maybe we will have cameras looking out all over our bodies.
+ That's a possible future.
+ And maybe-- and just--
+ and rely on the RGB.
+ And maybe, just because the price point of iPhones
+ bringing down cameras and stuff, maybe that's the reason--
+ that's the way it's going to go.
+ It's a good question.
+ OK.
+ The big points-- I think you can think a lot
+ about the mechanics of softness, the benefits or trade-offs
+ of softness, even with linear spring mass damper systems.
+ I really think that a lot of people
+ have used that kind of model to great effect
+ to think about the pros and cons of softness.
+ The real world has more interesting geometry
+ and the like, but a lot of the lessons transfer.
+ And the fact that tactiles can be a geometry sensor,
+ I think, is just a really cool connection to the type of tools
+ we've already talked about.
+ You can do pose estimation tracking,
+ but you can also do shape estimation.
+ There's object detection.
+ All of the sort of classical perception techniques
+ you can think about doing with tactile.
+ It's a little different because you
+ have very local features as opposed to global features,
+ but the same kind of ideas work.
+ All right, so let me end by just kind of giving an overview,
+ kind of a wrap-up of what we've done over the term,
+ just to put a bow on it here.
+ OK.
+ We've done a lot of things.
+ And I appreciate-- I mean, I sort of
+ feel like the class is taking material that maybe should be
+ is still sort of like research seminar class,
+ and it's trying to present it as a textbook class.
+ And we're somewhere in between, and there's some rough edges,
+ and I appreciate your patience.
+ But it's pretty fun to sort of be
+ in a field that's kind of on the verge of those two things.
+ So let's just lay the landscape a little differently
+ than I did in the chapters, just to think about that.
+ So we talked about kinematics, dynamics, simulation.
+ That was definitely a big theme.
+ In simulation, I emphasized the signals and systems
+ view of the world.
+ And some of you hate that this week.
+ But it's good.
+ No, I mean, but I do think that to scale
+ to very complex systems.
+ I mean, you hear from the big players that
+ are trying to build these massively complex systems
+ and have a level of robustness, that somehow that way
+ of arranging all the different components together
+ is, I think, a very scalable and robust.
+ I mean, Simulink is not a successful product
+ for so many years without reason.
+ And I think in manipulation, everything snaps in two.
+ We're seeing that over and over again.
+ So you got a taste of that.
+ I hope you didn't dislike it too much.
+ And then we had sort of the manipulator view of the world,
+ where we talked about the manipulator control ideas
+ from differential IK to force control and hybrid control
+ to stiffness control.
+ That's about how do you move your arm around,
+ ignoring all the complexity of the world,
+ regulate forces and the like.
+ We talked about planning sort of in that view of the world
+ too, about RRTs, trajectory optimization.
+ And that was-- our focus in the planning
+ was, again, about sort of the robot's view of the world
+ with its eyes closed.
+ How do you get from point A to point B?
+ If you've brought in some obstacles,
+ maybe you're going to plan around the obstacles.
+ But it was thinking mostly about the motion of the robot,
+ not the motion of the world.
+ We, of course, talked a bunch about perception with a big--
+ I wanted to emphasize first some of the geometry
+ and the geometric perception from ICP, Dart, et cetera,
+ for pose estimation.
+ But we also talked a bit about dense reconstructions.
+ That came up a bunch.
+ I never spent a lecture on it, but it kept coming up.
+ And then, of course, the revolution in perception
+ that's come from deep learning, segmentation,
+ pose estimation, but also new representations.
+ I think the thing I'm most excited about with the deep
+ learning approaches is that we can get fundamentally--
+ we don't have to go all the way through to pose.
+ And we can potentially estimate much less than a full shape
+ or pose estimation algorithm.
+ Maybe it's just the key points.
+ That was a simple example.
+ But maybe it's just some latent representation
+ that isn't even human intelligible that
+ comes out of a deep learning system,
+ but is enough to do good control.
+ And then when we talked about controlling--
+ moving the actual objects in the world,
+ affecting the world more, when we got deeper into that,
+ the major approach we talked about was RL.
+ We did it before, of course, by relatively simple--
+ I'm going to come into contact, close my hand,
+ and go like this.
+ But when we started getting richer emphasis
+ on the control of the environment,
+ we started talking mostly about RL, reinforcement learning,
+ and all of its different variants.
+ But maybe slightly more general, I
+ tried to emphasize the general awesomeness of, I think,
+ visual motor policies.
+ And whether you get them from RL or imitation learning
+ or model-based RL or model-free RL,
+ I think the opportunity to connect
+ these types of rich sensing, possibly
+ through novel representations, directly to control policies
+ is just so awesome.
+ And it's something that we're going
+ to see more and more of.
+ We talked about high-level task planning.
+ Rachel gave a great lecture last week.
+ We talked about it a little bit early on,
+ from strips and PDIDL, state machines, and behavior trees,
+ and then TAMP last week.
+ Actually, I told Rachel after her lecture
+ that watching her talk about it, I really--
+ I think next year, I think this has got to be even a more
+ core piece of the class.
+ I think we've got to move it up.
+ And it's just such an important piece of the manipulation
+ pipeline to scale to much more complicated tasks.
+ I think I felt really inspired by that.
+ So those are, in my mind, the core components
+ that we've been talking about.
+ And we've talked tactile and other things have added on,
+ I hope, some elements.
+ But like I say, it's pretty fun to be in a place
+ right now where it sort of feels like we have a curriculum
+ for manipulation.
+ And those tools will get more and more mature.
+ And the core concepts will be more and more mature.
+ And I hope that maybe there's value.
+ I hope the value that this class can bring
+ is that trying to put these under sort of the same umbrella
+ and same symbols most of the time
+ and same code most of the time.
+ So I mean, I think the number one thing
+ I want you to walk away with is that it's a super vibrant
+ research community.
+ It's a super vibrant problem.
+ I mean, the number of people in industry
+ that care about manipulation is just skyrocketing.
+ I think the potential for it to maybe to get grand,
+ to shape the future of humanity, the future of work, life off
+ Earth, I don't know.
+ It's pretty important stuff.
+ Maybe there are other important things out there, too.
+ But this is pretty important.
+ So yeah, maybe this will be a foundation for you.
+ And I hope some of you continue on and push on and give us
+ feedback so that we can keep making the course better.
+ Good.
+ Well, your turn next.
+ So Thursday, we will do the project videos.
+ And I think everybody knows the deal.
+ But I hope many of you will come here to watch with us.
+ We'll do a viewing session.
+ We have the room till 5 if we need it.
+ And we'll get oohs and ahs and questions
+ if you're here to answer them.
+ And we have time.
+ And I'll see you then.
+ Thank you.
+ [APPLAUSE]

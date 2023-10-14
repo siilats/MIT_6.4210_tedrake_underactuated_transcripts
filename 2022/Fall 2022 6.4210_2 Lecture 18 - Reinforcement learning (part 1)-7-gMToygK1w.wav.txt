@@ -1,0 +1,1409 @@
+ Today we're going to start talking about reinforcement learning.
+ It's funny how the pendulum swings, but I was just saying that last year I felt bad
+ about waiting until lecture 18 to talk about reinforcement learning, and this year I'm
+ not sure if anybody cares.
+ And who knows what next year is going to be, right?
+ But I think some people are incredibly excited.
+ I think it's an incredibly exciting topic.
+ Let me try to do what I do on good days, I think, which is to bring back the last ideas
+ from the last lecture and kind of fade into the ideas from today.
+ So last time we talked about the visual motor policies, right?
+ For me, I think it is now clear that I want policies that-- I will no longer be happy
+ if my policies don't read from the cameras and make decisions at high rate.
+ I think we've seen something good happen there, and we should continue to try to do that.
+ So the way that looks in our world here is maybe I have the manipulation station here.
+ It has a bunch of output ports.
+ It has the EWA state, the WSG state, but it also has some cameras.
+ And then we put that broadly into a visual motor policy here.
+ And that's what's going to send ultimately back into my EWA commands input port, my WSG
+ command input port.
+ The idea is we want to build controllers that can go from pixels all the way to-- well,
+ these positions, maybe not torques.
+ That would be crazy.
+ There's reasons why you might want to do torques, but in a lot of our cases, positions are going
+ to be good.
+ And we talked about the various ways you could think about what's inside this box, including
+ maybe everything we've done in class so far sort of fits inside this box.
+ But the huge promise of trying to get these with tools that are more based on machine
+ learning was-- the huge promise-- let me just write as I say it-- of ML in here is that
+ maybe I don't have to do anything in the middle of that that assumes a state representation.
+ For me, that's the biggest deal is using learned state representations.
+ That I don't know how to write the state of the peanut butter on the toast.
+ So with a lot of the classical tools, I would have to impose some representation of what's
+ happening in the world in the middle of this.
+ And maybe with some of the tools we're talking about in the last lecture and in these upcoming
+ lectures, I don't want to do that.
+ I don't have to do that.
+ So we could say that, like I said, everything we've done in class so far where I maybe have
+ a state estimator and a motion planner and a low-level controller, that could all be
+ inside.
+ I would call that a visual motor policy.
+ But I only would be happy calling it a visual motor policy if it was really making decisions
+ based on that camera at high rate.
+ Last time we said a simple way to start thinking about what visual motor policies can do was
+ via behavior cloning, where we really just took in, for instance, the EWA state and the
+ cameras, WSG and the cameras.
+ And we put it into a big neural net.
+ And we output the EWA command from that.
+ And we talked about the sort of characteristic architecture of that, as you maybe have an
+ enormous network to deal with the camera input, because it's a very complicated input.
+ And maybe pre-training on image net makes sense.
+ And for all the reasons, we might have an architecture that has a big network to deal
+ with the images, but then you bring in your EWA state, your WSG state, where you have
+ sensors on them directly.
+ You shouldn't have to only get that from cameras.
+ Those are easy sensors to add in.
+ And then maybe a relatively smaller policy.
+ In BC, we would collect an output of this directly.
+ In human demonstrations, let's say.
+ And so if we really just have a bunch of samples of the data here and the data here, then I
+ have a standard supervised learning problem where I just want to find a function, or potentially
+ a recurrent network, if I want to think of it as a sequence.
+ I want to find a function that predicts the EWA command given the inputs that I'm seeing.
+ That was last time.
+ And I think there's a lot of promise in that.
+ We're seeing some of the best demos in the manipulation world today are using that pipeline.
+ But we also have-- these are some of the ones from our group.
+ But we also know that there are limitations to that.
+ So it's a big open question about how far that takes us in the grand scheme of things.
+ How much is imitation learning going to be part of the final answer?
+ That's maybe one question.
+ And maybe a slightly different question is, do we only need behavior cloning to get to
+ the broad manipulation systems that we are looking for?
+ And maybe if we get cool enough haptic interfaces, then all this stuff starts to work.
+ We don't know.
+ OK, so that was the backdrop.
+ Now enter reinforcement learning.
+ How does reinforcement learning compare to that?
+ So this was a large requirement to say the burden of these demos, of doing a great behavior
+ cloning demo, starts with collecting lots of human data, collected on the day of your
+ demonstration, collected with experts.
+ This is a high cost.
+ Just like in supervised learning, there was a high cost initially of having somebody label
+ every pixel in your data set.
+ The cost of labeling or the cost of demonstrating becomes very high.
+ And if we can't generalize broadly beyond our demonstrations, then there's limits to
+ how valuable that can be.
+ So a harder version, but a super interesting version, is to try to describe what we want
+ out of the system, not with specific input/output pairs, but by saying just what we want the
+ robot to do over the long term.
+ And that's what reinforcement learning is doing.
+ In fact, that picture up there is the classic picture you always see in RL.
+ You see-- they don't always call it the plant, but I'm going to keep calling it the plant.
+ Maybe it's the world or the environment.
+ So my visual motor policy is my policy.
+ My manipulation station is my plant.
+ I have my observations coming out here.
+ I like to call observations y.
+ You could call them o if you're more CS inclined maybe, but these are my observations.
+ Over here is u for me, which is actions.
+ And we also have one other thing involved, which is a reward, r, which you'd like r to
+ be some function.
+ This is the-- I'm going to even say it clearly.
+ This is the one step reward function.
+ It's a scalar function of the current observations and the current actions.
+ So a richer way to describe what we want the robot to do would be to write it as an optimization
+ problem.
+ Let's say I have some policy.
+ We'll call it pi.
+ And maybe it's got parameters theta, the weights and biases of my neural network, for instance.
+ Then the optimization problem I want to think about is how do I maximize over my policy
+ parameters theta the sum of the long term rewards, given that those rewards were generated
+ by interacting with the plant.
+ So this is not maybe what you'll always see in-- the way you'll always see in RL, but
+ I'm going to write it this way because I think it's consistent.
+ So we're going to define yn to be my output function of my dynamical system that I've
+ defined carefully.
+ And xn plus 1 is just the forward dynamics of that system.
+ And I have to somehow specify the initial conditions to start that up.
+ So if I was actually going to implement this in Drake, for instance, then I have some--
+ potentially a whole diagram.
+ It has a context which has its state described.
+ It has its forward dynamics that the simulator knows how to evolve.
+ It has its output functions.
+ The diagram has outputs that are pulled from system outputs that evaluates things like
+ the image or the state of the EWA.
+ And subject to this dynamical system generating y's and u's that are consistent, I want to
+ maximize the long term reward.
+ I think I did it.
+ I was worried that I would get here and I'd write min.
+ And I was going to write cost over here.
+ It's my habit.
+ But I didn't change u and y, but I did change to r.
+ So that's a little compromise.
+ As I've written it here, this is not just an RL problem.
+ This is an optimal control problem, broadly.
+ And we haven't spent the many lectures it takes to build up the total toolbox of optimal
+ control here.
+ I could still, I think, give you some useful insights about RL today.
+ So the other class I teach, underactuated, we spent a lot of time thinking about the
+ optimal control problem more broadly and all the ways to think about using this dynamical
+ system to solve these problems.
+ But long before RL existed, there was optimal control.
+ And I would say reinforcement learning is a subset of optimal control, which has a particular
+ characteristic, particular emphasis.
+ Can I say RL is a subset of optimal control?
+ I mean, some people might want to write it that way.
+ Some people might write it-- I'm just going to say that.
+ I'm going to stick with that.
+ And it puts particular emphasis on a few things.
+ In the library of optimal control tools, the RL methods emphasize, first of all, black
+ box optimization.
+ So unlike most tools in optimal control, the RL algorithms, I think people know, are
+ not going to assume necessarily that we know f, the function f, or the function g, or even
+ the function r, only that we can get samples from it.
+ So we don't need to know the structure or the governing equations.
+ I just need a simulator that will tell me the output, or a real robot that will tell
+ me the output.
+ And the other thing that it emphasizes strongly, partly because it wants to connect to the
+ real world and to data, is the stochastic aspects, stochasticity.
+ So stochastic optimal control would be if I wanted to maximize over theta, for instance,
+ the expected value of my rewards.
+ And I think there's lots of ways I could discount this, or do average rewards and stuff.
+ I'm just going to keep it at the high level for now.
+ And it's interesting to think, OK, so this-- I haven't written anything that has probabilities
+ yet.
+ So here are my equations.
+ So my output functions can take random variables.
+ And my dynamics functions can take random variables.
+ And we've already done this a little bit, actually.
+ This is also a random variable.
+ And I can start my initial conditions, in general, from some probability distribution.
+ And once I pull-- I mean, any one of these would be enough.
+ Once I make the initial conditions come out of a random variable, then suddenly the future
+ state is a random variable, and the future observations are a random variable.
+ And it makes sense, then, the reward is not a random variable.
+ And if I want to maximize a scale or function of a random variable, I need to take some
+ measure of that random variable.
+ And the most common one for lots of important reasons is to take an expected value.
+ So this is, I think, the way to connect the modeling that we-- oh, yeah, please.
+ Yes.
+ Oh, no, it's not.
+ It's just too many symbols coming out of the typewriter.
+ Yep, thank you.
+ Yeah.
+ So this is, I think, a very nice match to the modeling power we've been talking about
+ in Drake's systems framework, for instance, and the way we've been writing simulations,
+ and the way you would generate this.
+ There's one thing that is missing, actually.
+ There's another way to add randomness besides just the initial conditions and
+ sort of noise.
+ That's a really rich specification.
+ Even if I were to restrict myself to Gaussian noise coming in, once I have a
+ nonlinear f, I can do anything.
+ Sorry about that.
+ How many of you here are professors?
+ We're from MIT.
+ They can't hear you on the lecture capture.
+ Check on your mic.
+ Thank you very much.
+ We stopped using that.
+ We just record ourselves.
+ I apologize.
+ OK, cool.
+ Thank you.
+ Yep.
+ So even if this is just Gaussian random variables, since I'm multiplying it by an
+ arbitrary f, I can do really rich things with that.
+ But there's one thing that I think is missing in that standard math.
+ Anybody know the thing I think is missing?
+ We'll see it in the code in just a minute.
+ Yeah.
+ [INAUDIBLE]
+ OK, there's definitely a reward.
+ That's in here.
+ Oh, OK.
+ You might say the thing that I'm missing, constraints.
+ But you can make reward up-- in reinforcement learning or any of the
+ unconstrained optimization, you would take the constraints you might have in a
+ normal optimization, and you would shove them up into the objective as a
+ penalty function.
+ So maybe that's-- yeah.
+ But I would tuck that inside here.
+ But as rich as I let R be, as rich as I let G be, f, and this probability
+ distribution, there's still something that this model of the world doesn't
+ quite capture.
+ Yeah.
+ Unknown model.
+ I mean, depending on how rich your unknown model is, that could fit-- this
+ is a pretty rich specification, right?
+ The policy can be stochastic.
+ That's true.
+ I didn't actually even write the-- I should have written the policy.
+ I missed my u of n is policy of y of n.
+ And this could be-- that was an omission, not a philosophical miss.
+ You're totally right.
+ You called me on it.
+ And this could be stochastic or deterministic.
+ You're totally right.
+ But that one I just forgot to write.
+ There's a more fundamental thing that this doesn't capture.
+ [INAUDIBLE]
+ OK.
+ It's discrete.
+ But I would say if I make my discrete to continuous math,
+ I could make discrete step small enough that it can capture most--
+ that's not the fundamental one I'm missing.
+ People do it in RL all the time.
+ But we didn't do it enough, I think, in classical control.
+ [INAUDIBLE]
+ A particular type of randomization, I think,
+ has happened in RL that didn't happen in optimal control.
+ If I made a random number of objects appear in my world,
+ then even the definition of x is different.
+ The number of state variables is different.
+ And so I don't quite know how to write that here.
+ There's a distribution over the size of x.
+ And that kind of breaks my otherwise beautiful state-space view
+ of the world.
+ You can still accommodate that in the tools we'll build today.
+ But this is almost perfect.
+ But there is something that it's missing, which is that I really
+ could have, in random draws of my simulator,
+ a completely different state, a completely different number
+ of objects in the world.
+ That's the only thing I find unsatisfying now
+ about writing it that way.
+ But you can't always make your y fixed.
+ You might have to alter the rate.
+ I think it must-- apart from clever network parameterizations
+ and stuff like this, but I do want y to be roughly fixed.
+ I think it's x that gets bigger or smaller.
+ If y is a camera, if y is my camera input and my robot data,
+ then that doesn't change, even if I have different numbers of objects
+ in the scene.
+ But x would be a different size.
+ So the generating equation--
+ [INAUDIBLE]
+ Yes.
+ [INAUDIBLE]
+ OK, so maybe you say that this-- if I was thinking of this
+ as a general data structure, then everything's fine.
+ If I'm thinking about this as a vector space and a difference
+ equation on a vector space, then it's impoverished.
+ But if this is like a dictionary in Python, then I'm good again.
+ And that's maybe a good way to think about it.
+ I need to go from my comfortable vector space world
+ to a dictionary in Python world.
+ And that kind of messes with me.
+ But it's important.
+ It's an important change.
+ OK, so let's just take a second to appreciate
+ that this is harder than BC.
+ So behavior cloning is here.
+ I collected directly input/output data.
+ But this is a harder problem than BC for a subtle reason.
+ Because BC can do sequence learning.
+ If I'm going to train a LSTM policy for my cloning,
+ then that's actually got some temporal components to it too.
+ But RL is harder than BC.
+ This is supervised.
+ [TYPING]
+ Learning.
+ Even possibly sequence learning.
+ [TYPING]
+ But BC doesn't have to think at all.
+ By having the data before and after my policy curated for me,
+ it doesn't have to think at all about all the stuff that
+ happens inside my plant.
+ It just completely avoids the plant.
+ And a lot of messy stuff can happen in the plant.
+ Inside our manipulation station, we have the physics engine.
+ We have the geometry engine.
+ We have the contact.
+ We have the renderer.
+ That's a lot of messy stuff that our algorithm's
+ going to have to go through now.
+ And BC just skips all that.
+ The classic way that people would talk about RL
+ being harder than supervised learning
+ is the delayed reward problem.
+ That you have long-term consequences of your actions.
+ The sequence learning has some of that.
+ [TYPING]
+ So I de-emphasized that here.
+ But there's another.
+ The fact that my reward depends on-- even my reward,
+ my instantaneous reward at time 23
+ depends on all of the actions I've taken from time 0 to 23.
+ Whereas in behavior cloning, certainly
+ in the simple versions of behavior cloning
+ or feedforward network, it just depends
+ on the instantaneous input.
+ But this is such a powerful general framework,
+ this optimal control framework, the RL framework,
+ that people are-- and it's had some incredible success.
+ So AlphaGo, for instance.
+ There's just so many--
+ StarCraft, you name it.
+ There's incredible successes of RL.
+ And we've seen some in manipulation, too.
+ So the one that everybody talks about
+ was the initial one by OpenAI.
+ But now it's been recreated in a lot less time.
+ And it's super compelling to say the recipe
+ to make an advanced robot manipulation system
+ is you just make the simulator.
+ And people have simulators, where you just
+ write the cost function, and then you do deep RL.
+ And people say things like, ah, it's so nice
+ we don't have to do control anymore.
+ Control is hard, and I just don't
+ have to do that anymore.
+ But it's not completely all done.
+ And like I said, the pendulum swings around.
+ And people seem-- even though RL is incredibly powerful,
+ I would say this year people are a little less excited.
+ I'm sure next year they're going to be super excited again.
+ But there are shifting winds, and people are--
+ there's various levels of excitement in RL.
+ I actually-- I started--
+ I did my thesis in RL.
+ I don't know if you guys know that.
+ I had a little walking robot.
+ I couldn't afford a full piece of rubber.
+ So I had to cut out--
+ I had to use a other piece of rubber one day,
+ and I never had a new one.
+ So I just had to--
+ I had very humble beginnings, I guess.
+ This was a CD rack that was holding up my ramp.
+ And then so that was a-- that's just a mechanical toy that
+ would walk down a ramp.
+ And then my thesis, dating myself now,
+ was a robot that learned how to walk
+ because it was close to walking by falling down a ramp.
+ And I-- actually, I have a secret.
+ The only reason I put this in here
+ is because Bojan's about to throw away
+ my treadmill that's been sitting in the lab corner.
+ And I was like, I just want to show it one last time
+ for nostalgic reasons.
+ No, no, it's good.
+ It's good.
+ This is the thing.
+ Like, so if you're doing an RL thesis, right?
+ So for me, I was like writing my thesis here, right?
+ And there was a treadmill here.
+ And all day long, you just kind of hear this--
+ [TAPPING]
+ You know, it's like, oh my god, I'm going to--
+ every once in a while, you hear--
+ [TAPPING]
+ And then you'd hear it go--
+ [MAKES EXPLOSION NOISE]
+ You know, as it was--
+ the treadmill shoved it up against the wall, right?
+ But that was my beginnings, I guess.
+ And I don't use RL a lot in my--
+ to make robots move today.
+ But that's not because I don't think it's powerful.
+ I think it's a pretty subtle--
+ there's a pretty subtle reason.
+ And maybe we can come back to it later.
+ But I just don't enjoy the state of it right now in that way.
+ But I don't want to tune cost functions and stuff.
+ I'll say that more carefully as we go.
+ We are doing RL theory, because I think
+ there's some beautiful things that have happened in RL that
+ need to be understood more rigorously.
+ So the group is actually doing a lot of RL.
+ But just maybe when we want the robot to do something,
+ that's not the tool I turn to today.
+ Sorry, someone's-- yeah, Rob.
+ Can you talk a little bit about the runtime
+ [INAUDIBLE]
+ Yeah, yeah.
+ [INAUDIBLE]
+ OK, good.
+ So I think people have the impression,
+ like, the open AI was massive amounts of compute.
+ It simulated millions of years of finger twiddling
+ in order to do that.
+ And people have gotten that down.
+ NVIDIA has a version now that's doing a very similar task
+ and dramatically less, at least, wall time.
+ I think a lot of compute still.
+ Optimal control isn't immune to that.
+ It depends which versions of optimal control.
+ So linear optical control is immune to that.
+ Nonlinear optimal control, there's
+ many different approaches, which I think RL is one of them.
+ And they enjoy different levels of generality,
+ like how many different problems you can embrace with that
+ and how strong is the algorithm.
+ So RL is all the way on the side of you
+ can optimize any plant and any cost function,
+ but it might take a long time.
+ And if you say, I don't want to do any,
+ I'll carve out a smaller set of problems
+ that I want to focus on, then you
+ can write narrower, more efficient algorithms.
+ And the big question, the big money question
+ is, where is manipulation in that space?
+ Is manipulation so complicated that you
+ have to treat it with the anything algorithm?
+ Or is there enough structure in the manipulation problem
+ that more targeted algorithms should be used?
+ OK, so my plan for today is to talk basically--
+ I don't have all of the optimal control background
+ that we've developed, but I could still
+ talk about some RL examples, including
+ the sort of software, how do you write these things.
+ And then I want to talk a little bit about RL
+ from the optimization perspective,
+ because we've been going back to optimization,
+ using a variety of optimization tools,
+ and I think we can connect to that.
+ And I've got as much as we have time to say about that.
+ Let me start by thinking a little bit about the software.
+ So how many people know OpenAI Gym?
+ It's a great thing.
+ So everybody agreed that there's a relatively simple requirement
+ to define an RL problem.
+ You just have to define your observations,
+ define your actions, define your reward.
+ And the community finally got behind a particular interface.
+ Someone agreed that these are the function names in Python
+ that we should all write our code behind.
+ That way, anybody who's writing simulators or problem instances
+ on one side can present this interface,
+ and everybody's writing RL algorithms on the other side
+ can act on that interface.
+ And the OpenAI Gym is the interface that won.
+ It's maybe transitioning to gymnasium.
+ We'll see.
+ OpenAI did a mic drop on it, said,
+ we're not going to do that anymore.
+ And someone else is like, that's still important.
+ And we'll see if the world moves to gymnasium.
+ But I think it's got so much momentum
+ that we're not going to lose it.
+ So the software interface to this optimal control problem
+ is just you have an initialization
+ of your gym environment.
+ You step.
+ That's my f of x.
+ You can reset if you need to.
+ You can render.
+ The step also actually takes the action,
+ and it outputs both the observations and the reward,
+ maybe a close.
+ All of those have a direct mapping
+ to what we've been doing all term.
+ So your init is just your build your simulator.
+ The step is just an advanced two in your simulator.
+ And then evaluate your observation
+ and evaluate your reward, for instance.
+ And reset might just be resetting
+ the context in our setting.
+ So everything-- this is just--
+ and anything, any simulator can easily present this interface.
+ That's the point of it.
+ It could be an Atari game.
+ It could be Go.
+ It could be a manipulation station.
+ Render might be-- is like the Meshcat publish kind of idea.
+ To make it easier to go from that diagram
+ and get it all correct, the actions and observations
+ and rewards, we have a thing in--
+ currently in manipulation repo, it's
+ slowly moving to main Drake, which is just the Drake gym
+ end, where you can hand it a simulator.
+ You can tell it which ports are the action ports you
+ care about, which ones are the observation ports, which
+ ones the reward port.
+ Or you can write a function for the reward
+ if you don't want to use ports.
+ And it'll wire that up and make that for you.
+ So it just makes that easy to make that interface.
+ And then-- so that's the OpenAI gym.
+ And a lot of people knew that.
+ But maybe I could have written it more carefully.
+, So this is my step reset whatever.
+ And then on one side of this are the simulators, for instance,
+ or a real robot if you so choose.
+ And on the other side of this are the algorithms.
+ Only one simulator will be discussed today, unfortunately.
+ But there are other choices that are perfectly good.
+ On the algorithm side, similarly, I'm
+ just going to pick one because I don't want
+ to talk about all of them.
+ These days we mostly use stable baselines three,
+ which is a nice implementation from DLR, I think,
+ and that has a lot of the-- kind of like OMPL
+ had a whole list of motion planning algorithms.
+ Stable baselines has a nice list of reinforcement learning
+ algorithms.
+ And this one is written in PyTorch.
+ A surprising number of our libraries
+ never made the leap to PyTorch.
+ So it's a perfectly good implementation.
+ It's the one we use.
+ It's interesting that the algorithm that most people use
+ or that we'll talk about the most today is PPO.
+ Maybe, what did you say?
+ SAC.
+ Right, so let's distinguish.
+ So in terms of the algorithms in manipulation, for instance,
+ there tends to be a breakdown between--
+ if you're using simulators, then PPO is often a go-to.
+ SAC maybe.
+ But if you're using real robots that people
+ tend to do Q-learning kind of things,
+ I think really the distinction is this is-- with a simulator,
+ you worry less about data starvation.
+ You just-- you run your simulator fast enough,
+ and you don't curate your data carefully,
+ and you do online RL.
+ And with real robots, data is precious,
+ and you don't want to have to run 100 million trials,
+ so you do offline RL a lot more, which
+ is more compatible with Q-learning type approaches.
+ So you store every piece of data.
+ You reuse the data to update your policies,
+ even after it's not the same policy that's running.
+ I'll get a little bit into that distinction later.
+ But PPO seems to be a fairly dominant entry now.
+ PPO has become the default. See, I backed it up.
+ Reinforcement learning at OpenAI,
+ and just a lot of people do.
+ In fact, it's not just PPO.
+ It's like there's a particular commit
+ in a particular repository that has a particular set
+ of parameters for PPO.
+ And you should only use that one,
+ because people have done studies of saying, we took PPO.
+ We did huge parameter sweeps, and we
+ got all kinds of different answers.
+ And then we did git bisect on the original PPO repository.
+ And we found out that this is the commit
+ that everybody should use.
+ And then another paper found roughly the same thing.
+ So it's like the world just tried to implement exactly
+ the policy parameters, the optimization parameters,
+ from this one commit.
+ Don't mess with it.
+ You're going to spend a lot more time optimizing.
+ But that actually is nice.
+ Kind of weird way that's nice, because then you know if--
+ there's just one version of PPO that you should care about.
+ So if I wanted to slip in PPO and just be happy,
+ as long as I use the parameters from that one commit,
+ I should be good.
+ I should have the same performances as other people.
+ And stable baselines is to use that commit, for instance.
+ OK, so let me do a little example.
+ I think it helps to put the stuff in context.
+ So remember the box flip up.
+ I thought that was just such a compelling example
+ for force control before.
+ So let me just even remind you of our existing example
+ for that.
+ This is the old notebook where I'm
+ going to run the stiffness control version of that.
+ Not force-based, I'll do the stiffness control-based.
+ And I'll just do the version that was scripted.
+ So we had a virtual finger.
+ We programmed the remote center of compliance, if you will,
+ and got this just beautifully simple high-level control.
+ Just says move it towards the wall, start lifting it up.
+ The center of compliance goes here.
+ The box will flip up.
+ And it'll pull itself back down.
+ That was just a really nice way to flip up a box, I guess,
+ if your finger was a point.
+ OK, so I did that again in RL.
+ This morning I just thought I'll code the exact same environment
+ and I'll put it in my Drake gem and then I'll run PPO on it.
+ And I did.
+ So let's see what happens.
+ Restart that so I can use the same Meshcat instance.
+ So I'm going to just use the pre-trained model.
+ It doesn't take long to train this one, a few minutes.
+ But I'll just use the--
+ mostly so I don't run out of batteries here,
+ I'll use the pre-trained one.
+ OK, so it flips up the box very well.
+ And then it smashes its head against the side.
+ So I'm going to just use the pre-trained model.
+ And I'll just use the pre-trained model.
+ And then it smashes its head against the side
+ for the rest of time.
+ It'll get random resets.
+ OK, it flips up the box.
+ And then it smashes its head against the wall.
+ And I got to the point I was like, oh, I could tune that away.
+ But it kind of makes a point.
+ Like, it's pretty good, but it's annoying that way too, right?
+ So I mean, I didn't tell it to smash its head against the wall.
+ I'll show you the cost function.
+ OK, that keeps going.
+ All right, so yeah, I recorded it just in case.
+ All right, so let me just sort of step through what that looked like.
+ And you can ask as many questions as you like.
+ But so what was the network in that?
+ OK, first of all, maybe I should have started with the action space.
+ So I wanted it to have the advantage of stiffness control.
+ I didn't want to deprive it of stiffness control.
+ So the input was actually-- because if you remember,
+ if your finger's a point, the difference between stiffness control
+ and inverse dynamics is non-existent.
+ It was just a 1 over mass.
+ So I basically gave it the-- that should be export input.
+ Inverse dynamics desired position was the action space.
+ So that's like the virtual finger in the stiffness control.
+ The observations was direct state output.
+ So I'm not even doing visual motor yet.
+ I'm just giving it access to the true state
+ and asking it to learn from that.
+ And then I just used stable baselines default MLP policy
+ to go directly from state to actions.
+ Now, we should expect that to be enough,
+ because the optimal control for that problem
+ should be just a function of state.
+ I didn't have to use an RL-- I didn't have
+ to use a recurrent network here.
+ I think just a multi-layer perceptron policy feedforward
+ network is enough.
+ And if you look at the default MLP policy, which is actually--
+ like all the examples use the default policy.
+ It's kind of a weird thing in RL for control.
+ If people basically-- there's like maybe this one and maybe
+ one with 255 units in the middle.
+ And they almost all use these same network parameters.
+ And people really don't change those very much.
+ My instinct would be to start mucking
+ with the size of the network a lot,
+ but the people really don't.
+ So the default network architecture
+ from stable baselines is just that.
+ So that means the policy network has 64 hidden units.
+ So it has the observations, which in this case
+ was the state, mapped into 64 hidden units, 64 hidden units,
+ and to the output, the action.
+ The value function was basically the same size.
+ So PPO, I will get to it as I go into it a little bit.
+ PPO is actually an actor-critic algorithm.
+ So it has both policy parameterization and a value
+ function parameterization.
+ And then I told you that the way that you make that in the Drake
+ GMM is you just have-- I just have my plant.
+ It's a little smaller than I would have liked here, sorry.
+ And I have an inverse dynamics controller.
+ I made a super small function for my reward,
+ and I piped that to the reward output.
+ I took my state, I put that to the observations output.
+ And the actions were almost just directly the inverse dynamics
+ controller, but my inverse dynamics controller
+ wanted a desired state.
+ And I only wanted to give it a desired position,
+ so those little boxes just put 0 for the desired velocity.
+ But it's really just like, make your little diagram,
+ pick the input that you want as your actions,
+ pick the output that you want as your observations output
+ or a function to be the reward.
+ The cost function is kind of fun and interesting.
+ I really didn't do any-- I mean, there's
+ one thing I did to do cost function tuning, I would say,
+ which is this last line.
+ But I'm allergic to cost function tuning.
+ I don't want to do much of that.
+ I did it before, and I don't ever want to do it again.
+ It's basically the box angle.
+ I wrap it around because sometimes it
+ did play tiddlywinks with the box,
+ and it would do multiple spins and land upright.
+ So I'm OK with that.
+ I'll take that as a success.
+ So the box angle modded into pi.
+ And most of the cost is just saying
+ that I want my angle from vertical to be small.
+ I do think about the world in terms of cost, not reward.
+ And I put a minus sign when I'm handing it
+ to my RL algorithms.
+ That's just how I roll.
+ So I penalized angle from vertical.
+ I penalized box velocity.
+ I penalized the effort, which is the difference
+ between the virtual finger and the actual finger.
+ I penalized the finger velocity because I
+ don't want it to be going like that.
+ But it still did.
+ And then the 10 is the one thing I was like,
+ I didn't type it in the first time, and I had to put that in.
+ And you can see the comment, why.
+ So if I only had negative rewards only,
+ and the Drake-Jim-Env will terminate
+ if the simulation crashes.
+ It'll terminate early.
+ If every time step can at best be a negative reward,
+ then it wanted to crash the simulator.
+ It was learning to break multi-body plant.
+ So I had to add 10 so that every time step was positive.
+ And then it would be rewarded for running a long simulation
+ and not rewarded for crashing my simulator.
+ How do you crash the simulator?
+ You cause ridiculous penetrations
+ at high velocities and stuff like that.
+ And it was learning to do that.
+ That's cool, but it's annoying.
+ But that was the one thing I was like, OK,
+ I have to go back in and add a 10.
+ Everything else was like, I don't
+ know why I picked 2 and 0.1, but it wasn't 2.
+ That was just me thinking that was 20 times as important
+ as that.
+ Yeah?
+ What was the effort?
+ The effort-- in the stiffness control,
+ I chose effort to be the distance
+ between the desired finger and the actual finger.
+ So that's like the stretch of the spring.
+ Yeah?
+ Why 10?
+ Why did you do 100?
+ I just looked at the rollouts and saw
+ what the largest cost I could get with those other things.
+ My one-step costs tended to be between 0 and negative 5
+ or something like that.
+ I just added something that was safely
+ bigger than the smallest reward I had gotten,
+ just to shift that up to be in the positive space.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ So the comment there, just to say back
+ for people watching remotely and the like,
+ is that stable baselines certainly recommend strongly
+ that you normalize your action space,
+ you normalize your observation-- maybe less about even
+ observations-- or normalize your reward.
+ And it does some amount of automatic things,
+ depending on if you turn that on or off.
+ So the question was, does it even
+ matter if I had picked 100?
+ [INAUDIBLE]
+ [INAUDIBLE]
+ Yeah, normalization wouldn't fix it
+ wanting to crash the simulator.
+ Right.
+ Yeah.
+ [INAUDIBLE]
+ Good.
+ Any other questions about that?
+ I definitely could have made that better.
+ It was a teaching moment for--
+ I just thought, if I leave that, it's kind of like--
+ because that's real.
+ I mean, you'll do that.
+ You'll see robots smacking their head against the wall
+ and stuff like that until you tell them not to.
+ And I want to think about--
+ I mean, that's like--
+ well, let me distinguish between two different types
+ of that kind of behavior.
+ Some of it is power, in the sense
+ that it can find very strange solutions.
+ And some of it is bad behavior by the optimizer, I would say.
+ So when it comes to tuning-- so if I wanted to make that better,
+ that basic framework is probably OK.
+ I could maybe make the 2's and the 0.1's different.
+ And I could dial that in and get a behavior that was less--
+ right, if I'd really penalized action,
+ then maybe it wouldn't do that.
+ But let me distinguish between two types of tuning.
+ I won't write the word distinguish.
+ [WRITING ON BOARD]
+ I was only going to write reward training, but I wrote cost.
+ I'll just go with it.
+ I would say the first one is whether you fully
+ specified the task.
+ OK?
+ [WRITING ON BOARD]
+ And I'll contrast that with reward shaping.
+ And these are slippery slope.
+ OK?
+ So let me distinguish what I mean here.
+ It's actually hard to write a cost function whose
+ optimal solution has the behavior you really want.
+ I gave an example of that before when
+ we were talking about loading the dishwasher, right?
+ I didn't tell the robot, don't throw dishes across the room.
+ Right?
+ And if I didn't tell it that, if it
+ could throw the dishes into the dishwasher,
+ it probably should.
+ Right?
+ That would optimize the objective.
+ So I would say that's my fault. I
+ didn't specify the optimization function whose optimal value
+ had the solution I want.
+ And it's not because I'm a bad person.
+ It's because it's really hard to write good optimization
+ landscapes.
+ Right?
+ And in general, I think a lot of the behaviors
+ that we do as manipulators, as humans that do manipulation,
+ is due to a lot of common sense understanding about the world.
+ Like, dishes shouldn't be smashed into the plate,
+ into the ground.
+ You don't have to-- having to tell all of these-- Leslie
+ Kelbing likes to call it background utility functions--
+ into a robot is very, very hard.
+ And I think it's really interesting and hard
+ to think about how do you give the programmer the vocabulary
+ to specify the super rich semantics.
+ And I'm all for that.
+ I like that a lot.
+ I think that's an interesting problem.
+ And I think-- and so natural language
+ can help with that, large language models, foundation
+ models.
+ These are things that are going to help
+ us make progress on that.
+ There's a second thing which happens,
+ which is just you're helping the optimizer.
+ [WRITING]
+ Which is that the optimizer got stuck in a local minima.
+ And if I write the cost function a little differently,
+ then maybe it'll do better and it'll
+ get down to the right solution.
+ And this one, I choose to do less of this
+ and try to work on better optimizers instead.
+ That's just my preference.
+ But so this one I have less excitement about.
+ This one I think is fundamental and good.
+ So for instance, like which one--
+ if I were to start tuning that example, my box flip example,
+ which one do you think is more the problem there?
+ Yeah.
+ [INAUDIBLE]
+ There's probably both.
+ Yeah.
+ [INAUDIBLE]
+ Nice.
+ Yeah, so I didn't actually say don't smash yourself
+ into the side of the bin repetitively.
+ That's my bad.
+ I could have said, I don't want you to smash yourself.
+ My bin is important or something.
+ But there's also-- I mean, I did tell it.
+ All other things equal, use less energy or use less effort
+ and keep your finger velocity small.
+ And it still chose to go like this.
+ So I'm pretty sure there's a solution that
+ would have flipped it up just as well that didn't go like this.
+ And so, yeah, in that case, I think
+ the optimizer has done a good enough job to get the job done.
+ But it hasn't found the optimal solution.
+ And just so you see the world through my eyes a little bit
+ more, if you-- let me take the opposite extreme of that.
+ Right?
+ So when we talked about the graph of convex sets motion
+ planning, the cost functions there of like this--
+ the bimanual thing doing complicated,
+ it was there's a start, there's a goal,
+ I want the shortest path.
+ Subject to velocity limits, acceleration limits on there.
+ The optimizer solves the global optimality,
+ or it says there's no solution.
+ Right?
+ That's just-- I mean, it's hard--
+ there's only a limited class of problems
+ that we know how to write that have a strong solution
+ like that.
+ But the joy of working with that system
+ is more for me than when you have to do this.
+ Right?
+ Yes?
+ [INAUDIBLE]
+ Yeah, that's a great question.
+ I suspect it would continue to get better, yeah.
+ The question would be like how long and what.
+ But you're right.
+ I think I could probably just let this go.
+ I did that fairly long for once, and it didn't change a lot,
+ but in that particular example.
+ But I do agree.
+ I think you could-- I mean, fundamental to RL
+ is a little bit of exploration.
+ And as long as it's still exploring,
+ it could eventually hop itself out and keep getting better.
+ Great question.
+ I mean, to some extent what we're doing is we're
+ lifting up the programmer from-- so like,
+ I can make a robot do anything using GCC or Clang.
+ I just have to write C++ code, and if I write good C++ code,
+ I can make the robot do anything.
+ And that's true of RL, too.
+ If I can write a good enough cost function,
+ I can make the robot do anything.
+ But in C++, the compiler is deterministic, and it's fast,
+ and the error messages are clear.
+ And I think RL will get there, but right now RL
+ is such that you try your cost function,
+ and then you wait a while, and it's
+ more frustrating to work on.
+ But that's just an intermediate state.
+ And actually, I think those of you that are working on RL,
+ I think you should work on that, because that's super--
+ there's just better things that will happen as the field
+ continues to work on it.
+ And the fact that it's solving problems
+ that nobody could program-- well, that's hard to say,
+ but people have not written GCC programs
+ to do some of the amazing things RL is doing.
+ So it's lifted our abilities.
+ I would put kinematic trajectory optimization somewhere
+ in the middle between those two.
+ So you're going to have to do some amount of tuning
+ with kinematic trajectory optimization.
+ A lot of times, you can do it with an initial guess,
+ or add a constraint to say, oh, I
+ didn't want you to do this crazy thing that you chose to do.
+ Put a constraint on there, and then you
+ could shape it in that way.
+ And I similarly find that very annoying,
+ and wish that we could just have stronger optimizers.
+ So there's a whole spectrum, I think, of these algorithms.
+ OK, quick stretch.
+ I wrote to myself, don't forget to tell people to stretch.
+ [LAUGHTER]
+ OK, so let's talk a little bit more about at least
+ the optimization view of the PPO class,
+ or maybe even simpler than PPO view of optimization.
+ So--
+, we've talked a bunch about optimization.
+ We've talked about nonlinear optimization.
+ We've talked about some convex optimization.
+ In general, let me say if I've got some parameters,
+ and I'm going to just call it f for my parameters here,
+ and I've got some complicated landscape, right?
+ And I want to try to find-- I'm going to stick with minimum,
+ because I'll screw it up all day long if I don't.
+ I'm trying to find the minimum of some non-convex objective
+ function.
+ And really, in the discussion today,
+ we're going to have this be unconstrained optimization.
+ We're not going to add additional constraints, OK?
+ If we did have additional constraints,
+ we would push them up into our cost function
+ with a penalty method, like an augmented Lagrangian
+ or something like that.
+ We've talked about various ways you can optimize this.
+ Maybe you find an initial guess, and you start moving downhill
+ based on the gradient, right?
+ So we've talked about gradient descent.
+ Now, gradient descent, as we've talked about it so far,
+ is off limits.
+ It's not allowed today, because it required us
+ to be able to evaluate the gradient of that function.
+ And that means I needed to know something about this.
+ This is not allowed in the black box view of the world,
+ right?
+ Because if I'm going to play Atari or Go,
+ or let's say StarCraft or something like this,
+ I don't have gradients coming out of that simulation,
+ that game engine.
+ We talked about sequential quadratic programming.
+ [WRITING ON BOARD]
+ That's what SNOPT is doing when we're solving IK problems,
+ or even kinematic trajectory optimization problems.
+ It similarly is using partial f, partial theta.
+ You would think, since it's doing quadratic programming,
+ that it would also be using the second derivative.
+ But actually, it's making an approximation
+ of the second derivative and only asking for the first one.
+ Sometimes to its detriment, but also requires that.
+ The question is, how do you do optimization
+ if you're not allowed to get the gradient?
+ And RL has a-- I mean, black box optimization in general
+ has a bunch of interesting solutions to that.
+ And RL has particular versions of black box optimizations
+ that are very well suited to the RL domain.
+ So what do I mean by black box?
+ That means I have-- let's call it f of theta here.
+ I have access-- if I give it a theta,
+ I'm allowed to evaluate f.
+ I get the value of f.
+ But I don't get to know anything more about f.
+ I don't know if there's sines and cosines in there.
+ I don't know anything.
+ As far as I'm concerned, theta goes in.
+ I can't see behind the curtain.
+ The f of theta comes out.
+ And I have to write an algorithm around that.
+ You would contrast that with-- people
+ call it white box optimization or glass box,
+ maybe makes more sense-- glass box optimization,
+ where you can see everything.
+ I mean, this is-- so the reason--
+ I think it's obvious that you can make Drake look
+ like an open AI gym.
+ It makes me a little sad to do that,
+ because the whole point of Drake is to look inside f.
+ Drake is a differentiable simulator.
+ It can give you partial f, partial theta,
+ even if you run a whole simulation.
+ It's not just the dynamics of multi-body plant,
+ but you can take gradients through simulator advanced,
+ too.
+ You can put a gradient in, get a gradient out, right?
+ So all of those things are available.
+ And we're going to throw them away
+ when we're doing things today.
+ And it turns out I haven't yet been able to do much better
+ with gradients.
+ Maybe I'll have to get to that next time.
+ So that's the game, black box optimization.
+ So how do you do black box optimization?
+ It sounds like, ah, how could I do anything without a gradient?
+ But then if I tell you how they do it, it's like, of course.
+ So let me give you the simplest black box optimization.
+ I'll take theta times 0.
+ This will be my optimization step.
+ So every time I'm going to run a simulation or something,
+ I'll increment my theta estimate by 1.
+ So here's a simple algorithm.
+ I'll evaluate f of theta i plus some random noise.
+ And then maybe I'll also, for good measure,
+ I'll evaluate this.
+ Turns out you don't have to.
+ But I'll evaluate this.
+ And if the random vector I chose was better, I'll keep it.
+ And if it was worse, I could keep this.
+ Turns out there's even funnier things you can do.
+ So not a huge brainstorm algorithm here.
+ It's just I'm going to say I've got an initial guess.
+ I'm somewhere in the landscape.
+ I'll evaluate it here.
+ If that was better, I'll keep it and I'll move down to here.
+ If it was worse, I'll stick with this one.
+ More generally, if I were to say theta i plus 1 is-- let's say,
+ I'll write it in the discrete logic,
+ but we can do it more directly in a second here.
+ If f of theta i plus w-- this is my experiment.
+ I'm doing minimization because that's how I roll--
+ is less than-- if I got better, then why don't I
+ update this to be plus w?
+ Now, for reasons we'll understand
+ as we get to the stochastic case,
+ we tend to actually put in a learning rate here.
+ [WRITING]
+ Some small positive number.
+ So I don't go all the way to the guess.
+ So why is that?
+ So if I were to go all the way here,
+ oh, it looked better on this one particular simulation.
+ But when someone else puts a different mug in the scene,
+ maybe that was a little too aggressive.
+ So I'm going to say, if I did one experiment
+ and it looked better, I'm going to take that as a suggestion
+ to move in that direction.
+ But I'm not going to go full tilt into that one observation.
+ And there's a stochastic interpretation
+ of what happens with this version of the algorithm, which
+ plays out beautifully.
+ And then otherwise, I'll go in the opposite direction,
+ but again, I'll put a learning rate in there.
+ That's supposed to be eta.
+ It's looking a little more curly than I meant it to,
+ but that's an eta.
+ And there's simple versions of this
+ that instead of writing a plus or minus here,
+ if I just multiply it by the difference of this,
+ I get a version of that too, which will always
+ go in the direction-- I can get rid of my if else
+ and just write this as a single line
+ by putting the difference here in here.
+ And that would basically set my sign and actually
+ my amplitude of my update.
+ But the basic idea is take a random guess.
+ If it looked better, let's go that way.
+ Now, that's actually a pretty powerful algorithm.
+ And PPO is doing a very smart version of that,
+ but it's not that different than that.
+ So what would you expect that to do compared to a gradient
+ descent type algorithm?
+ Gradient descent would take a sort of direct path,
+ in this case, here.
+ It'll get stuck in local minima here.
+ This one will take maybe a more meandering or slow path
+ to get to the minimum, but we'll have similar behavior.
+ Take some more trials.
+ It could also get stuck here.
+ If we start adding the randomness,
+ it could potentially jump out of here.
+ So it becomes a stochastic gradient descent
+ instead of a deterministic gradient descent.
+ So that's-- Don was saying, if I ran it longer,
+ it might have hopped out of here and come and found
+ a better solution if I ran it long enough.
+ So I think that is a pretty decent first order
+ model of what you should think about the R algorithms are
+ doing.
+ They're doing much more behind there,
+ but just as a very first glimpse of how does that compare
+ with the more model-based methods, which
+ are taking exact gradients, for instance,
+ this is doing random gradients.
+ And we're going to have you look at a version of this called
+ reinforce in some detail on the problem set.
+ Some of you already started.
+ And reinforce is sort of the predecessor to PPO.
+ So the picture you should have in your head
+ is that you're going to go downhill.
+ You're still doing a gradient descent-based algorithm.
+ You're just going to take a random walk downhill
+ that's biased towards in the direction of the true gradient.
+ And that's actually something that can be made precise,
+ is that with most of these updates,
+ you can say that the expected value of the update
+ is in the direction of the true gradient.
+ And the variance, you'd like to be small,
+ but the variance tends to be big.
+ And we do a lot of work in RL to try
+ to make the variance of the update smaller.
+ So that's kind of like the black box equivalent
+ of gradient descent.
+ But you can also think of black box equivalents of SQP, too.
+ You could take multiple samples.
+ And like CMAES is called-- it's covariant matrix adaptation
+ with something sampling.
+ It's the-- what's the ES?
+ Evolutionary strategy.
+ Thank you.
+ Evolutionary strategy.
+ Yes.
+ So imagine taking lots of random points on your landscape
+ and fitting a quadratic approximation to it,
+ and then taking a second order update.
+ These things can be made to work.
+ The picture is clean if the function is deterministic.
+ It's more beautiful, but a little bit more complicated
+ when you get noisy evaluations of your function.
+ Someone could have put a different number of objects
+ in front of me.
+ Every time I run the robot, I get a slightly different answer.
+ And I'm trying to optimize the expected reward.
+ But the background is the same.
+ And some of these algorithms enjoy more robustness to that.
+ You can think of it a lot-- for those of you
+ that do a lot of supervised learning,
+ you could think of it about how does your SGD come out
+ of mini-batch.
+ And some of the optimizers are a little better
+ at handling mini-batch.
+ Adam seems to be really good at it.
+ And these are the same kind of things.
+ So we get the comparable algorithms here,
+ which some of them enjoy more robustness to the mini-batch.
+ It really is very similar to mini-batch.
+ But every time I do 10 rollouts and I get 10 slightly different
+ evaluations from a potentially infinite number of evaluations,
+ it's very much like a mini-batch kind of update.
+ OK, so I said before that we do a little bit of work.
+ I'd say we're leaning into the group in various forms
+ of thinking about what RL is doing well,
+ what it's not doing well, how I can combine it
+ with some of the model-based control that we do.
+ So maybe I'll spend a few minutes
+ at the end telling you one of our recent research
+ stories about that, because I think it fits
+ this picture fairly well.
+ So let's just think, is this a good idea?
+ So I told you that I had-- the whole point of Drake
+ is to make it so you can look inside F if you want to.
+ Is there any reason why you shouldn't take gradients
+ if you have them?
+ It's a super interesting question,
+ because here's the mystery, right?
+ RL started to show robots doing things with their hands
+ and stuff that we haven't seen from people
+ who are using gradients before.
+ But with that picture, you'd say gradients
+ should only be better, right?
+ If I have a gradient, why wouldn't you use it?
+ OK, well, there's a couple reasons why it gets subtle.
+ The first one, I think, is very easy to see,
+ which is that if I'm doing visual motor policies,
+ it's hard to take gradients through a renderer.
+ So if I go from my equations of motion of my plant,
+ and my output function is render a camera into pixels
+ with a game engine style renderer,
+ and then do a neural network to go back to my actions,
+ the neural network's super differentiable.
+ That's great.
+ It's built for that.
+ But the renderer's not.
+ And there's been a lot of interesting work
+ on differentiable renderers.
+ But renderers aren't different.
+ If you move to the next pixel, you
+ could have an object whose pixel value is-- that pixel 14 by 28
+ hits the object.
+ And 13 by 28 misses the object.
+ True renderers actually do a little bit of smoothing
+ around the pixels and stuff like that.
+ But if you give me a gradient of how pixel 14 by 28
+ changes with respect to my parameters,
+ that doesn't do as much as you'd want.
+ So differentiable renders have been great,
+ but not the panacea, maybe.
+ Value metric rendering, like NERF,
+ seems to be a much better way to talk about that.
+ And that's been paying off.
+ But if you just wanted to take gradients,
+ if I just had the ability to take gradients
+ through Drake's renderer and back,
+ it's not clear that that's going to solve my problems.
+ But if you look at the OpenAI example,
+ they didn't even have a renderer in there.
+ They were just doing state feedback.
+ And they still did something that
+ surprised those of us that have been working on control
+ through contact for a long time.
+ So what is up with that?
+ And we spent some time thinking about it, actually.
+ Terry and Max and Kai-Ching spent some time
+ thinking about it.
+ And I can tell you the story in like five minutes.
+ It's a great 30-minute version, but I'll
+ tell you the five-minute version.
+ So you take the OpenAI example.
+ If I give myself observations, or state observations,
+ then the major complexity that remains, actually,
+ is the contact mechanics.
+ And somehow, they seem to have done an optimization that
+ was beyond what we had been doing
+ and other people had been doing through the contact.
+ So was there anything happening there?
+ And I think the story that has been emerging
+ is that we knew for a long time that contact dynamics leads
+ to discontinuous landscapes.
+ And I'll say that in the short version of that here.
+ And it seems like the random sampling, the way
+ that people are doing messy gradient descent,
+ is actually smoothing out some of the discontinuities that
+ comes from contact.
+ And that it was a good idea, and we should have been doing it
+ the whole time.
+ So actually, taking random samples
+ could be better than taking analytical gradients.
+ It's more subtle than that.
+ But we talked about some of the discontinuities of contact.
+ It doesn't happen everywhere, but it
+ does happen if a small change in my initial conditions,
+ for instance, causes me to hit a different face of the robot,
+ of the environment, for instance.
+ And that leads to these simulations that could have--
+ so you could imagine if I change the initial conditions
+ and I now look at the final conditions,
+ I could have a very different final condition
+ if I moved the initial conditions along here.
+ I'd get a very different final condition.
+ I'll end up on one side or the other.
+ So I can get a very different reward
+ if I went one side or the other.
+ So that would be a very discontinuous--
+ it's not this picture.
+ It's this picture with just immediate jumps.
+ Can happen if I have contact.
+ You also have these weird artifacts from simulators.
+ Remember I talked about how you can be going inside one--
+ the simulator is pushing you back towards one face,
+ and then you're all of a sudden pushing you
+ back towards the other face?
+ I think this one we should just resolve,
+ but this one causes some problems too.
+ And if you look at how people in optimization theory--
+ forget about RL-- optimization theory
+ think about how to do non-smooth optimization,
+ they have known for a long time that, first of all,
+ non-smooth optimization landscapes
+ could screw up gradient descent.
+ It could screw up even otherwise convex optimization.
+ And a natural idea would then be to smooth the objective.
+ So if you could take this and draw--
+ if you could somehow take your cost function
+ and just average over it and get a nice smooth version
+ of the cost function, wouldn't that be nice?
+ Wouldn't that make things better?
+ It turns out there's an interpretation
+ that the way people are sampling in RL
+ is doing that to our cost functions.
+ A bit.
+ It can move the minima.
+ I mean, there's a lot to think about in this world.
+ It changes the optimization landscape.
+ In some ways, that might be better for finding a solution,
+ but might not find the optimal solution.
+ So you could take these things that we get out
+ of actual contact problems and see
+ that they get smoothed out with RL type sampling.
+ Those are actual mechanical examples.
+ And I'll skip a little bit here.
+ So then the question is, if you have the analytical gradients,
+ should you use them?
+ And it's actually very subtle, because there's
+ times in your landscape where you're in smooth sailing,
+ and you should definitely use a gradient if you have it.
+ There's times where you're very close to a discontinuity,
+ and you prefer the first-- the black box methods.
+ So we've been thinking about ways
+ to take the best of both worlds.
+ And you can actually-- if you compute
+ both the empirical gradient from an RL side
+ and the analytical gradient, you can actually
+ do a little numerical test to see if they agree,
+ and know if you should trust your analytical gradient or not.
+ There's games like that that are actually super interesting.
+ One last point I'll make, because I know I'm out of time.
+ The coolest thing, though, is that once we
+ realized that was helping the optimization landscape,
+ you could stop and think, OK, well,
+ did you actually need to be random to get that effect?
+ And no, you can actually just change your contact model.
+ It means a little bit of force at a distance.
+ It means a little bit more penetration.
+ But you can soften your contact model
+ in a way that has a similar effect,
+ like almost an equivalence.
+ For any noise sampling model in RL,
+ we could find a contact model, but they
+ might be weirdly shaped.
+ Is stochasticity essential?
+ And it turns out you can do deterministic smoothing.
+ And you can put that into an RRT kind of planner
+ for contact, which never worked through contact before.
+ Motion cones are good.
+ There's a couple examples, but RRTs
+ have not had the success you might
+ think in planning through contact before.
+ But they work a lot better if you just smooth out
+ some contacts.
+ It makes the distance functions work better.
+ I could tell you more or less of the details.
+ But this lights me up.
+ This is like something amazing happened in RL, empirical RL.
+ And now I think the theorists are coming in and understanding
+ it a little bit better.
+ And sometimes the answer will be not just RL,
+ but a mixture of RL and true gradients and models.
+ And I would put my money on that being the future.
+ Because Go maybe has some structure,
+ but it doesn't have an obviously interpretable structure to me.
+ If I take a picture of a Go board and I move one piece,
+ the rollouts could be completely different in ways
+ that I don't have enough Go skills to understand.
+ But if you take my robot and my environment
+ and you move me by a centimeter, it's
+ going to be pretty similar.
+ It better be, otherwise I'm in trouble.
+ So I just think the structure in those problems has to matter.
+ All right, that concludes RL day one.
+ We'll talk a little bit more about maybe model-based RL.
+ And we're actually surveying you on this p-set
+ about what you want to see in the next few lectures.
+ So tell us, and we'll dial it in.
+ [BLANK_AUDIO]
