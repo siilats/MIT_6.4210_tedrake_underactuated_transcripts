@@ -1,0 +1,1493 @@
+ All right, welcome back, everybody.
+ We're starting the next phase here of our journey.
+ We're going to start transitioning
+ into manipulation in Clutter.
+ And I'll tell you the implications
+ of that in the next slide.
+ Quick admin announcements.
+ So we're getting closer to where we're
+ going to start defining projects.
+ And you'll have a project pre-proposal first,
+ where some people submit the pre-proposal, get a rubber
+ stamp, and then they're good.
+ But the pre-proposal is a chance,
+ if you haven't already, to give us
+ a draft of what you're thinking and get some feedback
+ before we lock it in with a more final proposal.
+ So the first pre-proposal is due on October 20,
+ which seems like infinitely far away,
+ but it'll be here before you know it.
+ So start thinking about who your project groups are.
+ If you're in CIM and you look around your CIM recitation,
+ that's the ideal setting for all the CIM content.
+ To have a group inside one recitation is ideal.
+ Not required, but ideal.
+ And if you want feedback from us beforehand, some of you
+ have been coming up and asking after class, which is great.
+ Sometimes-- actually, today is the one day
+ I have to leave right after class.
+ But almost always, I'm here after class.
+ And then-- just a second--
+ or even I'll come early before class if you want to talk,
+ or send me an email, or send the staff an email.
+ We'll definitely-- this is a good time to be just
+ throwing ideas off us.
+ [INAUDIBLE]
+ No, sorry.
+ It definitely does not need to be a novel.
+ The rubrics for the project are on the website.
+ As we get a little bit closer still, I'll go over that.
+ But absolutely, finding a paper and reproducing it
+ and understanding it is great.
+ But the partnering is what we wanted
+ to at least put in your head.
+ Yes?
+ [INAUDIBLE]
+ Yeah, so one is fine.
+ You can work by yourself.
+ That's great.
+ Two or three is great.
+ I think more than three starts to get harder.
+ So we normally say two or three is ideal for a group.
+ Great, and you've already been looking a little bit
+ at the projects from last year, so you have a sense.
+ But you're not going to feel restricted to robots
+ on a table this year, because we're
+ going to have a lecture right before your pre-proposals are
+ due with mobile robots doing all kinds of stuff.
+ Assuming I can get mobile robots to do all kinds of stuff
+ in simulation in time, hopefully.
+ OK, so let me just sort of step back for a second
+ and just think about what have we done so far
+ and why are we going to do this next.
+ Remember, I tried to tell you that I've
+ tried to organize the course.
+ We basically now have established
+ a very basic capability, and now we're
+ going to try to address the things that were limitations
+ of our previous approaches.
+ So we started with a quick lecture on hardware basics
+ just to help you appreciate what we're
+ commanding and controlling.
+ And then we talked about the basic pick and place
+ where we assumed the known pose was given to us,
+ and we assumed we knew the object,
+ because we had to pick the grasp relative to the object model.
+ And then we were able to do kinematics and Jacobian-based
+ control to do a full manipulation task,
+ but with some big assumptions.
+ And then last time, last week, we
+ talked about geometric perception,
+ which was the entry-level perception, which
+ if we have a model of the mustard bottle, for instance,
+ and you see a mustard bottle in the world,
+ we can use ICP and the variants, and some
+ of the important variants, to try to estimate the pose.
+ That removed the biggest assumption, I would say,
+ of assuming someone knew a priori where the pose was,
+ and we brought in a little bit of perception.
+ But that pipeline was still assuming a lot.
+ So in particular, the known object appears a lot there.
+ We assumed we knew the objects.
+ We want to do more complex scenes with many objects
+ and more diverse objects, where potentially you don't even
+ have a chance of knowing a perfect model of the object
+ we're manipulating.
+ And that's going to change the requirements
+ on both the control and planning stack and the perception stack.
+ But to start into that, we can still just say,
+ we're going to do a basic sort of pick
+ and place kind of operation.
+ I want you to think, by the end of the course,
+ of manipulation as way more than pick and place.
+ We do-- like tying shoelaces, I think,
+ is a better example of what manipulation
+ is than pick and place, even though a lot of robots
+ do pick and place.
+ So as kind of a way to structure that, our next sort of task
+ is based around this idea of building a little clutter
+ clearing station.
+ So we did this in the early days of the manipulation team
+ at TRI.
+ And the reason for it was because this
+ was just at the dawn of deep learning solving a lot
+ of computer vision problems.
+ And still today, but today we are more often
+ using pre-trained models than back then.
+ We really needed to generate a lot of data
+ and a lot of diverse data of robots' hands
+ around novel objects in both sim and in real.
+ So we just devised this very simple--
+ and other people have definitely done this too--
+ simple setup where you have two bins.
+ And their job is just to pick all the stuff from the one bin
+ and drop it in the other bin.
+ But we assume nothing about the objects in there.
+ And in general, we just threw whatever objects we wanted
+ into the bin.
+ And we got a lot of diversity from that.
+ If you watch this closely enough,
+ you'll see it's mostly pick and place.
+ But this system got to the point where
+ we could do some more subtle things.
+ Like I bet-- OK, there's a banana still.
+ But I bet to get the pillbox out of the corner,
+ it's going to go in and do--
+ it can't grasp that probably in first shot.
+ I think it just ended.
+ Am I that unlucky?
+ Like the whole video was playing for a minute and a half.
+ And as soon as I say something, it stops.
+ Yeah?
+ Yeah, it turns to [INAUDIBLE]
+ Ah, yeah, yeah.
+ So yeah, OK, it's possible that it missed that one.
+ Or that it was occluded or something like that.
+ Good eye, though.
+ He says it didn't move the pill bottle.
+ Skipped it.
+ There's also-- there's a little rubber duck that has like--
+ looks like Spock from Star Trek.
+ And I don't know.
+ It always ended up on the floor.
+ I don't know.
+ There was no-- you know, it was just
+ supposed to do this, but it seemed
+ like with high probability, it would
+ throw Spock onto the floor.
+ It must have been something about the geometry
+ or the compliance or something.
+ But I thought it was hilarious.
+ OK, so of course, we can do this in simulation too.
+ So this is my little--
+ let's see.
+ Look at that.
+ I haven't started it.
+ Not from the beginning here.
+ OK, so we're just going to start with random objects.
+ These are familiar objects if you've played with the YCB
+ object data set.
+ They all have ridiculously big mesh texture files.
+ But cameras, just like we set up before,
+ but now we have random objects.
+ And we're going to sit there and build not only the bits we've
+ done before, but we're going to generalize our perception
+ system.
+ We're going to talk about the more complicated simulation
+ that happens here.
+ And we're going to build a higher level state machine
+ to think about the logic of, OK, I missed something.
+ Let's go back and pick something up again.
+ So it brings up a little bit of some of the task planning too.
+ OK, so the first question you get
+ if you're trying to-- in simulation,
+ and you sort of saw it at the beginning of my animation.
+ But the first question is, how do you generate
+ diverse random simulations?
+ And the problem in its full glory
+ is actually fairly hard.
+ But if you're willing-- in this sort of clutter clearing setup,
+ and actually in a lot of robot experiments,
+ people that have been training deep learning perception
+ systems from simulated images and the like,
+ it's a fairly common workflow to generate random environments
+ by basically dropping things out of the sky.
+ So if you want to come up with a random distribution of clutter,
+ this is a pretty good way to do it.
+ And it's for a few subtle reasons.
+ One of them is that--
+ so basically, this is relying on the physics engine
+ to come up with the-- you give it
+ random initial conditions, but the physics engine
+ is really finding the static equilibrium of postures
+ for you.
+ And physics is a powerful thing.
+ And it's well-defined, almost always,
+ except for when objects are in deep penetration.
+ So if I were to just start the physics engine
+ with all of the objects completely on top of each other
+ at 0, 0, 0, then I don't know what it would do,
+ but probably things would be flying off
+ in different directions because of numerical instabilities.
+ Because really, the context solvers
+ shouldn't be asked to solve that problem.
+ That shouldn't happen in reality.
+ So a common heuristic is to--
+ so you'd like to start objects out of penetration.
+ And that's sort of hard in this--
+ if I had to pick configurations here that
+ had to be all out of penetration,
+ that would be a tough-- that's a puzzle to solve.
+ And we can do that with optimization.
+ If I have time, I'll talk about that.
+ But it's just much easier.
+ The script here is very simple.
+ You basically pick-- this is just all foam bricks,
+ but I'll show you it works more generally.
+ Pick an object, go up a little bit from the bin,
+ pick a random translation, a random pose,
+ and then lock that one in.
+ Now go up a little bit higher so that you're
+ pretty confident that you're not in an intersection.
+ Pick a random position and random pose.
+ And you just make a stack that is safely out of collision.
+ And then you let physics do the work, which in some ways
+ is a really clever--
+ like I say, physics is pretty good.
+ I mean, it's solving a really hard problem
+ by solving governing equations.
+ You can do that with arbitrary objects, of course.
+ So this is the YCB objects.
+ It's this pretty famous--
+ I mean, it's almost a folklore thing where--
+ so the Yale, Cal, Berkeley, there
+ were investigators from all three schools
+ that decided that we should make a common data set.
+ We should just agree.
+ They bought a bunch of objects on Amazon.
+ They scanned them and offered the scans
+ as part of their paper data set.
+ And they said, here's the part numbers.
+ If you contact us, we'll give you a copy of those,
+ or you can just order them online.
+ And so we have this data set of people that--
+ lots of people could work with the same objects.
+ Super useful.
+ It sucks that now the packaging has changed.
+ So you can't get that Cheez-It box.
+ You can get one with low sodium.
+ But it's still pretty good.
+ It's still pretty good.
+ So if you can find a vintage Cheez-It box that
+ matches the YCB, you could probably
+ get some money for that on eBay with the robotics market.
+ But you'll see a handful of these objects
+ that I use over and over and over again,
+ because they're the canonical ones.
+ And if you drop them out of the sky, you get things like this.
+ And it just works fine.
+ I always think it's funny.
+ It's like the central limit theorem at work,
+ even if it's like spam cans and mustard bottles.
+ But that's just uniform.
+ That's a uniform sampler.
+ And just-- there you go.
+ And you get these pileups.
+ So that works fine.
+ And of course, it works fine in 3D.
+ So this is me dropping things out of the sky,
+ putting a camera right above, and generating
+ a picture of the bin like the overhead camera would see.
+ And when we get to some of the deep learning-based perception,
+ we'll use this as a data set.
+ I just dropped it like 10,000 times.
+ I just made 10,000 images.
+ And they're all labeled from random initial conditions.
+ And that's a pretty good data set to train cheese-it box
+ detectors in clutter.
+ So that's very easy to say.
+ Just run it in the physics engine.
+ Just drop your assets in.
+ It's a few lines of code.
+ But when I got to this part, I was like, OK,
+ I have to tell you a little bit about contact simulation
+ because there's so much behind that little drop the spam can
+ thing.
+ There's so much smarts there.
+ There's so much subtlety there.
+ And some of it, you'll find yourself
+ in a situation where if you know this, you will persevere.
+ If you don't know this, your objects
+ will fall off the table or out of your hand
+ or explode into space.
+ So I want to spend a day talking a bit about contact simulation.
+ And just maybe to make the point,
+ I can even show the notebook here.
+ [VIDEO PLAYBACK]
+ So that's the 2D one.
+ It works fine.
+ Mix the video.
+ Here's the 3D one.
+ It really is a few lines of code.
+ I just-- if I can make that a little bigger here.
+ I just actually make this scenario file.
+ And I just said for one in range 10, pick a random object
+ and drop it into the file and then load it.
+ And then we set a random initial position.
+ And that's a few lines of code.
+ And what you get out is the scene.
+ But if you draw the contact force vectors,
+ you realize that to find a static equilibrium
+ of this system, the contact engine is actually
+ doing a lot of work.
+ It's solving for a lot of contact forces
+ to find a static equilibrium.
+ This is solving good physics problems.
+ And so let's just dig a little bit
+ into what that problem is that it's solving
+ and some of the subtleties about how it solves it.
+ So we talked already about spatial quantities.
+ We talked about positions and poses and rotation matrices.
+ We talked about spatial velocities.
+ Today we need to add spatial force.
+ Today we're going to start talking about forces.
+ So what's a spatial force?
+ Force is force.
+ What's a spatial force?
+ So a spatial force is a six-dimensional quantity.
+ We start with this, which has three components that you
+ would sort of expect, but also has three components.
+ This is the sort of translational.
+ And this is a 3 by 1 rotational.
+ Just like the spatial velocity vector
+ has angular velocity and translational velocity,
+ the forces have that too.
+ We're going to annotate this the same way.
+ Forces, we like to have names on their own.
+ I'll label everything in a second here.
+ So we write the expressed in frame down here.
+ For consistency, with the other notation,
+ it's still expressed in--
+ there's never a relative or measured in frame for forces.
+ We don't need that.
+ Forces are forces.
+ And this is the point that the force is applied.
+ [WRITING ON BOARD]
+ We often name the point with the body name,
+ as well as the point name, just to remember that it's
+ a force being applied on body B at point C.
+ It's a recommendation sort of.
+ [WRITING ON BOARD]
+ Because you're going to find yourself with a point on body
+ A that's coincident with a point on body B.
+ And there's equal and opposite forces.
+ And if you don't remember to sort of which one you're
+ talking about, it gets confusing fast.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, so good.
+ So what the heck is a rotational force?
+ Let me just finish writing it here.
+ This is a torque, yes.
+ That's why tau for torque.
+ This is name C and BP.
+ I'll just bring this a little wider.
+ [INAUDIBLE]
+ What's that?
+ [INAUDIBLE]
+ Yeah, this is an important spatial quantity.
+ So we have an entire algebra.
+ The question is, why would you mix this up and put this
+ together?
+ You're going to see, I think, in a very simple example.
+ It may be a compelling reason why to do it in just a second.
+ But our entire spatial algebra is
+ going to be defined really in these six dimensional spaces.
+ Just like it made sense to do angular velocity as well
+ as translational velocity.
+ And it turns out, if you want to summarize--
+ for instance, if the real world only
+ applies Cartesian forces--
+ maybe you could say--
+ I know it's just going to do it, I think.
+ It's probably a weak connection.
+ If the real world, you say, maybe only applies forces
+ that are translational, then you still
+ want to have the concept of a rotational force or torque
+ if you want to summarize the translational force
+ at a different point on the rigid body.
+ And this thing, this spatial force, is also known as wrench.
+ You'll hear it called wrench commonly.
+ I think I remembered to put the--
+ yeah, OK.
+ So instead of writing it all on the board, it's in the notes.
+ And I'll just put it up on the screen.
+ But basically, we have the same sort of algebra rules.
+ So spatial forces add when they're
+ applied to the same body in the same frame.
+ So the only thing that's different here
+ is the name of the force.
+ They're applied at the same--
+ I should even say at the same point on the same body
+ in the same frame.
+ Then you can add forces together.
+ You can shift spatial forces to a different application point.
+ Turns out, the translational force just shifts.
+ But you start getting cross products,
+ which you'll probably remember, r cross f kind of math
+ from physics.
+ You get cross products when you shift the point of application
+ of a force.
+ We're going to see that in a second here.
+ And then actually, for basically all the spatial quantities,
+ if you want to change that expressed in frame,
+ you do that by multiplying by a rotation matrix.
+ And that's it.
+ That's right in the notes.
+ But we're going to use these in a second.
+ So having this beautiful algebra sort of concept,
+ we can now do more complicated things in complicated systems
+ by just applying these rules efficiently over and over
+ again.
+ So let's do that in a very, very simple example.
+ So-- whoops, forgot to erase that one.
+ Well, it looks pretty close to what I was going to write.
+ So simple free body diagram.
+ Let's say I have a box sitting on a table.
+ I should use multiple colors of chalk.
+ Call this body B. And I'll put its frame here.
+ And I'll even assume that the center of mass
+ is right at the origin here.
+ [WRITING ON BOARD]
+ And I'm going to just set it on the table like this.
+ And I'm going to think about--
+ I'm going to start by summarizing the contact
+ forces between the box and the table with two forces, one
+ at each corner.
+ We'll see if that's sufficient and talk
+ about that in a minute.
+ But we'll call this contact force 1.
+ I'll call it F1.
+ And it's going to be applied in a coordinate frame 1.
+ And it's applied at this point C1.
+ Maybe I should call it BC1, follow my own advice.
+ It's a lot of symbols.
+ A lot of symbols.
+ This one I really don't like, but it really matters.
+ Otherwise, you're going to make--
+ in fact, when I was cleaning up the notes today,
+ I found a mistake in one of my examples.
+ And it's because I had tried to shortcut the notation,
+ and I made a mistake.
+ So we'll call this one force 2.
+ And apply it at coordinate frame C2.
+ So I'm calling this coordinate frame C2.
+ OK.
+ And then, of course, we have the force of gravity here,
+ mg, which I'll call force of gravity.
+ So let's just think about the statics problem here,
+ static equilibrium.
+ So when this is completely at rest,
+ then we should be able to solve, knowing
+ what we know about forces and force balance,
+ we should be able to solve for the contact forces
+ here that would satisfy the fact that that block is not moving.
+ Yeah?
+ [INAUDIBLE]
+ We're going to generalize this.
+ So that's good.
+ So let me assume it for now.
+ But the one reason to assume it is that actually most
+ simulators assume it.
+ Most simulators, when they're trying to summarize the contact
+ between two bodies, they will summarize that
+ with a small number of points.
+ It'd be more elegant to have an entire pressure distribution.
+ It just makes the math a little bit more complicated.
+ And certainly, this is sufficient to describe
+ equilibrium.
+ If you think-- if you want, I could put a little foot
+ on the--
+ on here.
+ And then it would be real.
+ You could make that physically true.
+ OK, so--
+ [INAUDIBLE]
+ Ask--
+ [INAUDIBLE]
+ Yep.
+ [INAUDIBLE]
+ Good.
+ So why does it matter?
+ Yeah, so we are going to choose to get ahead.
+ So first of all, it gets a lot more complicated than this.
+ So even just on the board in the--
+ well, in the previous slide, it's
+ going to get a lot more complicated.
+ Yeah, and so for instance, one of the ways
+ we're going to define a good grasp
+ is a grasp that can defy the maximal adversarial wrench.
+ If someone were to come up and knock your--
+ try to apply a force or something,
+ then you want to pick a grasp that
+ tries to avoid the biggest possible wrench.
+ And that would be a surrogate for not knowing
+ very much about your object.
+ So a good place to put your finger
+ can be decided based on thinking about the relative force
+ balances and things like that.
+ That's a great question.
+ Yes?
+ [INAUDIBLE]
+ It should go real speed.
+ You're saying that the blocks look like they fell slowly?
+ [INAUDIBLE]
+ Oh.
+ Oh, I see.
+ For the arm, yeah, that was just because we haven't done
+ motion planning yet, basically.
+ The defy k thing, I was just being conservative
+ and trying to make it move slowly and avoid cameras
+ and stuff like that.
+ But we're going to have better tools, yes.
+ And we'll just hopefully be whipping around and probably
+ throwing objects out of the hand and stuff like that.
+ Last year also, if you noticed in the projects,
+ there was a surprising number of people
+ that wanted to throw or whip or crush or whatever things,
+ which is cool.
+ Yeah, I'm good with that.
+ Someone says, we're going to do darts
+ and we want to do it on the real robot.
+ I was like, whoa, not my real robot.
+ But that can be a fun thing to do.
+ And the robots are just capable--
+ like, the KUKA is actually speed limited.
+ It's not a super fast robot.
+ That's not its finest attribute.
+ But probably just enough if you put
+ a little bit of a lever on the end to throw a dart.
+ Yeah.
+ But I don't support that for final projects.
+ OK.
+ So let's start being a little bit more careful here.
+ So f of gravity here, if I were to write it in--
+ it's sort of best defined in the world frame
+ and applied at the body frame here,
+ where the center of mass is.
+ Because in that frame, it's easy to just say
+ it's actually a six element vector that has no torque.
+ This is my slightly more precise version
+ of just writing negative mg there.
+ Actually, in the spatial notation,
+ it lives in a six dimensional space.
+ The contact forces are actually most naturally described
+ in the contact frame, which doesn't look very
+ different than the body frame and the world frame
+ in my first example.
+ But it will look much different later examples.
+ So because it's most natural to say, for instance,
+ that in this frame of contact, which
+ will move with the possible contact locations,
+ that, for instance, the force can never pull on the contact.
+ It can only push.
+ So in the contact frame, by convention, the contact frame--
+ the z direction is aligned with the contact normal.
+ So we have, for instance, that f of some i in the contact z
+ applied to whatever body is going
+ to be greater than or equal to 0.
+ Because you can't pull on--
+ contacts push, but don't pull.
+ And I'm assuming that the ground is just locked in.
+ It's not a body.
+ But if it was two bodies colliding,
+ then I would have a comparable contact frame
+ on the other body, which this is also true.
+ But it would be a different frame,
+ so equal and opposite frame.
+ Yeah?
+ [INAUDIBLE]
+ Good.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ I'm going to tell you how to define the contact normal
+ in a second.
+ I've got a picture that will help with that.
+ There's a general way to do that.
+ But that's a great question.
+ He says, you just said normal, but you put it
+ in a place that has a corner, which doesn't--
+ the normal might be poorly defined,
+ or you have to think about something
+ more complicated in the corner, which is a good point.
+ But there's a fairly clean way to define that.
+ So then if we want to do our general multibody algorithm,
+ or our basic free body diagram computation,
+ then we can just apply the rules of spatial algebra.
+ And basically, the step one would be--
+ I'll do it over here.
+ [WRITING ON BOARD]
+ We're going to put all the forces
+ in the same expressed-in frame.
+ I'll just do it in frame B, just to keep--
+ I could pick any one of them.
+ I could pick world.
+ I could do anything.
+ But let's do--
+ so for instance, I can just use that algebra and say,
+ force 1 written in body B, taken at point C1,
+ is just rotated by the rotation from C1 to B of F1, B1, B, C1.
+ I keep trying to make it better.
+ It's not an I. It's a 1.
+ And I could do the same thing for contact force 2.
+ But what is that doing?
+ That's just saying that there's a force here
+ that I can express it in the frame of B.
+ And the same way with positions and velocities,
+ it'd be expressed in frame.
+ I'm still applying it at this force.
+ So it actually-- if those two were not aligned,
+ it would rotate the force.
+ But it doesn't actually have a cross product or anything
+ involved yet.
+ The force is still being applied here.
+ I'm just going to choose numbers that
+ were relative to that coordinate system instead
+ of this coordinate system.
+ And then the second step would be to apply them
+ all at the same point.
+ Now, that sounds totally weird until you understand
+ that for rigid bodies, if I were to apply a force here,
+ that's indistinguishable from me applying a different force
+ at any other point on the body, a force and a moment,
+ potentially, at any other point in the body.
+ So if you apply a force here, I could apply a different force
+ and moment here that would have exactly the same effect.
+ From the point of view of the rigid body,
+ it's completely indistinguishable
+ from applying this force I have here.
+ So I'm going to use that.
+ And that's what the rules of spatial algebra
+ do is they show you exactly how to do those transformations.
+ And I'm going to say, well, I'm going to take it
+ as if I was pushing here.
+ I'm going to make a comparable force and moment and torque
+ here.
+ And then same thing, this one, I'll move that to here too.
+ And once they're in the same place,
+ now everything has to balance.
+ They can add or subtract when they're in the same place.
+ So this is where I get my translation.
+ 1 is-- it doesn't actually affect the translation 1.
+ b 1, 1, b.
+ But this is where the cross product comes in.
+ So tau b 1, b equals tau 1.
+ I hate all the symbols, but it really does make a difference.
+, That's a cross product, a vector cross product.
+ These are both 3 vectors, and so that's a vector cross product.
+ And this is just in simpler free body diagrams,
+ you probably would have just written this as r cross f.
+ That's the standard.
+ I'm producing a moment around the center of mass.
+ Yes?
+ [INAUDIBLE]
+ Nope.
+ Nope.
+ Because if you shift frames, then you
+ are going to potentially make it look like a force again.
+ [INAUDIBLE]
+ I see, you want the comparable thing.
+ It's not that way.
+ So applying the torque is almost a construction
+ that makes sense for rigid bodies.
+ As you said in the first thing, three dimensional forces
+ are real.
+ Torques are our summary of the effect of a body.
+ So they do act a little differently.
+ They don't compose in the way--
+ I agree there could be a nice symmetry if that was true,
+ but it's not.
+ They're different qualities.
+ And then, now we could solve for the contact forces if we like.
+ That must be for the--
+ to put things in balance by just saying,
+ now that they're in the same frames,
+ then f1 b b plus f2 b b plus f--
+ actually, I could even do this in the big one all at once.
+ I could do the components, or I could just do the whole thing.
+ So big F, gravity, b, that has to equal 0
+ if I'm in equilibrium.
+ So it says I'm in static equilibrium.
+ So that's six equations in its full glory,
+ one for each row of those.
+ In 2D, I guess you could say it's three equations,
+ because there's nothing out of plane
+ that would make any difference.
+ But in 3D, it's six equations.
+ And so it's interesting.
+ If you think about it and work it out,
+ I won't write everything out on the board.
+ But you can guess what the solution is for that.
+ So you'd probably think that this force had better
+ have magnitude mg divided by 2.
+ And this one had better be mg divided by 2,
+ assuming this is nicely in the center.
+ And that's what falls out of this.
+ But you have to understand, actually,
+ that the component that balances the z force, the z equation
+ in this, that only tells me that the sum of those two vectors
+ has to equal mg.
+ It doesn't say anything about the relative magnitude
+ of those two vectors.
+ It's actually the torque balance,
+ the fact that you have to have zero net torque, the thing
+ with the cross product, which says
+ if that body's in the middle, then they
+ will have equal magnitude.
+ Yes?
+ [INAUDIBLE]
+ Yeah.
+ So that's a good question.
+ So some people-- so some simulators, for instance--
+ or yeah, it's really a kind of a simulator thing more than a math
+ thing.
+ Since point contacts are maybe a poor summary of a contact
+ of face-on-face contact, some people
+ will have the ability to produce frictional torque right
+ at your point contact.
+ Maybe that'll make more sense when I put the friction
+ cone up in a second, because then we'll see it right there.
+ But it's true that sometimes people model that.
+ But that's really meant to model the effect of many forces
+ in a patch.
+ It's an approximation for that.
+ OK, so what about the horizontal components of the force?
+ Oh, sorry, yes?
+ [INAUDIBLE]
+ So you go through and you calculate
+ all kinds of contacts that are potential contacts.
+ And then in the rigid body algorithm
+ that does this recursive step through,
+ it summarizes things into a common frame
+ and does all the algebra in the common frame
+ and iterates through.
+ So that's what makes things efficient and elegant.
+ Yeah?
+ [INAUDIBLE]
+ So I've only so far said what happens in equilibrium.
+ And in that case, the forces are whatever they need
+ to be to keep things at zero.
+ We're going to see more complicated cases where
+ maybe there is no force that can stabilize, for instance.
+ And you have to make a choice.
+ What's the force going to be?
+ For instance, already here, we haven't
+ said what the horizontal component of the force is.
+ The force balance equations just tell me
+ that that magnitude and that magnitude
+ have to be equal so that it's not sliding.
+ But any magnitude of any size, as long
+ as they're equal and opposite, would
+ keep this block at rest.
+ So we need some rule to say what's
+ the magnitude of that horizontal component.
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ So that was just simulating forward.
+ And the simulation, because there's dissipation
+ and physics is clever, settles into a static equilibrium.
+ And you have to be careful in your simulator
+ to make sure that that is true, that everything converges
+ nicely.
+ But if you simulate the governing equations correctly,
+ it should do that, as long as there's any dissipation.
+ Every once in a while, actually, if you
+ watch the full simulation of the falling, dropping the bin,
+ I kind of was a little sloppy with the initial condition.
+ So sometimes, the mustard will hit the edge of the bin
+ and then fall forever because there's nothing else below.
+ So it actually doesn't converge to an equilibrium
+ because there's something falling to negative infinity.
+ And at some point, it'll crash, actually,
+ which is-- I don't like that it crashes.
+ But don't simulate it for more than 20 seconds,
+ if that happens.
+ OK.
+ All right.
+ So let's think about the horizontal component
+ because that gets us into friction.
+ And this is really a fundamental concept
+ that you must know if you're talking about manipulation,
+ which is this concept of a friction cone.
+ So maybe we'll see it by putting our box on a ramp now.
+ And now, our contact--
+ if I still have little feet on the corner here,
+ I'll still call this C1, C2.
+ I still have body 1 in the body frame here.
+ But now, if it's going to be in equilibrium,
+ I have to do a little bit more work
+ to make sure I have defined that horizontal component
+ in the contact frame.
+ And it turns out the most common model of friction
+ is Coulomb friction, which says that the magnitude
+ of the horizontal force is proportional to the magnitude
+ of the normal force in the contact frame.
+ So Coulomb friction-- if I can write it in shorthand here
+ first here, so this is the magnitude
+ of the tangential component is proportional to the magnitude
+ of the normal component.
+ That's not using my whole notation yet.
+ I'm going to make it in the proper frame in a second.
+ But the normal, we say, is always positive
+ by our definition.
+ That's our z component.
+ And so we're saying the xy component is actually--
+ this is in the Euclidean norm--
+ is proportional to this.
+ And that proportion is called the friction coefficient.
+ [WRITING]
+ Almost always mu.
+ [INAUDIBLE]
+ What?
+ This is a scalar in this case.
+ This is the magnitude.
+ So yeah.
+ That's why I wanted to use my whole thing.
+ But in shorthand, the magnitude of the normal,
+ this is a vector.
+ This is a scalar, actually.
+ So if I were to write it out, maybe it'll be more precise.
+ If I say of some thing in the contact z,
+ that's definitely a scalar.
+ Apply, let's say, a body B, it's actually going to be--
+ [WRITING]
+ So in 2D-- oh, sorry.
+ I didn't see your hand.
+ [INAUDIBLE]
+ Yep.
+ So this is some sort of a norm when I put these up.
+ And this just means it's the L2 norm, which means
+ I want to take a square root.
+ It's this thing squared.
+ The only other ones we'll ever use here, I would--
+ and I probably can't even think of a time in this class
+ where I use a different norm.
+ Did I just never write that?
+ Is that just confusing?
+ But sometimes I would use a 1 for the L1 norm,
+ or an infinity for an infinity norm.
+ Yep.
+ But if you were to Google LP norm, for instance,
+ that would tell you the story, where p is 2.
+ OK, so the geometry of this thing
+ is the geometry of a cone.
+ So if I were to draw f of icx, f of icy, f of icz here,
+ then the elements of that three-dimensional vector
+ that satisfy this constraint live inside a cone.
+ It's like an ice cream cone to the origin.
+ So when f of z is 0, these two must be 0.
+ There's nothing below.
+ It can't be negative.
+ And as f of z gets bigger, I can have bigger resistive forces,
+ which makes sense.
+ If you push down on something and then try to slide it,
+ that's going to be--
+ it's going to be able to resist more
+ than if you are gently touching something and try to slide it.
+ It actually makes some of these statics problems
+ very geometric, actually, and dynamics problems
+ very geometric.
+ Because if you want to ask, for instance,
+ is the box going to slide or is it
+ going to stick as a function of the ramp angle,
+ then I'm going to draw it a little bigger here.
+ So I've got a ramp.
+ I've got a box.
+ I've got friction cones now, which in 2D just
+ look kind of like that, I guess.
+ And I've got a force vector coming down.
+ I'm going to use lots of colors today.
+ And I've got a force coming down.
+ That's straight down.
+ So it turns out, with our spatial algebra--
+ or classic physics, but the spatial algebra just
+ makes it neat, clear in my mind--
+ we can move these forces as if they
+ are being applied at the body location.
+ And so they'll have some interpretation like this.
+ And they'll add.
+ So the condition-- I've got to finish my punch line.
+ The condition here on whether this thing has a force that's
+ inside the friction cone that can resist motion
+ is actually the geometric condition
+ of whether the opposite force of that
+ is inside the friction cone.
+ If there is a force that could be picked out of that cone--
+ like any of these are possible admissible forces--
+ if there's one that could be picked out of that cone,
+ then there'll be an equilibrium.
+ So in this case, maybe the way I drew it,
+ it's going to just a little bit slide.
+ It's not quite enough.
+ If I made the friction coefficient bigger,
+ then I could resist that.
+ If I made the normal force bigger, I could resist that.
+ Or if I-- no, that's not true.
+ Because that would also increase this.
+ If I made this thing larger, that's why it's geometric.
+ And that's why it's beautiful is that they would go up together.
+ Or if I made the ramp smaller, then that could be inside there.
+ So it becomes very geometric.
+ Sorry, what was your question?
+ [INAUDIBLE]
+ Yep.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ So oftentimes, the normal force is determined first.
+ And then that defines effectively the height of the cone.
+ Not always.
+ Typically, they're actually solved all jointly.
+ But that's maybe the easiest way to think about it,
+ is that the normal force determines
+ the horizontal forces.
+ Yeah.
+ [INAUDIBLE]
+ [INAUDIBLE]
+ So good.
+ So the laws of-- so the question is,
+ how do you actually pick one if maybe there's
+ a set of possible choices?
+ So typically, there's not a set of possible choices.
+ We have principles that tell us which one to pick.
+ There's some caveats to that.
+ But the first thing is, if the contact velocity, which
+ is the velocity at the point of contact, is 0,
+ or can be made 0, then the contact--
+ the frictional force would be whatever
+ causes the balance.
+ [WRITING ON BOARD]
+ I was thought about writing that out in symbols.
+ But I decided this one I should just write in words,
+ because I wanted to find another frame for contact velocity
+ like that.
+ But tell me if that's clear.
+ So if there's a sticking mode, where
+ if you're in sticking mode, it will choose the choice out
+ of this necessary to satisfy the equilibrium conditions.
+ If it's not 0, as soon as you're sliding at that point,
+ then we have the principle of maximal dissipation,
+ which means your contact force will be the biggest
+ force possible in the opposite direction of your movement.
+ It will always be the largest force in the cone opposite
+ to the velocity.
+ I promised to not write too low.
+ Moving up the board is kind of a cheat.
+ [WRITING ON BOARD]
+ That's the basic principle.
+ Now, Coulomb friction is not complete.
+ You can find cases where this is not enough principles
+ to fully define the forces, and you have to pick one.
+ Here's my favorite example.
+ Classical mechanics is just not good enough.
+ Thinking about things as rigid bodies is not good enough,
+ maybe I should say.
+ It's not like the physicists didn't do their job.
+ It's just that the level of modeling of rigid bodies
+ doesn't capture everything.
+ So take a four-legged table.
+ Four legs on the ground.
+ So if you balance gravity, then the sum of those four forces
+ have to be equal to the opposite of the gravity.
+ To balance torque, that tells you
+ kind of what at least three of the legs have to be doing.
+ But actually, it's ambiguous how it's
+ distributed across those four.
+ If you had three-legged table, everything's clean.
+ You have a four-legged table, then it's ambiguous.
+ The laws of minimum action and maximum dissipation
+ don't tell you how those forces are distributed,
+ which is funny, because then if you push the table,
+ that means that the frictional forces are undefined.
+ So it could go this way.
+ It could go that way.
+ It could go that way.
+ And physics just doesn't tell you.
+ Coulomb rigid body physics just doesn't tell you which one.
+ You have real tables that have real--
+ so there are one table legs a little shorter than the other,
+ or there's microscopic.
+ The real table doesn't do that.
+ The real table picks one, but it's at a level of modeling
+ that we are not capturing in this.
+ So what does our solver do?
+ It picks the one in the middle.
+ Almost always, we're solving optimization problems.
+ So kind of picking the least norm solution
+ tends to be the same, the right thing.
+ [INAUDIBLE]
+ Probably.
+ So I'll say it back to you in my words, though.
+ I think what's going to happen is
+ it's solving an optimization problem, typically
+ in velocities and forces.
+ And if there's multiple solutions,
+ it will pick the one that makes the norm of the velocity
+ and forces equal to 0, depending on if you're solving it
+ in the primal or in the dual.
+ So its interpretation probably has something like--
+ it probably has an interpretation
+ that you could talk out like that.
+ But I think what's precisely happening
+ is that in the velocity space, probably a minimum norm
+ solution.
+ OK.
+ So this friction cone idea is key.
+ We're going to use this a lot.
+ Again, how do we pick up grasps?
+ We're going to think about putting our friction cones
+ to resist wrenches in the same way
+ that there might be good places to put your friction cone,
+ good amounts to squeeze that will change the ability
+ to resist an adversarial wrench, like the rigid body
+ wrench, not a monkey wrench.
+ [INAUDIBLE]
+ Yes.
+ So basically, any force that's inside the friction cone
+ is a possible force.
+ You have additional constraints of like the normal force
+ can only be so big, given that it's
+ being powered by gravity here.
+ So the magnitude of that force is determined also
+ by the balance equations.
+ Well, here's a good question.
+ Test your intuition.
+ So in this setting, I have this brick, and I have a ramp.
+ So we said it was mg over 2 for the flat case.
+ Is this force bigger?
+ Are they the same?
+ [INAUDIBLE]
+ They're not the same.
+ OK, we got both answers.
+ You have to read the notes to find out.
+ [INAUDIBLE]
+ You don't have-- there's an asymmetry here, right?
+ That's not pushing like this.
+ Pretty clean in the algebra.
+ Yes.
+ [INAUDIBLE]
+ Good, yeah.
+ So I drew this in 2D, and I made it exact in this.
+ And in 3D, it really is the shape of this ice cream cone.
+ The square root here gives me conic sections
+ that look like this.
+ But oftentimes for optimization, or for faster simulation,
+ or something like this, it actually
+ can be useful to approximate this
+ with a polyhedral approximation of the friction cone,
+ where you write this as--
+ because some of these square roots
+ are kind of a nasty thing.
+ So sometimes you'll use a polyhedral approximation
+ of that friction cone.
+ And I could say a lot more, or I don't
+ know how to say a little more than that.
+ But that comes up naturally in a lot of optimization
+ formulations.
+ This would be the--
+ for instance, if you write a linear complementarity problem,
+ you might have heard of linear complementarity problem, LCP,
+ which is a way to do simulation.
+ The fact that it's a linear complementarity problem
+ is because we made a polyhedral approximation of the cone.
+ If you wanted to do a full second order cone version,
+ then it would be a nonlinear complementarity problem,
+ which is much harder to solve.
+ But that's just bonus.
+ Yeah?
+ [INAUDIBLE]
+ So this is a gross summary of the surface materials.
+ The only way that the surface materials come in
+ is by picking mu.
+ And so you need to go to a deeper level of detail
+ to capture-- to get over some of the abnormalities of the model,
+ the insufficiencies of the model.
+ It's also interesting.
+ So if you look in the robot description files,
+ for instance, you can pick--
+ you set a mu for each body.
+ But that's weird, because mu is really
+ a property of the pair of materials, right?
+ Rubber and glass, or whatever, these things
+ are pairs of materials.
+ So there's always a little bit of a hack in the middle,
+ where you say, well, I've got a mu of 10 and a mu of 0.3.
+ And I'm going to use a parallel resistor theorem or something
+ to put them together, just because it
+ would be a pain to label every pair of materials.
+ But that's what's happening.
+ So you typically put one per body,
+ even though that doesn't really make sense.
+ And there's also-- you'll see sometimes
+ mu static and mu dynamic, right?
+ So you can have static friction or dynamic friction.
+ It's kind of interesting, but actually, the friction
+ you get once you start sliding tends to be lower
+ than the sticking friction.
+ So if you make a plot of contact velocity and the total force
+ you'd get out, let's say the normal force--
+ let's see, the friction, F tangent normalized by F normal,
+ something like this, then it would--
+ you'll see plots that look like this.
+ You'll have a mu static, where if the velocity is 0,
+ you can get any force in that range.
+ But as soon as you start sliding,
+ then you'll have a mu dynamic that's actually lower.
+ Dynamic.
+ That's lower.
+ And that's a better model of what's
+ happening in this Coulomb friction.
+ And then you'll see people make--
+ they make stiff approximations of that sometimes.
+ So you'll see models that look like this, for instance.
+ They're smooth but stiff approximations of that.
+ But oftentimes, for first order, just make them equal.
+ You're fine.
+ Yes?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ Because you can satisfy all the equations by putting, say,
+ all the force on three legs, and the last leg
+ doesn't need to do anything.
+ Or you could put it on the opposite three legs,
+ and the first leg doesn't need to do anything.
+ And then that's just normal force, let's say.
+ You could satisfy all the torque and z balance
+ by putting on any three legs, for instance.
+ So now when you push, you'll get different forces
+ depending on which of those choices you made,
+ which will possibly cause a moment or not.
+ And they're all admissible by the Coulomb model.
+ [INAUDIBLE]
+ That's the extreme.
+ Of course, it would be--
+ you could have any linear combinations of those.
+ That's just-- I'm trying to make an extreme case.
+ But you--
+ [INAUDIBLE]
+ That is one solution.
+ But all the equations are also satisfied.
+ Everything that we said that defines physics
+ are also satisfied if you put all the weight on three legs,
+ any three legs.
+ And therefore, when you push, you
+ might get no friction on one leg,
+ or you might get all the friction,
+ you know, which could cause rotation or not.
+ Kind of annoying.
+ There's other things, too, that if I was a better chalkboard
+ lecturer, I should learn to do this, the Pan-Levay paradox.
+ So--
+ [INAUDIBLE]
+ Oh, I can cheat?
+ I can buy something on Amazon to make me a Pan-Levay paradox
+ guy?
+ Yeah.
+ Yeah, I don't know how to do it.
+ I won't try.
+ Probably doing it above my head wasn't the best place to start.
+ So no one liked the fact that I chose the contact points
+ to be at the corners.
+ Let's dig into that a little bit.
+ I'm glad you didn't like that.
+ I'm glad you called me on that.
+ But simulators do that.
+ And simulators have to make a choice.
+ And actually, it's kind of a gross part of simulation.
+ It tends to be a thing that leads to sadness.
+ Like when robots pick up objects, and then they go,
+ phew, you know, it tends to be--
+ there's a couple of things that can go wrong.
+ But this is one of them, a big one,
+ which is that you have to come up with an algorithm that,
+ given--
+ well, so here's the first thing, I guess, to say is,
+ like, penetration happens.
+ That's the word everybody uses.
+ I sounded out of context.
+ But there's-- you will--
+ so if you're simulating real systems
+ with numerical algorithms, bodies will overlap.
+ That's called penetration in the computational geometry world.
+ And that happens.
+ And you have to deal with it.
+ So if I have a box on a table, then it's sort of easy.
+ I could pick almost any two points
+ and find its force balance.
+ Of course, I need one to be on at least the right side
+ of the downward force and the left.
+ But what if I'm on the edge of a table now?
+ So if I start putting my box kind
+ of on the edge of the table, now it's
+ getting a little bit more subtle.
+ The position of this box relative to this box
+ means that probably I need to pick a point right here.
+ I could pick something else on this side.
+ What happens if you're a little bit in the corner?
+ Because your simulator took a numerical approximation
+ of the dynamics.
+ And so you're like, I'll exaggerate it.
+ Hopefully it doesn't get this bad in simulation.
+ But you're like this.
+ So where do you put the contact forces?
+ Simulators have to sort of pick.
+ I'm going to put one here.
+ I'm going to put one here.
+ And it's not that hard for any one image
+ to pick a few contact points.
+ Even in 3D, you get much more complicated geometries
+ intersecting and stuff.
+ But you always look at pairs of bodies.
+ And you could come up with some rubric to pick those points.
+ Here's the hard part.
+ While you're simulating, as the bodies move,
+ you'd really like those points to move smoothly.
+ And it's really hard to find one algorithm that always
+ finds a consistent set of points,
+ even as the bodies kind of are moving around
+ relative to each other.
+ And if those points jump discontinuously,
+ then your forces can jump discontinuously.
+ And that's when things go surprise.
+ So I actually made some slides about that.
+ I meant to show this before when you asked.
+ So how do you define the normal vector first in the broader
+ case, even at corners?
+ It turns out that you're always thinking about a normal vector
+ between two frames.
+ And so you take the sign distance
+ between two bodies, which is well-defined.
+ We often call it phi.
+ So these two bodies, that would be the sign distance.
+ And the derivative, the gradient of the sign distance,
+ is a nice working definition of the normal vector
+ that works even in corners.
+ In general, you just need to be a sub-gradient of that.
+ It's the vector that goes between the two points.
+ The distance is a scalar.
+ The gradient of that is a vector that moves along there.
+ And the interpretation of it being a gradient
+ also works if you're working directly in Q, not just in 3D.
+ So it has a generalized coordinates.
+ And then for the tangential coordinates,
+ you can just pick any basis on the orthogonal plane.
+ And sometimes you pick many of them for the polyhedral
+ approximation.
+ This would be like the polyhedral approximation
+ does something like that.
+ So when this is going on--
+ I already showed you that, but just think about this.
+ So if we use that as a heuristic--
+ so it works beautifully when things are out of contact
+ or when they just come into contact.
+ But everything-- and I could put up a different proposal.
+ And everything breaks when you start getting
+ into the deep penetration.
+ And here's a picture to make that--
+ so if you pick the point of maximal penetration,
+ the deepest point in the body, which
+ is a hard computational geometry thing to do,
+ but if you could do that nicely, and then you
+ took the gradient of that as your definition of the normal,
+ then that's going to push you like this.
+ That would be my instantaneous choice of a point.
+ Let's just say I'm going to pick only one point,
+ just to keep it simple.
+ One point, I'm going to try to push in that direction.
+ I'm going to call that my normal.
+ But here's what happens.
+ If you watch that as the bodies overlap,
+ your maximal point gets closer to the other face.
+ So the closest face that would allow you to exit
+ changes discontinuously.
+ That make sense?
+ You were closer to the side.
+ You're closer to the side, so you should definitely
+ put your normal force pushing out like that.
+ And then all of a sudden, when you go past the diagonal,
+ you're closer to the top.
+ Boom.
+ Context simulation has a big discontinuity,
+ and things get bad.
+ So it looks like the gradient of that looks like this,
+ as soon as you cross that boundary.
+ And if you cross it just a little bit,
+ maybe you don't notice.
+ You cross it a lot, you notice.
+ So when people are doing point contact, one thing
+ I've learned, actually, over the years,
+ to just-- I actually make my contact--
+ you'll notice some of the contact geometry that we use,
+ if you look closely at it.
+ I actually take a box, and I'll just put it--
+ we'll make it a little bit smaller on the inside,
+ call that a box.
+ And then I'll put some extra spheres of radius
+ almost 0 in the corner.
+ Just to say, always put contact points here, please.
+ And then do whatever you want with the rest of it.
+ But at least put contact points here,
+ and that makes things a lot more stable,
+ if you're using point contact simulation.
+ One of the things that was kind of an innovation in Drake,
+ in the contact engine, was this model
+ called hydroelastic contact, which
+ is the obvious thing, in some sense.
+ But it's the thing that--
+ making it computationally efficient enough
+ to run all the time at real rates
+ is what was maybe a bigger deal.
+ So now, instead of taking just a point contact or a few points,
+ we take a surface integral across the surface.
+ And even when you're in penetration,
+ we define a pressure field, which
+ defines a surface of--
+ the surface of overlap.
+ And we integrate numerically.
+ We make a new mesh on the fly, and we
+ integrate across that to get nice, smooth contact forces.
+ And that's all happening on every time step,
+ on every geometry pair, and everything like this.
+ So you get these beautiful simulations
+ with nice, smooth red contact vectors.
+ And like the-- yeah, I'll show you a couple of examples.
+ If you do this now, then these are the contact forces
+ that you get out with that extra computational geometry work.
+ And things suddenly get smooth.
+ And that made a big difference in our ability
+ to do sim-to-real transfer in Drake.
+ [AUDIO OUT]
+ So it's actually a lot of work under there
+ to make that all work, because all the possible geometry
+ pairs, whether it's a generic mesh or a sphere or whatever,
+ they all have these relatively complicated intersections.
+ And the shape of that intersection
+ depends on the relative stiffness of the bodies.
+ So there's a lot of things going on behind there.
+ And that's when you get these animations that we like,
+ which is like the dexterous hand picking up the mug.
+ And you'll see the entire contact patch
+ that we render sometimes.
+ And normally, you wouldn't see that.
+ That's extra math that we're doing behind the scenes
+ to make that really stable and good.
+ This is all-- you can turn all this on in MeshCat.
+ In fact, it'll happen automatically.
+ So you'll see any level of these rendering,
+ that's the entire pressure field.
+ When you see red arrows, you're seeing hydroelastic.
+ When you see green arrows, you're
+ seeing the old point contact model.
+ I'm porting the note-- oops, that was funny.
+ I'm actually porting-- so hydroelastic
+ was a little too slow last year.
+ And it's fast enough this year.
+ So I'm like one--
+ not even a whole lecture ahead of you--
+ porting the note to use hydroelastic for everything.
+ So you're going to see a few green vectors.
+ And then if you download it again the next day,
+ it'll be gone.
+ It'll be red.
+ But hopefully, you won't have to experience green vectors.
+ You can watch even the interaction of the bowl
+ with the table, for instance.
+ You get contact patches that are right
+ around the rim of the bowl.
+ It's a lot of geometry that's happening.
+ And one of the things that we are proud of--
+ this is another cool example.
+ You can actually mate LEGOs.
+ And it's just the physics of it will hold it together.
+ And the contact forces that come out
+ are just rock steady and stuff.
+ So most simulators don't have contact forces visualization
+ on by default, because they're crazy.
+ And ours was for a long time, too.
+ But we have ours enabled by default, just so you're like,
+ hey, you guys should really see these contact forces.
+ Yeah?
+ [INAUDIBLE]
+ So there's two different questions there.
+ Can you control the stiffness and damping?
+ Then absolutely.
+ There's a dissipation quantity that they all
+ have proper mechanical units.
+ There's a stiffness you can set for each body.
+ And then when they overlap, there's
+ a pressure field equation that defines the surface of balance.
+ How does it correspond to real?
+ I think it's intended, absolutely,
+ to correspond to real.
+ But there's typically some sim to real gap still.
+ Like if you took exactly the material properties of rubber,
+ you might get something that's a little bit--
+ I would hope it's perfect.
+ But that's the kind of place where
+ you might expect to cheat the numbers a little bit
+ to get a better match.
+ Yeah?
+ [INAUDIBLE]
+ You have to say that one again.
+ Sorry.
+ [INAUDIBLE]
+ OK, so the comment was that you have some anisotropic,
+ or some mud, or something like that.
+ Might be you have different friction properties
+ at different points.
+ So there's no sampling that happens here.
+ It actually is doing the computational geometry
+ of triangular meshes, and computing those things,
+ and taking integrals cleanly.
+ But if you had a surface that had different friction
+ properties, I think in practice what I would do today,
+ I would just drop a handful of different collision geometries
+ down there that had different coefficients and stuff
+ like this, and approximate it that way.
+ We could, of course, generalize it to that.
+ But we haven't put that level of generalization in there.
+ [INAUDIBLE]
+ I think intellectually there's no sampling.
+ Of course, you solve for vertices first,
+ and then you use that to compute the triangulation and stuff
+ like this.
+ But I think the mathematical model that
+ is being achieved by that code is
+ that you're taking an integral over the surface.
+ Yes?
+ [INAUDIBLE]
+ Yep.
+ [INAUDIBLE]
+ Yes, so the question is, could you ever
+ have sort of pass-through effects?
+ So OK, so Drake supports-- and so this is all rigid body.
+ And this is suitable.
+ These are actually compliant rigid body,
+ because you're allowed to penetrate a bit.
+ So it's suitable for objects that mostly keep their shape,
+ but could be squishy.
+ But if you had a really plush toy or something like that,
+ we actually have a soft body simulation
+ for that, which does finite element method.
+ And that could be suitable for things like cloth or something
+ like that.
+ But we actually don't advertise cloth support yet,
+ because exactly because of these pass-through events.
+ And we know how to--
+ the simulation community knows how to do that.
+ But you just have to do extra logic to prevent pass-through.
+ Because if your normal suddenly pops out the other side,
+ then that can be bad.
+ So this one, I don't think it would be devastating.
+ If you had enough mass of your pepper still on the first side,
+ then it would probably be almost unnoticeable.
+ So we don't feel like a sucking sound
+ when you happen to hit the table or anything like that.
+ But you could have more dramatic events
+ where you actually just pass through.
+ So if your simulation time step was too big,
+ you would just enter-- or your stiffness was too low.
+ Yes?
+ [INAUDIBLE]
+ We summarize the integral of the pressure field in a wrench.
+ That's one of the reasons.
+ So that's kind of why I showed this partly,
+ is that it's beautiful to say that the integral over that,
+ it gives you a total wrench.
+ Good.
+ I'm going to stop there.
+ Think about your project groups.
+ think about your projects, ask us questions,
+ and we'll see you Thursday.

@@ -1,0 +1,2956 @@
+1
+00:00:00,000 --> 00:00:02,000
+ All right, welcome back everybody
+
+2
+00:00:02,000 --> 00:00:09,680
+ If anybody's out there, so I'm I could use the Ethernet cable if anybody's back there in the booth
+
+3
+00:00:09,680 --> 00:00:13,000
+ But somehow my Wi-Fi is not working again
+
+4
+00:00:13,000 --> 00:00:20,720
+ Okay, so today we're transitioning into perception so let me even just as a quick setup right
+
+5
+00:00:20,720 --> 00:00:24,740
+ Last time we built an almost complete
+
+6
+00:00:26,120 --> 00:00:31,600
+ Manipulation system if you will right we we had our hardware
+
+7
+00:00:31,600 --> 00:00:34,680
+ abstraction our hardware simulation
+
+8
+00:00:34,680 --> 00:00:42,820
+ And we built on top of that
+
+9
+00:00:42,820 --> 00:00:49,480
+ Our differential inverse kinematics block which
+
+10
+00:00:49,480 --> 00:00:53,440
+ Well after some integration
+
+11
+00:00:53,440 --> 00:00:55,920
+ sent us IWA commands
+
+12
+00:00:56,800 --> 00:00:58,800
+ IWA positions
+
+13
+00:00:58,800 --> 00:01:09,640
+ The diff IK block needed to know the current IWA state so we had an important line here
+
+14
+00:01:09,640 --> 00:01:24,040
+ Okay, but the whole thing was predicated on
+
+15
+00:01:24,760 --> 00:01:32,320
+ Something over here, which just had a gripper velocity trajectory coming in
+
+16
+00:01:32,320 --> 00:01:45,040
+ Okay, and although that's
+
+17
+00:01:45,040 --> 00:01:48,560
+ That's a complete closed loop system
+
+18
+00:01:49,280 --> 00:01:55,800
+ Hidden inside when we designed the gripper trajectories and the and then differentiated them to get the gripper velocities
+
+19
+00:01:55,800 --> 00:02:00,520
+ We made a big assumption, which is that we knew where the red brick was okay?
+
+20
+00:02:00,520 --> 00:02:02,760
+ So everything was sort of based on this
+
+21
+00:02:02,760 --> 00:02:07,440
+ someone told me exactly where in the world I needed to reach to and
+
+22
+00:02:07,440 --> 00:02:11,240
+ That's just not good enough right at some point. We have to now
+
+23
+00:02:11,240 --> 00:02:18,460
+ Use our sensors to figure out where the brick is to do the work so so far. We assumed a perception Oracle, right?
+
+24
+00:02:19,160 --> 00:02:21,520
+ someone you could just query and tell us where the
+
+25
+00:02:21,520 --> 00:02:24,760
+ object was in the world frame and
+
+26
+00:02:24,760 --> 00:02:28,200
+ We were using
+
+27
+00:02:28,200 --> 00:02:31,200
+ some of the the the cheat ports like we could tell
+
+28
+00:02:31,200 --> 00:02:38,240
+ The body pose directly from of any object in the world right in our hardware station
+
+29
+00:02:38,240 --> 00:02:45,960
+ And so the goal today is to stop using those cheat ports and start using cameras instead and close the simplest loop we can
+
+30
+00:02:45,960 --> 00:02:48,400
+ around that whole system
+
+31
+00:02:48,560 --> 00:02:50,960
+ That they could actually be run on a real robot
+
+32
+00:02:50,960 --> 00:02:59,520
+ So I'm going to download
+
+33
+00:02:59,520 --> 00:03:05,160
+ Ridiculously big mesh cat animation over my why over my phones
+
+34
+00:03:05,160 --> 00:03:11,000
+ 5g and burn my data plan for the month, but hey there we go
+
+35
+00:03:11,000 --> 00:03:17,480
+ It's ridiculously big just because the mesh the the
+
+36
+00:03:18,480 --> 00:03:25,560
+ The YCB objects if you know what these are these this is a mustard bottle from the YCB objects, okay database a
+
+37
+00:03:25,560 --> 00:03:28,400
+ Little funny here, okay
+
+38
+00:03:28,400 --> 00:03:34,800
+ The meshes or the sorry the material files the texture maps for these files are like 50 megabytes
+
+39
+00:03:34,800 --> 00:03:40,400
+ So it takes a minute to download okay? This is roughly what we're doing almost the same as what we did last time
+
+40
+00:03:40,400 --> 00:03:45,680
+ The big difference is that we're going to have cameras now in the scene these are cameras I
+
+41
+00:03:46,720 --> 00:03:50,480
+ brought some I don't always have cameras in my pocket, but
+
+42
+00:03:50,480 --> 00:03:59,840
+ Today I do okay. Yeah, they're like this okay. This is the 415. This is the 435 real sense cameras
+
+43
+00:03:59,840 --> 00:04:03,000
+ Okay, you just USB plug them in
+
+44
+00:04:03,000 --> 00:04:08,800
+ You're good to go. They're amazing depth cameras. I'm going to tell you a little bit about them today, okay?
+
+45
+00:04:08,800 --> 00:04:09,800
+ What's going on here?
+
+46
+00:04:09,800 --> 00:04:15,880
+ But that's what you see in the scene are these depth cameras sprinkled throughout a bunch of them actually we put three on each bin
+
+47
+00:04:16,080 --> 00:04:18,080
+ You'll understand why
+
+48
+00:04:18,080 --> 00:04:24,560
+ Okay, and then mostly this is just the same kind of thing we did before where we start off we figure out
+
+49
+00:04:24,560 --> 00:04:32,880
+ Where the mustard bottle is that's the role of perception
+
+50
+00:04:32,880 --> 00:04:38,640
+ We then we do our standard gripper trajectory and make our move from part a to point B now
+
+51
+00:04:38,640 --> 00:04:40,640
+ What the heck is this thing that's getting left behind?
+
+52
+00:04:40,640 --> 00:04:42,280
+ Okay
+
+53
+00:04:42,280 --> 00:04:44,400
+ That thing is a point cloud
+
+54
+00:04:45,440 --> 00:04:49,240
+ Which is computed by reading the cameras at time zero?
+
+55
+00:04:49,240 --> 00:04:51,480
+ okay, and
+
+56
+00:04:51,480 --> 00:04:57,000
+ Doing some initial processing on the data that you get back from those cameras in order to make the decision about where to grasp
+
+57
+00:04:57,000 --> 00:05:04,800
+ Okay, so I bought at the moment of perception. I went ahead and you know put those in
+
+58
+00:05:04,800 --> 00:05:08,080
+ Okay, I have observations like this
+
+59
+00:05:08,080 --> 00:05:12,460
+ And then I have a model of what those I expect those observations to be and they end up matching
+
+60
+00:05:12,460 --> 00:05:15,240
+ Okay, we'll do all that and by the end of the lecture
+
+61
+00:05:15,880 --> 00:05:19,000
+ Okay, so we had gonna think in terms of these point clouds today
+
+62
+00:05:19,000 --> 00:05:24,560
+ Okay, so oh no not again
+
+63
+00:05:24,560 --> 00:05:30,880
+ All right, so like I said today is the first day of perception
+
+64
+00:05:30,880 --> 00:05:36,680
+ We're gonna do a lot of perception throughout the course today is kind of a more geometric view of perception
+
+65
+00:05:36,680 --> 00:05:40,560
+ we're not just learning a deep network that goes from image to
+
+66
+00:05:41,680 --> 00:05:46,000
+ Whatever representation we want we're gonna start by doing the geometry version now
+
+67
+00:05:46,000 --> 00:05:48,760
+ even though
+
+68
+00:05:48,760 --> 00:05:54,440
+ Going from image with through a deep network directly is I think by all accounts
+
+69
+00:05:54,440 --> 00:05:56,840
+ That's the best way to do things today
+
+70
+00:05:56,840 --> 00:06:03,760
+ There's still a lot of the a lot of perception tools that have baked in them
+
+71
+00:06:03,760 --> 00:06:07,760
+ Whether they're neural network or not some of the fundamentals of geometry
+
+72
+00:06:08,360 --> 00:06:12,880
+ It focus it builds beautifully on what we did last time. I think I'm in the kinematics
+
+73
+00:06:12,880 --> 00:06:18,160
+ okay, and if you're if you're interested in ideas like neural radiance fields or
+
+74
+00:06:18,160 --> 00:06:21,120
+ putting baking 3d priors
+
+75
+00:06:21,120 --> 00:06:26,720
+ Geometric priors into your neural networks and everything like this. This is going to be the foundation you need to do that kind of work
+
+76
+00:06:26,720 --> 00:06:33,960
+ So today we'll do it's a slightly old-school version of perception, but it's the foundation
+
+77
+00:06:34,120 --> 00:06:38,200
+ Okay, so we'll do incremental iterative closest point. Yes
+
+78
+00:06:38,200 --> 00:06:47,080
+ We will you will tell you to talk about where nerf comes into the stack later. Yeah, there's places where it makes a lot of sense
+
+79
+00:06:47,080 --> 00:06:51,520
+ Okay, so
+
+80
+00:06:51,520 --> 00:06:55,720
+ Everybody knows about the deep learning revolution. I think a few less people
+
+81
+00:06:55,720 --> 00:07:01,320
+ Realize how much of a geometry revolution we've had at the same time
+
+82
+00:07:01,320 --> 00:07:04,880
+ Okay, and it's it was powered partly by deep neural networks
+
+83
+00:07:04,880 --> 00:07:08,800
+ But even before that it was powered by I don't know autonomous driving companies
+
+84
+00:07:08,800 --> 00:07:14,120
+ Really caring about where the pedestrians were in the space people building a lot better sensors
+
+85
+00:07:14,120 --> 00:07:18,200
+ I mean virtual reality and augmented reality were a big driver, too
+
+86
+00:07:18,200 --> 00:07:24,520
+ Okay, and we started getting pretty incredible things that had no no neural networks involved
+
+87
+00:07:24,520 --> 00:07:30,680
+ Okay, this is even I don't know eight years ago or something like this dynamic fusion where we could we started having
+
+88
+00:07:31,200 --> 00:07:33,200
+ algorithms that could run in real time and
+
+89
+00:07:33,200 --> 00:07:34,960
+ build
+
+90
+00:07:34,960 --> 00:07:36,880
+ instantaneous 3d
+
+91
+00:07:36,880 --> 00:07:42,160
+ Reconstructions of the perceptions they were seeing and track, you know people moving around
+
+92
+00:07:42,160 --> 00:07:46,960
+ Building sort of these beautiful 3d models and that was a culmination of
+
+93
+00:07:46,960 --> 00:07:50,800
+ algorithmic work of new sensors
+
+94
+00:07:50,800 --> 00:07:57,320
+ And in particular the sensors were not only higher quality, but they were faster
+
+95
+00:07:58,400 --> 00:08:05,200
+ Faster to the point where if the world doesn't change too much between each frame then you can write a simpler algorithm to do
+
+96
+00:08:05,200 --> 00:08:13,160
+ Tracking and reconstruction. Okay, so there's just this massive revolution in geometry that's happened sort of alongside
+
+97
+00:08:13,160 --> 00:08:15,800
+ the deep learning revolution and
+
+98
+00:08:15,800 --> 00:08:21,440
+ Interestingly, they've come together. So now, you know, there's people baking in geometric priors into neural networks and the like
+
+99
+00:08:21,440 --> 00:08:27,880
+ Okay, so it started with
+
+100
+00:08:28,680 --> 00:08:35,600
+ Sensors that were thinking, you know, maybe autonomous driving related. So you see a valedine actually spot has a valedine you can stick on top
+
+101
+00:08:35,600 --> 00:08:36,960
+ Of it. It's still a
+
+102
+00:08:36,960 --> 00:08:42,160
+ relevant sensor today. These are our lidars laser being shot out and
+
+103
+00:08:42,160 --> 00:08:47,400
+ Bouncing back and estimating the distance from each point of light to the to the target
+
+104
+00:08:47,400 --> 00:08:50,600
+ Okay, and some of these reconstructions are just absolutely amazing
+
+105
+00:08:50,600 --> 00:08:56,840
+ You'll see an autonomous car driving through, you know City Street and hundreds of yards into the future
+
+106
+00:08:56,840 --> 00:09:03,280
+ You can see like a cat walking around the bush or something just incredible what kind of resolution and range that those sensors
+
+107
+00:09:03,280 --> 00:09:05,240
+ have
+
+108
+00:09:05,240 --> 00:09:09,840
+ That's like the Luminar particularly a 500 meter range crazy. Okay
+
+109
+00:09:09,840 --> 00:09:15,000
+ Indoors though, you'll tend to see a different type of laser scanner
+
+110
+00:09:15,000 --> 00:09:19,480
+ These Hakuyu's were were very very popular are still very very popular for
+
+111
+00:09:19,480 --> 00:09:24,960
+ Sort of indoor navigation where the lighting conditions are not as severe. The payloads can be a lot smaller
+
+112
+00:09:24,960 --> 00:09:27,840
+ The energy budget is maybe smaller. Okay
+
+113
+00:09:27,840 --> 00:09:34,160
+ But lidar is definitely one of the tools that sort of enabled this sort of revolution
+
+114
+00:09:34,160 --> 00:09:39,160
+ but alongside that were cameras that
+
+115
+00:09:39,160 --> 00:09:46,080
+ Didn't only return depth, you know lists of numbers that are just the depth but were coupled
+
+116
+00:09:46,080 --> 00:09:48,080
+ RGB
+
+117
+00:09:48,080 --> 00:09:54,080
+ Red green blue, you know color images with depth images and you get those in a handful of different ways
+
+118
+00:09:54,640 --> 00:09:56,640
+ some of them are
+
+119
+00:09:56,640 --> 00:09:59,000
+ actually just using stereo processing of the
+
+120
+00:09:59,000 --> 00:10:02,640
+ depth of the RGB images, so
+
+121
+00:10:02,640 --> 00:10:06,960
+ If you take an image with your right eye and an image with your left eye and you know the relative
+
+122
+00:10:06,960 --> 00:10:10,560
+ Position of your eyes you can do some quick stereo matching
+
+123
+00:10:10,560 --> 00:10:15,000
+ It says well this block over here looks a lot like the blocks on over here
+
+124
+00:10:15,000 --> 00:10:19,400
+ And therefore the depth of that those pixels must be at a certain range. Okay
+
+125
+00:10:20,560 --> 00:10:24,800
+ People do that now on FPGAs for instance on specialized hardware
+
+126
+00:10:24,800 --> 00:10:31,080
+ So that you can package it nicely into a into a block that basically is just outputting both an image and a depth
+
+127
+00:10:31,080 --> 00:10:35,800
+ This is the Carnegie multi-sense is actually the head that we carried around in Atlas the entire time
+
+128
+00:10:35,800 --> 00:10:38,000
+ you'll see
+
+129
+00:10:38,000 --> 00:10:40,520
+ Bumblebee point grades from bumblebee. There's a lot of
+
+130
+00:10:40,520 --> 00:10:45,720
+ Systems that are doing like that. Okay, let me go through the first round first
+
+131
+00:10:45,720 --> 00:10:48,560
+ Okay
+
+132
+00:10:48,560 --> 00:10:50,640
+ another line of the
+
+133
+00:10:50,640 --> 00:10:57,000
+ Tools like this the connect sensor was a big deal when that came out not only because it worked very well
+
+134
+00:10:57,000 --> 00:11:00,280
+ but because it was so inexpensive right so somehow the
+
+135
+00:11:00,280 --> 00:11:08,200
+ Home entertainment gaming world kind of revolutionized robotics by building a sensor that we needed. Okay, that was fantastic
+
+136
+00:11:08,200 --> 00:11:11,680
+ the first version of connect worked with
+
+137
+00:11:11,680 --> 00:11:16,760
+ Structured light so it's actually about as simple. I remember I mean this was an idea for
+
+138
+00:11:18,080 --> 00:11:24,720
+ Decades and decades. Okay, but it became practical with the Microsoft Connect where you actually just project patterns
+
+139
+00:11:24,720 --> 00:11:29,920
+ The patterns will deform on the object you can back out from the geometry something about the depth
+
+140
+00:11:29,920 --> 00:11:34,480
+ Axion there's a bunch of different hardware manufacturers that that built
+
+141
+00:11:34,480 --> 00:11:38,760
+ Structured light based depth cameras
+
+142
+00:11:38,760 --> 00:11:44,480
+ The ones that I showed you here like the 415 will talk the most about is actually
+
+143
+00:11:45,280 --> 00:11:50,720
+ Projected texture stereo. Okay, the problem with just taking two camera images
+
+144
+00:11:50,720 --> 00:11:57,360
+ If you're looking at a white wall, for instance, there's nothing to compare and contrast between the two images
+
+145
+00:11:57,360 --> 00:12:00,600
+ Okay, so but if you put if you project
+
+146
+00:12:00,600 --> 00:12:05,440
+ In infrared for instance that you know something that will just put a little bit of a pattern
+
+147
+00:12:05,440 --> 00:12:11,800
+ Then you can even in low contrast situations. You can get depth to come back out
+
+148
+00:12:12,600 --> 00:12:17,480
+ One of the reasons that's nice compared to some of the other options like the time of flight. I'll show you next
+
+149
+00:12:17,480 --> 00:12:24,880
+ Is that these these cameras can work even if they're looking at the same scene and they won't interfere with each other
+
+150
+00:12:24,880 --> 00:12:28,800
+ Right. So sometimes some of these cameras if they're sending out pings or something like this
+
+151
+00:12:28,800 --> 00:12:32,840
+ They can actually actively interfere with each other unless you synchronize them very very carefully
+
+152
+00:12:32,840 --> 00:12:37,640
+ One of the projected texture you can just point them and forget. Okay
+
+153
+00:12:37,640 --> 00:12:43,640
+ And then these days there really is a massive movement that was powered by deep learning
+
+154
+00:12:43,640 --> 00:12:47,280
+ Which is you can just go straight from RGB
+
+155
+00:12:47,280 --> 00:12:47,800
+ Okay
+
+156
+00:12:47,800 --> 00:12:51,480
+ So a lot of times even if you only have a cell phone camera and you don't have it
+
+157
+00:12:51,480 --> 00:12:56,080
+ Actually the cell phone cameras have depth sensors a lot of a lot of true depth on the iPhone for instance
+
+158
+00:12:56,080 --> 00:13:02,920
+ Okay, a lot of times you can actually build beautiful 3d models even from a single camera
+
+159
+00:13:02,920 --> 00:13:09,560
+ You don't even need the stereo pair. There's there's enough cues, of course from movement and other things, but there's also
+
+160
+00:13:09,560 --> 00:13:12,720
+ There's additional information that can be available if you
+
+161
+00:13:12,720 --> 00:13:17,160
+ Read everything on the internet. That's not what's happening in this particular one. This is a
+
+162
+00:13:17,160 --> 00:13:19,440
+ Neural radiance field we'll talk about later
+
+163
+00:13:19,440 --> 00:13:26,000
+ But just to say this is one of the first videos of the neural radiance fields showing that just from taking camera images
+
+164
+00:13:26,000 --> 00:13:28,480
+ You could stitch together a camera image
+
+165
+00:13:28,480 --> 00:13:32,240
+ And generate new images from new viewing angles
+
+166
+00:13:32,240 --> 00:13:34,720
+ And there's also lines of work in
+
+167
+00:13:34,720 --> 00:13:38,280
+ Monocular depth that for instance will just have
+
+168
+00:13:38,280 --> 00:13:43,600
+ You know a very clever thing to do for instance is to drive a car around with two cameras on it
+
+169
+00:13:43,600 --> 00:13:46,200
+ And then just use the second camera to
+
+170
+00:13:46,200 --> 00:13:49,840
+ Use stereo matching from there, but just learn a model
+
+171
+00:13:49,840 --> 00:13:53,280
+ From the single camera to the depth and then you can just
+
+172
+00:13:53,280 --> 00:13:56,720
+ You know use stereo matching from there, but just learn a model
+
+173
+00:13:56,720 --> 00:13:59,120
+ From the single camera to the depth
+
+174
+00:13:59,120 --> 00:14:03,440
+ And then you know when it's time to make a hundred million of them because you're gonna
+
+175
+00:14:03,440 --> 00:14:08,080
+ Make it into a product you just take away that extra camera and just use the learned mapping from
+
+176
+00:14:08,080 --> 00:14:09,680
+ Image to depth
+
+177
+00:14:09,680 --> 00:14:11,600
+ So monocular depth is a
+
+178
+00:14:11,600 --> 00:14:14,800
+ Surprisingly effective technology now
+
+179
+00:14:14,800 --> 00:14:19,200
+ Okay, now is a good time if you have a question or anything
+
+180
+00:14:19,200 --> 00:14:38,880
+ [inaudible]
+
+181
+00:14:38,880 --> 00:14:41,120
+ I don't actually know what's in the iPad so the
+
+182
+00:14:41,120 --> 00:14:44,800
+ I know that there's a true depth sensor here if you look at you know at the back of these there's
+
+183
+00:14:44,800 --> 00:14:49,120
+ They're projecting something here and they have the ability to do
+
+184
+00:14:49,120 --> 00:14:51,920
+ You do have a depth camera on your iPhone
+
+185
+00:14:51,920 --> 00:14:54,480
+ I don't have an iPad to look at
+
+186
+00:14:54,480 --> 00:15:01,600
+ [inaudible]
+
+187
+00:15:01,600 --> 00:15:06,560
+ Okay so the question was the second question was about the lidar on spot so typically the
+
+188
+00:15:06,560 --> 00:15:11,040
+ The velodynes on a car or on spot I didn't the spot I brought did not have a
+
+189
+00:15:11,040 --> 00:15:14,000
+ Velodyne on it it just had the surround cameras
+
+190
+00:15:14,000 --> 00:15:17,360
+ But yes typically those are scanning lidars and you have to do some
+
+191
+00:15:17,360 --> 00:15:23,280
+ Careful work to think about blurring from fast motions and timing it with the spinning laser
+
+192
+00:15:23,280 --> 00:15:23,760
+ That's true
+
+193
+00:15:23,760 --> 00:15:28,640
+ [inaudible]
+
+194
+00:15:28,640 --> 00:15:30,880
+ I think I think spots pretty good yeah
+
+195
+00:15:30,880 --> 00:15:34,400
+ Okay so oh yes please
+
+196
+00:15:34,400 --> 00:15:39,840
+ [inaudible]
+
+197
+00:15:39,840 --> 00:15:40,080
+ Yes
+
+198
+00:15:40,080 --> 00:15:47,600
+ [inaudible]
+
+199
+00:15:47,600 --> 00:15:53,040
+ So the so the question is you know I mentioned FPGA and the Carnegie head
+
+200
+00:15:53,040 --> 00:16:00,000
+ Yes I think that basically if you're doing block matching stereo that's the simplest algorithm
+
+201
+00:16:00,000 --> 00:16:04,240
+ And it's they're doing more than that in those heads but that's I think the the essence of the
+
+202
+00:16:04,240 --> 00:16:08,800
+ Of the hardness in the computation is that you're doing a relatively simple computation taking
+
+203
+00:16:08,800 --> 00:16:13,280
+ An 8x8 block of pixels comparing it to another 8x8 block of pixels but you have to do that for
+
+204
+00:16:13,280 --> 00:16:18,800
+ All possible pairs in a row for instance like this so it's a it's a very trivially parallelized
+
+205
+00:16:18,800 --> 00:16:23,760
+ Operation and in order to get operating at full frame rates I mean computers have gotten faster
+
+206
+00:16:23,760 --> 00:16:30,400
+ And faster but it's just a beautiful solution for specialized hardware yes yeah
+
+207
+00:16:30,400 --> 00:16:36,960
+ [inaudible]
+
+208
+00:16:36,960 --> 00:16:44,080
+ Depends on the technology so so like Nerf out of the box the neural radiance fields
+
+209
+00:16:44,080 --> 00:16:50,960
+ Don't have scale unless you do some work a priori to tell them about the relative poses
+
+210
+00:16:50,960 --> 00:16:58,000
+ You can run a different geometry processing algorithm first most of the projected texture
+
+211
+00:16:58,000 --> 00:17:02,320
+ Or or anything that's projecting light actively does have absolute scale
+
+212
+00:17:03,280 --> 00:17:10,400
+ They do have maximum range and minimum range so a lot of them are actually it's kind of it can
+
+213
+00:17:10,400 --> 00:17:15,760
+ Be frustrating to use them you know you put a beautiful sensor on your wrist and then you
+
+214
+00:17:15,760 --> 00:17:20,400
+ Realize that the minimum range of like the d415 is 0.3 meters or something like that so
+
+215
+00:17:20,400 --> 00:17:24,640
+ You know the last when you're when you're getting close to the object that camera becomes blind
+
+216
+00:17:24,640 --> 00:17:27,600
+ To the in the last 30 centimeters
+
+217
+00:17:32,960 --> 00:17:41,440
+ Okay alongside this you know many sources of camera input we also have a
+
+218
+00:17:41,440 --> 00:17:46,880
+ A lot of different ways to store that data when it comes in lots of different 3d representations
+
+219
+00:17:59,520 --> 00:18:06,480
+ A bit like we talked about representations of rotation there's a there's just a handful of
+
+220
+00:18:06,480 --> 00:18:11,680
+ Different formats for instance and some of them are good for some kind of type of computation
+
+221
+00:18:11,680 --> 00:18:15,760
+ And some are good for the other and you can convert you should expect to convert back and
+
+222
+00:18:15,760 --> 00:18:20,480
+ Forth between them and figure out which one's best for for particular sources so
+
+223
+00:18:20,480 --> 00:18:26,160
+ The image the the image that you get directly out of a depth camera
+
+224
+00:18:26,160 --> 00:18:31,520
+ That has rgb you think of that as an rgb plus d image
+
+225
+00:18:31,520 --> 00:18:39,440
+ So it would have four channels some the first three are color values the last one is just the
+
+226
+00:18:39,440 --> 00:18:47,440
+ Depth and at every pixel that's kind of the output of these cameras by default okay so that's you
+
+227
+00:18:47,440 --> 00:18:54,480
+ Know one depth per pixel right we're going to take those rgb images which is a perfectly
+
+228
+00:18:54,480 --> 00:18:59,680
+ Good representation and convert them into colored point clouds okay
+
+229
+00:18:59,680 --> 00:19:11,120
+ So while this is a you know four by size of the image representation a point cloud is a list of
+
+230
+00:19:16,320 --> 00:19:24,720
+ Points in 3d possibly annotated with color values or normals or other attributes
+
+231
+00:19:24,720 --> 00:19:30,400
+ If you compare that to some of the ones you might have seen from a
+
+232
+00:19:30,400 --> 00:19:36,800
+ Graphics software or graphics course you'll see you'll see things like you know triangle meshes
+
+233
+00:19:42,960 --> 00:19:46,400
+ Or there's volumetric meshes triangle meshes are surface meshes
+
+234
+00:19:46,400 --> 00:19:52,080
+ And you can you can have volumetric meshes in addition to surface meshes
+
+235
+00:19:52,080 --> 00:19:58,720
+ You can think about sine distance functions as a representation
+
+236
+00:20:10,080 --> 00:20:18,560
+ And increasingly now people are choosing to store those in neural networks so
+
+237
+00:20:18,560 --> 00:20:25,760
+ NERF the neural radiance fields I was mentioning before
+
+238
+00:20:25,760 --> 00:20:38,640
+ Is almost a sine distance function we'll get to the nuances of that when we get closer
+
+239
+00:20:38,640 --> 00:20:43,040
+ Okay but this would be I mean we're going to we're going to go into each of these when it becomes
+
+240
+00:20:43,040 --> 00:20:47,920
+ Most relevant but I want to just sort of get the the landscape out here first okay
+
+241
+00:20:47,920 --> 00:20:53,040
+ You can also see voxel based representations
+
+242
+00:20:53,040 --> 00:20:59,440
+ Some type of occupancy grids
+
+243
+00:21:05,840 --> 00:21:08,480
+ Okay there's lots of different ways to represent 3d
+
+244
+00:21:08,480 --> 00:21:16,560
+ Data like this okay some of the algorithms were the you know will will really more naturally
+
+245
+00:21:16,560 --> 00:21:20,640
+ Fit with one versus the other and most of the time you can go back and forth yeah
+
+246
+00:21:33,280 --> 00:21:38,000
+ Oh no I think by default the depth channel is the same size as the RGB
+
+247
+00:21:38,000 --> 00:21:57,200
+ The depth always will give you something that will have some minimum range some maximum range and some
+
+248
+00:21:57,200 --> 00:22:02,080
+ Resolution inside that range of course but you should think of it as an image that has
+
+249
+00:22:02,080 --> 00:22:06,800
+ For every pixel a depth specified so in that sense the resolution is the same yeah
+
+250
+00:22:06,800 --> 00:22:13,760
+ Yep yep you should think of every pixel being labeled yeah
+
+251
+00:22:13,760 --> 00:22:27,600
+ So there's a lot of algorithms in fact the one we will talk about today doesn't use color
+
+252
+00:22:27,600 --> 00:22:33,040
+ To start okay but you can potentially do better if you also include color values
+
+253
+00:22:33,040 --> 00:22:44,080
+ Some algorithms will only use the d part in fact I would say many of the algorithms before
+
+254
+00:22:44,080 --> 00:22:49,680
+ Deep learning really came in would would have only very limited use of the RGB values because RGB
+
+255
+00:22:49,680 --> 00:22:54,320
+ I mean computer vision is hard let me just let's just take a second to think to remember why computer
+
+256
+00:22:54,320 --> 00:23:02,160
+ Vision is hard right so if I take two slightly different images okay of a similar scene if the
+
+257
+00:23:02,160 --> 00:23:07,120
+ Lighting changes at all right the color values are going to go are going to be wildly different for
+
+258
+00:23:07,120 --> 00:23:12,080
+ Pixels that correspond to the same point in real space or if I take the same object and put it in
+
+259
+00:23:12,080 --> 00:23:16,880
+ Two different rooms right the same point on the same object is going to come up with very different
+
+260
+00:23:16,880 --> 00:23:23,760
+ Color values okay but having said that if you were to I remember the time when I was I was
+
+261
+00:23:24,320 --> 00:23:29,920
+ With my students and we were you know enjoying how well RGB techniques were starting to work
+
+262
+00:23:29,920 --> 00:23:35,280
+ And I said okay today if you were to pick if someone could only give you depth or only give
+
+263
+00:23:35,280 --> 00:23:41,680
+ You RGB what would you pick and nowadays it's RGB all the way RGB is so much more informative there's
+
+264
+00:23:41,680 --> 00:23:46,640
+ So many things you can't see through a depth camera that you can see in RGB and humans of
+
+265
+00:23:46,640 --> 00:23:52,160
+ Course are very very good at that so I so I think if you have a method that's only limited using
+
+266
+00:23:52,160 --> 00:24:00,080
+ Depth it's probably limited it's probably not the state of the art okay
+
+267
+00:24:00,080 --> 00:24:10,720
+ All right so let's dig in sort of this part of the pipeline first go from RGB to point cloud
+
+268
+00:24:10,720 --> 00:24:16,400
+ And start seeing the connections between the geometry of these camera representations and
+
+269
+00:24:16,400 --> 00:24:21,840
+ The geometry of spatial transforms and the like and how do we write optimization problems over them
+
+270
+00:24:22,080 --> 00:24:24,160
+ Okay maybe I'll do it over here
+
+271
+00:24:24,160 --> 00:24:38,560
+ So this is maybe not a super popular view here but
+
+272
+00:24:38,560 --> 00:24:47,920
+ I could you could argue that perception is just a hard kinematics problem at least the problem
+
+273
+00:24:47,920 --> 00:24:52,720
+ The first version of perception we're going to do today okay it's certainly a controls problem but
+
+274
+00:24:52,720 --> 00:24:58,320
+ But even before that we're going to think of perception today as a kinematics problem
+
+275
+00:24:58,320 --> 00:25:03,040
+ What do I mean by that okay so let me say I've got an object
+
+276
+00:25:03,040 --> 00:25:14,320
+ In space okay so I'll do 2d objects here because my artistic abilities are limiting in that way
+
+277
+00:25:15,200 --> 00:25:18,960
+ Okay so let's say I have an object in space and it's got some
+
+278
+00:25:18,960 --> 00:25:24,000
+ Coordinate system some canonical coordinate system I'll say this is my
+
+279
+00:25:24,000 --> 00:25:34,000
+ Coordinate frame o and this will be the x and this will be the y axis okay
+
+280
+00:25:34,000 --> 00:25:43,440
+ And I'm going to say the first thing I want to do is represent this geometry I could represent it as
+
+281
+00:25:43,440 --> 00:25:50,880
+ A series of bases for instance that would be most similar to the triangle mesh in 2d it would just
+
+282
+00:25:50,880 --> 00:25:58,000
+ Be line segments okay but instead I'm going to use a point cloud representation of that object
+
+283
+00:25:58,000 --> 00:26:03,680
+ Okay so I want to represent this object with a series of points on the boundary
+
+284
+00:26:03,680 --> 00:26:10,320
+ They're going to be points in now for my example here a 2d space
+
+285
+00:26:11,600 --> 00:26:15,600
+ And they're going to be written in the coordinate system of the object
+
+286
+00:26:15,600 --> 00:26:22,800
+ Okay so I'll call those points the model points
+
+287
+00:26:22,800 --> 00:26:33,120
+ Sort of my model of the object and
+
+288
+00:26:38,480 --> 00:26:47,680
+ And I'll write them as points right p for point here if I have model point i here
+
+289
+00:26:47,680 --> 00:26:56,320
+ And I'll say that they're my model exists in the objects frame okay position of the object
+
+290
+00:26:56,320 --> 00:27:00,000
+ Of each point in the object frame
+
+291
+00:27:00,320 --> 00:27:02,320
+ So
+
+292
+00:27:02,320 --> 00:27:24,320
+ Okay now I have a camera that's kicking out some other points hopefully they're
+
+293
+00:27:25,120 --> 00:27:31,840
+ Relatively similar okay similarly spaced but maybe I have something that is coming out
+
+294
+00:27:31,840 --> 00:27:36,960
+ Like this okay
+
+295
+00:27:36,960 --> 00:27:45,360
+ By the way you rarely get all the points from the camera but we'll assume that for just to start
+
+296
+00:27:45,360 --> 00:27:48,240
+ And I'll call these my scene points
+
+297
+00:27:48,240 --> 00:28:06,080
+ S-I for scene and I get what I get out of my camera is the scene points in the camera frame
+
+298
+00:28:17,440 --> 00:28:21,280
+ And let's say I took great care when I mounted my camera
+
+299
+00:28:21,280 --> 00:28:28,080
+ So maybe we can say that the location of the camera in the world is known
+
+300
+00:28:28,080 --> 00:28:35,600
+ If it's bolted to your hand or something like that that could be
+
+301
+00:28:35,600 --> 00:28:39,840
+ Also just a forward kinematics problem to figure out where the location of the camera is yeah
+
+302
+00:28:45,840 --> 00:28:49,040
+ It can be absolutely if it's if it's bolted to the robot
+
+303
+00:28:49,040 --> 00:28:52,160
+ Then you would you would definitely be as a function of the joint positions
+
+304
+00:28:52,160 --> 00:29:00,080
+ Right so far this is just a pose not a rotation or not a velocity okay
+
+305
+00:29:00,080 --> 00:29:04,480
+ So the challenge
+
+306
+00:29:04,480 --> 00:29:09,840
+ The goal of perception in this case
+
+307
+00:29:13,600 --> 00:29:14,400
+ Is to figure out
+
+308
+00:29:14,400 --> 00:29:25,840
+ The transform of the object in the world we have a lot of the pieces we have
+
+309
+00:29:25,840 --> 00:29:31,600
+ Points in the world we have camera points in the world a lot of points
+
+310
+00:29:31,600 --> 00:29:34,400
+ And scene points and then we have the camera's location yeah
+
+311
+00:29:34,720 --> 00:29:42,560
+ The point cloud is a 2D world so there are not like the normal world
+
+312
+00:29:42,560 --> 00:29:46,400
+ And you can take the point and 3D camera
+
+313
+00:29:46,400 --> 00:29:48,480
+ Great great yes so
+
+314
+00:29:48,480 --> 00:29:54,400
+ So the point cloud resolution so that's a really good question so the question was
+
+315
+00:29:54,400 --> 00:29:58,720
+ You know the camera I think of a camera image is giving me points in a 2D picture
+
+316
+00:29:58,720 --> 00:30:01,600
+ Right but if I have a depth channel inside that
+
+317
+00:30:01,600 --> 00:30:06,560
+ Then it's the first step that I didn't I should have said is I'm going to take those 2D points
+
+318
+00:30:06,560 --> 00:30:11,280
+ In in the camera and I'm going to project them into a 3D point right by just applying
+
+319
+00:30:11,280 --> 00:30:17,360
+ My in my camera frame that's easy I just say that it's at some depth in the in the immediate frame
+
+320
+00:30:17,360 --> 00:30:22,640
+ Now there's a couple steps that go involved that are involved in that so first of all there's like
+
+321
+00:30:22,640 --> 00:30:27,520
+ Intrinsics in the camera you have to take out any distortion from the lens or something like this
+
+322
+00:30:27,520 --> 00:30:33,520
+ But this is something we know a lot about it's still a pain but it's but it's something we know
+
+323
+00:30:33,520 --> 00:30:39,440
+ A lot about and then the other thing is the extrinsics which is to take those points in the
+
+324
+00:30:39,440 --> 00:30:45,520
+ Camera frame and bring it into the world frame and that would be this this xwc that's the camera
+
+325
+00:30:45,520 --> 00:30:54,320
+ Extrinsics okay good but all those are are quite doable to go from the 2D picture with a depth
+
+326
+00:30:54,320 --> 00:31:04,480
+ Channel into a 3D point yeah okay but there's another step yeah go ahead
+
+327
+00:31:04,480 --> 00:31:20,080
+ So let's say this is exactly the right the same object right that my model my model was perfect
+
+328
+00:31:20,080 --> 00:31:27,520
+ Right so and that my sensor had zero noise okay there's still things that can get in the way
+
+329
+00:31:27,520 --> 00:31:32,240
+ Right which is that like those points might have been sampled in different places along the you
+
+330
+00:31:32,240 --> 00:31:36,720
+ Know there's there's reasons why that's almost never going to be perfect but as a toy problem
+
+331
+00:31:36,720 --> 00:31:41,760
+ To start I'm actually going to say let's consider the case where we've just taken the model points
+
+332
+00:31:41,760 --> 00:31:46,000
+ And translated it someone translated them through an unknown transform and we're going to try to get
+
+333
+00:31:46,000 --> 00:31:50,800
+ That back okay that's the easy case and we'll look at the harder case where there's noise and
+
+334
+00:31:50,800 --> 00:31:57,840
+ Outliers and other things in between great question okay there's another thing that we have to assume
+
+335
+00:31:57,840 --> 00:32:05,680
+ To well that we will assume to get started okay these are all just yellow dots okay and these are
+
+336
+00:32:05,680 --> 00:32:11,600
+ All just yellow dots and your incredible brain knows how to map the you know knows that this
+
+337
+00:32:11,600 --> 00:32:16,640
+ Yellow dot probably corresponds to that yellow dot okay but if it's just a list of numbers on
+
+338
+00:32:16,640 --> 00:32:23,040
+ The computer that mapping the correspondence it's called between those points and this points is not
+
+339
+00:32:23,040 --> 00:32:29,200
+ Given and in general it has to be acquired by some sort of logic you have to figure out which of
+
+340
+00:32:29,200 --> 00:32:33,600
+ These if you just have a pile of points over here and a pile of points over here figuring out those
+
+341
+00:32:33,600 --> 00:32:39,040
+ Correspondences is a massive part of the problem okay but let's just start by assuming that someone
+
+342
+00:32:39,040 --> 00:32:45,040
+ Said that the i-th point here matches the i-th point over here and we'll solve the second part
+
+343
+00:32:45,040 --> 00:32:46,160
+ Of that problem in a second yeah
+
+344
+00:32:46,160 --> 00:32:58,880
+ So so it let's say i had a cad model i could take these points directly from the cad model
+
+345
+00:32:58,880 --> 00:33:03,520
+ So if that's so helpful that's why i'm using the word model sometimes the way you get it is you
+
+346
+00:33:03,520 --> 00:33:08,560
+ You know put your your object down in a nice situation and you get one scan and then you use
+
+347
+00:33:08,560 --> 00:33:13,040
+ That as your model for finding it in other things okay but but think of this as like you've got a
+
+348
+00:33:13,040 --> 00:33:19,040
+ Cad model and then this is the real object out in the world that i got returns from that's the scene
+
+349
+00:33:19,040 --> 00:33:24,320
+ Okay so step one
+
+350
+00:33:24,320 --> 00:33:33,680
+ We'll assume known correspondences
+
+351
+00:33:33,680 --> 00:33:47,440
+ Sometimes the word i feel like i forget to define it but it's just the mapping i would
+
+352
+00:33:47,440 --> 00:33:51,520
+ Define it in symbols in a minute but the mapping from those points to these points are the
+
+353
+00:33:51,520 --> 00:33:53,440
+ Correspondences right
+
+354
+00:33:57,760 --> 00:34:03,920
+ Okay so in that case you can sort of see that we have a nice little kinematics problem an
+
+355
+00:34:03,920 --> 00:34:06,720
+ Optimization problem we know that
+
+356
+00:34:06,720 --> 00:34:23,440
+ The i-th point of the model should correspond with the
+
+357
+00:34:27,440 --> 00:34:37,920
+ Oops zero m i that's the model in object frame mapped to the world frame should correspond to
+
+358
+00:34:37,920 --> 00:34:49,760
+ In the simple exactly one-to-one correspondence problem
+
+359
+00:34:50,560 --> 00:34:57,360
+ These are the obvious kinematic equations okay and in this these are all known
+
+360
+00:34:57,360 --> 00:35:04,880
+ Are given and this is the unknown
+
+361
+00:35:04,880 --> 00:35:14,240
+ So the question becomes how do i extract the pose
+
+362
+00:35:14,240 --> 00:35:19,200
+ Given a list of you know for all i a list of many correspondences
+
+363
+00:35:19,520 --> 00:35:24,800
+ Now if we dig in just a little bit to the pose representation you remember from our
+
+364
+00:35:24,800 --> 00:35:39,680
+ Spatial transforms that doing this is equivalent to both the translation plus the rotation
+
+365
+00:35:45,600 --> 00:35:59,200
+ Okay i'm leaving off the w for my shorthand but w is everywhere okay so really if the unknowns are
+
+366
+00:35:59,200 --> 00:36:05,520
+ Both the translation inside there and the rotation the rotation you'll remember we have
+
+367
+00:36:05,520 --> 00:36:09,920
+ Lots of choices about how to represent that this is always three numbers basically in 3d
+
+368
+00:36:09,920 --> 00:36:13,840
+ In 2d it'd be the two numbers here we have many different ways we could possibly represent the
+
+369
+00:36:13,840 --> 00:36:21,760
+ 3d rotations but somehow we need to search over these okay and that's the question
+
+370
+00:36:21,760 --> 00:36:29,840
+ So solving this is is actually an inverse kinematics problem right we're trying to figure
+
+371
+00:36:29,840 --> 00:36:39,280
+ Out given the given the the data the points in space we're trying to back out the orientations
+
+372
+00:36:39,280 --> 00:36:44,080
+ And rotations this is an inverse kinematics problem
+
+373
+00:36:44,080 --> 00:36:57,680
+ Now let's stop and think for a second here so last time we didn't actually do inverse kinematics we
+
+374
+00:36:57,680 --> 00:37:04,320
+ Did differential inverse kinematics i said inverse kinematics is harder we're going to defer that to
+
+375
+00:37:04,320 --> 00:37:10,560
+ Later but this time we're going to go directly i haven't written any differential kinematics yet
+
+376
+00:37:10,560 --> 00:37:15,920
+ I've just written a kinematics problem so this is like you know the positions and orientations
+
+377
+00:37:15,920 --> 00:37:21,920
+ Inside here is like our generalized coordinates that we're trying to back out so what is the
+
+378
+00:37:21,920 --> 00:37:28,240
+ Difference why am i why did i advocate immediately diff i k for moving the arm around but i'm saying
+
+379
+00:37:28,240 --> 00:37:32,000
+ We're going to have to solve the full inverse kinematics problem for this one
+
+380
+00:37:32,000 --> 00:37:36,180
+ Yeah
+
+381
+00:37:36,180 --> 00:37:45,040
+ I think that's right so he says you don't have the ground truth right so
+
+382
+00:37:45,040 --> 00:37:50,720
+ Effectively the the magic that happens in the in the robot case is that you know the initial
+
+383
+00:37:50,720 --> 00:37:54,880
+ Conditions and you want to change those initial conditions you have an initial
+
+384
+00:37:54,880 --> 00:37:59,600
+ Q and you're making small changes to that so you have a place to linearize around
+
+385
+00:37:59,600 --> 00:38:05,920
+ Okay in perception you know at least once you have to wake up and figure out where the objects are
+
+386
+00:38:05,920 --> 00:38:09,520
+ You don't have an initial unless someone gives you a good initial guess then you could be in
+
+387
+00:38:09,520 --> 00:38:14,960
+ The land of differential kinematics inverse kinematics okay but we're saying you know at
+
+388
+00:38:14,960 --> 00:38:19,280
+ Least once you have to figure out the hard problem find the needle in the haystack potentially okay
+
+389
+00:38:20,160 --> 00:38:25,280
+ Now once you solve that once i actually would advocate differential inverse kinematics if you
+
+390
+00:38:25,280 --> 00:38:29,200
+ Wanted to track for instance if you want to do real-time tracking then by all means you should
+
+391
+00:38:29,200 --> 00:38:36,160
+ Be thinking about gradients and the like okay but the one-time problem is a little bit it must be
+
+392
+00:38:36,160 --> 00:38:42,960
+ Solved i guess in the perception case fortunately this is not some complicated chain of of equations
+
+393
+00:38:42,960 --> 00:38:47,520
+ That can lead to lots of uh of non-linearities and local minima and stuff this is about the
+
+394
+00:38:47,520 --> 00:38:50,960
+ Simplest inverse kinematics problem we could have to solve and we're going to see it has
+
+395
+00:38:50,960 --> 00:38:54,160
+ Beautiful structure and good solutions okay
+
+396
+00:38:54,160 --> 00:39:06,400
+ Okay so let's start um we get to pick a rotation representation now
+
+397
+00:39:06,400 --> 00:39:11,680
+ The the derivation i'll do would go through fine for at least for quaternions
+
+398
+00:39:11,680 --> 00:39:16,240
+ And we're going to do rotation matrices here just because i think it's a little bit
+
+399
+00:39:16,960 --> 00:39:22,320
+ It's obviously a linear equation in a three by three matrix here so it's just a little easier
+
+400
+00:39:22,320 --> 00:39:28,000
+ On the board um so so let's let's say even though this is my spatial algebra rotation
+
+401
+00:39:28,000 --> 00:39:33,200
+ We're going to represent this with three by three matrices for for the purpose of this
+
+402
+00:39:33,200 --> 00:39:36,720
+ And this is three by one numbers
+
+403
+00:39:36,720 --> 00:39:41,760
+ Yes you have a question
+
+404
+00:39:41,760 --> 00:39:56,320
+ So um you know i've got a mug here at least once i'm going to say you know i'm going to build a
+
+405
+00:39:56,320 --> 00:39:59,760
+ CAD model or whatever i'm going to pick an origin of my CAD system and i'm going to just define an
+
+406
+00:39:59,760 --> 00:40:04,800
+ Object relevant model of this i think that is the natural like if you think about what you would
+
+407
+00:40:04,800 --> 00:40:08,560
+ Have to do to build a model and write some coordinate system the natural thing would be
+
+408
+00:40:08,560 --> 00:40:14,640
+ To attach your coordinate system to the object itself okay and then the question of then is of
+
+409
+00:40:14,640 --> 00:40:18,960
+ Where it is in space becomes what's where is that object in space that's the second transform i think
+
+410
+00:40:18,960 --> 00:40:21,460
+ Yep
+
+411
+00:40:21,460 --> 00:40:30,960
+ Yep so uh pick the bottom corner you know it's it's just like if you were in solid works
+
+412
+00:40:30,960 --> 00:40:35,040
+ And you were you know you have to just start drawing lines you got to pick a zero zero
+
+413
+00:40:35,040 --> 00:40:40,080
+ Somewhere okay and all of your points are sort of relative to that zero zero it doesn't matter if
+
+414
+00:40:40,080 --> 00:40:43,760
+ You put it in the middle it doesn't put it in the matter in the bottom corner but it's just the frame
+
+415
+00:40:43,760 --> 00:40:47,360
+ Of reference that you're going to define those points relative to each other thank you that's
+
+416
+00:40:47,360 --> 00:40:59,200
+ Good question okay so so now to solve this problem we want to back out those nine plus three numbers
+
+417
+00:40:59,200 --> 00:41:06,000
+ 12 numbers in order to make those equations match okay a little annoying that i picked the
+
+418
+00:41:06,000 --> 00:41:07,600
+ Divider right there let me slide that out
+
+419
+00:41:07,600 --> 00:41:15,280
+ Okay that's the game how do we do it
+
+420
+00:41:15,280 --> 00:41:23,040
+ So first of all
+
+421
+00:41:26,720 --> 00:41:31,040
+ Do you see even though it's it doesn't look quite in the normal way but do you see that's just a
+
+422
+00:41:31,040 --> 00:41:39,680
+ Linear equation right so this is you should see that this is like ax is approximately equal to b
+
+423
+00:41:39,680 --> 00:41:53,120
+ Right except in this case the x would be my three you know three positions and then the the 12
+
+424
+00:41:54,320 --> 00:42:00,800
+ Rotation coordinates all stacked in one line if i just flatten those into one vector the a
+
+425
+00:42:00,800 --> 00:42:09,360
+ Has a bunch of stuff about the pmi in here flipped around a little bit and shifted okay and this has
+
+426
+00:42:09,360 --> 00:42:19,760
+ Got the psi over here inside that okay but it really is just you could just rewrite that you
+
+427
+00:42:19,760 --> 00:42:25,840
+ Know if i flatten that out into a big a matrix that's your data matrix big b matrix okay and
+
+428
+00:42:25,840 --> 00:42:31,920
+ You're trying to solve a least squares problem to back that out almost almost yes
+
+429
+00:42:31,920 --> 00:42:38,800
+ So this is the scene points you know in the
+
+430
+00:42:38,800 --> 00:42:44,080
+ I guess in the camera it also is going to have inside it the the x
+
+431
+00:42:46,480 --> 00:42:53,040
+ Wc which is i guess given right in this bright pink thing on the top
+
+432
+00:42:53,040 --> 00:43:00,400
+ That's the that's the right hand side yeah and then the rest of it is decision variables which
+
+433
+00:43:00,400 --> 00:43:09,280
+ Are just multiplied by the pm so if i just try to solve ax equal to b i just tried to take an a
+
+434
+00:43:09,280 --> 00:43:16,720
+ Inverse what's wrong with that right if i have any number of so you need a some number of points
+
+435
+00:43:16,720 --> 00:43:20,320
+ We'll ask you on the p set exactly how many points you need for that to be well defined
+
+436
+00:43:20,320 --> 00:43:26,400
+ Okay you need some number of points for this to just to have a unique solution okay but most of
+
+437
+00:43:26,400 --> 00:43:31,520
+ The time you're going to be in a situation where you have many points many more than 12 points
+
+438
+00:43:31,520 --> 00:43:36,080
+ Let's say well you know if each point contributes three things so you know many more than four
+
+439
+00:43:36,080 --> 00:43:41,840
+ Points hopefully if you're at the four point room you know find another camera or something right
+
+440
+00:43:41,840 --> 00:43:49,200
+ Okay so if solving that with exact equality would be very brittle for all the reasons we brought up
+
+441
+00:43:49,200 --> 00:43:53,680
+ A minute ago right if there's any noise if you sampled uh slightly different points on the
+
+442
+00:43:53,680 --> 00:43:57,440
+ Surface just because of the word the position of your camera or something like that that's not
+
+443
+00:43:57,440 --> 00:44:01,680
+ Going to be a good way to go so we're going to solve this again in the least squares sense yeah
+
+444
+00:44:05,840 --> 00:44:07,520
+ Yeah i was thinking about that myself
+
+445
+00:44:07,520 --> 00:44:12,560
+ Oh look at that
+
+446
+00:44:12,560 --> 00:44:22,880
+ Wow it used to be like i had options 1 through 32 but now it actually just says chalkboard and
+
+447
+00:44:22,880 --> 00:44:26,480
+ Center light turn on i don't know that's good they just upgraded that this year
+
+448
+00:44:26,480 --> 00:44:29,840
+ Okay that was way too easy i should have done that before yeah
+
+449
+00:44:34,000 --> 00:44:34,500
+ I'm sorry
+
+450
+00:44:34,500 --> 00:44:43,840
+ This is a i'm i'm using this as an abstract so so i could i want to when i see this
+
+451
+00:44:43,840 --> 00:44:49,920
+ I think of a you know a standard linear algebra problem where typically in linear algebra when
+
+452
+00:44:49,920 --> 00:44:55,360
+ People write this they will use a and b matrix and what i was trying to convey is that the
+
+453
+00:44:55,360 --> 00:45:01,360
+ Problem we have with different variables that are you know rooted in geometry could be interpreted
+
+454
+00:45:01,360 --> 00:45:07,920
+ As our standard ax equals b where the a matrix is populated with the data from pm
+
+455
+00:45:07,920 --> 00:45:13,920
+ Okay and the b matrix is populated from psi right yeah
+
+456
+00:45:13,920 --> 00:45:24,080
+ That's exactly the so you got it right so so the reason i said almost he says is this going to give
+
+457
+00:45:24,080 --> 00:45:30,080
+ You a valid rotation matrix right so what i really want to write in an optimization world is i want
+
+458
+00:45:30,080 --> 00:45:37,040
+ To minimize the difference between the right and the left hand side this is basically my ax minus b
+
+459
+00:45:37,040 --> 00:45:46,640
+ Okay but i'll say p plus r p o m i minus
+
+460
+00:45:46,640 --> 00:45:52,000
+ Psi that's already rotated into the world frame okay
+
+461
+00:45:54,000 --> 00:46:01,040
+ Sum over i i'm going to minimize this over pr that's almost what i want to say okay that's
+
+462
+00:46:01,040 --> 00:46:08,640
+ Like the least squares version of that fitting but there's one important detail which is that not all
+
+463
+00:46:08,640 --> 00:46:14,000
+ Nine numbers you can't pick arbitrary nine numbers and get a valid rotation matrix
+
+464
+00:46:14,000 --> 00:46:20,720
+ Okay so what i'll do is i'll write in here r has to be part of s03
+
+465
+00:46:22,560 --> 00:46:25,840
+ As a constraint this is the special orthogonal group
+
+466
+00:46:25,840 --> 00:46:30,880
+ Three okay and you're going to understand it completely it just says it's a valid rotation matrix
+
+467
+00:46:30,880 --> 00:46:39,440
+ One way to write that is with additional constraints on the optimization problem
+
+468
+00:46:39,440 --> 00:46:47,200
+ So i can i can write this you know in the shorthand but what i in order to implement that
+
+469
+00:46:48,160 --> 00:46:55,040
+ What i would actually do is write the things that define a valid rotation matrix
+
+470
+00:46:55,040 --> 00:47:01,840
+ First of all r transpose has to be r inverse that's one constraint that makes a valid
+
+471
+00:47:01,840 --> 00:47:08,080
+ Rotation matrix and the other one is the determinant of r has to be positive one
+
+472
+00:47:08,080 --> 00:47:14,960
+ So this is the optimization problem we're working on yes
+
+473
+00:47:15,760 --> 00:47:20,480
+ [inaudible]
+
+474
+00:47:20,480 --> 00:47:25,920
+ It's a good that's a good question so it turns out that this constraint by itself
+
+475
+00:47:25,920 --> 00:47:32,880
+ ensures the determinant is either plus one or minus one but the minus one case can get you
+
+476
+00:47:32,880 --> 00:47:36,880
+ That would be called an improper rotation which is a rotation plus a reflection
+
+477
+00:47:36,880 --> 00:47:42,480
+ So if you want to stay with the proper rotations you need the extra constraint that's a good
+
+478
+00:47:42,480 --> 00:47:49,280
+ question. In practice we often we will drop this and then check for reflections
+
+479
+00:47:49,280 --> 00:47:52,320
+ afterwards and flip it back because this is an ugly constraint in general
+
+480
+00:47:52,320 --> 00:48:02,160
+ In fact if you think about this so this we said is in the decision variables the inside of this
+
+481
+00:48:02,160 --> 00:48:10,480
+ is a linear function which means the squared is a quadratic function so you should be thinking
+
+482
+00:48:10,480 --> 00:48:16,960
+ I've got you know a quadratic bowl like this that's a good case. What are these in terms of
+
+483
+00:48:16,960 --> 00:48:21,440
+ the constraints? I told you quadratic programming is beautiful if you have it but it's defined when
+
+484
+00:48:21,440 --> 00:48:26,960
+ you have linear constraints. Are these constraints linear? Right this is not a linear constraint
+
+485
+00:48:26,960 --> 00:48:35,520
+ It's also a quadratic constraint the way you can see that is you multiply by both sides you say
+
+486
+00:48:35,520 --> 00:48:42,480
+ R times R transpose equals I would be an equivalent writing of that and so the decision variables
+
+487
+00:48:42,480 --> 00:48:49,840
+ have to be zero or one to make all of the nine elements match okay but those are each of those
+
+488
+00:48:49,840 --> 00:48:56,400
+ the entries in this matrix is the squared of the original decision variables okay so this
+
+489
+00:48:56,400 --> 00:49:05,520
+ is a quadratic constraint. This constraint turns out to be cubic in the three by three matrices
+
+490
+00:49:05,520 --> 00:49:12,320
+ in two by two matrices it's just it's actually the same as it's a quadratic again okay but that
+
+491
+00:49:12,320 --> 00:49:20,000
+ can be in general cubic. So those are less good but it turns out that you know we have really
+
+492
+00:49:20,000 --> 00:49:25,680
+ really good solutions to this. This is like one potentially ugly hard class of optimization
+
+493
+00:49:25,680 --> 00:49:37,280
+ problems where this one we just we nail it okay. Let's actually do the 2D example. I think it's
+
+494
+00:49:37,280 --> 00:49:47,040
+ useful to understand the optimization landscape. What are we setting our code up to have to solve?
+
+495
+00:49:53,840 --> 00:49:57,280
+ Okay so let's say we're going to do the two by two version of it so in that case
+
+496
+00:49:57,280 --> 00:50:06,480
+ a two by two rotation matrix you'll often see it's cosine theta negative sine theta
+
+497
+00:50:06,480 --> 00:50:17,120
+ sine theta cos theta. We could try to search directly for theta but to keep our analogy to
+
+498
+00:50:17,120 --> 00:50:23,600
+ the 3D case what I'm going to instead do is I'm going to just name a variable. I'll call it
+
+499
+00:50:23,600 --> 00:50:36,080
+ what did I call it a for cosine theta so b for sine theta and also I'll parameterize my matrix
+
+500
+00:50:36,080 --> 00:50:46,960
+ as a negative b b a. Again I'm going to search over a and b. This is a trick that you can't quite do
+
+501
+00:50:47,600 --> 00:50:54,000
+ in so in 3D if I would have had I could have done a b c d for instance like this.
+
+502
+00:50:54,000 --> 00:51:01,200
+ It just happens that in 2D I know there's not enough degrees of freedom. I know that I can
+
+503
+00:51:01,200 --> 00:51:06,400
+ solve away c and d so I haven't done that but in 3D you don't get that same luxury.
+
+504
+00:51:06,400 --> 00:51:10,640
+ That was your question was it?
+
+505
+00:51:15,120 --> 00:51:18,720
+ Okay we'll come back to it when it when it makes sense then. Okay all right so
+
+506
+00:51:18,720 --> 00:51:28,080
+ so let's just multiply this out so what does r times r transpose equal i look like? Well that
+
+507
+00:51:28,080 --> 00:51:37,760
+ looks like a negative b b a times the transpose of that a negative b b a
+
+508
+00:51:40,720 --> 00:51:50,480
+ and that implies in order for this to equal 1 0 0 1 that implies a squared plus b squared has to equal
+
+509
+00:51:50,480 --> 00:52:04,960
+ 1 and it says that a b minus b a has to equal 0. Okay so that's a two quadratic constraints that
+
+510
+00:52:04,960 --> 00:52:10,800
+ define the rotation matrix being a valid rotation. Okay and this is the same thing is happening in
+
+511
+00:52:10,800 --> 00:52:19,040
+ 3D you know same same type of thing but you just have more equations flying around. It happens if
+
+512
+00:52:19,040 --> 00:52:26,160
+ you wanted to say that the determinant of this equals positive 1. In this case it's the same as
+
+513
+00:52:26,160 --> 00:52:37,760
+ this right this is also the determinant of r equals plus 1 and that's because I took out the
+
+514
+00:52:37,760 --> 00:52:44,720
+ improper rotations by my parameters roughly. Okay so yes.
+
+515
+00:52:53,120 --> 00:52:58,240
+ Yep yep sorry that's that was just me spelling it out but you're right that's trivially true.
+
+516
+00:52:58,240 --> 00:53:16,560
+ Yep also because I did the change of variables. Okay so I made a animation of a visualization
+
+517
+00:53:16,560 --> 00:53:22,320
+ of this okay so what I want you to think of is a objective that's a quadratic bowl
+
+518
+00:53:22,320 --> 00:53:26,880
+ and a constraint that is this quadratic constraint. So what does that look like?
+
+519
+00:53:26,880 --> 00:53:39,760
+ It went out of order but here it is. Okay this is what it looks like. Okay so I took a few points
+
+520
+00:53:39,760 --> 00:53:46,320
+ and I made it I made a you know my quadratic objective and I can and I just I took my points
+
+521
+00:53:46,320 --> 00:53:51,200
+ and I just rotated them I'm just trying to back it up bring it back so I can actually dynamically
+
+522
+00:53:51,200 --> 00:54:00,720
+ rotate what those points are. Okay and it's moving around and my goal is to find the bottom
+
+523
+00:54:00,720 --> 00:54:05,760
+ of the quadratic bowl but it has to be on this constraint so if you look down from the top
+
+524
+00:54:05,760 --> 00:54:11,520
+ this is the unit circle constraint which looks like a cylinder I mean I project it up okay so I
+
+525
+00:54:11,520 --> 00:54:17,760
+ have to find the lowest point on the on the parabola that intersects with the red constraint
+
+526
+00:54:18,560 --> 00:54:23,440
+ and it turns out in the case where there's no noise the minimum is always going to be on the
+
+527
+00:54:23,440 --> 00:54:29,680
+ manifold right because the best rotation that you could find is going to have it's going to be a
+
+528
+00:54:29,680 --> 00:54:35,840
+ valid rotation. Okay so in this case is actually the good case now as soon as you add noise that
+
+529
+00:54:35,840 --> 00:54:42,240
+ the parabola could move off the unit circle and you're going to need to project it back onto the
+
+530
+00:54:42,240 --> 00:54:46,960
+ unit circle that's the fundamental geometry of this problem. It's also it's very it's a
+
+531
+00:54:46,960 --> 00:54:51,280
+ very famous problem it's the point correspondence problem the Waba problem there's it comes up in
+
+532
+00:54:51,280 --> 00:54:56,400
+ all kinds of fields it's a famous problem of this solve a quadratic objective onto the
+
+533
+00:54:56,400 --> 00:54:59,200
+ unit circle or the SO3 constraint. Okay
+
+534
+00:54:59,200 --> 00:55:05,280
+ interestingly yeah go ahead
+
+535
+00:55:05,280 --> 00:55:12,400
+ it's only a little bit hard so it is harder to do
+
+536
+00:55:13,520 --> 00:55:18,320
+ basically I don't know that I don't have the simple relationship to just know that this is
+
+537
+00:55:18,320 --> 00:55:24,320
+ negative sign and theta so I would have to use nine numbers instead of I just used two numbers here
+
+538
+00:55:24,320 --> 00:55:35,200
+ in three by three I'll you know have a b c d e f right
+
+539
+00:55:38,080 --> 00:55:45,280
+ and then the the r transpose r is still quadratic the determinant is cubic
+
+540
+00:55:45,280 --> 00:55:54,640
+ for a three by three matrix yeah okay but the geometry is roughly the same yeah yes
+
+541
+00:55:54,640 --> 00:56:03,680
+ that's this constraint and the determinant constraint so yeah
+
+542
+00:56:03,680 --> 00:56:13,920
+ yeah okay interestingly let me just get one thing more thing in and then so interestingly
+
+543
+00:56:13,920 --> 00:56:19,040
+ we could have parameterized the whole thing directly with theta okay that's only one
+
+544
+00:56:19,040 --> 00:56:23,360
+ variable in 2d of course in 3d we'd pick quaternions or we'd pick one of the other
+
+545
+00:56:23,360 --> 00:56:27,920
+ representations in this case it's maybe illustrative to see that if we just did it in
+
+546
+00:56:27,920 --> 00:56:32,160
+ terms of theta what does that cost function look like I threw that on the plot too
+
+547
+00:56:32,160 --> 00:56:37,040
+ no but okay
+
+548
+00:56:37,040 --> 00:56:47,280
+ and it is similarly beautiful and good okay so now there's no constraints I don't if I were to
+
+549
+00:56:47,280 --> 00:56:52,720
+ just parameterize it with theta then I would always get a valid rotation out I don't need this
+
+550
+00:56:54,080 --> 00:56:59,120
+ so I could just write my objective but the objective is no longer quadratic it's a
+
+551
+00:56:59,120 --> 00:57:02,960
+ it's a non-convex objective it's got sines and cosines in the middle of it
+
+552
+00:57:02,960 --> 00:57:07,680
+ and the sines and cosines multiplied out you get you get cosine squared whatever you know
+
+553
+00:57:07,680 --> 00:57:14,480
+ to the second power gives you a cost landscape that looks like this and if I you know move my
+
+554
+00:57:14,480 --> 00:57:20,960
+ theta that rotated the two relative to each other then the minimum moves correspondingly
+
+555
+00:57:22,560 --> 00:57:29,440
+ luckily you know all of the minima are good in this case they're all just two pi off so just
+
+556
+00:57:29,440 --> 00:57:35,440
+ you know similarly this is a good optimization if I start with an initial guess and I and I go down
+
+557
+00:57:35,440 --> 00:57:39,840
+ then I'm always going to find a good answer in the no noise case things are going to behave
+
+558
+00:57:39,840 --> 00:57:43,920
+ differently not only when you have noise but also when you have additional constraints like for
+
+559
+00:57:43,920 --> 00:57:47,280
+ instance if you don't want to penetrate if you don't want your object to penetrate the world or
+
+560
+00:57:47,280 --> 00:57:50,640
+ something like this that becomes a harder constraint and we'll choose we'll see the
+
+561
+00:57:50,640 --> 00:57:53,040
+ differences between those representations more yeah
+
+562
+00:57:53,040 --> 00:58:04,080
+ in the two by two case it is quadratic in the three by three it's not quadratic
+
+563
+00:58:04,080 --> 00:58:11,280
+ but what we're going to do is ignore it the rotation matrix is sufficient to get determinant
+
+564
+00:58:11,280 --> 00:58:17,760
+ plus or minus one we're going to solve if our if our determinant was minus one that we're going to
+
+565
+00:58:17,760 --> 00:58:22,720
+ we're going to multiply by a negative one in one of the in one of the yeah so basically it's whether
+
+566
+00:58:22,720 --> 00:58:26,960
+ you have a right-handed rule or a left-handed rule if you end up with a left-handed rule you flip it
+
+567
+00:58:26,960 --> 00:58:32,000
+ back to a right-handed rule and you call it a day yeah so that's how we get around that one but
+
+568
+00:58:32,000 --> 00:58:40,640
+ you're right it's cubic okay so that was just searching for rotations I left out the the
+
+569
+00:58:40,640 --> 00:58:45,920
+ in this simple example I left out the positions but one of the most important insights I want you
+
+570
+00:58:45,920 --> 00:58:53,520
+ to take away today is that actually you can separate solving rotations from solving for the
+
+571
+00:58:53,520 --> 00:59:03,360
+ translations okay why is that so registering the points the key the key insight and we already had
+
+572
+00:59:03,360 --> 00:59:09,680
+ it in the first lecture about spatial transforms remember I made you I did a check yourself kind
+
+573
+00:59:09,680 --> 00:59:18,320
+ of thing saying the position the the position of b relative to a only depends on the rotation
+
+574
+00:59:18,320 --> 00:59:22,000
+ between those two frames not on the position because it's already it's already a vector
+
+575
+00:59:22,000 --> 00:59:28,000
+ the base of that vector is is you know in rooted in the coordinate system so the
+
+576
+00:59:28,000 --> 00:59:34,000
+ the relative positions of two points only depends on the rotation
+
+577
+00:59:34,960 --> 00:59:42,960
+ so
+
+578
+00:59:42,960 --> 00:59:59,120
+ the trick is if you just try to fit every point by itself then then you have to solve for the
+
+579
+00:59:59,120 --> 01:00:04,640
+ translation and rotation separately but if you just take the difference between two points that
+
+580
+01:00:04,640 --> 01:00:09,440
+ quantity does not depend on the translation of the object you could take an object you know
+
+581
+01:00:09,440 --> 01:00:16,080
+ I don't know in in building 32 or an object here okay and the the absolute
+
+582
+01:00:16,080 --> 01:00:20,080
+ translation does not affect the relative point only the orientation
+
+583
+01:00:23,760 --> 01:00:28,640
+ so the trick is you subtract out some nominal point in the middle of your point cloud
+
+584
+01:00:28,640 --> 01:00:34,720
+ from all your points you solve for the rotations and then at the end now that you know the rotations
+
+585
+01:00:34,720 --> 01:00:41,600
+ you can easily figure out the positions okay you can solve for the rotations separately
+
+586
+01:00:41,600 --> 01:00:49,680
+ you guys didn't look like you got that I mean I'm not trying to but you didn't look as happy as a
+
+587
+01:00:49,680 --> 01:00:55,040
+ as a you know on average let's just say yeah yes
+
+588
+01:00:55,040 --> 01:01:09,040
+ that is true that is true
+
+589
+01:01:09,040 --> 01:01:14,400
+ so so so you said it almost right and I have to re-say it for the people on the video so
+
+590
+01:01:15,440 --> 01:01:20,560
+ so we're going to take the the model point cloud we'll find the centroid of the model point cloud
+
+591
+01:01:20,560 --> 01:01:26,080
+ and write all of the model points relative to the model centroid and I'll take the central I'll take
+
+592
+01:01:26,080 --> 01:01:30,000
+ all those scene points I'll take the scene centroid and write all of theirs relative to
+
+593
+01:01:30,000 --> 01:01:34,080
+ the scene centroid and then I'm going to try to take those relative coordinates and rotate them
+
+594
+01:01:34,080 --> 01:01:39,440
+ until they match and now I have an easy problem to just snap the positions into alignment so it's
+
+595
+01:01:39,440 --> 01:01:54,080
+ a two-step process yes so so the question is why an arbitrary point so it the key insight is that
+
+596
+01:01:54,080 --> 01:01:58,640
+ it's the relative points that that match it turns out there is a right kind of a natural point to
+
+597
+01:01:58,640 --> 01:02:02,720
+ pick which is the centroid because then it actually just drops right out of the out of
+
+598
+01:02:02,720 --> 01:02:12,640
+ the equations in a beautiful way yeah yeah it's the average of the points it's literally the
+
+599
+01:02:12,640 --> 01:02:26,160
+ average of the data points yeah yes in 3d also it's only rotations that affects the relative
+
+600
+01:02:26,160 --> 01:02:33,200
+ points if you have a you know this point relative to this point then it the only thing that changes
+
+601
+01:02:33,200 --> 01:02:38,320
+ that number you know changing the coordinate system doesn't you know the location of the
+
+602
+01:02:38,320 --> 01:02:42,160
+ coordinate system does not change the relative number it's only the rotations
+
+603
+01:02:49,120 --> 01:02:53,840
+ in 3d it works fine yeah okay so quick quick quiz so
+
+604
+01:02:53,840 --> 01:03:01,840
+ what happens if you have a symmetric object right so I drew one in sort of intentionally
+
+605
+01:03:01,840 --> 01:03:06,880
+ that had a you know an asymmetry there what if it was a box
+
+606
+01:03:06,880 --> 01:03:17,200
+ so so she says it's impossible to know you know if it was if it was four ways symmetric
+
+607
+01:03:17,200 --> 01:03:23,520
+ in an actual box then it's impossible to know but so you're right of course but the thing I just want
+
+608
+01:03:23,520 --> 01:03:28,720
+ to make sure it's clear that so far I've assumed known correspondences so in the case of known
+
+609
+01:03:28,720 --> 01:03:35,120
+ correspondences there is no symmetry it cannot be right if someone told me that this point
+
+610
+01:03:35,120 --> 01:03:39,840
+ corresponds to that face and there is always a unique solution right and the reason that's sort
+
+611
+01:03:39,840 --> 01:03:43,040
+ of maybe puzzling is I'm showing you these plots that look like they have a unique solution
+
+612
+01:03:43,840 --> 01:03:50,000
+ even in the case of something that has symmetries and the reason for that it's not a it's not a trick
+
+613
+01:03:50,000 --> 01:03:53,920
+ that function doesn't change if your object suddenly becomes symmetric it's because it's
+
+614
+01:03:53,920 --> 01:03:59,440
+ the known correspondences case okay let me let me keep moving a little bit so I want to get
+
+615
+01:03:59,440 --> 01:04:04,000
+ through a couple things all right and we'll ask you a couple questions about uniqueness and the like
+
+616
+01:04:04,000 --> 01:04:13,200
+ on the problem okay is that is that a basic idea clear if someone gives me the correspondences
+
+617
+01:04:13,200 --> 01:04:23,600
+ then I have a very good algorithm which is just solving this that that can can find the optimal
+
+618
+01:04:23,600 --> 01:04:29,360
+ solution in fact even the solving the quadratic thing projecting onto the unit circle you don't
+
+619
+01:04:29,360 --> 01:04:33,920
+ have to just you know solve and then project you actually can solve it beautifully and it turns out
+
+620
+01:04:33,920 --> 01:04:39,200
+ the solution is given by this by the singular value decomposition okay so the the wobble problem is
+
+621
+01:04:39,200 --> 01:04:45,200
+ famously solved by the singular value decomposition if you have extra constraints then you're going to
+
+622
+01:04:45,200 --> 01:04:50,960
+ use extra machinery typically a very powerful way to write that is as a semi-definite program which
+
+623
+01:04:50,960 --> 01:04:56,800
+ we'll get to later okay but but these kind of quadratic constraints are a particularly nice
+
+624
+01:04:56,800 --> 01:05:02,960
+ case of a semi-definite program okay but in in the in the unconstrained case or you know only this
+
+625
+01:05:02,960 --> 01:05:10,400
+ constraint this is like the the svd if you know the basic picture of the geometry of svd right
+
+626
+01:05:10,400 --> 01:05:14,880
+ it's about finding the coordinate you warp it to the circle you rotate it and you warp it back
+
+627
+01:05:14,880 --> 01:05:18,960
+ okay well that warping to the circle is exactly the warping that happens
+
+628
+01:05:18,960 --> 01:05:24,240
+ of projecting onto the unit circle okay so it's it turns out to be exactly related to the svd
+
+629
+01:05:27,600 --> 01:05:31,600
+ okay so equipped with that we now have the most important
+
+630
+01:05:31,600 --> 01:05:37,520
+ algorithm for sort of geometric perception which is the iterative closest point
+
+631
+01:05:37,520 --> 01:05:52,400
+ the biggest assumption we made so far was this known correspondence
+
+632
+01:05:53,120 --> 01:06:00,160
+ right someone told me the the relative correspondences if i instead have to solve
+
+633
+01:06:00,160 --> 01:06:07,280
+ for the correspondences then then i have an extra work to do and just to give my
+
+634
+01:06:07,280 --> 01:06:10,240
+ notation let's define a correspondence vector okay
+
+635
+01:06:17,360 --> 01:06:26,240
+ so i'll use a correspondence vector c one for it's the length of num points times one okay
+
+636
+01:06:26,240 --> 01:06:36,400
+ the num points by one vector and the ith element takes an integer value and i'll say
+
+637
+01:06:36,400 --> 01:06:42,000
+ the ith element is an integer j if
+
+638
+01:06:44,320 --> 01:06:48,400
+ point si corresponds
+
+639
+01:06:48,400 --> 01:06:52,800
+ to model
+
+640
+01:06:52,800 --> 01:06:59,600
+ point mj
+
+641
+01:06:59,600 --> 01:07:08,720
+ and now i was careful that to choose that so it doesn't have to be a one-to-one mapping
+
+642
+01:07:08,720 --> 01:07:13,680
+ right i'm going to try to power through a little bit more so it doesn't have to be a
+
+643
+01:07:13,680 --> 01:07:20,160
+ one-to-one mapping there could be model points that don't have a corresponding scene point
+
+644
+01:07:20,160 --> 01:07:24,080
+ which is important because oftentimes if you have a camera you're just looking at one side
+
+645
+01:07:24,080 --> 01:07:28,960
+ you're not going to have scene points all the way around the object okay but we're saying that every
+
+646
+01:07:28,960 --> 01:07:34,000
+ scene point corresponds to a model there's other choices people sometimes make where the
+
+647
+01:07:34,000 --> 01:07:37,600
+ where you assume that every model goes to a scene and that all of them have implications
+
+648
+01:07:37,600 --> 01:07:44,080
+ but in this we're going to choose it like like this okay i could then just write my optimization
+
+649
+01:07:44,080 --> 01:07:47,920
+ i'm going to search over x
+
+650
+01:07:47,920 --> 01:08:01,360
+ using that notation minus p si squared but now i have to search i have to find both ci
+
+651
+01:08:03,360 --> 01:08:10,080
+ which is this discrete thing right this is an it's a function on the elements of one to
+
+652
+01:08:10,080 --> 01:08:12,320
+ num model points
+
+653
+01:08:12,320 --> 01:08:26,400
+ that's the set that lives in so it's kind of a weird thing to optimize over and x in se3
+
+654
+01:08:29,200 --> 01:08:37,760
+ so how am i going to optimize that right it looks like kind of a quadratic objective but with a
+
+655
+01:08:37,760 --> 01:08:42,240
+ combinatorial aspect of it of trying to figure out all these correspondences simultaneously and you
+
+656
+01:08:42,240 --> 01:08:46,800
+ can do that we've had paper that does that kind of thing where we're trying to do the
+
+657
+01:08:46,800 --> 01:08:52,400
+ combinatorial search at the same time as the continuous search but it's very expensive optimization
+
+658
+01:08:55,120 --> 01:09:03,440
+ so the icp algorithm famously does it by by splitting it into two parts
+
+659
+01:09:04,240 --> 01:09:09,760
+ so
+
+660
+01:09:09,760 --> 01:09:32,320
+ in many optimizations kind of like this it's often the case that if you fix one set of variables then
+
+661
+01:09:32,320 --> 01:09:37,120
+ the optimization is easy fix another set of variables the other optimization is easy and
+
+662
+01:09:37,120 --> 01:09:41,280
+ then you end up with natural algorithms that alternate between the two optimization problems
+
+663
+01:09:41,280 --> 01:09:45,920
+ and that's exactly what we'll do here because if the correspondences are known then the
+
+664
+01:09:45,920 --> 01:09:50,320
+ optimization is exactly what we did a minute ago that's the point registration with known
+
+665
+01:09:50,320 --> 01:09:56,160
+ correspondences and it has a beautiful solution and then the other side of it is if the transform
+
+666
+01:09:56,160 --> 01:10:05,520
+ is known then finding the corresponding points is just a nearest neighbor problem okay so if we have
+
+667
+01:10:05,520 --> 01:10:18,240
+ an initial guess for x then we can find what they step one solve the nearest neighbor problem
+
+668
+01:10:18,800 --> 01:10:25,040
+ so c our new ci is going to be just be the
+
+669
+01:10:25,040 --> 01:10:31,440
+ we can just try all the possible correspondences basically i'm going to say
+
+670
+01:10:31,440 --> 01:10:39,520
+ x p o n j argmin over j
+
+671
+01:10:41,520 --> 01:10:48,480
+ x p o n j argmin over j
+
+672
+01:10:48,480 --> 01:10:57,520
+ minus psi squared so in the if for a small point cloud you can just literally try all the possible
+
+673
+01:10:57,520 --> 01:11:01,360
+ correspondences for this when x is known you can just measure the distance and take the smallest
+
+674
+01:11:01,360 --> 01:11:06,640
+ one okay when it gets bigger you start using efficient nearest neighbor data structures
+
+675
+01:11:06,640 --> 01:11:11,840
+ like kd trees and stuff like that okay but this is a fast nearest neighbor query
+
+676
+01:11:11,840 --> 01:11:17,120
+ and then the second step is given correspondences
+
+677
+01:11:17,120 --> 01:11:33,360
+ solve for x and then you just repeat until the convergence okay
+
+678
+01:11:33,360 --> 01:11:42,160
+ so let's see what that looks like so i did not stand in the middle of here right here
+
+679
+01:11:42,160 --> 01:11:51,200
+ okay so this is the kind of plot i'm going to show you here so this was the known correspondence one
+
+680
+01:11:51,200 --> 01:11:58,080
+ i picked a lovely salmon color for the random object with random points in 2d and known points
+
+681
+01:11:58,080 --> 01:12:04,560
+ and then i rotated it and translated it by some random quantities and got my blue scene points
+
+682
+01:12:04,560 --> 01:12:11,600
+ in the first step we have a known correspondence problem and the registration just works exactly
+
+683
+01:12:11,600 --> 01:12:17,840
+ okay that's the known correspondence version now if i take another point another example here with
+
+684
+01:12:17,840 --> 01:12:26,560
+ my scene my my model points and my scene points if i start the iter the icp algorithm then i think i
+
+685
+01:12:26,560 --> 01:12:32,160
+ can just step through here we go okay the first thing is i do is i solve that given that initial
+
+686
+01:12:32,160 --> 01:12:37,120
+ guess which was a bad initial guess i you know this is the initial guess here i just compute
+
+687
+01:12:37,120 --> 01:12:47,520
+ the nearest neighbors for every um every scene point i find the nearest point okay and then i
+
+688
+01:12:47,520 --> 01:12:52,560
+ given those correspondences i try to solve for the new optimization and it doesn't do very well
+
+689
+01:12:52,560 --> 01:12:59,520
+ because my correspondences were all wrong but the hope is that it gets you closer okay and then i
+
+690
+01:12:59,520 --> 01:13:07,280
+ get a new chance at my correspondences and many times this converges beautifully in a small number
+
+691
+01:13:07,280 --> 01:13:11,040
+ of alternations because you know at some point your correspondences are correct and you snap
+
+692
+01:13:11,040 --> 01:13:26,800
+ right into place yeah yes um so just like uh you can separate translation and rotation scaling can
+
+693
+01:13:26,800 --> 01:13:36,080
+ be separated too and the trick is so just like the observation is that um the the relative positions
+
+694
+01:13:36,080 --> 01:13:42,720
+ only depend on rotations it turns out the difference of of distances only depends on scale
+
+695
+01:13:42,720 --> 01:13:48,400
+ so if you if you play that trick one more time you get something that only depends on scale so
+
+696
+01:13:48,400 --> 01:13:54,320
+ you can fit scale first and then fit rotations and then fit translations i actually cite that
+
+697
+01:13:54,320 --> 01:13:58,640
+ in the notes because i think that's part of the story yeah
+
+698
+01:13:59,200 --> 01:14:19,440
+ yes good so so this algorithm can absolutely get stuck in local minima i i you know there's a in
+
+699
+01:14:19,440 --> 01:14:24,240
+ the in the code you can play with it's just random so the fact that it's mostly translation
+
+700
+01:14:24,240 --> 01:14:28,400
+ it's probably because i wanted one that fits on the slide but i didn't think of it that way now
+
+701
+01:14:28,400 --> 01:14:34,240
+ i feel like i picked a bad example but uh yeah so so it but it absolutely can get stuck in local
+
+702
+01:14:34,240 --> 01:14:38,960
+ minimum yes if you pick the wrong correspondences you make not enough change you could get the same
+
+703
+01:14:38,960 --> 01:14:45,200
+ correspond same wrong correspondences back and that will never leave right uh so there are many
+
+704
+01:14:45,200 --> 01:14:48,640
+ ways and we're going to talk about those more next time but there are many ways you can try
+
+705
+01:14:48,640 --> 01:14:52,640
+ random initializations of correspondences but you can also there are more robust methods that can
+
+706
+01:14:52,640 --> 01:14:54,640
+ they can try to avoid some of those local minima yeah
+
+707
+01:14:54,640 --> 01:15:08,640
+ so and we're going to talk about noise uh also next time it's actually it's a fairly subtle
+
+708
+01:15:08,640 --> 01:15:14,560
+ question and i had a i had a slide i blew past real quick but uh just to show you some like real
+
+709
+01:15:14,560 --> 01:15:22,400
+ world noise is is extremely structured so if you think about noise as like adding gaussian values
+
+710
+01:15:22,400 --> 01:15:28,000
+ to all of those values independently that's not the way cameras have noise cameras tend to have
+
+711
+01:15:28,000 --> 01:15:32,800
+ like this is the actual depth image and this is like the the depth image you get out of a camera
+
+712
+01:15:32,800 --> 01:15:37,440
+ they have dropouts like pixels that are just mixing and missing in the middle they will have
+
+713
+01:15:37,440 --> 01:15:42,080
+ swaths of like a shiny material might have very noisy things and then they have a lot of noise
+
+714
+01:15:42,080 --> 01:15:48,320
+ shiny material might have very noisy things and a you know a flat material could could not so so
+
+715
+01:15:48,320 --> 01:15:54,080
+ the the answer to your question requires thinking a little bit about the types of noise yeah
+
+716
+01:16:09,280 --> 01:16:14,160
+ yep just alternate back and forth between when x is fixed the problem is easy its nearest neighbors
+
+717
+01:16:14,160 --> 01:16:19,280
+ when the correspondences are fixed then the problem is easy it's this wobble problem
+
+718
+01:16:19,280 --> 01:16:31,600
+ that's true you're solving many optimization problems in the loop the one the this one is
+
+719
+01:16:31,600 --> 01:16:36,880
+ so easy that it becomes an svd it's a called svd so it's i wouldn't even call it an optimization
+
+720
+01:16:36,880 --> 01:16:42,720
+ problem in the implementation it's very fast even for very big point clouds but yes it is it is
+
+721
+01:16:42,720 --> 01:16:47,760
+ alternating between those and let me just i'll take home with one more example here so yeah these
+
+722
+01:16:47,760 --> 01:16:55,040
+ are i've got lots of examples of real noisy things but you're gonna play with the bunny because
+
+723
+01:16:55,040 --> 01:17:01,280
+ everybody who ever does icp makes the stanford bunny snap into alignment with another stanford
+
+724
+01:17:01,280 --> 01:17:06,800
+ bunny that's just like you know early in computer graphics the stanford bunny sort of did a
+
+725
+01:17:06,800 --> 01:17:11,280
+ winner take all thing and it just won out and there's everybody uses the stanford bunny okay
+
+726
+01:17:11,280 --> 01:17:17,920
+ so you'll do that on your problem set but just to show you even in the examples i i i showed you
+
+727
+01:17:17,920 --> 01:17:24,240
+ like the loading a dishwasher for instance if you watch carefully at what happens so there was a
+
+728
+01:17:24,240 --> 01:17:29,040
+ perception system that tried to figure out where the mug was to begin with okay but as the robot
+
+729
+01:17:29,040 --> 01:17:33,600
+ moves even in this sort of state-of-the-art perception system okay uh state-of-the-art a
+
+730
+01:17:33,600 --> 01:17:43,200
+ few years ago i guess but um watch this that was running icp i mean that wasn't the icp updates but
+
+731
+01:17:43,200 --> 01:17:48,400
+ it actually when it goes there it has a model of the mug back back in the day okay and it actually
+
+732
+01:17:48,400 --> 01:17:54,480
+ tried to align the model of the mug before going into to close the the difference between the
+
+733
+01:17:54,480 --> 01:17:58,560
+ faraway cameras rough estimate of the where the mugs were and actually making the pick
+
+734
+01:17:58,560 --> 01:18:02,640
+ and people still do that today leslie and tomas we were in a meeting with leslie tomas the other
+
+735
+01:18:02,640 --> 01:18:06,800
+ day and they're like we're going to do icp for this and and the young students were like okay
+
+736
+01:18:06,800 --> 01:18:11,200
+ that's kind of old school but uh but it still works like it still works really well yeah
+
+737
+01:18:11,200 --> 01:18:25,360
+ yep so this is part one part two is like how do you do more robust versions of this with partial
+
+738
+01:18:25,360 --> 01:18:31,360
+ views and outliers and noise yep so we're going to talk about that next time good i'll answer you
+
+739
+01:18:31,360 --> 01:18:33,320
+ I'm sure you can come out a bit of effort.
+

@@ -1,0 +1,739 @@
+ All right, welcome back everybody
+ If anybody's out there, so I'm I could use the Ethernet cable if anybody's back there in the booth
+ But somehow my Wi-Fi is not working again
+ Okay, so today we're transitioning into perception so let me even just as a quick setup right
+ Last time we built an almost complete
+ Manipulation system if you will right we we had our hardware
+ abstraction our hardware simulation
+ And we built on top of that
+ Our differential inverse kinematics block which
+ Well after some integration
+ sent us IWA commands
+ IWA positions
+ The diff IK block needed to know the current IWA state so we had an important line here
+ Okay, but the whole thing was predicated on
+ Something over here, which just had a gripper velocity trajectory coming in
+ Okay, and although that's
+ That's a complete closed loop system
+ Hidden inside when we designed the gripper trajectories and the and then differentiated them to get the gripper velocities
+ We made a big assumption, which is that we knew where the red brick was okay?
+ So everything was sort of based on this
+ someone told me exactly where in the world I needed to reach to and
+ That's just not good enough right at some point. We have to now
+ Use our sensors to figure out where the brick is to do the work so so far. We assumed a perception Oracle, right?
+ someone you could just query and tell us where the
+ object was in the world frame and
+ We were using
+ some of the the the cheat ports like we could tell
+ The body pose directly from of any object in the world right in our hardware station
+ And so the goal today is to stop using those cheat ports and start using cameras instead and close the simplest loop we can
+ around that whole system
+ That they could actually be run on a real robot
+ So I'm going to download
+ Ridiculously big mesh cat animation over my why over my phones
+ 5g and burn my data plan for the month, but hey there we go
+ It's ridiculously big just because the mesh the the
+ The YCB objects if you know what these are these this is a mustard bottle from the YCB objects, okay database a
+ Little funny here, okay
+ The meshes or the sorry the material files the texture maps for these files are like 50 megabytes
+ So it takes a minute to download okay? This is roughly what we're doing almost the same as what we did last time
+ The big difference is that we're going to have cameras now in the scene these are cameras I
+ brought some I don't always have cameras in my pocket, but
+ Today I do okay. Yeah, they're like this okay. This is the 415. This is the 435 real sense cameras
+ Okay, you just USB plug them in
+ You're good to go. They're amazing depth cameras. I'm going to tell you a little bit about them today, okay?
+ What's going on here?
+ But that's what you see in the scene are these depth cameras sprinkled throughout a bunch of them actually we put three on each bin
+ You'll understand why
+ Okay, and then mostly this is just the same kind of thing we did before where we start off we figure out
+ Where the mustard bottle is that's the role of perception
+ We then we do our standard gripper trajectory and make our move from part a to point B now
+ What the heck is this thing that's getting left behind?
+ Okay
+ That thing is a point cloud
+ Which is computed by reading the cameras at time zero?
+ okay, and
+ Doing some initial processing on the data that you get back from those cameras in order to make the decision about where to grasp
+ Okay, so I bought at the moment of perception. I went ahead and you know put those in
+ Okay, I have observations like this
+ And then I have a model of what those I expect those observations to be and they end up matching
+ Okay, we'll do all that and by the end of the lecture
+ Okay, so we had gonna think in terms of these point clouds today
+ Okay, so oh no not again
+ All right, so like I said today is the first day of perception
+ We're gonna do a lot of perception throughout the course today is kind of a more geometric view of perception
+ we're not just learning a deep network that goes from image to
+ Whatever representation we want we're gonna start by doing the geometry version now
+ even though
+ Going from image with through a deep network directly is I think by all accounts
+ That's the best way to do things today
+ There's still a lot of the a lot of perception tools that have baked in them
+ Whether they're neural network or not some of the fundamentals of geometry
+ It focus it builds beautifully on what we did last time. I think I'm in the kinematics
+ okay, and if you're if you're interested in ideas like neural radiance fields or
+ putting baking 3d priors
+ Geometric priors into your neural networks and everything like this. This is going to be the foundation you need to do that kind of work
+ So today we'll do it's a slightly old-school version of perception, but it's the foundation
+ Okay, so we'll do incremental iterative closest point. Yes
+ We will you will tell you to talk about where nerf comes into the stack later. Yeah, there's places where it makes a lot of sense
+ Okay, so
+ Everybody knows about the deep learning revolution. I think a few less people
+ Realize how much of a geometry revolution we've had at the same time
+ Okay, and it's it was powered partly by deep neural networks
+ But even before that it was powered by I don't know autonomous driving companies
+ Really caring about where the pedestrians were in the space people building a lot better sensors
+ I mean virtual reality and augmented reality were a big driver, too
+ Okay, and we started getting pretty incredible things that had no no neural networks involved
+ Okay, this is even I don't know eight years ago or something like this dynamic fusion where we could we started having
+ algorithms that could run in real time and
+ build
+ instantaneous 3d
+ Reconstructions of the perceptions they were seeing and track, you know people moving around
+ Building sort of these beautiful 3d models and that was a culmination of
+ algorithmic work of new sensors
+ And in particular the sensors were not only higher quality, but they were faster
+ Faster to the point where if the world doesn't change too much between each frame then you can write a simpler algorithm to do
+ Tracking and reconstruction. Okay, so there's just this massive revolution in geometry that's happened sort of alongside
+ the deep learning revolution and
+ Interestingly, they've come together. So now, you know, there's people baking in geometric priors into neural networks and the like
+ Okay, so it started with
+ Sensors that were thinking, you know, maybe autonomous driving related. So you see a valedine actually spot has a valedine you can stick on top
+ Of it. It's still a
+ relevant sensor today. These are our lidars laser being shot out and
+ Bouncing back and estimating the distance from each point of light to the to the target
+ Okay, and some of these reconstructions are just absolutely amazing
+ You'll see an autonomous car driving through, you know City Street and hundreds of yards into the future
+ You can see like a cat walking around the bush or something just incredible what kind of resolution and range that those sensors
+ have
+ That's like the Luminar particularly a 500 meter range crazy. Okay
+ Indoors though, you'll tend to see a different type of laser scanner
+ These Hakuyu's were were very very popular are still very very popular for
+ Sort of indoor navigation where the lighting conditions are not as severe. The payloads can be a lot smaller
+ The energy budget is maybe smaller. Okay
+ But lidar is definitely one of the tools that sort of enabled this sort of revolution
+ but alongside that were cameras that
+ Didn't only return depth, you know lists of numbers that are just the depth but were coupled
+ RGB
+ Red green blue, you know color images with depth images and you get those in a handful of different ways
+ some of them are
+ actually just using stereo processing of the
+ depth of the RGB images, so
+ If you take an image with your right eye and an image with your left eye and you know the relative
+ Position of your eyes you can do some quick stereo matching
+ It says well this block over here looks a lot like the blocks on over here
+ And therefore the depth of that those pixels must be at a certain range. Okay
+ People do that now on FPGAs for instance on specialized hardware
+ So that you can package it nicely into a into a block that basically is just outputting both an image and a depth
+ This is the Carnegie multi-sense is actually the head that we carried around in Atlas the entire time
+ you'll see
+ Bumblebee point grades from bumblebee. There's a lot of
+ Systems that are doing like that. Okay, let me go through the first round first
+ Okay
+ another line of the
+ Tools like this the connect sensor was a big deal when that came out not only because it worked very well
+ but because it was so inexpensive right so somehow the
+ Home entertainment gaming world kind of revolutionized robotics by building a sensor that we needed. Okay, that was fantastic
+ the first version of connect worked with
+ Structured light so it's actually about as simple. I remember I mean this was an idea for
+ Decades and decades. Okay, but it became practical with the Microsoft Connect where you actually just project patterns
+ The patterns will deform on the object you can back out from the geometry something about the depth
+ Axion there's a bunch of different hardware manufacturers that that built
+ Structured light based depth cameras
+ The ones that I showed you here like the 415 will talk the most about is actually
+ Projected texture stereo. Okay, the problem with just taking two camera images
+ If you're looking at a white wall, for instance, there's nothing to compare and contrast between the two images
+ Okay, so but if you put if you project
+ In infrared for instance that you know something that will just put a little bit of a pattern
+ Then you can even in low contrast situations. You can get depth to come back out
+ One of the reasons that's nice compared to some of the other options like the time of flight. I'll show you next
+ Is that these these cameras can work even if they're looking at the same scene and they won't interfere with each other
+ Right. So sometimes some of these cameras if they're sending out pings or something like this
+ They can actually actively interfere with each other unless you synchronize them very very carefully
+ One of the projected texture you can just point them and forget. Okay
+ And then these days there really is a massive movement that was powered by deep learning
+ Which is you can just go straight from RGB
+ Okay
+ So a lot of times even if you only have a cell phone camera and you don't have it
+ Actually the cell phone cameras have depth sensors a lot of a lot of true depth on the iPhone for instance
+ Okay, a lot of times you can actually build beautiful 3d models even from a single camera
+ You don't even need the stereo pair. There's there's enough cues, of course from movement and other things, but there's also
+ There's additional information that can be available if you
+ Read everything on the internet. That's not what's happening in this particular one. This is a
+ Neural radiance field we'll talk about later
+ But just to say this is one of the first videos of the neural radiance fields showing that just from taking camera images
+ You could stitch together a camera image
+ And generate new images from new viewing angles
+ And there's also lines of work in
+ Monocular depth that for instance will just have
+ You know a very clever thing to do for instance is to drive a car around with two cameras on it
+ And then just use the second camera to
+ Use stereo matching from there, but just learn a model
+ From the single camera to the depth and then you can just
+ You know use stereo matching from there, but just learn a model
+ From the single camera to the depth
+ And then you know when it's time to make a hundred million of them because you're gonna
+ Make it into a product you just take away that extra camera and just use the learned mapping from
+ Image to depth
+ So monocular depth is a
+ Surprisingly effective technology now
+ Okay, now is a good time if you have a question or anything
+ [inaudible]
+ I don't actually know what's in the iPad so the
+ I know that there's a true depth sensor here if you look at you know at the back of these there's
+ They're projecting something here and they have the ability to do
+ You do have a depth camera on your iPhone
+ I don't have an iPad to look at
+ [inaudible]
+ Okay so the question was the second question was about the lidar on spot so typically the
+ The velodynes on a car or on spot I didn't the spot I brought did not have a
+ Velodyne on it it just had the surround cameras
+ But yes typically those are scanning lidars and you have to do some
+ Careful work to think about blurring from fast motions and timing it with the spinning laser
+ That's true
+ [inaudible]
+ I think I think spots pretty good yeah
+ Okay so oh yes please
+ [inaudible]
+ Yes
+ [inaudible]
+ So the so the question is you know I mentioned FPGA and the Carnegie head
+ Yes I think that basically if you're doing block matching stereo that's the simplest algorithm
+ And it's they're doing more than that in those heads but that's I think the the essence of the
+ Of the hardness in the computation is that you're doing a relatively simple computation taking
+ An 8x8 block of pixels comparing it to another 8x8 block of pixels but you have to do that for
+ All possible pairs in a row for instance like this so it's a it's a very trivially parallelized
+ Operation and in order to get operating at full frame rates I mean computers have gotten faster
+ And faster but it's just a beautiful solution for specialized hardware yes yeah
+ [inaudible]
+ Depends on the technology so so like Nerf out of the box the neural radiance fields
+ Don't have scale unless you do some work a priori to tell them about the relative poses
+ You can run a different geometry processing algorithm first most of the projected texture
+ Or or anything that's projecting light actively does have absolute scale
+ They do have maximum range and minimum range so a lot of them are actually it's kind of it can
+ Be frustrating to use them you know you put a beautiful sensor on your wrist and then you
+ Realize that the minimum range of like the d415 is 0.3 meters or something like that so
+ You know the last when you're when you're getting close to the object that camera becomes blind
+ To the in the last 30 centimeters
+ Okay alongside this you know many sources of camera input we also have a
+ A lot of different ways to store that data when it comes in lots of different 3d representations
+ A bit like we talked about representations of rotation there's a there's just a handful of
+ Different formats for instance and some of them are good for some kind of type of computation
+ And some are good for the other and you can convert you should expect to convert back and
+ Forth between them and figure out which one's best for for particular sources so
+ The image the the image that you get directly out of a depth camera
+ That has rgb you think of that as an rgb plus d image
+ So it would have four channels some the first three are color values the last one is just the
+ Depth and at every pixel that's kind of the output of these cameras by default okay so that's you
+ Know one depth per pixel right we're going to take those rgb images which is a perfectly
+ Good representation and convert them into colored point clouds okay
+ So while this is a you know four by size of the image representation a point cloud is a list of
+ Points in 3d possibly annotated with color values or normals or other attributes
+ If you compare that to some of the ones you might have seen from a
+ Graphics software or graphics course you'll see you'll see things like you know triangle meshes
+ Or there's volumetric meshes triangle meshes are surface meshes
+ And you can you can have volumetric meshes in addition to surface meshes
+ You can think about sine distance functions as a representation
+ And increasingly now people are choosing to store those in neural networks so
+ NERF the neural radiance fields I was mentioning before
+ Is almost a sine distance function we'll get to the nuances of that when we get closer
+ Okay but this would be I mean we're going to we're going to go into each of these when it becomes
+ Most relevant but I want to just sort of get the the landscape out here first okay
+ You can also see voxel based representations
+ Some type of occupancy grids
+ Okay there's lots of different ways to represent 3d
+ Data like this okay some of the algorithms were the you know will will really more naturally
+ Fit with one versus the other and most of the time you can go back and forth yeah
+ Oh no I think by default the depth channel is the same size as the RGB
+ The depth always will give you something that will have some minimum range some maximum range and some
+ Resolution inside that range of course but you should think of it as an image that has
+ For every pixel a depth specified so in that sense the resolution is the same yeah
+ Yep yep you should think of every pixel being labeled yeah
+ So there's a lot of algorithms in fact the one we will talk about today doesn't use color
+ To start okay but you can potentially do better if you also include color values
+ Some algorithms will only use the d part in fact I would say many of the algorithms before
+ Deep learning really came in would would have only very limited use of the RGB values because RGB
+ I mean computer vision is hard let me just let's just take a second to think to remember why computer
+ Vision is hard right so if I take two slightly different images okay of a similar scene if the
+ Lighting changes at all right the color values are going to go are going to be wildly different for
+ Pixels that correspond to the same point in real space or if I take the same object and put it in
+ Two different rooms right the same point on the same object is going to come up with very different
+ Color values okay but having said that if you were to I remember the time when I was I was
+ With my students and we were you know enjoying how well RGB techniques were starting to work
+ And I said okay today if you were to pick if someone could only give you depth or only give
+ You RGB what would you pick and nowadays it's RGB all the way RGB is so much more informative there's
+ So many things you can't see through a depth camera that you can see in RGB and humans of
+ Course are very very good at that so I so I think if you have a method that's only limited using
+ Depth it's probably limited it's probably not the state of the art okay
+ All right so let's dig in sort of this part of the pipeline first go from RGB to point cloud
+ And start seeing the connections between the geometry of these camera representations and
+ The geometry of spatial transforms and the like and how do we write optimization problems over them
+ Okay maybe I'll do it over here
+ So this is maybe not a super popular view here but
+ I could you could argue that perception is just a hard kinematics problem at least the problem
+ The first version of perception we're going to do today okay it's certainly a controls problem but
+ But even before that we're going to think of perception today as a kinematics problem
+ What do I mean by that okay so let me say I've got an object
+ In space okay so I'll do 2d objects here because my artistic abilities are limiting in that way
+ Okay so let's say I have an object in space and it's got some
+ Coordinate system some canonical coordinate system I'll say this is my
+ Coordinate frame o and this will be the x and this will be the y axis okay
+ And I'm going to say the first thing I want to do is represent this geometry I could represent it as
+ A series of bases for instance that would be most similar to the triangle mesh in 2d it would just
+ Be line segments okay but instead I'm going to use a point cloud representation of that object
+ Okay so I want to represent this object with a series of points on the boundary
+ They're going to be points in now for my example here a 2d space
+ And they're going to be written in the coordinate system of the object
+ Okay so I'll call those points the model points
+ Sort of my model of the object and
+ And I'll write them as points right p for point here if I have model point i here
+ And I'll say that they're my model exists in the objects frame okay position of the object
+ Of each point in the object frame
+ So
+ Okay now I have a camera that's kicking out some other points hopefully they're
+ Relatively similar okay similarly spaced but maybe I have something that is coming out
+ Like this okay
+ By the way you rarely get all the points from the camera but we'll assume that for just to start
+ And I'll call these my scene points
+ S-I for scene and I get what I get out of my camera is the scene points in the camera frame
+ And let's say I took great care when I mounted my camera
+ So maybe we can say that the location of the camera in the world is known
+ If it's bolted to your hand or something like that that could be
+ Also just a forward kinematics problem to figure out where the location of the camera is yeah
+ It can be absolutely if it's if it's bolted to the robot
+ Then you would you would definitely be as a function of the joint positions
+ Right so far this is just a pose not a rotation or not a velocity okay
+ So the challenge
+ The goal of perception in this case
+ Is to figure out
+ The transform of the object in the world we have a lot of the pieces we have
+ Points in the world we have camera points in the world a lot of points
+ And scene points and then we have the camera's location yeah
+ The point cloud is a 2D world so there are not like the normal world
+ And you can take the point and 3D camera
+ Great great yes so
+ So the point cloud resolution so that's a really good question so the question was
+ You know the camera I think of a camera image is giving me points in a 2D picture
+ Right but if I have a depth channel inside that
+ Then it's the first step that I didn't I should have said is I'm going to take those 2D points
+ In in the camera and I'm going to project them into a 3D point right by just applying
+ My in my camera frame that's easy I just say that it's at some depth in the in the immediate frame
+ Now there's a couple steps that go involved that are involved in that so first of all there's like
+ Intrinsics in the camera you have to take out any distortion from the lens or something like this
+ But this is something we know a lot about it's still a pain but it's but it's something we know
+ A lot about and then the other thing is the extrinsics which is to take those points in the
+ Camera frame and bring it into the world frame and that would be this this xwc that's the camera
+ Extrinsics okay good but all those are are quite doable to go from the 2D picture with a depth
+ Channel into a 3D point yeah okay but there's another step yeah go ahead
+ So let's say this is exactly the right the same object right that my model my model was perfect
+ Right so and that my sensor had zero noise okay there's still things that can get in the way
+ Right which is that like those points might have been sampled in different places along the you
+ Know there's there's reasons why that's almost never going to be perfect but as a toy problem
+ To start I'm actually going to say let's consider the case where we've just taken the model points
+ And translated it someone translated them through an unknown transform and we're going to try to get
+ That back okay that's the easy case and we'll look at the harder case where there's noise and
+ Outliers and other things in between great question okay there's another thing that we have to assume
+ To well that we will assume to get started okay these are all just yellow dots okay and these are
+ All just yellow dots and your incredible brain knows how to map the you know knows that this
+ Yellow dot probably corresponds to that yellow dot okay but if it's just a list of numbers on
+ The computer that mapping the correspondence it's called between those points and this points is not
+ Given and in general it has to be acquired by some sort of logic you have to figure out which of
+ These if you just have a pile of points over here and a pile of points over here figuring out those
+ Correspondences is a massive part of the problem okay but let's just start by assuming that someone
+ Said that the i-th point here matches the i-th point over here and we'll solve the second part
+ Of that problem in a second yeah
+ So so it let's say i had a cad model i could take these points directly from the cad model
+ So if that's so helpful that's why i'm using the word model sometimes the way you get it is you
+ You know put your your object down in a nice situation and you get one scan and then you use
+ That as your model for finding it in other things okay but but think of this as like you've got a
+ Cad model and then this is the real object out in the world that i got returns from that's the scene
+ Okay so step one
+ We'll assume known correspondences
+ Sometimes the word i feel like i forget to define it but it's just the mapping i would
+ Define it in symbols in a minute but the mapping from those points to these points are the
+ Correspondences right
+ Okay so in that case you can sort of see that we have a nice little kinematics problem an
+ Optimization problem we know that
+ The i-th point of the model should correspond with the
+ Oops zero m i that's the model in object frame mapped to the world frame should correspond to
+ In the simple exactly one-to-one correspondence problem
+ These are the obvious kinematic equations okay and in this these are all known
+ Are given and this is the unknown
+ So the question becomes how do i extract the pose
+ Given a list of you know for all i a list of many correspondences
+ Now if we dig in just a little bit to the pose representation you remember from our
+ Spatial transforms that doing this is equivalent to both the translation plus the rotation
+ Okay i'm leaving off the w for my shorthand but w is everywhere okay so really if the unknowns are
+ Both the translation inside there and the rotation the rotation you'll remember we have
+ Lots of choices about how to represent that this is always three numbers basically in 3d
+ In 2d it'd be the two numbers here we have many different ways we could possibly represent the
+ 3d rotations but somehow we need to search over these okay and that's the question
+ So solving this is is actually an inverse kinematics problem right we're trying to figure
+ Out given the given the the data the points in space we're trying to back out the orientations
+ And rotations this is an inverse kinematics problem
+ Now let's stop and think for a second here so last time we didn't actually do inverse kinematics we
+ Did differential inverse kinematics i said inverse kinematics is harder we're going to defer that to
+ Later but this time we're going to go directly i haven't written any differential kinematics yet
+ I've just written a kinematics problem so this is like you know the positions and orientations
+ Inside here is like our generalized coordinates that we're trying to back out so what is the
+ Difference why am i why did i advocate immediately diff i k for moving the arm around but i'm saying
+ We're going to have to solve the full inverse kinematics problem for this one
+ Yeah
+ I think that's right so he says you don't have the ground truth right so
+ Effectively the the magic that happens in the in the robot case is that you know the initial
+ Conditions and you want to change those initial conditions you have an initial
+ Q and you're making small changes to that so you have a place to linearize around
+ Okay in perception you know at least once you have to wake up and figure out where the objects are
+ You don't have an initial unless someone gives you a good initial guess then you could be in
+ The land of differential kinematics inverse kinematics okay but we're saying you know at
+ Least once you have to figure out the hard problem find the needle in the haystack potentially okay
+ Now once you solve that once i actually would advocate differential inverse kinematics if you
+ Wanted to track for instance if you want to do real-time tracking then by all means you should
+ Be thinking about gradients and the like okay but the one-time problem is a little bit it must be
+ Solved i guess in the perception case fortunately this is not some complicated chain of of equations
+ That can lead to lots of uh of non-linearities and local minima and stuff this is about the
+ Simplest inverse kinematics problem we could have to solve and we're going to see it has
+ Beautiful structure and good solutions okay
+ Okay so let's start um we get to pick a rotation representation now
+ The the derivation i'll do would go through fine for at least for quaternions
+ And we're going to do rotation matrices here just because i think it's a little bit
+ It's obviously a linear equation in a three by three matrix here so it's just a little easier
+ On the board um so so let's let's say even though this is my spatial algebra rotation
+ We're going to represent this with three by three matrices for for the purpose of this
+ And this is three by one numbers
+ Yes you have a question
+ So um you know i've got a mug here at least once i'm going to say you know i'm going to build a
+ CAD model or whatever i'm going to pick an origin of my CAD system and i'm going to just define an
+ Object relevant model of this i think that is the natural like if you think about what you would
+ Have to do to build a model and write some coordinate system the natural thing would be
+ To attach your coordinate system to the object itself okay and then the question of then is of
+ Where it is in space becomes what's where is that object in space that's the second transform i think
+ Yep
+ Yep so uh pick the bottom corner you know it's it's just like if you were in solid works
+ And you were you know you have to just start drawing lines you got to pick a zero zero
+ Somewhere okay and all of your points are sort of relative to that zero zero it doesn't matter if
+ You put it in the middle it doesn't put it in the matter in the bottom corner but it's just the frame
+ Of reference that you're going to define those points relative to each other thank you that's
+ Good question okay so so now to solve this problem we want to back out those nine plus three numbers
+ 12 numbers in order to make those equations match okay a little annoying that i picked the
+ Divider right there let me slide that out
+ Okay that's the game how do we do it
+ So first of all
+ Do you see even though it's it doesn't look quite in the normal way but do you see that's just a
+ Linear equation right so this is you should see that this is like ax is approximately equal to b
+ Right except in this case the x would be my three you know three positions and then the the 12
+ Rotation coordinates all stacked in one line if i just flatten those into one vector the a
+ Has a bunch of stuff about the pmi in here flipped around a little bit and shifted okay and this has
+ Got the psi over here inside that okay but it really is just you could just rewrite that you
+ Know if i flatten that out into a big a matrix that's your data matrix big b matrix okay and
+ You're trying to solve a least squares problem to back that out almost almost yes
+ So this is the scene points you know in the
+ I guess in the camera it also is going to have inside it the the x
+ Wc which is i guess given right in this bright pink thing on the top
+ That's the that's the right hand side yeah and then the rest of it is decision variables which
+ Are just multiplied by the pm so if i just try to solve ax equal to b i just tried to take an a
+ Inverse what's wrong with that right if i have any number of so you need a some number of points
+ We'll ask you on the p set exactly how many points you need for that to be well defined
+ Okay you need some number of points for this to just to have a unique solution okay but most of
+ The time you're going to be in a situation where you have many points many more than 12 points
+ Let's say well you know if each point contributes three things so you know many more than four
+ Points hopefully if you're at the four point room you know find another camera or something right
+ Okay so if solving that with exact equality would be very brittle for all the reasons we brought up
+ A minute ago right if there's any noise if you sampled uh slightly different points on the
+ Surface just because of the word the position of your camera or something like that that's not
+ Going to be a good way to go so we're going to solve this again in the least squares sense yeah
+ Yeah i was thinking about that myself
+ Oh look at that
+ Wow it used to be like i had options 1 through 32 but now it actually just says chalkboard and
+ Center light turn on i don't know that's good they just upgraded that this year
+ Okay that was way too easy i should have done that before yeah
+ I'm sorry
+ This is a i'm i'm using this as an abstract so so i could i want to when i see this
+ I think of a you know a standard linear algebra problem where typically in linear algebra when
+ People write this they will use a and b matrix and what i was trying to convey is that the
+ Problem we have with different variables that are you know rooted in geometry could be interpreted
+ As our standard ax equals b where the a matrix is populated with the data from pm
+ Okay and the b matrix is populated from psi right yeah
+ That's exactly the so you got it right so so the reason i said almost he says is this going to give
+ You a valid rotation matrix right so what i really want to write in an optimization world is i want
+ To minimize the difference between the right and the left hand side this is basically my ax minus b
+ Okay but i'll say p plus r p o m i minus
+ Psi that's already rotated into the world frame okay
+ Sum over i i'm going to minimize this over pr that's almost what i want to say okay that's
+ Like the least squares version of that fitting but there's one important detail which is that not all
+ Nine numbers you can't pick arbitrary nine numbers and get a valid rotation matrix
+ Okay so what i'll do is i'll write in here r has to be part of s03
+ As a constraint this is the special orthogonal group
+ Three okay and you're going to understand it completely it just says it's a valid rotation matrix
+ One way to write that is with additional constraints on the optimization problem
+ So i can i can write this you know in the shorthand but what i in order to implement that
+ What i would actually do is write the things that define a valid rotation matrix
+ First of all r transpose has to be r inverse that's one constraint that makes a valid
+ Rotation matrix and the other one is the determinant of r has to be positive one
+ So this is the optimization problem we're working on yes
+ [inaudible]
+ It's a good that's a good question so it turns out that this constraint by itself
+ ensures the determinant is either plus one or minus one but the minus one case can get you
+ That would be called an improper rotation which is a rotation plus a reflection
+ So if you want to stay with the proper rotations you need the extra constraint that's a good
+ question. In practice we often we will drop this and then check for reflections
+ afterwards and flip it back because this is an ugly constraint in general
+ In fact if you think about this so this we said is in the decision variables the inside of this
+ is a linear function which means the squared is a quadratic function so you should be thinking
+ I've got you know a quadratic bowl like this that's a good case. What are these in terms of
+ the constraints? I told you quadratic programming is beautiful if you have it but it's defined when
+ you have linear constraints. Are these constraints linear? Right this is not a linear constraint
+ It's also a quadratic constraint the way you can see that is you multiply by both sides you say
+ R times R transpose equals I would be an equivalent writing of that and so the decision variables
+ have to be zero or one to make all of the nine elements match okay but those are each of those
+ the entries in this matrix is the squared of the original decision variables okay so this
+ is a quadratic constraint. This constraint turns out to be cubic in the three by three matrices
+ in two by two matrices it's just it's actually the same as it's a quadratic again okay but that
+ can be in general cubic. So those are less good but it turns out that you know we have really
+ really good solutions to this. This is like one potentially ugly hard class of optimization
+ problems where this one we just we nail it okay. Let's actually do the 2D example. I think it's
+ useful to understand the optimization landscape. What are we setting our code up to have to solve?
+ Okay so let's say we're going to do the two by two version of it so in that case
+ a two by two rotation matrix you'll often see it's cosine theta negative sine theta
+ sine theta cos theta. We could try to search directly for theta but to keep our analogy to
+ the 3D case what I'm going to instead do is I'm going to just name a variable. I'll call it
+ what did I call it a for cosine theta so b for sine theta and also I'll parameterize my matrix
+ as a negative b b a. Again I'm going to search over a and b. This is a trick that you can't quite do
+ in so in 3D if I would have had I could have done a b c d for instance like this.
+ It just happens that in 2D I know there's not enough degrees of freedom. I know that I can
+ solve away c and d so I haven't done that but in 3D you don't get that same luxury.
+ That was your question was it?
+ Okay we'll come back to it when it when it makes sense then. Okay all right so
+ so let's just multiply this out so what does r times r transpose equal i look like? Well that
+ looks like a negative b b a times the transpose of that a negative b b a
+ and that implies in order for this to equal 1 0 0 1 that implies a squared plus b squared has to equal
+ 1 and it says that a b minus b a has to equal 0. Okay so that's a two quadratic constraints that
+ define the rotation matrix being a valid rotation. Okay and this is the same thing is happening in
+ 3D you know same same type of thing but you just have more equations flying around. It happens if
+ you wanted to say that the determinant of this equals positive 1. In this case it's the same as
+ this right this is also the determinant of r equals plus 1 and that's because I took out the
+ improper rotations by my parameters roughly. Okay so yes.
+ Yep yep sorry that's that was just me spelling it out but you're right that's trivially true.
+ Yep also because I did the change of variables. Okay so I made a animation of a visualization
+ of this okay so what I want you to think of is a objective that's a quadratic bowl
+ and a constraint that is this quadratic constraint. So what does that look like?
+ It went out of order but here it is. Okay this is what it looks like. Okay so I took a few points
+ and I made it I made a you know my quadratic objective and I can and I just I took my points
+ and I just rotated them I'm just trying to back it up bring it back so I can actually dynamically
+ rotate what those points are. Okay and it's moving around and my goal is to find the bottom
+ of the quadratic bowl but it has to be on this constraint so if you look down from the top
+ this is the unit circle constraint which looks like a cylinder I mean I project it up okay so I
+ have to find the lowest point on the on the parabola that intersects with the red constraint
+ and it turns out in the case where there's no noise the minimum is always going to be on the
+ manifold right because the best rotation that you could find is going to have it's going to be a
+ valid rotation. Okay so in this case is actually the good case now as soon as you add noise that
+ the parabola could move off the unit circle and you're going to need to project it back onto the
+ unit circle that's the fundamental geometry of this problem. It's also it's very it's a
+ very famous problem it's the point correspondence problem the Waba problem there's it comes up in
+ all kinds of fields it's a famous problem of this solve a quadratic objective onto the
+ unit circle or the SO3 constraint. Okay
+ interestingly yeah go ahead
+ it's only a little bit hard so it is harder to do
+ basically I don't know that I don't have the simple relationship to just know that this is
+ negative sign and theta so I would have to use nine numbers instead of I just used two numbers here
+ in three by three I'll you know have a b c d e f right
+ and then the the r transpose r is still quadratic the determinant is cubic
+ for a three by three matrix yeah okay but the geometry is roughly the same yeah yes
+ that's this constraint and the determinant constraint so yeah
+ yeah okay interestingly let me just get one thing more thing in and then so interestingly
+ we could have parameterized the whole thing directly with theta okay that's only one
+ variable in 2d of course in 3d we'd pick quaternions or we'd pick one of the other
+ representations in this case it's maybe illustrative to see that if we just did it in
+ terms of theta what does that cost function look like I threw that on the plot too
+ no but okay
+ and it is similarly beautiful and good okay so now there's no constraints I don't if I were to
+ just parameterize it with theta then I would always get a valid rotation out I don't need this
+ so I could just write my objective but the objective is no longer quadratic it's a
+ it's a non-convex objective it's got sines and cosines in the middle of it
+ and the sines and cosines multiplied out you get you get cosine squared whatever you know
+ to the second power gives you a cost landscape that looks like this and if I you know move my
+ theta that rotated the two relative to each other then the minimum moves correspondingly
+ luckily you know all of the minima are good in this case they're all just two pi off so just
+ you know similarly this is a good optimization if I start with an initial guess and I and I go down
+ then I'm always going to find a good answer in the no noise case things are going to behave
+ differently not only when you have noise but also when you have additional constraints like for
+ instance if you don't want to penetrate if you don't want your object to penetrate the world or
+ something like this that becomes a harder constraint and we'll choose we'll see the
+ differences between those representations more yeah
+ in the two by two case it is quadratic in the three by three it's not quadratic
+ but what we're going to do is ignore it the rotation matrix is sufficient to get determinant
+ plus or minus one we're going to solve if our if our determinant was minus one that we're going to
+ we're going to multiply by a negative one in one of the in one of the yeah so basically it's whether
+ you have a right-handed rule or a left-handed rule if you end up with a left-handed rule you flip it
+ back to a right-handed rule and you call it a day yeah so that's how we get around that one but
+ you're right it's cubic okay so that was just searching for rotations I left out the the
+ in this simple example I left out the positions but one of the most important insights I want you
+ to take away today is that actually you can separate solving rotations from solving for the
+ translations okay why is that so registering the points the key the key insight and we already had
+ it in the first lecture about spatial transforms remember I made you I did a check yourself kind
+ of thing saying the position the the position of b relative to a only depends on the rotation
+ between those two frames not on the position because it's already it's already a vector
+ the base of that vector is is you know in rooted in the coordinate system so the
+ the relative positions of two points only depends on the rotation
+ so
+ the trick is if you just try to fit every point by itself then then you have to solve for the
+ translation and rotation separately but if you just take the difference between two points that
+ quantity does not depend on the translation of the object you could take an object you know
+ I don't know in in building 32 or an object here okay and the the absolute
+ translation does not affect the relative point only the orientation
+ so the trick is you subtract out some nominal point in the middle of your point cloud
+ from all your points you solve for the rotations and then at the end now that you know the rotations
+ you can easily figure out the positions okay you can solve for the rotations separately
+ you guys didn't look like you got that I mean I'm not trying to but you didn't look as happy as a
+ as a you know on average let's just say yeah yes
+ that is true that is true
+ so so so you said it almost right and I have to re-say it for the people on the video so
+ so we're going to take the the model point cloud we'll find the centroid of the model point cloud
+ and write all of the model points relative to the model centroid and I'll take the central I'll take
+ all those scene points I'll take the scene centroid and write all of theirs relative to
+ the scene centroid and then I'm going to try to take those relative coordinates and rotate them
+ until they match and now I have an easy problem to just snap the positions into alignment so it's
+ a two-step process yes so so the question is why an arbitrary point so it the key insight is that
+ it's the relative points that that match it turns out there is a right kind of a natural point to
+ pick which is the centroid because then it actually just drops right out of the out of
+ the equations in a beautiful way yeah yeah it's the average of the points it's literally the
+ average of the data points yeah yes in 3d also it's only rotations that affects the relative
+ points if you have a you know this point relative to this point then it the only thing that changes
+ that number you know changing the coordinate system doesn't you know the location of the
+ coordinate system does not change the relative number it's only the rotations
+ in 3d it works fine yeah okay so quick quick quiz so
+ what happens if you have a symmetric object right so I drew one in sort of intentionally
+ that had a you know an asymmetry there what if it was a box
+ so so she says it's impossible to know you know if it was if it was four ways symmetric
+ in an actual box then it's impossible to know but so you're right of course but the thing I just want
+ to make sure it's clear that so far I've assumed known correspondences so in the case of known
+ correspondences there is no symmetry it cannot be right if someone told me that this point
+ corresponds to that face and there is always a unique solution right and the reason that's sort
+ of maybe puzzling is I'm showing you these plots that look like they have a unique solution
+ even in the case of something that has symmetries and the reason for that it's not a it's not a trick
+ that function doesn't change if your object suddenly becomes symmetric it's because it's
+ the known correspondences case okay let me let me keep moving a little bit so I want to get
+ through a couple things all right and we'll ask you a couple questions about uniqueness and the like
+ on the problem okay is that is that a basic idea clear if someone gives me the correspondences
+ then I have a very good algorithm which is just solving this that that can can find the optimal
+ solution in fact even the solving the quadratic thing projecting onto the unit circle you don't
+ have to just you know solve and then project you actually can solve it beautifully and it turns out
+ the solution is given by this by the singular value decomposition okay so the the wobble problem is
+ famously solved by the singular value decomposition if you have extra constraints then you're going to
+ use extra machinery typically a very powerful way to write that is as a semi-definite program which
+ we'll get to later okay but but these kind of quadratic constraints are a particularly nice
+ case of a semi-definite program okay but in in the in the unconstrained case or you know only this
+ constraint this is like the the svd if you know the basic picture of the geometry of svd right
+ it's about finding the coordinate you warp it to the circle you rotate it and you warp it back
+ okay well that warping to the circle is exactly the warping that happens
+ of projecting onto the unit circle okay so it's it turns out to be exactly related to the svd
+ okay so equipped with that we now have the most important
+ algorithm for sort of geometric perception which is the iterative closest point
+ the biggest assumption we made so far was this known correspondence
+ right someone told me the the relative correspondences if i instead have to solve
+ for the correspondences then then i have an extra work to do and just to give my
+ notation let's define a correspondence vector okay
+ so i'll use a correspondence vector c one for it's the length of num points times one okay
+ the num points by one vector and the ith element takes an integer value and i'll say
+ the ith element is an integer j if
+ point si corresponds
+ to model
+ point mj
+ and now i was careful that to choose that so it doesn't have to be a one-to-one mapping
+ right i'm going to try to power through a little bit more so it doesn't have to be a
+ one-to-one mapping there could be model points that don't have a corresponding scene point
+ which is important because oftentimes if you have a camera you're just looking at one side
+ you're not going to have scene points all the way around the object okay but we're saying that every
+ scene point corresponds to a model there's other choices people sometimes make where the
+ where you assume that every model goes to a scene and that all of them have implications
+ but in this we're going to choose it like like this okay i could then just write my optimization
+ i'm going to search over x
+ using that notation minus p si squared but now i have to search i have to find both ci
+ which is this discrete thing right this is an it's a function on the elements of one to
+ num model points
+ that's the set that lives in so it's kind of a weird thing to optimize over and x in se3
+ so how am i going to optimize that right it looks like kind of a quadratic objective but with a
+ combinatorial aspect of it of trying to figure out all these correspondences simultaneously and you
+ can do that we've had paper that does that kind of thing where we're trying to do the
+ combinatorial search at the same time as the continuous search but it's very expensive optimization
+ so the icp algorithm famously does it by by splitting it into two parts
+ so
+ in many optimizations kind of like this it's often the case that if you fix one set of variables then
+ the optimization is easy fix another set of variables the other optimization is easy and
+ then you end up with natural algorithms that alternate between the two optimization problems
+ and that's exactly what we'll do here because if the correspondences are known then the
+ optimization is exactly what we did a minute ago that's the point registration with known
+ correspondences and it has a beautiful solution and then the other side of it is if the transform
+ is known then finding the corresponding points is just a nearest neighbor problem okay so if we have
+ an initial guess for x then we can find what they step one solve the nearest neighbor problem
+ so c our new ci is going to be just be the
+ we can just try all the possible correspondences basically i'm going to say
+ x p o n j argmin over j
+ x p o n j argmin over j
+ minus psi squared so in the if for a small point cloud you can just literally try all the possible
+ correspondences for this when x is known you can just measure the distance and take the smallest
+ one okay when it gets bigger you start using efficient nearest neighbor data structures
+ like kd trees and stuff like that okay but this is a fast nearest neighbor query
+ and then the second step is given correspondences
+ solve for x and then you just repeat until the convergence okay
+ so let's see what that looks like so i did not stand in the middle of here right here
+ okay so this is the kind of plot i'm going to show you here so this was the known correspondence one
+ i picked a lovely salmon color for the random object with random points in 2d and known points
+ and then i rotated it and translated it by some random quantities and got my blue scene points
+ in the first step we have a known correspondence problem and the registration just works exactly
+ okay that's the known correspondence version now if i take another point another example here with
+ my scene my my model points and my scene points if i start the iter the icp algorithm then i think i
+ can just step through here we go okay the first thing is i do is i solve that given that initial
+ guess which was a bad initial guess i you know this is the initial guess here i just compute
+ the nearest neighbors for every um every scene point i find the nearest point okay and then i
+ given those correspondences i try to solve for the new optimization and it doesn't do very well
+ because my correspondences were all wrong but the hope is that it gets you closer okay and then i
+ get a new chance at my correspondences and many times this converges beautifully in a small number
+ of alternations because you know at some point your correspondences are correct and you snap
+ right into place yeah yes um so just like uh you can separate translation and rotation scaling can
+ be separated too and the trick is so just like the observation is that um the the relative positions
+ only depend on rotations it turns out the difference of of distances only depends on scale
+ so if you if you play that trick one more time you get something that only depends on scale so
+ you can fit scale first and then fit rotations and then fit translations i actually cite that
+ in the notes because i think that's part of the story yeah
+ yes good so so this algorithm can absolutely get stuck in local minima i i you know there's a in
+ the in the code you can play with it's just random so the fact that it's mostly translation
+ it's probably because i wanted one that fits on the slide but i didn't think of it that way now
+ i feel like i picked a bad example but uh yeah so so it but it absolutely can get stuck in local
+ minimum yes if you pick the wrong correspondences you make not enough change you could get the same
+ correspond same wrong correspondences back and that will never leave right uh so there are many
+ ways and we're going to talk about those more next time but there are many ways you can try
+ random initializations of correspondences but you can also there are more robust methods that can
+ they can try to avoid some of those local minima yeah
+ so and we're going to talk about noise uh also next time it's actually it's a fairly subtle
+ question and i had a i had a slide i blew past real quick but uh just to show you some like real
+ world noise is is extremely structured so if you think about noise as like adding gaussian values
+ to all of those values independently that's not the way cameras have noise cameras tend to have
+ like this is the actual depth image and this is like the the depth image you get out of a camera
+ they have dropouts like pixels that are just mixing and missing in the middle they will have
+ swaths of like a shiny material might have very noisy things and then they have a lot of noise
+ shiny material might have very noisy things and a you know a flat material could could not so so
+ the the answer to your question requires thinking a little bit about the types of noise yeah
+ yep just alternate back and forth between when x is fixed the problem is easy its nearest neighbors
+ when the correspondences are fixed then the problem is easy it's this wobble problem
+ that's true you're solving many optimization problems in the loop the one the this one is
+ so easy that it becomes an svd it's a called svd so it's i wouldn't even call it an optimization
+ problem in the implementation it's very fast even for very big point clouds but yes it is it is
+ alternating between those and let me just i'll take home with one more example here so yeah these
+ are i've got lots of examples of real noisy things but you're gonna play with the bunny because
+ everybody who ever does icp makes the stanford bunny snap into alignment with another stanford
+ bunny that's just like you know early in computer graphics the stanford bunny sort of did a
+ winner take all thing and it just won out and there's everybody uses the stanford bunny okay
+ so you'll do that on your problem set but just to show you even in the examples i i i showed you
+ like the loading a dishwasher for instance if you watch carefully at what happens so there was a
+ perception system that tried to figure out where the mug was to begin with okay but as the robot
+ moves even in this sort of state-of-the-art perception system okay uh state-of-the-art a
+ few years ago i guess but um watch this that was running icp i mean that wasn't the icp updates but
+ it actually when it goes there it has a model of the mug back back in the day okay and it actually
+ tried to align the model of the mug before going into to close the the difference between the
+ faraway cameras rough estimate of the where the mugs were and actually making the pick
+ and people still do that today leslie and tomas we were in a meeting with leslie tomas the other
+ day and they're like we're going to do icp for this and and the young students were like okay
+ that's kind of old school but uh but it still works like it still works really well yeah
+ yep so this is part one part two is like how do you do more robust versions of this with partial
+ views and outliers and noise yep so we're going to talk about that next time good i'll answer you
+ I'm sure you can come out a bit of effort.

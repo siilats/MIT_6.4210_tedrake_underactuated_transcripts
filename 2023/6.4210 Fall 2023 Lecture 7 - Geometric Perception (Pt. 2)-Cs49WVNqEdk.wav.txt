@@ -1,0 +1,1326 @@
+ Okay, hi everybody.
+ Today we're going to continue our foiré into perception, our first explorations of perception.
+ And if you remember, the goal is to -- that's what it says when it's loading.
+ Let me just -- let me do it from scratch.
+ How about that?
+ You should know, by the way, all the demos I show are right there for you to run, right?
+ So how many people are actually running the notebooks from the lecture notes?
+ A few, yeah?
+ But let's just say they're right there to run.
+ If you just run the Pose notebook in the Pose chapter, then you'll see exactly the demo
+ that we're sort of working up towards, right?
+ Which is -- we've already got all the basic components now.
+ So we -- someone took a mustard bottle.
+ We took a moment to scan the mustard bottle so we have a known model.
+ Now there's a mustard bottle in the bin with a bunch of cameras looking at it.
+ And we're going to use our point cloud processing to find that mustard bottle and then use that
+ now, that information of the pose of the object, in order to plan our grasp the same way we
+ did last time.
+ Okay?
+ That's what we're working towards.
+ And we talked about -- yeah?
+ [ Inaudible Speaker ]
+ So you could -- one way to make a model would be to take your object and try to see it from
+ lots of different angles and make a point cloud of it to start.
+ That's a perfectly reasonable way to do it.
+ Oftentimes when you're in the wild, though, then you're never going to see the bottom
+ of the mustard bottle, depending on where your cameras are.
+ So that would typically take a separate step where you put it in a scanner or something
+ like that.
+ In fact, that's kind of what we did here.
+ The way I made those point clouds was I just put a camera -- a bunch of cameras at it and
+ sampled and down sampled and worked from that.
+ Yeah?
+ [ Inaudible Speaker ]
+ The question is, would you improve performance to use the same camera?
+ I think that, you know, point clouds are a pretty robust representation.
+ And by the time you often -- some of the processing we'll do as we work with them more, you'll
+ down sample and the like.
+ So you're pretty agnostic to the camera.
+ In fact, a lot of people -- you'll hear people say things like, I chose to use depth in this
+ project instead of RGB because it's less sensitive to the camera properties.
+ So -- and the lighting conditions and things like that.
+ Okay.
+ So last time we worked through some of the mechanics, and we'll go through extensions
+ of that today.
+ But we ended up with the iterative closest point algorithm, right?
+ So --
+ [ Writing on Board ]
+ -- talked about point clouds.
+ We talked about point set registration.
+ First with known correspondences.
+ And that one had a beautiful solution, which happened to just require calling SVD.
+ It had basically a linear algebra solution.
+ And then for unknown correspondences, we so far -- we introduced the ICP algorithm, the
+ iterative closest point algorithm.
+ And I showed an example that was admittedly a best case for it, right, where the orientation
+ wasn't so bad.
+ And the iterative closest point algorithm worked by finding correspondences based on
+ nearest neighbors.
+ Just taking the points in the scene, the points in the model, saying they're corresponding
+ if they're the closest one.
+ And then assuming that was correct, solving for the pose given the known correspondences,
+ and then updating and running until convergence.
+ Now, if you play with the notebook in the -- I intentionally made random objects and
+ random initial conditions.
+ You'll see lots of cases where that also fails, right?
+ So when you start with a good initial guess, it very reliably can, in a small number of
+ steps, converge.
+ It's got a nice finite convergence property, okay?
+ But it's also easy to get it confused, where it starts corresponding in wrong ways, and
+ it will never get unstuck.
+ Okay, so this problem has local minima when you separate out the closest point from the
+ pose estimation.
+ Okay, but we're going to work to try to do better than that, and also even think about
+ some of the other limitations of this today.
+ So my goal for today, the main goal for today, is to start working with more real-world point
+ clouds.
+ I'll just call them messy point clouds.
+ And we'll think about -- we'll go from hard correspondences before.
+ I'll introduce what I mean by soft correspondences, and talk about a lot of generalizations to
+ this basic ICP algorithm, some of which can be extremely effective.
+ We'll talk a little bit specifically about dealing with outliers.
+ And then I want to make sure we talk a little bit about sort of beyond just correspondence-based
+ points.
+ So what would you do if you wanted to add constraints to the optimization?
+ Or what other sorts of information can you get from knowing that you've got a depth camera
+ that isn't available in the simple point set registration objective?
+ So that's the main goal.
+ Let me just start quickly by telling you a little bit more about how we simulate point
+ clouds and simulate cameras in Drake, but in general.
+ So this is the same kind of system you've been familiar with, but I put in this RGB
+ sensor in the middle here, which is just another block in our block diagram.
+ It connects directly to the scene graph, which has all the geometry information, and it outputs
+ a color image, a depth image of different-- you can choose different resolutions of the
+ depth image.
+ It optionally takes a label image and tells you exactly which pixel corresponds with which
+ object.
+ But that's, of course, a cheat that you wouldn't have in the real world.
+ And you can ask for it to output the poses and stuff, too.
+ Now, even though that's just a simple system in this picture, underneath there is an entire
+ rendering pipeline that's a fairly sophisticated rendering pipeline.
+ We have a few different options when you do RGBD sensors in Drake.
+ You can use the standard OpenGL-based pipelines.
+ Those are fast, and they run at simulation rates.
+ Or you can do a remote process call to Blender or some other ray tracing or higher quality
+ renderer of your choice if you want to make pictures that are sufficiently rich to maybe
+ train a perception system or impress your friends with fancy movies.
+ But these are all in the systems framework.
+ They're just one more block in our diagram.
+ But down in the depths, they're doing a lot of rendering work.
+ I also put in an extra piece in this diagram to extract--
+ to take the depth image out and project it into the 3D.
+ So I guess I didn't highlight this, but this is depth image to point cloud.
+ But this thing right here immediately puts out a color image and a depth image.
+ Yeah?
+ [INAUDIBLE]
+ Yeah, that's coming.
+ So in practice-- I put that in manually just so you at least once see what the system looks
+ like and understand what's happening.
+ But in practice, we have this hardware station abstraction.
+ And you listed a bunch of objects in the scene.
+ You can just add one more thing into your YAML file and say there's a camera.
+ You can talk about the properties of that camera right in the YAML file.
+ And effectively, you just add a couple more lines to your YAML file.
+ And suddenly, you've got a camera in there that will automatically
+ add the RGBD sensor system into the inside of your hardware station
+ and will make those output ports available in the hardware station
+ abstraction.
+ The goal of the hardware station abstraction
+ is to be whatever the real robot is.
+ That's the boundary.
+ So we actually don't make point clouds come out of the hardware station
+ ever because the robot doesn't going to send you point clouds.
+ It's going to send you a depth image.
+ So that's the layer of abstraction, the hardware station.
+ And so the thing that converts from the depth and color to a point cloud,
+ that would be outside the hardware station,
+ because you're going to have to do that even if you're on a real robot.
+ But in general, one more line.
+ It happens.
+ It looks like I did more lines.
+ That's because I put the camera geometry in the scene too.
+ And then I just said there's a camera where the camera geometry is.
+ But if you just want to have an invisible camera in the sky,
+ you don't need the camera model.
+ So then inside that abstraction of the hardware station,
+ we have the multi-body plant, the scene graph, the RGBD sensor,
+ all on the inside.
+ And then if you want to also convert it to point clouds,
+ then there's another system that converts it to point clouds outside.
+ And then if you want to send those point clouds to MeshCAD,
+ there's one more system you can publish it with.
+ So what does that give you?
+ That gives you something like this.
+ Here we go.
+ It gives you scenes like this.
+ But in MeshCAD, when you publish both the original geometry--
+ that's under the Drake thing--
+ and the point cloud that gets published, that's this camera.
+ As you can see behind my box here.
+ Oh, I forgot to put the camera in this one.
+ I ran it fresh.
+ The new one has the camera in it.
+ But this is actually-- even though that looks beautiful from this side,
+ that's actually just the point cloud colorized with the RGB values.
+ And it immediately shows one of the limitations of using cameras
+ is partial views.
+ You're only going to see one side of the mustard bottle with one camera.
+ But like I said, we talked last time sort of assuming
+ we had the luxury of making a very nice model,
+ and then the luxury of having a perfect depth camera.
+ But real point clouds are actually messy.
+ This is just some real data of our messy lab.
+ This is what if I were to have ideal depth would look like.
+ And this is more like what the real depth looks like.
+ And we're going to talk about the specific ways
+ that they're messy in a few minutes.
+ And I just grabbed another random desktop manipulation.
+ One of the other things people say often about the D415 in particular,
+ it's funny, all sorts of people have all commented--
+ they always use the same word.
+ They always say it's kind of lumpy.
+ I don't think I've ever used lumpy really in my--
+ but everybody chooses that word because it's just kind of lumpy.
+ And that's just the limitations of being--
+ when you're that close, the accuracy of that sensor
+ and somehow the way it's doing its stereo matching
+ has that property, which makes it very hard to detect vegetables very
+ accurately.
+ If your bumps, your lumps are on the same scale
+ as the things you're trying to manipulate,
+ that's bad news.
+ OK, yeah, so I made the partial views.
+ So how do you get around partial views?
+ There's many ways to do it.
+ You could have a mobile manipulator that can sort of look around
+ and take multiple views.
+ In the dish example that I showed you before,
+ we put cameras everywhere.
+ It doesn't mitigate completely the partial view problem.
+ Still, when you're looking in the sink,
+ you're not going to see the bottom of the plate, for instance,
+ or the bottom of the mustard bottle.
+ But at least I'll get as many views as I possibly can looking in.
+ And that's kind of a common thing if you're seeing an instrumented robot
+ station.
+ You'll expect to see multiple cameras all looking down.
+ And if you see that, don't knock the cameras.
+ That's just not cool.
+ Because then someone has to go back and calibrate everything again.
+ So if you're visiting a lab and you see lots of cameras, don't touch.
+ OK, even this one has two on the wrist.
+ So it tries to see just about everything.
+ OK, so let's just think about some of the problems.
+ So in what ways are point clouds messy?
+ OK, types of messy, I guess I'll write.
+ One of them, which I'm trying to show here,
+ is that point clouds are not necessarily messy.
+ One of them, which I'm trying to show here, is partial views.
+ And let's think for a second about what partial views would do.
+ So if I had my blue model and my salmon object
+ and I was trying to register them together,
+ how is ICP going to do with the partial view problem?
+ Now, you remember that we specifically
+ chose that we were going to write the correspondences last time.
+ We said Ci equals j means that scene point i corresponds
+ to model j.
+ OK, so we went to some lengths to say that for every scene point,
+ we have to have a corresponding point in the model,
+ but not the other way around.
+ We did not say in that representation that every model point had to have
+ a corresponding point in the scene.
+ This is a major reason why, is that for partial views,
+ you can sort of expect in the perfect case,
+ where you just didn't see the back half, but you got noise-free points,
+ then this is OK.
+ This is going to do still fairly well.
+ It can still get stuck in local minima and the like,
+ but it has a chance of being successful.
+ This is an example of a local minima, but it had a chance.
+ If I had run it a bunch of times, it would work some of the time.
+ Yeah?
+ Another problem is just sort of Gaussian noise.
+ Let's just say Gaussian noise, or lumps, maybe.
+ That's not a technical term.
+ That's just me being silly.
+ The real sensors really don't have Gaussian error characteristics,
+ but people often will use that in their point cloud algorithms.
+ It's a little suspicious, probably, because in fact,
+ when you're solving the least squares problem, which
+ is the known correspondence problem, the least squares problem
+ that we wrote down a bunch last time, and we'll write down again in a minute,
+ that's actually very robust to Gaussian noise.
+ It's going to solve that correspondence.
+ It's going to look for the pose which minimizes the least squares objective.
+ If you add a little Gaussian noise in, it's
+ designed to fight that Gaussian noise.
+ Unfortunately, real sensors give lumps more than Gaussian noise.
+ The other one that you'll get is outliers.
+ And you can get sort of a little bit of outliers,
+ or you can get a lot of outliers.
+ So one thing you could sort of imagine would be,
+ I've looked at my mustard bottle, but I accidentally got a few,
+ I don't know, shiny points over to the side, so I got a few pixels.
+ If I had my objects, maybe I have my scene points
+ that look kind of like this.
+ Pretty recognizable, but now I had like two sort of just random outlier scene
+ points.
+ If I do my existing objective, if I try to minimize x in SE(3),
+ the sum over i of some x that I'm looking for, mci minus--
+ that was the objective we wrote down last time.
+ We can solve nicely if the correspondences are known.
+ What happens to my sort of ICP algorithm when I do this,
+ when I introduce a few outliers?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ Yeah.
+ The squared error here is going to be large,
+ so it's going to actually have a measurable effect
+ on the pose you estimate.
+ So even though it's like, obviously, I
+ would want to try to fit the object over here,
+ it's very likely, if we're demanding that all of the scene points
+ have a corresponding model point, that because it's
+ going to pick some point for this, you're more likely going to end up
+ with a fit that looks something like way over here.
+ These are going to have a large effect compared to the ones that
+ are all sort of close.
+ So that's a problem the way we've written it.
+ Interestingly, if you want to be robust to outliers,
+ one thing you could do, which sort of seems natural,
+ you could write your correspondences the other way.
+ You could say that every point in my model
+ has to correspond to a point in my scene,
+ and then these will just get ignored.
+ Right, if I said that the other way, if I said,
+ every point in my model has to correspond
+ to one of the points in my scene, then the fact
+ that none of the points in my model correspond to those points is fine.
+ But then you're susceptible to partial views.
+ So the correspondence of going scene to model is good for partial views.
+ The correspondence of going model to scene is good for outliers.
+ But unfortunately, we need to really be good at both.
+ So one of the goals here is to generalize
+ our notion of correspondence a bit so that we
+ can try to be robust to both.
+ [SIDE CONVERSATION]
+ All right, so let's do that.
+ The first way we'll do that is with this notion of soft correspondences.
+ So let me do it.
+ I'm going to work towards soft correspondences,
+ but first let me just make a small change to this formulation that
+ could open up the possibility of corresponding not all
+ to something in one direction.
+ So instead of my correspondence vector, let's do a correspondence matrix.
+ Say Cij, and it's going to be 0 or 1.
+ And I'll say it's 1 if scene point i corresponds to model point j.
+ [SIDE CONVERSATION]
+ So certainly, this can capture what we've written before.
+ If I just fill in the diagonal entries of this,
+ I can represent this perfectly with that.
+ And I can actually represent either one.
+ I could do the model to scene or the scene to model line with that.
+ But you can also potentially have model points
+ that aren't corresponding to any scene points or scene points
+ that don't correspond to any model point.
+ The price you pay for that, though, is that now you have to sum--
+ you're going to solve a slightly more expensive optimization problem.
+ Sum over i and sum over j, Cij, mi--
+ which one did I say?
+ mj here minus psi.
+ That doesn't sound like it looks kind of painless or harmless.
+ You just have one more sum there.
+ But if you've got 1,000 points or a million points in your point cloud,
+ then this can actually be the difference between running at real time
+ versus not running at real time, having to do that,
+ going to n squared for your big point cloud.
+ So this is a more general formulation, but it's more computationally expensive.
+ Is that clear?
+ I mean, I don't want the algebra to look like a trick.
+ But before, I tucked my correspondences in here.
+ And now I've done it by just turning on and off the terms in my sum.
+ So that's a slightly more general.
+ And it allows you to, like I say, handle a more flexible mapping.
+ It also leads to the possibility of having softer correspondences.
+ This is hard correspondences if it's still 0 or 1.
+ But soft correspondences could be if I have c, let's say,
+ i, j takes values between 0 and 1, for instance.
+ I could say, I correspond to that point a little, a little bit.
+ Or I could correspond to many points.
+ I mean, even this one could correspond to many points.
+ But maybe if you want to correspond a little bit to lots of points,
+ that can be a softer version of this correspondence.
+ But in that same-- if you're willing to do the double sum,
+ then this is a flexible thing.
+ And the question becomes, how would you choose c, i, j?
+ So before, we chose to say something was corresponding
+ if it was based on a nearest neighbor query.
+ We need a heuristic now to say-- or some sort of mechanism
+ now to pick c, i, j in this more general sense.
+ So one of the ideas out there would just be
+ to use something like a Gaussian kernel.
+ OK.
+ I'll say what I mean by that.
+ OK.
+ And this is the coherent point drift CPD algorithm,
+ which is a variation on ICP that does this sort of soft correspondence
+ with Gaussian kernels.
+ OK, so maybe the way to think about it--
+ I've already got a picture started here.
+ I have my model points and my scene points.
+ OK.
+ If I think about--
+ you can do it either way around.
+ But if I think about putting sort of a Gaussian kernel--
+ these are level sets of my two-dimensional Gaussian
+ around every point, then I'll basically score the distance.
+ But it's weighted, and it'll ramp off on the tail.
+ So I'll just compute the distance between all of the points--
+ again, an n-squared kind of operation.
+ I'll compute the distance to all of them.
+ But instead of just using the distance straight up,
+ I'm going to weight the distances that are far away from me more
+ and have the distances that are close be more in a bell shape,
+ in a Gaussian.
+ The Gaussian, of course, brings extra probabilistic interpretations
+ around, and it keeps the objective looking
+ like a quadratic function and stuff.
+ So the Gaussian is a natural choice.
+ But the essence of the idea is really just taper off,
+ make my values close to 0 if the points are far away,
+ and closer to whatever the Gaussian--
+ when you're close to 0.
+ And then you could normalize that so that the sum is 1
+ if you want across those points.
+ That's just a normalization coefficient
+ that we can solve naturally enough.
+ Normalization may matter if some points have lots of neighbors
+ and other points don't have lots of neighbors.
+ So just imagine putting rubber bands between you
+ and all of your neighbors, but there's
+ some sort of a nonlinear band.
+ That's a pretty robust, good way to do a more general form
+ of correspondence.
+ And you see in all of these papers--
+ by the way, you always see the Stanford bunny.
+ Somehow the Stanford bunny just won that game.
+ And you'll see them all adding things that will, for instance,
+ add a lot of outliers, add a lot of partial views.
+ This is the CPD paper, coherent point drift paper,
+ which shows that this thing can have pretty robust registration
+ even with lots of noise and potentially lots of outliers.
+ The general word on the street is
+ that CPD is a lot more robust than ICP,
+ but it's potentially a lot more expensive
+ that you get these n squareds that pop in a few times.
+ There are algorithms out there that try to do almost CPD,
+ but staying in the linear regime.
+ And they can be a pretty nice trade-off in between.
+ So messy point clouds require, I think,
+ a more general thinking about correspondence.
+ Yeah?
+ [INAUDIBLE]
+ Good.
+ I should have said that all the way through.
+ So this is still an iterative algorithm.
+ So on step-- given an initial value of x,
+ initial guess, which is kind of what I've illustrated here.
+ I've got a guess for where the model is,
+ and observations of the scene.
+ Given that initial guess, now I can compute the distances
+ and score them with a bell curve.
+ That allows me to compute these coefficients.
+ And then I solve the point registration problem
+ that's weighted by this, which is, again,
+ an SPD-based operation.
+ And then I alternate.
+ And so it's going to snap in, and it'll
+ have some of the same local minima properties
+ that the original ICP does, but it's
+ going to be less immediately susceptible
+ because it's going to average out the local correspondence.
+ Great.
+ Thank you for making me say that.
+ Yeah?
+ [INAUDIBLE]
+ Yeah.
+ So you have to be careful about your normalization.
+ That's correct.
+ So he says, maybe you don't want to normalize for outliers.
+ So let's just think about that for a second.
+ So how does CPD handle outliers?
+ By default, it's handling outliers
+ by setting a very small weight.
+ C should be very close to 0, or 0, effectively,
+ for things that are far away.
+ So if it was the case that you were corresponding
+ to only outliers, I think in that setting,
+ then maybe they're not outliers.
+ If they're the only points that I'm nearby,
+ then I should actually attach myself to them
+ to maximize the objective.
+ So I think there is a canonical normalization of Cij,
+ and they use it in the paper for sure.
+ Yeah?
+ [INAUDIBLE]
+ Beautiful.
+ So I was going to make that point next.
+ So yeah.
+ So what is an outlier in the real world?
+ I drew a cartoon of an outlier being like two points.
+ But if I have a cluttered scene and a mustard bottle sitting
+ in the cluttered scene, I'm going
+ to get point cloud returns from all
+ of the other objects in the scene, including the desk,
+ including everything.
+ So actually, it can often be the case
+ that 90% of your points are outliers in that sense.
+ And now the problem is finding a needle in the haystack.
+ So if you start with just an ICP or CPD kind of framework
+ in that, you're going to need to have a fairly good initial
+ guess.
+ Otherwise, you're likely to get your mustard bottle attached
+ to the chair or something like this.
+ Because of that, although people do do that, and there's cases--
+ I'll show you a couple of times where that can be useful.
+ Oftentimes now, nowadays, segmentation with deep networks
+ is so good that you'll typically do segmentation first
+ and then give yourself a small crop nearby
+ and try to identify there.
+ And then you're in a picture where you have some returns
+ maybe in your box, but it's not as much as finding
+ the mustard bottle in Rome.
+ You'll know why I said that in a second.
+ OK?
+ Yeah?
+ So I mean, partial views would still be--
+ so if, let's say, I'm using an RGB neural network-based
+ segmentation, they would still be
+ able to go from that camera view and say,
+ this is the area of interest.
+ And then I can map that through the geometry of the camera
+ into the 3D and make a box and make the cuts.
+ So partial views in that pipeline are fine.
+ There was a more classical point cloud-based way
+ to do segmentation.
+ Those would be maybe potentially more susceptible to segmentation
+ to partial views in the segmentation.
+ But the neural network ones are pretty darn good.
+ So you might have--
+ a lot of times, people would just
+ find a mustard bottle on a flat table.
+ So they'd identify the table, and they'd
+ subtract it out, things like that.
+ Yeah?
+ Yeah.
+ There's a lot of different potential ways.
+ So again, a deep network--
+ so neural networks are going to be
+ very good at solving the more global problem.
+ So if you really have to look at a big cluttered scene
+ and start with an initial guess, then it's
+ very hard to do better than a neural network
+ or something like that.
+ Sometimes-- deep learning can be amazing for even the final step
+ two, for the pose estimation step two.
+ But oftentimes, using the geometry
+ can do better in the local to get
+ the accuracy of dialing in your pose very accurately.
+ So there was a long time where people
+ would do deep learning to get an initial guess,
+ geometric perception to fill in the details
+ and snap it into place.
+ There's leaderboards on the pose estimation.
+ And around 2020, they flipped to--
+ deep learning and computer vision
+ happened much earlier, 2016, let's say.
+ But they only started beating the geometric versions
+ and the leaderboards around 2020 or so, 2021.
+ But now they're just winning.
+ Yeah?
+ [INAUDIBLE]
+ Good.
+ So let me repeat it for everybody to hear.
+ So I assumed-- all my pictures have been drawn uniform samples
+ across the object.
+ If I were to shine a camera or do less careful things,
+ I might have had a bunch of points in my model over here
+ and maybe not as many on this side.
+ There's really no reason to expect the scene
+ to be distributed as nicely around the boundary
+ of the object as the model was, or not even nicely.
+ They could be different.
+ So I think the soft correspondences also
+ address that.
+ So you don't have to have--
+ it's less requiring you to match exactly one.
+ If you were to have Cij being 0.5, 0.5,
+ imagine a setting where my scene and my model
+ are almost on top of each other.
+ Let's say my model points came spaced like this.
+ And with perfect alignment, my scene points came like this.
+ Model scene, right?
+ I could still drive this objective to 0.
+ I could correspond to both of them.
+ No, it wouldn't be 0, but it would be a minimum.
+ Yeah.
+ So that's another reason to use the generalized correspondences.
+ Yes?
+ [INAUDIBLE]
+ x is my pose, yeah?
+ This x is my rigid transform.
+ So when I say SE3, that means it's got to be a valid--
+ it's going to be three positions and some valid rotation.
+ And in the math here, we're using our spatial algebra
+ in that writing.
+ But the main idea here of this iterative algorithm
+ is that I'm going to deal with outliers and noise
+ and other things and partial views.
+ But outliers, by setting this to a very small number.
+ And it's alternating.
+ It's using the previous guess, the distances
+ from the previous guess, to set those thresholds.
+ And then it's solving this in effectively closed form
+ with the singular value decomposition.
+ But a generalization of that, which
+ has different computational properties,
+ but more flexibility, I could just say,
+ what if I wanted to use the distance here?
+ This is already my quadratic bowl.
+ What if I just said things that have a really large distance
+ shouldn't cost me more?
+ What if instead of just using a quadratic function here,
+ which just got worse and worse and worse, what if I said,
+ I'm going to obtain error from being far away,
+ but then it just flattens out?
+ So you can do exactly this without the alternations
+ with a small change where you could say,
+ I'm going to minimize over--
+ I'll write the sum like this.
+ That still means my two sums potentially.
+ Some more general loss function of--
+ it doesn't have to be quadratic.
+ It could be quadratic and trying to do some of the same things
+ that the Gaussian was doing.
+ Yeah, so there's a bunch of squared exponential.
+ I mean, that's kind of what a Gaussian is, I guess.
+ There's a couple of canonical choices.
+ So the quadratic-- if I just use the quadratic,
+ you would think of that as a parabola that
+ goes up quadratically.
+ And therefore, large distance objects, outliers,
+ are going to have a very, very large effect on my cost.
+ You can do a little bit better.
+ If you use a Huber loss, it has at least a linear scaling
+ after the initial growth.
+ That turns it into a linear scaling.
+ But actually, the Gaussian that we're doing here,
+ like in CPD, it has an interpretation.
+ If you think of it in this way, it's
+ sort of the cost of going farther out hails off.
+ And now it's a subtle point.
+ So the fact that this is flat for large distances,
+ it doesn't have to be 0 in this picture.
+ It just has to be flat.
+ You still want it to cost more to have a point far away
+ from you than if you had one that was perfect.
+ But it stops affecting my optimization
+ because if I've got a flat line over here,
+ then small changes in my estimate of the pose
+ will not affect the cost I get back
+ so that the ones that are in the flat part of the curve
+ have no effect on the optimization.
+ So the most extreme version of that
+ would be a truncated least squares, where you just say,
+ if the distance is less than 1, for instance,
+ then I'm going to use the quadratic.
+ And if it's greater than 1, then it's just 1.
+ So that'll reward you for making as many inliers as possible
+ because an inlier will always get less cost.
+ You want your outliers to cost at least as much
+ as the worst inlier.
+ But then the outliers don't affect your pose.
+ So those are the standard cast of objective choices.
+ Now, once we go into that space, you're
+ now leaving the world of quadratic programming or SVD.
+ And you're going to typically do nonlinear optimization
+ to solve for that.
+ So originally, we had cost functions.
+ I had decision variables like this.
+ And cost functions like this, we've
+ so far been in the land of these nice convex objective functions
+ that have unique minima.
+ But this would be a convex optimization.
+ These are going to lead to non-convex optimizations
+ in general just because it's a richer class.
+ So if I have my decision variables x, my costs,
+ I could have cost landscapes that are more complicated.
+ Probably not negative in this particular problem.
+ And I'm going to potentially have a harder time optimizing
+ against these functions because they
+ could have more local minima.
+ So that's the thing to watch out for.
+ But it's really empowering to be able to use
+ these richer things that deal very naturally without liars.
+ The truncated least squares in particular,
+ there's ways to address that with a logic where
+ you do beautiful quadratic optimization.
+ And you can turn these on or off.
+ And so there are nice convex optimization approaches
+ to solving that one, that hard nonlinearity.
+ But in general, you're in the harder problem space.
+ Yeah, typically, it's typically a heuristic.
+ Some sort of-- I mean, yeah, maybe it
+ has to do with the confidence you have in your model
+ or the noise characteristics of your sensor
+ or something like this.
+ There are rubrics, I guess.
+ But people normally just say, eh, one.
+ And then if it's getting stuck, you change it to 0.5.
+ And you hope-- yeah.
+ Yeah, that can be a little heuristic.
+ OK, but that's an extremely powerful toolbox.
+ And once you go there, there's a lot
+ of things you can do to make the computations really
+ fast, for instance.
+ So one of the cool ideas that I like
+ is if you're going to be doing lots of distance queries
+ from points to your model, then one of the things you can do
+ is you could take your model and precompute a sine distance
+ function over 3D space.
+ How many people know what a sine distance function is?
+ Have you seen those before?
+ This is the best picture I could find.
+ It's from Pete, who's awesome.
+ But yeah, so imagine we have our 3D Stanford bunny or something.
+ But here's a 2D slice of the Stanford bunny.
+ That sounded mean.
+ And so in that slice, we're going
+ to have a picture that takes negative values,
+ but has a negative distance to the object
+ when it's in the inside.
+ It's 0 on the boundary of the object,
+ in all three dimensions, of course.
+ And it gets the distance, the actual distance,
+ so the closest plane on the boundary everywhere.
+ That's a function you can sort of precompute
+ once for each model.
+ And now, distance queries become just lookups.
+ You don't even have to sample your bunny.
+ You can just have it work directly
+ from the original mesh, for instance.
+ And now if I want to know quickly
+ what's the distance from this point to there,
+ it's just a table lookup.
+ In this setting, that just makes things a lot faster
+ and very GPU compatible and the like.
+ Sine distance functions are important.
+ One of the many representations that I mentioned,
+ but for this particular optimization,
+ they're very effective.
+ Yeah?
+ [INAUDIBLE]
+ That might be how you generate this.
+ So the question is, how would you compare this
+ to a Euclidean distance?
+ The sine distance function is a Euclidean distance
+ defined to be what's the minimum Euclidean distance
+ from this point.
+ The value of the sine distance function
+ would be the minimum Euclidean distance
+ to any point on the boundary.
+ Typically, it's Euclidean.
+ And then similarly, it'd be minimum distance here,
+ but I'm going to assign this myself, if you will,
+ on the inside.
+ That's how you would compute it.
+ But the point is, if you're going
+ to be doing lots of queries all the time,
+ don't do that minimum over boundary points every time.
+ Precompute it once, and then do the table lookup.
+ Yeah?
+ [INAUDIBLE]
+ So how do you compute that?
+ So it turns out that if you represent it even
+ at a finite number of points and interpolate,
+ that these can be surprisingly good.
+ In voxels, yes.
+ So a voxel-based representation, if you
+ wanted to just use that as your representation
+ of the geometry, there's an algorithm called
+ marching cubes that will go and look at the voxel-based
+ representation and find the boundary to try
+ to find the zero level set.
+ And you'll see geometry that comes out of this that's
+ as good as--
+ in fact, this is probably one of those--
+ as good as any CAD file, but it's actually
+ represented with a fairly coarse voxel grid.
+ When I started looking at that, I was like,
+ I'm impressed at how coarse your voxel
+ can be with the level of resolution
+ you can get out of your mesh.
+ Nowadays, people will store that in a neural network.
+ Deep SDF, in fact, was one of the first to do that.
+ So you could just have a neural network function over R3
+ that says, what's my sine distance?
+ And then you can try to figure it out.
+ You just find the zeros of the neural network output
+ to reconstruct your object.
+ And that turns out to be a very, very powerful representation.
+ Yeah?
+ [INAUDIBLE]
+ Because it allows you to play these games with outliers,
+ for instance.
+ Yeah?
+ [INAUDIBLE]
+ They are all trying to be good for outliers in the sense
+ that they're flattening out over here.
+ They will have different--
+ this might be a slightly harder--
+ if you just handed this to a general nonlinear optimizer,
+ that might be a harder optimization landscape.
+ But it would be very specific about outliers.
+ Cool.
+ Yes?
+ [INAUDIBLE]
+ Good.
+ So how would you do optimization on this?
+ So there's a toolbox of nonlinear optimizers
+ that people will use.
+ A natural choice would be--
+ I'm going to pick a point here and just start going down
+ and doing gradient descent.
+ So oftentimes, when we get into these non-convex optimizations,
+ we'll also have constraints.
+ If you're doing constrained optimization,
+ then people will do, for instance,
+ second-order methods that can handle constraints more
+ naturally.
+ Or you have to do projected gradient descent.
+ We're going to evolve those tools when we need them.
+ So I think gradient descent is a perfectly reasonable model.
+ And that's why it could potentially
+ get stuck in local minima.
+ But again, you can make local quadratic approximations
+ and try to do faster optimization that way
+ or handle constraints more naturally.
+ OK.
+ So that was like a--
+ actually, in the notes, I went through many
+ of the variations of ICP.
+ And there's some that are just super clever.
+ They're really, really clever in how
+ you can deal with outliers, how you can use--
+ remember, last time we talked about the--
+ you can use the pairwise distance
+ to do scale estimation because it's
+ invariant to translation and rotation.
+ So you can use those same sort of invariant features
+ to try to find correspondences.
+ There's so many clever tricks.
+ You can use color values to try to--
+ or features that somehow try to find correspondences.
+ There's lots and lots of tricks.
+ And I tried to give you a summary of them
+ sort of in the notes.
+ But this is the main idea I wanted to communicate here.
+ Because correspondences aren't everything.
+ And I want to make some time to talk about,
+ what are the limitations of this?
+ And what have we not done now?
+ And why do we need something a little bit more
+ than correspondences?
+ OK.
+ And I guarantee, if you put a mustard bottle or a mug
+ or something on the table, and you
+ get your nice, fancy RealSense camera out,
+ and you do your ICP in the real world,
+ you're going to hit this thing, which is just--
+ everybody hits it.
+ It's really annoying.
+ OK.
+ Let me do it maybe with a mug, just
+ because I can't draw mustard bottles very well.
+ OK.
+ So let's say I've got a table here in 2D.
+ OK.
+ And I've got my mug sitting on the table.
+ And ICP is going to come back.
+ OK.
+ And it's going to say, I don't know,
+ here's your estimate of the mug.
+ And it minimizes the least squares sense.
+ OK.
+ And you're going to be like, that's not my estimate of mug.
+ It's in the table.
+ I know the mug's not in the table.
+ Right?
+ And then you'll have another sample return, OK,
+ where it's going to say, here's my estimate of the mug.
+ And you'll be like, I know the mug is not floating in space.
+ Right?
+ And so there's things that you know about the optimization
+ problem that you haven't told that ICP,
+ the sort of correspondence-only objective,
+ is not rich enough to express.
+ OK.
+ So correspondences aren't everything.
+ There's other information, like non-penetration
+ as a constraint.
+ So how would you think about that?
+ What's the constraint that you would write?
+ Non-penetration just means two bodies should obviously
+ not be penetrating.
+ They should not have a negative sign distance.
+ This one, what kind of a constraint
+ would you write to say things are not floating in space?
+ Contact force.
+ Yeah.
+ More generally, this should be like a free body diagram.
+ And it should be a static equilibrium.
+ If you know something about equilibrium,
+ if you know something about even the basic physics,
+ and you assume the scene is static,
+ then you should just say forces should balance.
+ And if there's not a force that makes that thing at rest,
+ then it's probably not a valid solution.
+ There's one other really good one, OK,
+ which I want to talk through.
+ And I mentioned it sort of before.
+ But if my camera is over here, and it's shooting--
+ somehow its field of view is here, and my box is here,
+ then the fact that I get point returns here, here, and here,
+ not only does that tell me I've got some points that I
+ should try to match here.
+ But there's actually a whole bunch more information.
+ The fact that I got those points from this camera,
+ it also tells me that there's no objects there.
+ This is like the free space constraints.
+ [WRITING]
+ So those are sort of three examples of extra things
+ beyond what we've expressed in the point correspondence
+ problem so far.
+ Yeah?
+ [INAUDIBLE]
+ It's a really, really good question, OK?
+ So how would we write a non-penetration constraint?
+ So first of all, let's assume that the table is fixed.
+ So we just want to say that there's some constraint
+ on the pose such that no point on the mug
+ can possibly be in the table.
+ So for instance, I could have a constraint somehow saying
+ x of the object has to be greater than or equal to 0.
+ Now think about-- that's just a hopelessly generic way
+ to write a constraint.
+ But it depends on the pose of the mug.
+ How would I evaluate this constraint?
+ This constraint could be the distance of the closest point
+ on the mug to the table.
+ Let me even say signed distance.
+ If my signed distance between the points
+ on the mug and the table are all greater than or equal to 0,
+ then I've satisfied that non-penetration constraint.
+ [INAUDIBLE]
+ Yes, that's true.
+ So what she said is that in order to write this,
+ I have to have encoded in the program
+ in that f is the position of the table.
+ If you're estimating multiple objects simultaneously,
+ then you might be writing this as a function of x of object 1,
+ x of object 2.
+ More generally, you could think of this
+ as writing a function--
+ sorry to be jumping around on the board here--
+ a function of the configuration vector q,
+ which defines all of the positions of my robot
+ and bodies in the world.
+ We actually have-- so implementing that constraint
+ and implementing that constraint in a way that it gives
+ the best gradients possible, because that's potentially
+ a non-smooth function.
+ If I change q a little bit, the point that is the closest
+ could change discontinuously.
+ So we actually-- there's a lot of tools in Drake,
+ for instance.
+ This would be called a minimum distance constraint.
+ Minimum distance.
+ Points.
+ And you can just say, make a mathematical program.
+ Add my quadratic objective on the points.
+ Now add a minimum distance constraint,
+ saying that the minimum distance between these two bodies
+ has to be greater than or equal to 0.
+ And behind the scenes is some computational geometry
+ that is computing those, taking those two bodies,
+ given the current q, and estimating that minimum
+ distance.
+ Yeah.
+ The question is, doesn't this-- this
+ is a highly nonlinear function, potentially,
+ and non-smooth function.
+ Doesn't that make the solver have a hard time
+ confining an optimal solution?
+ Yes, it does.
+ This is not magical.
+ It makes the optimization problem much harder.
+ It will still, like ICP, have the property
+ that if you have a pretty good initial guess,
+ it can be surprisingly effective.
+ In particular, in tracking applications,
+ where you find an initial pose and then track objects
+ as they move, and you only have to adjust--
+ as long as you're staying on track,
+ you always have a pretty good initial guess.
+ These things can be extremely effective.
+ The solvers are very, very good.
+ They're better than you could hope for them to be,
+ but these problems are very hard in general.
+ The static equilibrium constraint
+ can be written similarly, but it requires also
+ knowledge of mass.
+ But we can write similar, and there's also
+ a static equilibrium constraint available in Drake.
+ Do you have a question?
+ [INAUDIBLE]
+ Good question.
+ So static equilibrium sounds like a heavy hammer,
+ if I just want to say that it's on the table.
+ So in the simple setting of the mug is on the table,
+ then absolutely, you could just say that some of the points
+ are 0.
+ But I think you quickly find yourself
+ in a more complicated situations, where it's not just
+ like I'm stacking mugs, but just I think,
+ what if the table's planted, or there's
+ situations where writing the heuristics solution
+ becomes almost harder than just writing the governing equations
+ and having physics tell you.
+ There's some threshold.
+ I think for flat table, I think you're absolutely right.
+ You could just say, set it on the table,
+ have one of the distances be equal to 0.
+ That would be good.
+ Yes?
+ [INAUDIBLE]
+ Yeah.
+ [INAUDIBLE]
+ Yeah, so he asks, what about using something like diffusion
+ to converge on the constraint manifold?
+ I mean, almost certainly, yes.
+ I think diffusion is very good at learning manifolds.
+ And there's a manifold of possible collision surfaces.
+ The question would be the cost of training that model.
+ If it's too environment specific,
+ it might be not worth the power of it.
+ [INAUDIBLE]
+ I haven't seen that in particular, but probably.
+ Probably, yeah.
+ I mean, it'd be a good project, for instance,
+ if you wanted to try that.
+ OK, so yeah, static equilibrium, we're
+ going to use it more later.
+ It'll be, for instance, one of the ways that we
+ find initial conditions of a simulator,
+ would be to try to find things that are in static equilibrium
+ with penetration.
+ So we'll go back through these a bit later.
+ But effectively, these are nonlinear, non-convex
+ constraints that can be added to the problem.
+ They give you a richer specification than ICP,
+ but they come up with much harder optimization problems.
+ OK, the free space constraint is actually my favorite.
+ Like, I just think it's so easy to underestimate
+ how important that one is.
+ So how would we write a free space constraint in, let's say,
+ to hand to an optimizer?
+ How could we write a function that says,
+ no other objects are in that space?
+ Yeah.
+ You could do voxels.
+ So the proposal is voxels.
+ You could say, there's a lot of voxels maybe in my camera frame
+ and those should not be in.
+ That could potentially work.
+ The voxels, you would need to do something
+ to try to smooth out that objective.
+ You don't want to have to check all the voxels independently
+ as independent constraints.
+ Yeah.
+ [INAUDIBLE]
+ That's exactly-- that's my favorite solution.
+ So did you hear what he says?
+ He says, you can actually turn that
+ into a non-penetration constraint problem.
+ If you make a fictitious object, which
+ is the geometry is defined by the area between your camera
+ and all your returns, you make this object here,
+ then the same sort of non-penetration constraints,
+ saying this object should not be in penetration
+ with this fictitious object, is actually a really nice way
+ to write a free space constraint.
+ It's still an ugly object, a mathematical object,
+ but it's one that people use at real time rates
+ to do tracking and the like.
+ There's a version, the paper that I like,
+ that I first saw this is called Dart.
+ In robotics, there's like 16 things called Dart.
+ This is one of them.
+ Dart, it's dynamic articulated tracking.
+ Oh, maybe that's just articulated.
+ Maybe it's just dynamic articulated tracking
+ by Tanner Schmidt et al.
+ I think it's just dynamic articulated tracking.
+ So Tanner did these free computations of the SDF,
+ made a very fast implementation, and was
+ able to track objects that were having non-penetration
+ constraints and free space constraints and the like all
+ on the fly, solving these nonlinear optimization
+ problems very fast.
+ There's other subtleties about this point correspondence
+ that are sort of limitations, or just you
+ should watch for them.
+ So one of the examples I like to think about
+ is imagine you have a thin book on a flat table.
+ Or maybe a better example.
+ Let's say I'm looking at a door, and what I care about
+ is opening the door handle, something like this.
+ I'm going to get a bunch of returns, points on the door.
+ And getting those points a little bit wrong,
+ the door could shift up or left or right, that's fine.
+ But the few points on the door handle
+ matter so much more than all of those points
+ you're going to get on the door.
+ If I've got a thin book on a table,
+ and I'm getting returns from the top of the book
+ and the returns from the table, the thing
+ that's going to determine where the book on the table
+ is is probably the very small number of returns
+ on the boundary that should have really a lot more importance
+ relatively than the massive number of returns
+ I'll get on the table in the book.
+ I think there is something fundamentally uninformed
+ about the ICP objectives, and that is a limitation.
+ And I don't have a magic solution to get around that.
+ I just want you to know that I feel that it's a limitation.
+ It doesn't have a notion.
+ There's not a canonical notion of the important points.
+ All points are treated equally in this.
+ It's very democratic, but it's not always
+ what you want for your robot.
+ But in that space, it's really, really a very powerful tool.
+ So let me show you a couple examples of how well--
+ how it can be used very effectively.
+ Well, first of all, this is a simple example,
+ which is in the notes of that non-penetration constraint
+ in action.
+ So let's say I have the model here,
+ and I have the returns coming from the red, which
+ because of noise somehow were through the wall.
+ I put this as like a box in the corner.
+ So the green is supposed to be the area
+ you're not supposed to go.
+ And you know that your box should
+ be in the positive orthant here.
+ But I'm getting returns that are negative.
+ So solving that non-penetration constraint,
+ which is a handful of lines of code and mathematical program,
+ can find the best solution, which
+ is minimizing those distances that
+ is outside the constraint.
+ And maybe even before I finish, let
+ me show you a couple more of those examples.
+ So the way you do that in mathematical program,
+ just the way we added quadratic costs, for instance,
+ in the QP, you can add generic costs, which are just
+ defined with a Python function.
+ And Drake will try to take gradients
+ through those functions.
+ Every once in a while, he'll type something
+ that we can't take a gradient through.
+ But most of the time, it just works.
+ That's how you would add these richer objectives.
+ And in that example right there, what I did
+ is I took this original objective, added those costs.
+ But it turns out that that squared distance function--
+ so there's also constraints saying that those positions
+ have to all be outside--
+ in the positive orthant.
+ So that's the basic mechanics of this problem,
+ is just add constraints saying that in my reconstructed thing,
+ all of the points need to be positive x and positive y.
+ And those you just add as costs and add
+ as generic costs and constraints.
+ And the implementation of this squared distance function
+ and the implementation of this position in world
+ are potentially these nonlinear functions.
+ The position model in world is taking--
+ in this case, the decision variable was just theta.
+ I didn't even parameterize the rotation matrix.
+ I just parameterized theta, since I'm already
+ doing nonlinear optimization.
+ And I computed the position of the model in the world
+ as a function of theta using our spatial algebra.
+ The squared distance, then, is this position
+ of the model in world, turned into an error function
+ and squared.
+ But I'm writing basically natural Python code.
+ And when the optimizer tries to solve it,
+ what it will do is it'll evaluate these functions
+ on the decision variables.
+ And it'll take the gradients of those functions
+ in order to try to walk down the landscape.
+ That is the full program that made that box come out
+ of the corner, but otherwise minimize the ICP objective.
+ We'll give you a lot more experience
+ with those kind of things when you need them.
+ OK, so here's a couple examples of, I think,
+ ICP, even though it's limited, there's
+ some ways that are, I think, very effective in the wild
+ today.
+ And this one's called label fusion.
+ Let me just pause it for a second.
+ So when everybody started trying to train deep networks
+ to do pose estimation, one of the challenges
+ was to have ground truth labels.
+ There's only a handful of ways that people do that now.
+ One of them is actually in simulation.
+ You just put ground truth.
+ You generate a bunch of synthetic images.
+ You have ground truth poses.
+ You have pairs that you can train a supervised learning
+ system on image and pose, image and pose, image and pose.
+ But it's much better to do that on real world data.
+ So one of the early pipelines for doing that on real world
+ data used ICP.
+ Now, ICP isn't strong enough to solve the problem.
+ Otherwise, we wouldn't have had to train a deep network.
+ But with a simple GUI, so this project, basically,
+ you would take a bunch of pictures of the scene.
+ You'd do some dense reconstruction
+ to try to make them into one point cloud.
+ And then you'd offer it up to a human
+ who would just click three points on the scene point
+ cloud and three points on the model.
+ And they're just super fast, like three clicks.
+ And that was just enough to have an initial guess
+ that's enough, typically, for ICP
+ to do the rest of the work.
+ And the cool thing is, since you took a bunch of camera images
+ in order to get a nice view or whatever,
+ once you have that clicked once, you
+ can actually go back to all of those camera images
+ and label them with the ground truth label,
+ knowing the geometry of the camera and everything.
+ You can say, in all of those 100 images or something,
+ I know the pose of the object relative to the camera.
+ You generate a lot of data very fast.
+ And that works very well.
+ That was, I think, a leading pipeline for a while,
+ or things like that were a leading pipeline.
+ I would still do this today if I was
+ trying to make a real-world data set myself
+ for deep pose estimation.
+ Now you can just go through all of your data
+ and all these different images where you've just
+ identified it once as a ground truth label in the messy scene.
+ [AUDIO OUT]
+ OK, but there's another--
+ this is why I made the joke about mustard and Rome before.
+ There's other places where you'll see, basically,
+ this ICP point correspondence solved, sometimes
+ at massive scales.
+ And they're still used very much today.
+ Like everybody who's doing NERF is probably doing this first,
+ for instance.
+ So this is ColMap, which is one of the most popular ones, which
+ is one of the first large-scale structure from motion.
+ It's almost an analogy.
+ There's differences in that problem a little bit,
+ which I can talk to.
+ But this was just going online.
+ The Rome data set is going online
+ and a bunch of pictures of people
+ taking pictures around Rome.
+ And the problem was to go back and figure out
+ where their cameras were and merge
+ their individual cameras into a coherent 3D model of Rome.
+ And it's shockingly good.
+ It's crazy how good it is.
+ You don't have to send a robot out there.
+ Just go on Flickr.
+ Incredibly good.
+ OK, so the way ColMap works is there's details.
+ There's lots of details.
+ And I haven't covered structure from motion properly.
+ But I do think that the background we have now
+ from ICP and the like gives you what
+ you need to read the ColMap paper properly.
+ So you'll see, first step, figure out correspondences.
+ There's a lot of work in ColMap to do it at very large scales.
+ You have many, many, many images.
+ And you want to first figure out even what images
+ might have correspondences.
+ So there's a lot of efficiency optimizations
+ that make this incredibly good.
+ But they use features.
+ So they're not just using every point cloud.
+ They're going to-- they don't have a depth camera.
+ Random people putting images on Flickr
+ didn't take depth images.
+ So in the structure from motion problem,
+ you had to go straight from raw images.
+ And one of the ways you do that is you just
+ use these generic features.
+ SIFT features are the most common ones.
+ You don't have to know that as a detail,
+ but that's a name you'll see often.
+ There's standard algorithms that look for features in the image
+ and mark them as an important point in the image.
+ They have the vector of features.
+ And you can look for similar features in different images,
+ decide that they correspond.
+ And you start these approximate correspondence algorithms.
+ And then in the heart of this is the bundle adjustment,
+ which is almost point set registration problem.
+ And in fact, it looks almost identical to what we just said.
+ One of the key differences is that this pi here,
+ it looks almost exactly like the loss function I wrote.
+ But this pi here is going--
+ projecting points in 2D through the camera
+ in an unknown pose of the camera.
+ And instead of wrapping the object around or the entire
+ scene around, they're actually moving the camera around.
+ And that's these-- unfortunately,
+ their x is their data, and my x is my transform.
+ But that's a point.
+ But almost identical objective function.
+ They're solving very efficiently.
+ They're not just handing that whole thing and going.
+ There's a lot of algorithms that make that more efficient.
+ But the basis is exactly what we've been talking about here.
+ And when you go to build a neural radiance field
+ or do Gaussian splatting or whatever the newest 3D
+ reconstruction from deep learning community is,
+ you'll see that if you're bringing
+ raw images or your raw video or something like this,
+ the first step still today is to use
+ Colmap to figure out where the heck your camera was.
+ And if you don't do that, you tend to not get scale
+ information.
+ So NERF by itself, typically, you
+ will start with using these very geometric perception
+ algorithms to just understand how
+ to align all those images into one neural radiance field.
+ So I think one of the more boutique lectures
+ as we get to it in the end, and you'll
+ have a little bit of choose your own adventure,
+ I think it'd be fun to have an entire lecture about some
+ of the dense reconstructions and the newer
+ neural descriptive stuff.
+ But we'll see if you pick that later in the term.
+ Cool.
+ That's it.
+ I'll see you next time.
