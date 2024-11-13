@@ -1,0 +1,485 @@
+I can do my standard setup, is that so far, we've
+ either assumed we knew where the block was immediately,
+ or I actually, in some of the notebooks,
+ I had the system pull on the output port that
+ was the cheat port, I call it, from the manipulation station.
+ So if you look closely at the manipulation station,
+ it tells you what you would get from the robot, which
+ are the IWA positions and the shunk positions.
+ It doesn't tell you directly--
+ I mean, there's no sensors saying where the block is yet.
+ But we have these cheat ports that
+ will tell you the position and the pose
+ of any object in the scene.
+ And so I was using that as a backdoor
+ to figure out where the brick started
+ and plan everything relative to that, or I just hardcoded it.
+ So today, we're going to stop using those.
+ We're going to instead use the cameras.
+ So the cameras are the sensors that we have available
+ to see the world and to figure out where that red brick is.
+ And thus begins the conversation for perception.
+ So I mean, maybe it goes without saying,
+ but computer vision is hard.
+ It's been hard for a long time.
+ It got a lot better in the last few years with deep learning.
+ But if you think about why it's hard
+ and why it breaks a lot of the optimization type approaches
+ like we saw for kinematics, I would
+ say is because if you take the color
+ values of the pixels in an image,
+ this is a very bad space.
+ So RGB, the red, green, blue space,
+ the color values in an image, they
+ don't satisfy the sort of--
+ it's hard to write optimization directly
+ against the RGB values.
+ So you can have very nearby RGB values
+ that mean very different things in terms
+ of the geometry in the world and vice versa.
+ So you can change the lighting a lot,
+ and the brick's still in the same scene.
+ The RGB values went all over the place.
+ So because of this, I would say there are two
+ major branches of perception for robotics.
+ One of them continues to use geometry
+ but uses a different type of cameras, which gives
+ direct geometry information.
+ I'm going to tell you a little bit about them.
+ And the other is now sort of the more deep learning-based work.
+ I've separated into deep perception.
+ Typically, it can work directly from RGB values,
+ and it's becoming highly effective.
+ Now, even in the last year or so,
+ we're starting to see those two worlds collapse again.
+ And people are doing like NERF, if people know what NERF is,
+ or deep SDF.
+ Or you're seeing deep learning using geometry representations
+ and trying to combine those two again.
+ So it's not a surprise, maybe, but I'd
+ say those two streams are interesting by themselves
+ and are going to be hopelessly intertwined into the future.
+ So I mean, I do think, though, it's important.
+ Some people say deep learning is all you need
+ to do for perception right now.
+ And I just don't think that's true.
+ I think there has been this other parallel revolution,
+ just as--
+ maybe not quite as dramatic as the deep learning.
+ But going on very much in parallel
+ and getting spectacular results has
+ been this geometric perception pipeline.
+ And that's sad, like really comically sad there.
+ OK.
+ Huh.
+ I'm sorry, I shouldn't have unplugged that one.
+ I just screwed up your stream, did I?
+ I meant to unplug this one.
+ Man, the number of technical problems I've managed to have.
+ [AUDIO OUT]
+, let's try.
+ [AUDIO OUT]
+ Kind of ruined my flow, didn't it?
+ [AUDIO OUT]
+ [AUDIO OUT]
+ It's going to make me register real quick.
+ That's what I didn't do, I think.
+ [AUDIO OUT]
+ Good Lord.
+ [AUDIO OUT]
+ [AUDIO OUT]
+ I'll just use my iPhone in a second here.
+ [AUDIO OUT]
+ [AUDIO OUT]
+ I'm going to lecture off my iPhone.
+ How about that?
+ [AUDIO OUT]
+ That works fine.
+ [AUDIO OUT]
+ It should not be better than the MIT network.
+ OK.
+ Sorry about that.
+ It's going to play the videos a little slower probably.
+ [AUDIO OUT]
+ OK, so there's a second revolution-- sorry for that--
+ based on geometric processing of the visual scene.
+ So you've probably seen incredible reconstructions
+ from autonomous driving, driving through town,
+ and building beautiful maps.
+ This is sort of the indoor equivalent of the SLAM,
+ if you know, the simultaneous localization and mapping.
+ This one is called dynamic fusion.
+ It's in particular tracking objects
+ that can change their shape or change their pose relative.
+ But it's just absolutely stunning
+ that a handful of years ago, people
+ started being able to build this sort of quality
+ reconstruction of a 3D world from a camera
+ that you can fit in your pocket.
+ In fact, I've got one in my pocket right here.
+ Yeah, look at that.
+ These kind of cameras, right?
+ I don't always have them in my pocket.
+ But-- oh, that's not true actually,
+ because I do always have one in my pocket.
+ There's one right there too, right?
+ Which is pretty awesome.
+ So that has been fueled by a lot of different things.
+ I mean, robotics is a good enterprise.
+ But I would say robotics by itself
+ might not have been enough fuel for this.
+ But now augmented reality, like Facebook Labs,
+ is working on this.
+ It was originally Oculus.
+ And the people that did this work became Oculus,
+ became Facebook Reality Labs.
+ So it's being powered by those kind of revolutions.
+ So let's just think a little bit about these different types
+ of sensors, and why are they different than a standard
+ camera, and why did they help robotics jump into the
+ perception age, I would say.
+ There's a couple different types out there.
+ You've probably heard of LIDAR, the laser range finders.
+ These are based on time of flight, where they're actually
+ shooting out an active laser, and then waiting for the
+ return, and measuring the distance.
+ And some of these are just crazy good, right?
+ So even a year ago, there was these 500 meter range luminars
+ coming out where a car can drive through it.
+ It can basically see the whole city, it feels like.
+ And it's just building highly accurate geometric models as
+ it's driving down the street.
+ It's crazy good.
+ And you see these kind of--
+ I don't know if that's actually processed, or that
+ could just be a raw return.
+ Some of the raw returns from these cameras
+ just look spectacular.
+ I mean, the resolution degrades the farther you go, but it's
+ still crazy good.
+ And when these started happening, this started
+ powering a lot of the geometric work in robotics
+ perception.
+ Stereo imaging is still a thing.
+ It's an important thing, where you'll see stereo heads that
+ were the classic approach to building
+ sensors for perception.
+ This is actually the Carnegie head, which is stuck in the
+ middle of Atlas, which is the humanoid robot from at least
+ the version of Atlas we have upstairs, carried around this
+ stereo pair head.
+ And basically, the basic principle, there's two cameras.
+ And it's comparing the two images, trying to find similar
+ blocks in the left and right image, and then saying how
+ different are those blocks in the image using the distance
+ between the lenses and figuring out the depth.
+ There's many different ways to do it, but basically, a simple
+ block matching stereo is a perfectly good way to do it.
+ Each of these have different pros and cons.
+ I'll tell you about the ones we picked.
+ I'll tell you most about the one we picked.
+ Structured light, it was the Microsoft
+ Kinect came out.
+ This was considered a major advance for indoor.
+ LiDAR was traditionally considered for outdoor
+ applications, and it works in natural light, whereas the
+ Kinect was one of the first things that powered the indoor
+ perception revolution.
+ And the fact that they became so cheap because they were
+ sold with game consoles was a big, big deal.
+ I think that really opened up the number of people that were
+ playing with them and just really
+ bootstrapped the research.
+ So the structured light approach is you're projecting
+ some image onto the scene, which allows you to then, by
+ taking a picture, have far more information than you
+ would have had with just random pixels coming in.
+ But the one that we're going to use that I have in my
+ pocket here is an Intel RealSense D415.
+ They're pretty small, pretty nice.
+ This is actually a projected texture stereo.
+ The RealSense line and the Intel line has a handful of
+ different technologies, but this is the projected texture
+ stereo version.
+ So it's basically a stereo camera, except that it's also
+ got a little projector, obviously, that's just pushing
+ out some pattern of light.
+ So that if you were to look at--
+ if you take stereo images of a purely white wall, then
+ there's nothing that it could possibly do to compare those
+ images to get a reasonable depth.
+ But if you project an invisible pattern, an IR pattern even,
+ on the wall, then there's still something that it can
+ see in order to get good depth information.
+ And in general, it reduces the reliance on the textures in
+ the world, because it's providing its own texture.
+ Compared to things like LiDAR and other time of flight
+ technologies, one of the reasons we like this is
+ because they don't interfere with each other.
+ So it actually doesn't care what the--
+ so compared to the structured light, where it's trying to
+ set up a certain pattern out, this one's just putting out
+ any old pattern.
+ It just wants to have texture.
+ It doesn't care--
+ it's not trying to match a specific pattern.
+ It's just trying to make sure that there's not
+ sameness everywhere.
+ So if you have two cameras pointing at the same scene,
+ and they're both projecting texture, no big deal.
+ It's still getting good returns.
+ Whereas a lot of the other cameras before that, you had
+ to really synchronize your multiple cameras to make sure
+ they weren't hitting--
+ sending active pulses at the same time.
+ It was a major, major pain.
+ And we do use multiple cameras.
+ I'll show you in a minute the number of cameras we put
+ around that dish-loading example.
+ But this is new news.
+ This is August 17th this year.
+ Super sad.
+ I don't really use emojis, but I almost put a sad emoji on
+ here, right?
+ I don't really know what I'm going to do.
+ But it's really bad news for the field.
+ I mean, we're bummed.
+ There's not a great replacement yet.
+ I mean, there's more technologies out there, but
+ the RealSense has become a favorite for sure.
+ And I think we're--
+ I don't know.
+ We're just too small as a field to matter.
+ But they're selling them, but I guess they're
+ not selling enough.
+ So I don't know what we'll be using next year in class.
+ But we've got a bunch of RealSenses.
+ We're going to hang on to them, keep using them as long
+ as we can.
+ OK.
+ So we have the ability to simulate these cameras, of
+ course, in the simulation.
+ But we simulate them in various levels of fidelity.
+ OK?
+ So the simplest one, and the one we'll use for most of the
+ class, is just a standard OpenGL renderer.
+ OK?
+ So OpenGL is sort of the basic graphics language that's
+ existed forever.
+ It's not particularly fancy in the way it does lighting.
+ Or it's capable, but not compared to the new game
+ engine quality technologies.
+ But it's fast.
+ And it's got GPU acceleration.
+ And it's definitely faster than real time.
+ OK.
+ So let me just step you through.
+ This is just a diagram from a very simple system that has an
+ object, a single object in the scene.
+ Turns out it's a mustard bottle.
+ OK.
+ And so we've got a multi-body plant, which is just holding
+ the mustard bottle, not doing anything interesting.
+ We've got the scene graph, which is the geometry engine.
+ And we now can take an RGB sensor and add a new sensor
+ into the diagram.
+ It hooks right up to the scene graph.
+ OK.
+ It's just another system.
+ It reads geometry.
+ It has a message passing with the scene graph to get the
+ geometry information.
+ And it spits out color image, but also depth image in a
+ couple different channels.
+ And a label image for when you want to train your machine
+ learning algorithms.
+ You can say per pixel what object is it associated with.
+ And you can have it spit out the pose of the sensor.
+ OK.
+ So RGBD for red, green, blue, and depth sensors.
+ It's just one more channel that gives you a
+ depth signal back.
+ OK.
+ And the images that come out are the standard--
+ you take the first three channels, the
+ standard RGB images.
+ You get something that looks like this out.
+ There's a little mustard bottle.
+ And then there's an image that's the same number of
+ pixels, the same size, which just says for every pixel,
+ what's the distance to the object in the scene?
+ The first return, right?
+ Or NAN if it's too far.
+ Actually, it's not NAN.
+ There's a particular integer for that.
+ OK.
+ So you'll see this come slowly into MeshCat here.
+ So in MeshCat, you can push the point clouds out to the
+ renderer, too.
+ So first of all, I drew the camera with the camera
+ coordinates here.
+ So you can see red, green, blue, remember?
+ So x, y, z.
+ Right?
+ So in order to get the images that we saw, we wanted the
+ camera oriented like this.
+ It's a little bit hard to think about.
+ I put it at a little bit of a tilt in order to get a little
+ bit of an angle on the shot.
+ OK?
+ But you can go in and navigate through MeshCat.
+ You can turn on and off the geometry from scene graph.
+ And you can turn on and off the point cloud.
+ But there's a point cloud in there giving you the same sort
+ of the raw information, I guess, from the cameras.
+ Right?
+ Now, the camera only sees one side of the object.
+ Right?
+ And that's a big part of what we have to take care of in
+ perception is the fact that we only get partial views.
+ Right?
+ So it's not going to be enough to assume you could see all
+ parts of the object and match all parts of the object.
+ When you have occlusions, when you have multiple objects in
+ the scene, it gets even worse.
+ And the best perception systems can do a lot with very
+ partial views.
+ OK.
+ I said we like to just not worry about the cameras
+ interfering.
+ OK?
+ But this is a little ridiculous, I would say.
+ We just didn't want to worry about whether we had enough
+ cameras or we wanted to avoid partial views as much as
+ possible, so we put a bunch of cameras all over the place.
+ And we would do things like use some cameras to train the
+ other cameras.
+ There were multiple reasons for it.
+ But we instrumented the world with plenty of cameras, OK?
+ Including two on the wrist.
+ Right?
+ So right on the wrist of the robot, there's
+ two right there.
+ We'll mount them in various places.
+ The robot that we tried to bring in--
+ we successfully brought the robot in, but the cage had to
+ be disassembled.
+ And the cage had--
+ the standard cage we had around it was there primarily to hold
+ the cameras in fixed locations and have a nice view down into
+ the scene.
+ So we're going to talk mostly today about relatively
+ simple-- like clean point clouds.
+ And thinking about what you do if the point clouds are giving
+ you pure geometry information.
+ But next time, we're going to go into the fact that the real
+ point clouds are pretty messy.
+ OK?
+ So I'm just--
+ introduce the idea of it here, but we're going to dig more
+ into it with our methods next time.
+ So this is a simulated depth return for
+ this kind of a scene.
+ OK?
+ And this is what you actually get out of
+ the real depth camera.
+ Now you notice it's not Gaussian noise.
+ OK?
+ So it's not like I take every pixel and I pull a random
+ number and I change the depth value by some Gaussian number.
+ It's much more stereotypical than that.
+ It tends to happen on the edges of objects, right?
+ Where the normals are not very incident to the camera.
+ OK?
+ That's a typical place where you don't get good returns or
+ don't get good depth images.
+ Or if one camera can't-- or if both cameras can't see the
+ side of an object or something like that.
+ There's other--
+ so transparent or reflective surfaces are all-- there's
+ things like this that are the canonical bad
+ cases for these cameras.
+ There was a great project actually by the same Facebook
+ group where they were mapping the inside of homes and they
+ wanted to build these beautiful 3D
+ maps of indoor homes.
+ And the problem is people have windows and
+ people have mirrors.
+ So they actually--
+ they had a very clever--
+ I'll actually talk about it later.
+ But they have a very clever trick for figuring out how to
+ work with mirrors and windows.
+ OK, so this is just an example--
+ another example of-- this is the D415 where Cooney is
+ looking at some Legos and vegetables and random stuff on
+ his table, OK?
+ But if you scroll around the 3D-- the same way I scrolled
+ around the mustard bottle, he's got the camera above.
+ The camera's not moving.
+ This is just looking at the point cloud that's coming out
+ from different angles.
+ I would say there's one word that everybody always uses
+ when they talk about the point clouds out of D415--
+ lumpy.
+ Everybody says lumpy.
+ It's like--
+ it doesn't seem like a word that would come to--
+ but I've heard a lot of people say, yeah, yeah, those are
+ lumpy point clouds.
+ And it just has this characteristic ripple, OK?
+ And if your carrots or whatever are like about the
+ same size as your lumps, things get pretty dicey.
+ So that wasn't meant to be a joke.
+ OK.
+ So that's our setup.
+ Let's start thinking about how to do work with point clouds
+ and how to go from depth to point clouds and why, as you
+ can see here, that thinking about point clouds is actually
+ a kinematics problem.
+ So I hope it blends nicely from what we did last time.
+ OK.
+ I'll start here.
+ So there's many representations of 3D data, of
+ 3D geometry, let me say.
+ OK.
+ The one that we were just illustrating there is called a
+ point cloud.
+ OK.
+ So typically, this would be a--
+ let's say a 3 by n matrix, OK, where this is the x, y, z
+ positions in a Cartesian frame.
+ And this is the number of pixels or number of points.
+ OK.
+ It can also be--
+ you can also have RGB values.
+ You can also have normal information.
+ There are a couple other things that you can--
+ extra information you can add to the point cloud.
+ But the first thing we'll think about is just x, y, z
+ positions in space that are a point that I got from a--
+ indirectly from a depth camera.
+ OK.
+ I mean, a depth image, like we got directly out of the
+ camera, is also, in some sense, a
+ representation of 3D geometry.
+ But it's not enough by itself.
+ You also need to know, let's say, the camera info.
+ I'll get more detailed about that later.
+ But in order to turn that 2D image into a 3D point cloud,
+ you need to know something about the geometry of the
+ camera, and potentially even the location in space.
+ There are other representations of 3D
+ geometry, too.
+ I mean, you can do triangular meshes.
+ Some of you will have heard of signed distance
+ representations.
+ And this has led to things like NERF, which I will say
+ more carefully later.
+ Voxel grids are another one, or occupancy grids.
+ OK.
+ So for the most part, I want you to--
+ we're going to think about these kind of the same way we
+ thought about rotations, where there are many, many
+ different types of representations for the
+ geometry.
